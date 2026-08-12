@@ -1,0 +1,33 @@
+# Dependências
+node_modules/
+vendor/
+.venv/
+__pycache__/
+
+# Build
+dist/
+build/
+out/
+*.class
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Testes / cobertura
+coverage/
+.pytest_cache/
