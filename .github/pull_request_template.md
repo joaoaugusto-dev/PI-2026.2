@@ -1,26 +1,46 @@
-## Descrição
+## 📌 Descrição
 
-<!-- Resuma o que este PR faz e por quê. -->
+<!-- Resuma de forma clara o que este PR faz e a motivação técnica/negócio. -->
 
-## Tipo de mudança
+## 🎯 Tipo de Mudança
 
-- [ ] Nova funcionalidade
-- [ ] Correção de bug
-- [ ] Refatoração
-- [ ] Documentação
-- [ ] Outro (descreva):
+- [ ] `feat`: Nova funcionalidade
+- [ ] `fix`: Correção de bug / problema
+- [ ] `refactor`: Refatoração sem alteração de comportamento
+- [ ] `docs`: Documentação / markdown
+- [ ] `chore`: Configurações, dependências, infraestrutura
+- [ ] `test`: Testes automatizados
 
-## Como testar
+## 🏢 Área / Módulo Afetado
 
-<!-- Passos para validar as mudanças localmente. -->
+- [ ] Back-end (`/api`)
+- [ ] Front-end (`/web`)
+- [ ] Infraestrutura / Cloud (`AWS / Supabase`)
+- [ ] Documentação / Banco de Dados (`/docs`)
 
-## Checklist
+## 🧪 Como Testar e Validar
 
-- [ ] Testei localmente e funciona como esperado
-- [ ] Segui as convenções de código e branch do [CONTRIBUTING.md](../CONTRIBUTING.md)
-- [ ] Atualizei documentação relevante, se necessário
-- [ ] Não deixei arquivos temporários, segredos ou dados sensíveis no commit
+<!-- Passos detalhados para reproduzir/testar a alteração localmente. -->
+1. 
+2. 
+3. 
 
-## Issues relacionadas
+## 📸 Evidências (Screenshots / Insomnia / Swagger / Logs)
 
+<!-- Anexe prints de tela para front-end (responsivo) ou capturas de retorno para back-end. -->
+
+## ✅ Definition of Done (DoD)
+
+Marque os itens validados antes de solicitar a aprovação:
+
+- [ ] **Revisão:** Código revisado por pelo menos 1 integrante da equipe (PR aprovado).
+- [ ] **Limpeza & Segurança:** Sem `console.log`, variáveis não utilizadas, credenciais ou segredos expostos.
+- [ ] **Responsividade (Front-end):** Tela testada e validada em **360px**, **768px** e **1280px**.
+- [ ] **Testes de API (Back-end):** Rota testada no Insomnia/Swagger cobrindo cenário de **sucesso** e de **erro**.
+- [ ] **Documentação:** Documentação afetada atualizada (`/docs/arquitetura.md`, README, dicionário de dados ou diagramas).
+- [ ] **Rastreabilidade:** Título do PR e commits seguem Conventional Commits e referenciam a Issue.
+
+## 🔗 Issues Relacionadas
+
+<!-- Vincule a issue correspondente. Ex: Closes #12 ou Ref #12 -->
 Closes #
