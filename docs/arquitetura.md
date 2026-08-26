@@ -15,7 +15,7 @@ O sistema é organizado em três camadas principais:
 [API Node.js]
     |
     v
-[PostgreSQL / Supabase]
+[PostgreSQL]
 ```
 
 Integrações externas:
@@ -31,8 +31,7 @@ AWS CloudWatch ---> monitoramento
 - O front-end não acessa diretamente o banco.
 - A API é responsável por autenticação, validação e regras de negócio.
 - Segredos ficam em `.env`.
-- A `service_role key` fica somente no back-end.
-- RLS deve permanecer ativo nas tabelas.
+- Credenciais e connection strings de banco ficam somente no back-end.
 - Autoria das operações críticas é obtida pelo JWT, e não pelo corpo da requisição.
 - O prefixo atual da API é `/v1`.
 
@@ -48,32 +47,11 @@ Modo quiosque sem senha. O usuário informa matrícula ou utiliza o crachá. A A
 
 ## Banco
 
-A arquitetura mantém duas possibilidades:
-
-1. PostgreSQL próprio hospedado em infraestrutura da Soufer.
-2. Supabase como alternativa rápida para o projeto.
-
-A decisão depende da autorização do TI da Soufer.
+O banco de dados adotado é o **PostgreSQL** (hospedado na nuvem via AWS RDS ou em infraestrutura dedicada). Todas as tabelas, tipos ENUM, triggers, constraints, views e índices parciais são mantidos nativamente via scripts SQL/migrations.
 
 ## Infraestrutura prevista
 
 - API: AWS EC2 com Node 20, PM2 e Nginx.
 - Front-end: AWS S3 + CloudFront.
 - Monitoramento: CloudWatch.
-- Banco: Supabase/PostgreSQL.
-
-## CI/CD e revisão automatizada
-
-O repositório usa a GitHub Action oficial `anthropics/claude-code-action` em dois
-workflows (`.github/workflows/`):
-
-- **`claude.yml`** — assistente sob demanda. Dispara quando alguém menciona
-  `@claude` em um comentário de issue, comentário de review, review de PR ou no
-  corpo/título de uma issue. Usa o token em `secrets.CLAUDE_CODE_OAUTH_TOKEN`.
-- **`claude-code-review.yml`** — revisão automática. Dispara em todo PR aberto,
-  atualizado ou reaberto e roda o plugin `code-review` do
-  `claude-code-plugins`, postando comentários inline no PR.
-
-Não substitui a aprovação humana exigida na Seção 5/6 do `CLAUDE.md`
-(pelo menos um aprovador) — é uma checagem automática adicional antes da
-revisão humana.
+- Banco: PostgreSQL (AWS RDS).
