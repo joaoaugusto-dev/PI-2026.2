@@ -1,8 +1,8 @@
 # Regras do Projeto Integrador (PI)
 
 Antes de criar, planejar ou implementar qualquer coisa neste repositório, consulte
-o documento "Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf" (raiz do
-projeto). Ele contém as regras/orientações oficiais do PI e têm prioridade sobre
+o documento "Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf" (em
+`/docs`). Ele contém as regras/orientações oficiais do PI e têm prioridade sobre
 qualquer suposição própria sobre estrutura, tecnologias, entregáveis ou formato do
 trabalho.
 
