@@ -12,3 +12,43 @@
 ## Contribuindo
 
 Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md), que define as convenções de branches, commits e o fluxo de revisão do projeto.
+
+# Documentação
+
+Índice da documentação técnica e de projeto do SOUFER Tools.
+
+## Equipe
+
+- [Equipe e responsabilidades](docs/equipe.md)
+
+## Arquitetura
+
+- [Arquitetura geral](docs/arquitetura.md)
+
+## Banco
+
+- [Modelagem e regras do banco](docs/banco.md)
+
+## API
+
+- [Endpoints e convenções](docs/api.md)
+
+## Front-end
+
+- [Rotas, componentes e interface](docs/front.md)
+
+## Dados
+
+- [Integração, importação e qualidade](docs/dados.md)
+
+## Infraestrutura
+
+- [Infraestrutura, deploy e custos](docs/infraestrutura.md)
+
+## Processos
+
+- [Regras de negócio e fluxos](docs/processos.md)
+
+## Projeto
+
+- [Milestones, padrões e checklist](docs/projeto.md)
