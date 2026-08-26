@@ -12,7 +12,6 @@ exige, sinalize o conflito antes de prosseguir.
 
 # SOUFER Tools — Guia de Execução do Projeto
 
-> Salve este arquivo como `CLAUDE.md`. Na convenção do Claude Code ele costuma ficar
 
 **Baseado no Plano de Projeto v3.** Alterações da v3 em relação à v2:
 - **Arquitetura de banco em aberto:** Supabase é mais recurso do que o necessário
