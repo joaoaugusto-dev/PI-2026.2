@@ -61,3 +61,19 @@ A decisão depende da autorização do TI da Soufer.
 - Front-end: AWS S3 + CloudFront.
 - Monitoramento: CloudWatch.
 - Banco: Supabase/PostgreSQL.
+
+## CI/CD e revisão automatizada
+
+O repositório usa a GitHub Action oficial `anthropics/claude-code-action` em dois
+workflows (`.github/workflows/`):
+
+- **`claude.yml`** — assistente sob demanda. Dispara quando alguém menciona
+  `@claude` em um comentário de issue, comentário de review, review de PR ou no
+  corpo/título de uma issue. Usa o token em `secrets.CLAUDE_CODE_OAUTH_TOKEN`.
+- **`claude-code-review.yml`** — revisão automática. Dispara em todo PR aberto,
+  atualizado ou reaberto e roda o plugin `code-review` do
+  `claude-code-plugins`, postando comentários inline no PR.
+
+Não substitui a aprovação humana exigida na Seção 5/6 do `CLAUDE.md`
+(pelo menos um aprovador) — é uma checagem automática adicional antes da
+revisão humana.
