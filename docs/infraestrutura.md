@@ -4,7 +4,7 @@
 
 | Componente | Serviço | Objetivo |
 |---|---|---|
-| Banco | Supabase/PostgreSQL | Persistência |
+| Banco | PostgreSQL (AWS RDS) | Persistência relacional |
 | API | AWS EC2 t3.micro | Execução do Node.js |
 | Front | AWS S3 + CloudFront | Hospedagem estática/CDN |
 | Monitoramento | CloudWatch | Logs, métricas e alarmes |
@@ -31,14 +31,12 @@ Na etapa final:
 - ambiente de desenvolvimento;
 - ambiente de produção.
 
-Para Supabase, estão previstos:
+Para o PostgreSQL, os bancos estarão separados por ambiente:
 
 ```text
-soufer-dev
-soufer-prod
+soufer_dev
+soufer_prod
 ```
-
-Caso seja adotado PostgreSQL próprio, os bancos equivalentes deverão ser separados conforme a estratégia definida.
 
 ## Plano B
 

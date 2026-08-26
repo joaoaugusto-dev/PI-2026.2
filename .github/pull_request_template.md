@@ -15,7 +15,7 @@
 
 - [ ] Back-end (`/api`)
 - [ ] Front-end (`/web`)
-- [ ] Infraestrutura / Cloud (`AWS / Supabase`)
+- [ ] Infraestrutura / Cloud (`AWS / PostgreSQL / Nuvem`)
 - [ ] Documentação / Banco de Dados (`/docs`)
 
 ## 🧪 Como Testar e Validar
