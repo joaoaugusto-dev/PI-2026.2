@@ -9,6 +9,7 @@ dist/
 build/
 out/
 *.class
+*.zip
 
 # Variáveis de ambiente e segredos
 .env
