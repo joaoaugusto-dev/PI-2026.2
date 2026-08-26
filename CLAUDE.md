@@ -1315,7 +1315,7 @@ testes de ponta a ponta.
   3. Ação de inativar (não apagar).
 - **Pronto quando:** criar, editar e inativar um colaborador funciona pela
   tela.
-- **Se sobrar tempo:** nada — é uma boa hora de ajudar o Guilherme na FE-22 se
+- **Se sobrar tempo:** nada — é uma boa hora de ajudar o João na FE-22 se
   este CRUD terminar rápido.
 
 #### `[ ]` FE-24 — CRUDs de setores, categorias e atividades (Kauan)
