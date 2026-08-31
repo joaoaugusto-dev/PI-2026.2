@@ -82,4 +82,4 @@ Antes de qualquer PR ser aprovado e mergeado, todos os itens abaixo devem ser ga
 3. [ ] **Responsividade (Front):** Telas validadas rigorosamente em **360px**, **768px** e **1280px**.
 4. [ ] **Qualidade de API (Back):** Rotas testadas no Insomnia/Swagger (cenários de sucesso e erro).
 5. [ ] **Documentação Atualizada:** `/docs/arquitetura.md`, README, dicionário de dados ou diagramas atualizados.
-6. [ ] **Rastreabilidade:** Commits e PR referenciam o ID da issue correspondente.
+6. [ ] **Rastreabilidade:** Commits e PR referenciam o ID da issue correspondente. Se o PR conclui a issue, a descrição do PR deve incluir `Closes #<número>` (ou `Fixes #<número>`) para que o GitHub feche a issue automaticamente no merge.
