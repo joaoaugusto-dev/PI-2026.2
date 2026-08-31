@@ -204,7 +204,7 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
 **Foco:** recuperar a entrega de 18/08 (já vencida) e fechar a de 25/08 no prazo.
 **Buffer:** nenhum — sprint de recuperação, sem folga.
 
-#### `[ ]` DB-01 — Levantamento de requisitos com o almoxarifado (João)
+#### `[x]` DB-01 — Levantamento de requisitos com o almoxarifado (João)
 - **Depende de:** nada, pode começar agora.
 - **Objetivo:** entender o fluxo real de retirada e devolução hoje na Soufer,
   mesmo que informal, para validar os campos do banco antes de programar.
@@ -220,6 +220,11 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
   confirmada ou corrigida.
 - **Se sobrar tempo:** já tirar fotos de ferramentas reais para usar como exemplo
   visual no Figma mais adiante.
+- **Concluído:** relatório da visita técnica salvo em `/docs/requisitos.pdf`
+  (referenciado no README). **Achado crítico que muda o escopo:** o
+  empréstimo de ferramentas acontece na **manutenção**, não no almoxarifado
+  geral (que só trabalha com consumíveis, sem devolução) — ver conflitos
+  sinalizados abaixo.
 
 #### `[ ]` DB-02 — Modelo conceitual e lógico (DER) (Henrique)
 - **Depende de:** rascunho pode começar em paralelo com DB-01, ajustar depois.
