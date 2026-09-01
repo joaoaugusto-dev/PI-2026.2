@@ -14,7 +14,7 @@ escrito**.
 
 ## Stack (definida na Seção 4 do guia raiz)
 
-- Vite + React 18 + React Router 6
+- Vite + React 19 + React Router 7
 - TanStack Query (dado remoto) + Axios (cliente HTTP)
 - React Hook Form + Zod (formulários e validação)
 - Tailwind + shadcn/ui
@@ -81,6 +81,25 @@ não filhas do layout autenticado.
   `@hookform/resolvers` diretamente, sem o wrapper. Adicionar de volta só se
   precisar dos primitivos de acessibilidade (`FormField`/`FormMessage`) que
   ele oferecia.
+
+- **Design system (FE-01) vive em `src/index.css`, não no Figma** — a equipe
+  fechou a paleta/tipografia/movimento direto em código (tokens CSS em
+  `:root`/`.dark` dentro de `@theme inline`), sem página separada no Figma.
+  Paleta: `--brand-red` #E30613 (ação primária/marca), `--brand-red-dark`
+  #B5121B (hover/pressed), preto #1D1D1B (texto), `--border`/`--input`
+  #D9D9D9. Cores de status (`--status-disponivel` verde #1B8A4B,
+  `--status-em-uso` cinza #575756, `--status-indisponivel` vermelho #E30613,
+  `--status-atraso` âmbar #C77700) são exclusivas de badge/KPI/indicador —
+  nunca usar verde/âmbar em botão ou área de marca. Espaçamento reaproveita a
+  escala padrão do Tailwind (já em múltiplos de 4px, sem token custom).
+  Tipografia usa Geist Variable (`--font-sans`) e uma stack mono nativa
+  (`--font-mono`, sem dependência nova) para código de patrimônio. Durações de
+  movimento (`--motion-state` 140ms, `--motion-screen` 240ms,
+  `--motion-stagger` 20ms, `--motion-reduced` 80ms) ficam como tokens prontos
+  para a FE-08/FE-06 consumirem.
+- **Sidebar/login sempre no visual negativo** (fundo escuro, logo branco) é
+  regra de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
+  `index.css`.
 
 ## Responsividade
 
