@@ -1,0 +1,24 @@
+# ============================================================================
+# Nixpacks Configuration - SOUFER Tools (Monorepo API + Web)
+# Compatível com Dokploy, Coolify, Railway e Render
+# ============================================================================
+
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+  "if [ -f api/package.json ]; then cd api && npm install; cd ..; fi",
+  "if [ -f web/package.json ]; then cd web && npm install; cd ..; fi"
+]
+
+[phases.build]
+cmds = [
+  "if [ -f api/package.json ]; then cd api && npm run build; cd ..; fi",
+  "if [ -f web/package.json ]; then cd web && npm run build; cd ..; fi"
+]
+
+[start]
+cmd = "cd api && npm start"
