@@ -126,7 +126,7 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
 - **Banco:** PostgreSQL (instância dedicada / AWS RDS), bancos `soufer_dev` e `soufer_prod` conectados via pool `pg` (`node-postgres`) com migrations em `/api/db/migrations/`.
 - **API:** Node 20 + Express (4/5) + `pg` (Connection Pooling) + `bcryptjs` + `jsonwebtoken` + Zod + Helmet + `cors` +
   `express-rate-limit` + Pino + Swagger UI (`swagger-ui-express` + `swagger-jsdoc`). Testes com Vitest + Supertest.
-- **Front:** Vite + React 18 + React Router 6 + TanStack Query + Axios + React
+- **Front:** Vite + React 19 + React Router 7 + TanStack Query + Axios + React
   Hook Form + Zod + Tailwind + shadcn/ui + `recharts` + `react-barcode`.
 - **Infra:** AWS EC2 (API, via PM2 + Nginx) + S3/CloudFront (front) + CloudWatch.
   Plano B: Render ou Railway.
@@ -779,7 +779,7 @@ ajustar responsividade com calma.
 - **Objetivo:** esqueleto do front rodando localmente, já com as bibliotecas
   definidas na Seção 4.
 - **Passo a passo:**
-  1. Criar o projeto com Vite + React 18 em `/web`.
+  1. Criar o projeto com Vite + React 19 em `/web`.
   2. Instalar e configurar Tailwind + shadcn/ui + React Router + TanStack
      Query + Axios.
   3. Aplicar os tokens de cor e tipografia definidos na FE-01.

@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { BellIcon } from 'lucide-react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +41,8 @@ const nav = [
 ]
 
 export function AppLayout() {
+  const location = useLocation()
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -52,21 +55,22 @@ export function AppLayout() {
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map((item) => (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.to}
-                          end={item.to === '/'}
-                          className={({ isActive }) =>
-                            isActive ? 'font-medium text-primary' : undefined
-                          }
-                        >
-                          {item.label}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {group.items.map((item) => {
+                    const isActive =
+                      item.to === '/'
+                        ? location.pathname === '/'
+                        : location.pathname.startsWith(item.to)
+
+                    return (
+                      <SidebarMenuItem key={item.to}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <NavLink to={item.to} end={item.to === '/'}>
+                            {item.label}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -76,6 +80,7 @@ export function AppLayout() {
       <SidebarInset>
         <header className="flex h-14 items-center gap-2 border-b px-4">
           <SidebarTrigger />
+          <BellIcon className="ml-auto size-4 text-muted-foreground" />
         </header>
         <Outlet />
       </SidebarInset>
