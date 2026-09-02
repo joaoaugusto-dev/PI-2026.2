@@ -779,7 +779,7 @@ Figma e virar código de verdade.
 **Buffer:** trabalho pesado até quinta 17/09; sexta e fim de semana livres para
 ajustar responsividade com calma.
 
-#### `[ ]` FE-05 — Setup do projeto React (João)
+#### `[x]` FE-05 — Setup do projeto React (João)
 - **Depende de:** DOC-01.
 - **Objetivo:** esqueleto do front rodando localmente, já com as bibliotecas
   definidas na Seção 4.
@@ -794,7 +794,7 @@ ajustar responsividade com calma.
 - **Se sobrar tempo:** configurar o Storybook, se o time achar que vale a pena
   documentar componente por componente (opcional, não é exigido pelo PI).
 
-#### `[ ]` FE-06 — AppLayout e responsividade (João)
+#### `[x]` FE-06 — AppLayout e responsividade (João)
 - **Depende de:** FE-05.
 - **Objetivo:** o esqueleto visual que toda página vai usar: sidebar, header e
   comportamento mobile.
@@ -863,7 +863,7 @@ ajustar responsividade com calma.
 - **Se sobrar tempo:** adicionar um retorno visual (ícone de check) quando o
   reconhecimento for bem-sucedido, antes mesmo de avançar de tela.
 
-#### `[ ]` FE-10 — Esqueleto navegável de todas as páginas (João)
+#### `[~]` FE-10 — Esqueleto navegável de todas as páginas (João)
 - **Depende de:** FE-06, FE-07.
 - **Objetivo:** todas as rotas do sistema existem e navegam entre si, mesmo que
   ainda sem dado real em algumas — é o que o Marcelo vai avaliar no dia 22/09.

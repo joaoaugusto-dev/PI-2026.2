@@ -1,3 +1,4 @@
+import { BellIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Sidebar,
@@ -79,6 +80,7 @@ export function AppLayout() {
       <SidebarInset>
         <header className="flex h-14 items-center gap-2 border-b px-4">
           <SidebarTrigger />
+          <BellIcon className="ml-auto size-4 text-muted-foreground" />
         </header>
         <Outlet />
       </SidebarInset>
