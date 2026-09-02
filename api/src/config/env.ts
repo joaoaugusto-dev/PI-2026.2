@@ -24,14 +24,31 @@ if (envPath) {
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProd = nodeEnv === 'production';
 
+const INSECURE_JWT_SECRETS = [
+  'soufer_tools_fallback_secret',
+  'soufer_tools_super_secret_jwt_key_development_2026',
+  'secret',
+  'jwt_secret',
+  'changeme',
+];
+
 const jwtSecret = process.env.JWT_SECRET;
-if (isProd && (!jwtSecret || jwtSecret === 'soufer_tools_fallback_secret')) {
-  throw new Error('FATAL: JWT_SECRET precisa ser obrigatoriamente definido com um valor seguro em ambiente de produção.');
+if (isProd) {
+  if (!jwtSecret || INSECURE_JWT_SECRETS.includes(jwtSecret) || jwtSecret.length < 32) {
+    throw new Error(
+      'FATAL: JWT_SECRET precisa ser obrigatoriamente definido em produção com uma chave segura de no mínimo 32 caracteres (não utilize o segredo de exemplo do .env.example).'
+    );
+  }
 }
 
+const INSECURE_DB_PASSWORDS = ['postgres', 'root', '123456', 'password', 'admin'];
 const dbPassword = process.env.DB_PASSWORD;
-if (isProd && !dbPassword) {
-  throw new Error('FATAL: DB_PASSWORD precisa ser obrigatoriamente definido em ambiente de produção.');
+if (isProd) {
+  if (!dbPassword || INSECURE_DB_PASSWORDS.includes(dbPassword.toLowerCase())) {
+    throw new Error(
+      'FATAL: DB_PASSWORD precisa ser obrigatoriamente definido com uma senha segura em produção (não utilize senhas padrão como "postgres").'
+    );
+  }
 }
 
 const corsOrigin = process.env.CORS_ORIGIN;
