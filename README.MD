@@ -21,6 +21,10 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 
 - [Equipe e responsabilidades](docs/equipe.md)
 
+## Requisitos
+
+- [Relatório da visita técnica ao almoxarifado/manutenção](docs/requisitos.pdf)
+
 ## Arquitetura
 
 - [Arquitetura geral](docs/arquitetura.md)
