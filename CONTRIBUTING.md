@@ -29,7 +29,7 @@ Formato: `<tipo>/<area>-<id>-<slug-descritivo>`
 | `feat/` | Nova funcionalidade ou tela | `feat/api-07-crud-ferramentas`, `feat/web-02-dashboard` |
 | `fix/` | Correção de bug | `fix/api-05-validacao-jwt`, `fix/web-01-alinhamento-mobile` |
 | `docs/` | Alteração puramente em documentação | `docs/doc-01-setup-repo`, `docs/db-02-der` |
-| `chore/` | Configurações, dependências, scripts | `chore/infra-01-setup-supabase` |
+| `chore/` | Configurações, dependências, scripts | `chore/db-04-setup-postgres` |
 | `refactor/` | Refatoração de código sem mudar regra | `refactor/api-auth-middleware` |
 
 ---

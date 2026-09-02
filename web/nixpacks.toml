@@ -1,0 +1,18 @@
+# ============================================================================
+# Nixpacks Configuration - SOUFER Tools Front-end (Web)
+# Compatível com Dokploy, Railway, Render, Coolify e CLI Nixpacks
+# ============================================================================
+
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npx serve -s dist -l 80"

@@ -13,13 +13,14 @@ exige, sinalize o conflito antes de prosseguir.
 # SOUFER Tools — Guia de Execução do Projeto
 
 
-**Baseado no Plano de Projeto v3.** Alterações da v3 em relação à v2:
-- **Arquitetura de banco em aberto:** Supabase é mais recurso do que o necessário
-  para este sistema. A rota "certa" seria PostgreSQL próprio no servidor da Soufer,
-  com auth própria — mas só é viável se o TI da Soufer liberar espaço. Perguntar
-  isso na validação de requisitos (issue DB-01, Seção 8). Enquanto não houver
-  resposta, seguir com Supabase (já modelado no DDL). DDL e endpoints valem para
-  as duas rotas. Decisão final vai para ata.
+**Baseado no Plano de Projeto v3 (com decisão arquitetural de banco e autenticação):**
+- **Decisão arquitetural de banco e autenticação:** A equipe definiu
+  a rota "PostgreSQL próprio" (instância relacional dedicada/gerenciada, conectada via
+  pool `pg` nativo com migrations versionadas) e camada de autenticação própria
+  (AuthService com `bcryptjs` e `jsonwebtoken`), descartando o uso do Supabase e do
+  Supabase Auth. Esta decisão garante independência total de BaaS, conformidade com os
+  requisitos de infraestrutura (AWS RDS / EC2 ou servidor próprio Soufer) e controle
+  fino sobre tokens e autorizações (almoxarife de 8h e quiosque de 15min).
 - **Leitor de código de barras físico confirmado:** o campo de identificação
   (ferramenta e colaborador) opera por leitura via scanner físico, não digitação
   manual — foco automático + tratamento de Enter (issue FE-09, Seção 8). João leva
@@ -121,9 +122,9 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
 ## 4. Arquitetura e stack
 
 - **Monorepo:** `soufer-tools/` com `/api` e `/web`.
-- **Banco:** Supabase (PostgreSQL), projetos `soufer-dev` e `soufer-prod`.
-- **API:** Node 20 + Express 5 + `@supabase/supabase-js` + Zod + JWT + Helmet +
-  `express-rate-limit` + Pino + Swagger. Testes com Vitest + Supertest.
+- **Banco:** PostgreSQL (instância dedicada / AWS RDS), bancos `soufer_dev` e `soufer_prod` conectados via pool `pg` (`node-postgres`) com migrations em `/api/db/migrations/`.
+- **API:** Node 20 + Express (4/5) + `pg` (Connection Pooling) + `bcryptjs` + `jsonwebtoken` + Zod + Helmet + `cors` +
+  `express-rate-limit` + Pino + Swagger UI (`swagger-ui-express` + `swagger-jsdoc`). Testes com Vitest + Supertest.
 - **Front:** Vite + React 18 + React Router 6 + TanStack Query + Axios + React
   Hook Form + Zod + Tailwind + shadcn/ui + `recharts` + `react-barcode`.
 - **Infra:** AWS EC2 (API, via PM2 + Nginx) + S3/CloudFront (front) + CloudWatch.
@@ -275,7 +276,7 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
 - **Objetivo:** tabela pedida pelo Marudi — para cada peça da solução (banco,
   API, front, monitoramento), o modelo de serviço de nuvem e por quê.
 - **Passo a passo:**
-  1. Confirmar a classificação: Supabase = PaaS/DBaaS; EC2 = IaaS;
+  1. Confirmar a classificação: PostgreSQL (AWS RDS) = PaaS/DBaaS; EC2 = IaaS;
      S3 + CloudFront = PaaS/estático; CloudWatch = SaaS.
   2. Escrever 2 a 3 linhas de justificativa para cada escolha.
   3. Salvar em `/docs/infra-plano.md`.
@@ -288,9 +289,8 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
 - **Objetivo:** planilha comparando o custo mensal estimado do mesmo desenho nos
   três provedores.
 - **Passo a passo:**
-  1. Simular na calculadora da AWS: EC2 t3.micro + S3 + CloudFront (o banco fica
-     de fora por já estar no Supabase, mas simular o equivalente RDS também, para
-     efeito de comparação pedida pelo documento).
+  1. Simular na calculadora da AWS: EC2 t3.micro + RDS PostgreSQL + S3 + CloudFront
+     para estimativa completa da infraestrutura.
   2. Repetir a simulação equivalente no Azure.
   3. Repetir no Google Cloud.
   4. Montar `/docs/custos-nuvem.xlsx` com os três valores e prints de cada
@@ -382,43 +382,39 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
 
 ### Sprint 1 (qua 26/08 a ter 01/09) — Entrega oficial 01/09 (Max): banco criado
 
-**Foco:** banco de dados completo no Supabase; setup inicial da API; início do
+**Foco:** banco de dados completo no PostgreSQL (migrations, triggers, views, seed); setup inicial da API com pool `pg` e auth própria; início do
 design system do front (não depende do back, corre em paralelo).
 **Buffer:** trabalho pesado até quinta 27/08; sexta 28/08 e o fim de semana ficam
 livres para revisar o schema com calma antes da entrega de terça.
 
-#### `[ ]` DB-04 — Criar projetos Supabase dev e prod (Henrique)
+#### `[ ]` DB-04 — Configurar bancos PostgreSQL dev e prod e variáveis de ambiente (Henrique / Guilherme)
 - **Depende de:** nada.
-- **Objetivo:** dois ambientes isolados, um para testar sem medo e outro que vai
-  virar produção.
+- **Objetivo:** dois bancos isolados (`soufer_dev` e `soufer_prod`) com conexão via pool `pg`, e configuração de `.env.example`.
 - **Passo a passo:**
-  1. Criar o projeto `soufer-dev` no Supabase.
-  2. Criar o projeto `soufer-prod` no Supabase.
-  3. Guardar as chaves (`anon` e `service_role`) de cada um.
-  4. Criar `/api/.env.example` com as variáveis de ambiente esperadas (sem
-     valores reais).
-- **Pronto quando:** os dois projetos existem e as chaves estão documentadas (não
-  commitadas em texto puro, só em `.env.example` com placeholders).
-- **Se sobrar tempo:** já ativar o `pg_cron` e as extensões `unaccent` e
-  `pg_trgm` nos dois projetos, que vão ser usadas mais adiante.
+  1. Provisionar/criar o banco `soufer_dev` localmente (via PostgreSQL nativo ou Docker).
+  2. Estruturar a configuração do banco de produção (`soufer_prod` no AWS RDS / PostgreSQL).
+  3. Criar `/api/src/config/database.ts` com gerenciamento de pool de conexões (`pg.Pool`).
+  4. Criar `/api/.env.example` com as variáveis de conexão (host, port, user, password, database, ssl).
+- **Pronto quando:** o pool de conexões conecta com sucesso ao banco `soufer_dev` e `.env.example` está documentado.
+- **Se sobrar tempo:** já validar a ativação das extensões `unaccent` e `pg_trgm` no banco.
 
-#### `[ ]` DB-05 — Executar o DDL completo (Henrique)
+#### `[ ]` DB-05 — Executar o DDL completo via migration (Henrique)
 - **Depende de:** DB-02, DB-03, DB-04.
 - **Objetivo:** todas as 11 tabelas, os 7 enums e os índices criados no
-  `soufer-dev`, batendo com o dicionário de dados.
+  `soufer_dev`, batendo com o dicionário de dados.
 - **Passo a passo:**
   1. Copiar o SQL definido em `/docs/arquitetura.md` (setores, categorias,
      atividades, usuarios, colaboradores, ferramentas, emprestimos, ocorrencias,
      notificacoes, feriados, auditoria).
   2. Rodar como uma migration versionada em `/api/db/migrations/0001_init.sql`
-     (não rodar direto no editor do Supabase sem salvar o arquivo).
+     usando o runner `npm run db:migrate`.
   3. Conferir que `codigo_patrimonio` é gerado corretamente (`SF000001` ao
      inserir a primeira ferramenta de teste).
   4. Conferir que o índice único parcial do empréstimo aberto existe
      (`uq_emprestimo_aberto`).
-- **Pronto quando:** todas as tabelas existem no `soufer-dev` e a migration está
+- **Pronto quando:** todas as tabelas existem no `soufer_dev` e a migration está
   versionada no repositório.
-- **Se sobrar tempo:** rodar o mesmo script no `soufer-prod` desde já, mesmo sem
+- **Se sobrar tempo:** rodar o mesmo script no `soufer_prod` desde já, mesmo sem
   dado nenhum — evita divergência entre os dois ambientes lá na frente.
 
 #### `[ ]` DB-06 — Triggers de negócio (Henrique)
@@ -434,7 +430,7 @@ livres para revisar o schema com calma antes da entrega de terça.
   3. Criar `fn_abre_ocorrencia` + trigger — ao devolver com avaria ou perda,
      insere automaticamente em `ocorrencias`.
   4. Testar manualmente cada trigger com um `insert`/`update` de exemplo direto
-     no SQL Editor do Supabase, conferindo o resultado esperado.
+     no cliente PostgreSQL (psql, DBeaver ou script de teste), conferindo o resultado esperado.
 - **Pronto quando:** os três cenários de teste manual (retirada normal, retirada
   de ferramenta já emprestada, devolução com avaria) se comportam como esperado.
 - **Se sobrar tempo:** escrever esses três testes manuais como um arquivo
@@ -468,8 +464,8 @@ livres para revisar o schema com calma antes da entrega de terça.
      colaboradores e 50 ferramentas variadas.
   2. Incluir alguns empréstimos já abertos e alguns já devolvidos (com e sem
      ocorrência), para o dashboard não nascer vazio.
-  3. Rodar o seed no `soufer-dev`.
-- **Pronto quando:** o `soufer-dev` tem dado realista o bastante para popular
+  3. Rodar o seed no `soufer_dev` (`npm run db:seed`).
+- **Pronto quando:** o `soufer_dev` tem dado realista o bastante para popular
   todas as telas futuras.
 - **Se sobrar tempo:** gerar os dados com nomes e situações plausíveis (não
   "Ferramenta 1", "Ferramenta 2") — ajuda a pegar problema de layout com nome
@@ -497,19 +493,19 @@ livres para revisar o schema com calma antes da entrega de terça.
 - **Depende de:** DOC-01.
 - **Objetivo:** esqueleto da API rodando localmente.
 - **Passo a passo:**
-  1. Iniciar o projeto Node 20 em `/api` com Express 5.
+  1. Iniciar o projeto Node 20 em `/api` com Express (4/5) e TypeScript.
   2. Configurar ESLint, Prettier e Pino (logs estruturados).
   3. Criar a estrutura de pastas: `config`, `routes`, `controllers`, `services`,
-     `repositories`, `middlewares`, `validators`, `utils`.
-  4. Conectar ao `soufer-dev` usando `@supabase/supabase-js` e a
-     `service_role key` guardada em `.env`.
+     `middlewares`, `validators`, `utils`.
+  4. Conectar ao banco `soufer_dev` usando pool `pg` (`node-postgres`) e as
+     credenciais guardadas em `.env`.
 - **Pronto quando:** `npm run dev` sobe a API sem erro.
-- **Se sobrar tempo:** configurar hot-reload com `nodemon` se ainda não estiver.
+- **Se sobrar tempo:** configurar hot-reload com `tsx watch` se ainda não estiver.
 
 #### `[ ]` API-02 — Healthcheck e conexão com o banco (Henrique)
 - **Depende de:** API-01, DB-05.
 - **Objetivo:** rota `/v1/health` respondendo e confirmando que a API conversa
-  com o Supabase.
+  com o PostgreSQL.
 - **Passo a passo:**
   1. Criar `GET /v1/health` retornando `{ status: "ok", db: "ok" }` após fazer
      uma consulta simples no banco (ex.: contar setores).
@@ -561,7 +557,7 @@ para ensaiar a navegação do protótipo com calma antes de mostrar pro Marcelo.
 - **Objetivo:** todo endpoint protegido consegue saber quem está logado, sem
   depender do que o front manda no corpo da requisição.
 - **Passo a passo:**
-  1. Criar o middleware `auth` que valida o JWT emitido pelo Supabase Auth e
+  1. Criar o middleware `auth` que valida o JWT emitido pelo serviço de autenticação próprio (`AuthService` com `jsonwebtoken` e `bcryptjs`) e
      injeta `req.usuario` (id, nome, papel).
   2. Criar o middleware `autorizar(...papeis)` que bloqueia com 403 se o papel
      do usuário não estiver na lista permitida.
@@ -816,17 +812,14 @@ ajustar responsividade com calma.
 - **Passo a passo:**
   1. Criar a tela `/login` com formulário de e-mail e senha (React Hook Form +
      Zod).
-  2. Chamar a autenticação do Supabase Auth pelo cliente do front ou por um
-     endpoint da própria API (decidir com o Henrique qual caminho, e documentar
-     em `/docs/arquitetura.md`).
+  2. Chamar o endpoint de autenticação próprio da API (`POST /v1/auth/login`), recebendo o JWT e os dados do usuário.
   3. Guardar o token em memória (nunca em `localStorage` puro sem cuidado) e
      criar um contexto de sessão.
   4. Criar o componente `RotaProtegida` que redireciona para `/login` se não
      houver sessão.
 - **Pronto quando:** login real contra a API funciona e uma rota protegida
   bloqueia usuário deslogado.
-- **Se sobrar tempo:** adicionar "esqueci minha senha" (fluxo padrão do
-  Supabase Auth) — não é exigido, mas é rápido de plugar.
+- **Se sobrar tempo:** adicionar fluxo de redefinição de senha na API própria — não é exigido para o MVP.
 
 #### `[ ]` FE-08 — Componentes base reutilizáveis (Kauan)
 - **Depende de:** FE-05.
@@ -928,7 +921,7 @@ para o fluxo básico e usa segunda 28/09 para lapidar antes da entrega de terça
   2. Plugar filtros de busca, status e categoria na `DataTable`.
   3. Criar a tela de detalhe (`/ferramentas/:id`) mostrando ficha e histórico.
   4. Tratar loading (skeleton) e vazio (usar o `EmptyState`).
-- **Pronto quando:** a lista reflete o dado real do `soufer-dev` e os filtros
+- **Pronto quando:** a lista reflete o dado real do `soufer_dev` e os filtros
   funcionam.
 - **Se sobrar tempo:** adicionar um `debounce` no campo de busca para não
   disparar uma requisição a cada tecla.
@@ -948,8 +941,7 @@ para o fluxo básico e usa segunda 28/09 para lapidar antes da entrega de terça
   5. Ao imprimir, chamar `PATCH /v1/ferramentas/:id/etiqueta-impressa`.
 - **Pronto quando:** cadastrar uma ferramenta gera e imprime a etiqueta de
   ponta a ponta.
-- **Se sobrar tempo:** adicionar upload de foto da ferramenta (usa o Supabase
-  Storage) — é enriquecimento, não bloqueia nada.
+- **Se sobrar tempo:** adicionar upload de foto da ferramenta (armazenamento de arquivos / S3) — é enriquecimento, não bloqueia nada.
 
 #### `[ ]` FE-13 — Modal de cadastro rápido de colaborador (João)
 - **Depende de:** API-09, FE-09.
@@ -1049,7 +1041,7 @@ costuma ter imprevisto de configuração, é bom ter esse colchão.
 - **Objetivo:** a API rodando de forma persistente na nuvem, não só localmente.
 - **Passo a passo:**
   1. Clonar o repositório na instância e configurar o `.env` de produção
-     apontando para o `soufer-prod`.
+     apontando para o `soufer_prod`.
   2. Rodar a API com PM2 em modo cluster.
   3. Configurar `pm2 startup` + `pm2 save` para sobreviver a um reboot.
   4. Configurar Nginx como reverse proxy da porta 80 para a porta da API.
@@ -1225,7 +1217,7 @@ auditoria.
      ocorrência sem ferramenta `indisponivel`, colaborador duplicado por
      matrícula, empréstimo com `previsao_devolucao` antes da `data_retirada`.
   2. Imprimir um relatório legível no terminal.
-- **Pronto quando:** rodar o script no `soufer-dev` (mesmo sem problema real)
+- **Pronto quando:** rodar o script no `soufer_dev` (mesmo sem problema real)
   retorna "tudo certo" e, ao forçar uma inconsistência manual, o script
   detecta.
 - **Se sobrar tempo:** rodar esse script como parte do pipeline de CI (se
@@ -1491,7 +1483,7 @@ foram fundidos aqui.
 - **Objetivo:** a versão que vai ser apresentada já estável, rodando com dado
   real (ou o mais realista possível).
 - **Passo a passo:**
-  1. Rodar a migration e o seed final no `soufer-prod`.
+  1. Rodar a migration e o seed final no `soufer_prod`.
   2. Fazer o deploy definitivo da API e do build do front.
   3. Rodar o roteiro de demonstração completo direto na URL pública.
 - **Pronto quando:** a URL pública sustenta o roteiro de demonstração sem
