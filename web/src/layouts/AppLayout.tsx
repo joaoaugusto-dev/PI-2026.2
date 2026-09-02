@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +40,8 @@ const nav = [
 ]
 
 export function AppLayout() {
+  const location = useLocation()
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -52,21 +54,22 @@ export function AppLayout() {
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map((item) => (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.to}
-                          end={item.to === '/'}
-                          className={({ isActive }) =>
-                            isActive ? 'font-medium text-primary' : undefined
-                          }
-                        >
-                          {item.label}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {group.items.map((item) => {
+                    const isActive =
+                      item.to === '/'
+                        ? location.pathname === '/'
+                        : location.pathname.startsWith(item.to)
+
+                    return (
+                      <SidebarMenuItem key={item.to}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <NavLink to={item.to} end={item.to === '/'}>
+                            {item.label}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
