@@ -14,18 +14,34 @@ const app = express();
 // Middlewares de Segurança e Parsing
 app.use(helmet());
 
-const allowedOrigins = env.corsOrigin === '*'
-  ? ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000']
+const defaultDevOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
+const configuredOrigins = env.corsOrigin === '*'
+  ? ['*']
   : env.corsOrigin.split(',').map((o) => o.trim());
+
+const isOriginAllowed = (origin?: string): boolean => {
+  // Permite requisições sem header Origin (Postman, Insomnia, curl direto, CLI, etc.)
+  if (!origin) return true;
+  if (configuredOrigins.includes('*')) return true;
+  if (configuredOrigins.includes(origin)) return true;
+  // Em desenvolvimento, garante que o Swagger UI (porta 3000) e o Vite (5173) funcionem sem bloqueio
+  if (env.nodeEnv !== 'production' && defaultDevOrigins.includes(origin)) return true;
+  return false;
+};
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permite requisições sem origin (como Postman, Insomnia, CLI) ou contidas na whitelist
-      if (!origin || allowedOrigins.includes(origin) || env.corsOrigin === '*') {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
-        callback(new Error(`Origem '${origin}' não autorizada pelas políticas de CORS.`));
+        callback(null, false);
       }
     },
     credentials: true,
