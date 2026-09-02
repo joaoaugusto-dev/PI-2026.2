@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
+import { StatusPage } from '@/pages/StatusPage'
 
 const placeholder = (title: string) => <PlaceholderPage title={title} />
 
@@ -10,6 +11,8 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: placeholder('Dashboard') },
+      { path: 'status', element: <StatusPage /> },
+      { path: 'health', element: <StatusPage /> },
       { path: 'ferramentas', element: placeholder('Ferramentas') },
       { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
