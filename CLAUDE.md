@@ -28,8 +28,8 @@ exige, sinalize o conflito antes de prosseguir.
   o Code128 impresso na etiqueta 50x25mm (issue DOC-08, Seção 8).
 
 Nota: a numeração de issues do PDF v3 (M0–M14, #01–#84) é anterior ao
-replanejamento em sprints — o cronograma da Seção 8 deste arquivo é a fonte de
-verdade atual para issues, responsáveis e datas.
+replanejamento em sprints — Issues e Milestones do GitHub (ver Seção 8) são a
+fonte de verdade atual para issues, responsáveis e datas.
 
 ---
 
@@ -41,13 +41,14 @@ Code — deve:
 1. **Ler a Seção 3 (regras de negócio) antes de tocar em qualquer código.** Essas
    regras não são negociáveis e várias delas já causaram retrabalho em versões
    anteriores do plano.
-2. **Verificar a Seção 8 (cronograma) para saber em que sprint estamos** e pegar só
-   as issues daquele sprint (ou anteriores, se ficaram pendentes).
+2. **Verificar as Milestones/Issues do GitHub (ver Seção 8) para saber em que
+   sprint estamos** e pegar só as issues daquele sprint (ou anteriores, se
+   ficaram pendentes).
 3. **Respeitar o campo "Depende de" de cada issue.** Se a dependência não está
    marcada como concluída, a issue não deve ser iniciada — construir uma tela em
    cima de uma API que ainda não existe gera retrabalho.
 4. **Marcar o status ao trabalhar:** `[ ]` pendente, `[~]` em andamento, `[x]`
-   concluído. Edite este arquivo diretamente ao mudar o status de uma issue.
+   concluído. Atualize o status da issue no GitHub, não neste arquivo.
 5. **Usar o campo "Se sobrar tempo"** como válvula de escape: se surgir uma ideia
    nova no meio da tarefa, ela entra ali como nota, não interrompe o trabalho
    principal nem estoura o prazo da issue.
@@ -190,13 +191,11 @@ equipe).
 
 ## 8. Cronograma interno de execução
 
-A ordem real de construção **não é igual** à ordem das entregas oficiais acima —
-o banco e a API precisam existir antes do front consumir dados de verdade. Cada
-sprint concentra o trabalho pesado até quinta-feira, deixando sexta e o fim de
-semana como folga: tempo para polir o que foi feito, testar de novo, ou seguir uma
-ideia nova que surgiu durante a semana sem atrasar a entrega seguinte.
+O cronograma detalhado (sprints, issues, dependências, responsáveis e status)
+não vive mais neste arquivo — ele fica desatualizado rápido demais. A fonte de
+verdade é o board de Issues do GitHub:
 
-Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
+https://github.com/joaoaugusto-dev/PI-2026.2/issues
 
 ---
 
@@ -1571,15 +1570,15 @@ foram fundidos aqui.
   nunca depois do prazo.
 
 ---
+Cada sprint é uma milestone (com data de entrega correspondente):
 
-### Apresentações (23 a 27/11)
+https://github.com/joaoaugusto-dev/PI-2026.2/milestones
 
-#### `[ ]` PRES-05 — Apresentação final (Todos)
-- **Depende de:** tudo.
-- **Objetivo:** demonstração funcional, presença de todos, oratória e
-  conteúdo.
-- **Lembrete crítico:** quem faltar no dia da apresentação fica sem nota de
-  apresentação (2,0 pontos) — confirmar a presença de todos com antecedência.
+Antes de iniciar, planejar ou continuar qualquer issue, consulte a issue
+correspondente no GitHub (busque pelo ID, ex. `FE-14`, no título) para ver
+status, dependências e descrição atual — não assuma pelo que foi dito em
+conversas anteriores. Ao terminar uma issue, atualize o status dela no
+GitHub (não neste arquivo).
 
 ---
 
