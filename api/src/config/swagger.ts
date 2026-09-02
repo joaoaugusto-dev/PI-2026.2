@@ -14,8 +14,8 @@ const swaggerOptions: swaggerJSDoc.Options = {
     },
     servers: [
       {
-        url: `http://localhost:${env.port}/v1`,
-        description: 'Servidor Local (v1)',
+        url: '/v1',
+        description: 'Servidor Atual (v1)',
       },
     ],
     components: {
