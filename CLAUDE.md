@@ -20,11 +20,14 @@ exige, sinalize o conflito antes de prosseguir.
   isso na validação de requisitos (issue DB-01, Seção 8). Enquanto não houver
   resposta, seguir com Supabase (já modelado no DDL). DDL e endpoints valem para
   as duas rotas. Decisão final vai para ata.
-- **Leitor de código de barras físico confirmado:** o campo de identificação
-  (ferramenta e colaborador) opera por leitura via scanner físico, não digitação
-  manual — foco automático + tratamento de Enter (issue FE-09, Seção 8). João leva
-  um leitor de código de barras real no dia da apresentação para testar ao vivo com
-  o Code128 impresso na etiqueta 50x25mm (issue DOC-08, Seção 8).
+- **Leitor de código de barras físico (em revisão — ver DB-01, Seção 8):** o campo
+  de identificação (ferramenta e colaborador) opera por leitura via scanner físico,
+  não digitação manual — foco automático + tratamento de Enter (issue FE-09, Seção
+  8). João leva um leitor de código de barras real no dia da apresentação para
+  testar ao vivo com o Code128 impresso na etiqueta 50x25mm (issue DOC-08, Seção
+  8). A visita técnica à Soufer (DB-01) levantou que a etiqueta adesiva não
+  sobrevive ao uso na manutenção — decisão final (scanner vs. gravação a lápis
+  elétrico com código curto) pendente de ata.
 
 Nota: a numeração de issues do PDF v3 (M0–M14, #01–#84) é anterior ao
 replanejamento em sprints — o cronograma da Seção 8 deste arquivo é a fonte de
@@ -107,8 +110,10 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
 6. **Responsável pelo registro vem sempre do usuário logado (JWT)** —
    `usuario_retirada_id`, `usuario_devolucao_id`, `registrada_por` e `criado_por`
    nunca são aceitos vindos do corpo da requisição.
-7. **Código de patrimônio é gerado a partir do ID** (`SF` + 6 dígitos) e é o
-   mesmo valor codificado no código de barras (Code128).
+7. **(Em revisão — ver DB-01, Seção 8) Código de patrimônio é gerado a partir do
+   ID** (`SF` + 6 dígitos) e é o mesmo valor codificado no código de barras
+   (Code128). A visita técnica à Soufer levantou um código curto de 4 dígitos
+   gravado a lápis elétrico como alternativa — decisão pendente de ata.
 8. **Apenas dois perfis:** `almoxarife` (acesso completo, login normal) e
    `consulta` (sessão de 15 minutos por matrícula/crachá, só leitura de
    disponibilidade, sem senha).
@@ -204,7 +209,7 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
 **Foco:** recuperar a entrega de 18/08 (já vencida) e fechar a de 25/08 no prazo.
 **Buffer:** nenhum — sprint de recuperação, sem folga.
 
-#### `[x]` DB-01 — Levantamento de requisitos com o almoxarifado (João)
+#### `[~]` DB-01 — Levantamento de requisitos com o almoxarifado (João)
 - **Depende de:** nada, pode começar agora.
 - **Objetivo:** entender o fluxo real de retirada e devolução hoje na Soufer,
   mesmo que informal, para validar os campos do banco antes de programar.
@@ -220,11 +225,29 @@ Legenda de status: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
   confirmada ou corrigida.
 - **Se sobrar tempo:** já tirar fotos de ferramentas reais para usar como exemplo
   visual no Figma mais adiante.
-- **Concluído:** relatório da visita técnica salvo em `/docs/requisitos.pdf`
+- **Em andamento:** relatório da visita técnica salvo em `/docs/requisitos.pdf`
   (referenciado no README). **Achado crítico que muda o escopo:** o
   empréstimo de ferramentas acontece na **manutenção**, não no almoxarifado
   geral (que só trabalha com consumíveis, sem devolução) — ver conflitos
-  sinalizados abaixo.
+  sinalizados abaixo. Falta ainda: `/docs/requisitos.md` (o "Pronto quando"
+  exige esse arquivo, não só o PDF) e a confirmação explícita da lista de 10
+  atividades (passo 3).
+
+**Conflitos sinalizados pela visita (decisão pendente em ata, ver regra do
+preâmbulo deste arquivo):**
+1. **Leitor de código de barras vs. gravação a lápis elétrico:** a etiqueta
+   adesiva de código de barras não sobrevive ao uso na manutenção. A Soufer
+   propõe gravação a lápis elétrico com código curto de 4 dígitos. Isso
+   contradiz a nota "Leitor de código de barras físico confirmado" (linhas
+   23-27) e o formato `SF` + 6 dígitos descrito na Seção 3 (regra 7) — ambos
+   marcados **em revisão** até a decisão ser fechada. A retirada precisa
+   aceitar digitação do código como caminho principal, não só leitura por
+   scanner (afeta FE-09).
+2. **Cadastro individual vs. em grupo para jogos de chave:** ainda não
+   decidido, precisa ser fechado antes do schema (afeta DB-02).
+3. **Hospedagem local vs. nuvem externa:** a Soufer prefere hospedagem local —
+   mesmo ponto já registrado como pendente sobre a arquitetura de banco no
+   topo deste arquivo.
 
 #### `[ ]` DB-02 — Modelo conceitual e lógico (DER) (Henrique)
 - **Depende de:** rascunho pode começar em paralelo com DB-01, ajustar depois.
