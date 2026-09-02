@@ -49,6 +49,7 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 
 - [Infraestrutura, deploy e custos](docs/infraestrutura.md)
 - [Plano de infraestrutura e modelos em nuvem (M2)](docs/infra-plano.md)
+- [Guia de deploy no Dokploy](docs/dokploy.md)
 
 ## Processos
 
