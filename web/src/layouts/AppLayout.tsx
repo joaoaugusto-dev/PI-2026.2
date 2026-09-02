@@ -1,5 +1,5 @@
-import { BellIcon } from 'lucide-react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Activity, BellIcon } from 'lucide-react'
+import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
 import {
   Sidebar,
   SidebarContent,
@@ -14,6 +14,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { Badge } from '@/components/ui/badge'
 
 const nav = [
   {
@@ -38,6 +39,12 @@ const nav = [
       { to: '/importar', label: 'Importar CSV' },
     ],
   },
+  {
+    label: 'Sistema',
+    items: [
+      { to: '/status', label: 'Status da API' },
+    ],
+  },
 ]
 
 export function AppLayout() {
@@ -46,8 +53,11 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader className="px-4 py-3 font-semibold">
-          SOUFER Tools
+        <SidebarHeader className="px-4 py-3 font-semibold flex items-center justify-between">
+          <span>SOUFER Tools</span>
+          <span className="text-[10px] font-mono font-normal bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+            v1.0
+          </span>
         </SidebarHeader>
         <SidebarContent>
           {nav.map((group) => (
@@ -78,9 +88,21 @@ export function AppLayout() {
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-          <BellIcon className="ml-auto size-4 text-muted-foreground" />
+        <header className="flex h-14 items-center gap-2 border-b px-4 justify-between">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link to="/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+              <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <Activity className="size-3 text-muted-foreground" />
+                <span className="text-[11px] font-medium hidden sm:inline">Status API</span>
+              </Badge>
+            </Link>
+            <BellIcon className="size-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+          </div>
         </header>
         <Outlet />
       </SidebarInset>
