@@ -21,14 +21,14 @@ exige, sinalize o conflito antes de prosseguir.
   Supabase Auth. Esta decisão garante independência total de BaaS, conformidade com os
   requisitos de infraestrutura (AWS RDS / EC2 ou servidor próprio Soufer) e controle
   fino sobre tokens e autorizações (almoxarife de 8h e quiosque de 15min).
-- **Leitor de código de barras físico (em revisão — ver DB-01, Seção 8):** o campo
-  de identificação (ferramenta e colaborador) opera por leitura via scanner físico,
-  não digitação manual — foco automático + tratamento de Enter (issue FE-09, Seção
-  8). João leva um leitor de código de barras real no dia da apresentação para
-  testar ao vivo com o Code128 impresso na etiqueta 50x25mm (issue DOC-08, Seção
-  8). A visita técnica à Soufer (DB-01) levantou que a etiqueta adesiva não
-  sobrevive ao uso na manutenção — decisão final (scanner vs. gravação a lápis
-  elétrico com código curto) pendente de ata.
+- **Leitor de código de barras físico (em revisão — ver issue DB-01 no board do
+  GitHub):** o campo de identificação (ferramenta e colaborador) opera por
+  leitura via scanner físico, não digitação manual — foco automático +
+  tratamento de Enter (issue FE-09). João leva um leitor de código de barras
+  real no dia da apresentação para testar ao vivo com o Code128 impresso na
+  etiqueta 50x25mm (issue DOC-08). A visita técnica à Soufer (DB-01) levantou
+  que a etiqueta adesiva não sobrevive ao uso na manutenção — decisão final
+  (scanner vs. gravação a lápis elétrico com código curto) pendente de ata.
 
 Nota: a numeração de issues do PDF v3 (M0–M14, #01–#84) é anterior ao
 replanejamento em sprints — Issues e Milestones do GitHub (ver Seção 8) são a
@@ -112,10 +112,11 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
 6. **Responsável pelo registro vem sempre do usuário logado (JWT)** —
    `usuario_retirada_id`, `usuario_devolucao_id`, `registrada_por` e `criado_por`
    nunca são aceitos vindos do corpo da requisição.
-7. **(Em revisão — ver DB-01, Seção 8) Código de patrimônio é gerado a partir do
-   ID** (`SF` + 6 dígitos) e é o mesmo valor codificado no código de barras
-   (Code128). A visita técnica à Soufer levantou um código curto de 4 dígitos
-   gravado a lápis elétrico como alternativa — decisão pendente de ata.
+7. **(Em revisão — ver issue DB-01 no board do GitHub) Código de patrimônio é
+   gerado a partir do ID** (`SF` + 6 dígitos) e é o mesmo valor codificado no
+   código de barras (Code128). A visita técnica à Soufer levantou um código
+   curto de 4 dígitos gravado a lápis elétrico como alternativa — decisão
+   pendente de ata.
 8. **Apenas dois perfis:** `almoxarife` (acesso completo, login normal) e
    `consulta` (sessão de 15 minutos por matrícula/crachá, só leitura de
    disponibilidade, sem senha).
