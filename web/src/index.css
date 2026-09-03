@@ -88,9 +88,10 @@
     --control-h: 3.5rem;
     --control-h-fluxo: 3.75rem;
 
-    /* Movimento — durações e easing (FE-01) */
-    --motion-state: 140ms cubic-bezier(.2, 0, 0, 1);
-    --motion-screen: 240ms cubic-bezier(.2, 0, 0, 1);
+    /* Movimento — durações (FE-01). O easing fica em --ease-soufer, no
+       @theme abaixo, para o Tailwind gerar os utilitários a partir dele. */
+    --motion-state: 140ms;
+    --motion-screen: 240ms;
     --motion-stagger: 20ms;
     --motion-reduced: 80ms;
 
@@ -160,6 +161,145 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* ---------------------------------------------------------------------------
+   Movimento (FE-01)
+
+   Regra de 60fps: animação só toca `transform` e `opacity` — as duas
+   propriedades que o compositor resolve sem layout nem repaint. Nunca animar
+   width/height/top/left/margin/box-shadow: cada quadro vira reflow e o
+   almoxarifado roda em máquina fraca.
+--------------------------------------------------------------------------- */
+@theme {
+    --ease-soufer: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Todo utilitário `transition-*` do Tailwind já nasce no tempo de estado
+       do design system — não precisa repetir duration/ease em cada tela. */
+    --default-transition-duration: var(--motion-state);
+    --default-transition-timing-function: var(--ease-soufer);
+
+    --animate-entrada: entrada var(--motion-screen) var(--ease-soufer) both;
+    --animate-reconhecido: reconhecido 420ms var(--ease-soufer);
+    --animate-erro: erro 260ms var(--ease-soufer);
+    --animate-atraso: atraso 2s var(--ease-soufer) infinite;
+
+    /* Entrada de tela, card e linha de lista. */
+    @keyframes entrada {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 8px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* Leitura de código aceita (FE-09): confirma sem tirar o foco do campo. */
+    @keyframes reconhecido {
+        0% {
+            transform: scale(1);
+        }
+        45% {
+            transform: scale(1.025);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    /* Código inválido: nega o gesto, não pisca cor. */
+    @keyframes erro {
+        0%,
+        100% {
+            transform: none;
+        }
+        25% {
+            transform: translate3d(-4px, 0, 0);
+        }
+        65% {
+            transform: translate3d(3px, 0, 0);
+        }
+    }
+
+    /* Único loop permitido, e só no indicador de atraso. */
+    @keyframes atraso {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.55;
+        }
+    }
+}
+
+@layer components {
+    /* Lista escalonada: só os 6 primeiros itens animam. Do 7º em diante a
+       espera acumulada passa a ser percebida como lentidão, e uma lista de
+       400 ferramentas viraria uma cascata infinita. */
+    .lista-stagger > * {
+        animation: var(--animate-entrada);
+    }
+    .lista-stagger > *:nth-child(1) {
+        animation-delay: 0ms;
+    }
+    .lista-stagger > *:nth-child(2) {
+        animation-delay: var(--motion-stagger);
+    }
+    .lista-stagger > *:nth-child(3) {
+        animation-delay: calc(2 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(4) {
+        animation-delay: calc(3 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(5) {
+        animation-delay: calc(4 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(6) {
+        animation-delay: calc(5 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(n + 7) {
+        animation: none;
+    }
+}
+
+/* prefers-reduced-motion: some a translação, mantém só a opacidade em 80ms.
+   Redefinir o keyframe aqui é o que garante que nada mais se move — não
+   adianta só encurtar a duração. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: var(--motion-reduced) !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: var(--motion-reduced) !important;
+        scroll-behavior: auto !important;
+    }
+
+    @keyframes entrada {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes reconhecido {
+        from,
+        to {
+            transform: none;
+        }
+    }
+
+    @keyframes erro {
+        from,
+        to {
+            transform: none;
+        }
+    }
 }
 
 @layer base {

@@ -28,6 +28,29 @@ function Card({ className, children }: { className?: string; children: React.Rea
   )
 }
 
+function Demo({
+  nome,
+  classe,
+  nota,
+  children,
+}: {
+  nome: string
+  classe: string
+  nota: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border p-4">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <p className="text-secao">{nome}</p>
+        <code className="font-mono text-sm text-muted-foreground">.{classe}</code>
+      </div>
+      {children}
+      <p className="text-sm text-muted-foreground">{nota}</p>
+    </div>
+  )
+}
+
 const paleta = [
   { nome: 'Red', hex: '#E30613', uso: 'Ação primária, marca' },
   { nome: 'Red dark', hex: '#B5121B', uso: 'Hover / pressionado' },
@@ -95,6 +118,7 @@ const botoes = [
 
 export function DesignSystemPage() {
   const [foco, setFoco] = useState('')
+  const [replay, setReplay] = useState(0)
 
   return (
     <div className="space-y-8 p-6">
@@ -288,19 +312,137 @@ export function DesignSystemPage() {
       </Secao>
 
       <Secao titulo="Movimento">
-        <Card className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ['Estado', '120–160ms', 'cubic-bezier(.2, 0, 0, 1)'],
-            ['Tela e modal', '200–260ms', 'nunca acima de 300ms'],
-            ['Lista', 'stagger 20ms', 'só nos 6 primeiros'],
-            ['Reduced motion', 'opacidade 80ms', 'sem translação'],
-          ].map(([titulo, a, b]) => (
-            <div key={titulo} className="space-y-1">
-              <p className="text-secao">{titulo}</p>
-              <p className="font-mono text-sm text-muted-foreground">{a}</p>
-              <p className="font-mono text-sm text-muted-foreground">{b}</p>
+        <Card className="space-y-4">
+          <p className="text-corpo text-muted-foreground">
+            Animação só toca <code className="font-mono">transform</code> e{' '}
+            <code className="font-mono">opacity</code> — as duas propriedades que o compositor
+            resolve sem layout nem repaint, e por isso as únicas que seguram 60fps na máquina
+            do almoxarifado. Nunca animar <code className="font-mono">width</code>,{' '}
+            <code className="font-mono">height</code>, <code className="font-mono">top</code>,{' '}
+            <code className="font-mono">left</code>, <code className="font-mono">margin</code> ou{' '}
+            <code className="font-mono">box-shadow</code>: cada quadro vira reflow.
+          </p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ['Estado', '140ms', 'hover, foco, pressionado'],
+              ['Tela e modal', '240ms', 'nunca acima de 300ms'],
+              ['Lista', 'stagger 20ms', 'só nos 6 primeiros'],
+              ['Reduced motion', 'opacidade 80ms', 'sem translação'],
+            ].map(([titulo, a, b]) => (
+              <div key={titulo} className="space-y-1">
+                <p className="text-secao">{titulo}</p>
+                <p className="font-mono text-sm text-muted-foreground">{a}</p>
+                <p className="font-mono text-sm text-muted-foreground">{b}</p>
+              </div>
+            ))}
+            <div className="space-y-1">
+              <p className="text-secao">Easing</p>
+              <p className="font-mono text-sm text-muted-foreground">
+                cubic-bezier(.2, 0, 0, 1)
+              </p>
+              <p className="font-mono text-sm text-muted-foreground">
+                sai rápido, chega devagar
+              </p>
             </div>
-          ))}
+          </div>
+        </Card>
+      </Secao>
+
+      <Secao titulo="Animações · demonstração">
+        <Card className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setReplay((n) => n + 1)}
+            className="h-(--control-h) rounded-lg border bg-background px-4 text-corpo font-medium transition-colors hover:bg-muted active:translate-y-px"
+          >
+            Repetir animações
+          </button>
+
+          <div key={replay} className="grid gap-6 lg:grid-cols-2">
+            <Demo
+              nome="Entrada de tela"
+              classe="animate-entrada"
+              nota="Fade + 8px de subida em 240ms. Toda página e todo card de conteúdo entram assim."
+            >
+              <div className="animate-entrada rounded-lg border bg-muted p-4 text-corpo">
+                Detalhes da retirada
+              </div>
+            </Demo>
+
+            <Demo
+              nome="Lista escalonada"
+              classe="lista-stagger"
+              nota="20ms entre itens, só nos 6 primeiros — do 7º em diante entra sem animação, senão uma lista de 400 ferramentas vira cascata."
+            >
+              <ul className="lista-stagger space-y-1">
+                {['SF000452', 'SF000453', 'SF000454', 'SF000455'].map((codigo) => (
+                  <li
+                    key={codigo}
+                    className="rounded-md border px-3 py-2 font-mono text-corpo"
+                  >
+                    {codigo}
+                  </li>
+                ))}
+              </ul>
+            </Demo>
+
+            <Demo
+              nome="Código reconhecido"
+              classe="animate-reconhecido"
+              nota="Escala de 2,5% em 420ms quando o leitor acerta a ferramenta. Confirma sem tirar o foco do campo — o operador continua bipando."
+            >
+              <div className="animate-reconhecido flex h-(--control-h) items-center gap-2 rounded-lg border border-status-disponivel/40 bg-status-disponivel/5 px-3">
+                <CheckCircle2Icon className="size-5 text-status-disponivel" />
+                <span className="text-corpo">SF000452</span>
+              </div>
+            </Demo>
+
+            <Demo
+              nome="Código recusado"
+              classe="animate-erro"
+              nota="Nega o gesto em 260ms. O erro é comunicado pelo texto abaixo do campo, não por cor piscando."
+            >
+              <div className="space-y-1">
+                <div className="animate-erro flex h-(--control-h) items-center rounded-lg border border-destructive px-3 font-mono text-corpo">
+                  SF00045
+                </div>
+                <p className="text-sm text-destructive">
+                  Código com 7 dígitos — o padrão tem 8.
+                </p>
+              </div>
+            </Demo>
+
+            <Demo
+              nome="Indicador de atraso"
+              classe="animate-atraso"
+              nota="Único loop permitido no sistema, e só no KPI de atrasadas quando o número é maior que zero. Nenhum outro elemento pulsa."
+            >
+              <div className="w-fit space-y-2 rounded-lg border border-status-atraso p-4">
+                <p className="flex items-center gap-1.5 text-rotulo tracking-[0.08em] text-muted-foreground uppercase">
+                  <span aria-hidden className="animate-atraso size-2 rounded-[1px] bg-status-atraso" />
+                  Atrasadas
+                </p>
+                <p className="text-kpi text-status-atraso">7</p>
+              </div>
+            </Demo>
+
+            <Demo
+              nome="Transição de estado"
+              classe="transition-colors"
+              nota="Todo utilitário transition-* do Tailwind já nasce em 140ms com o easing do sistema, via --default-transition-*. Não repetir duração em cada tela. Passe o mouse."
+            >
+              <div className="flex h-(--control-h) w-fit items-center rounded-lg bg-brand-red px-6 text-corpo font-medium text-white transition-colors hover:bg-brand-red-dark active:translate-y-px">
+                Confirmar
+              </div>
+            </Demo>
+          </div>
+
+          <p className="text-corpo text-muted-foreground">
+            Com <code className="font-mono">prefers-reduced-motion: reduce</code> tudo isso cai
+            para 80ms de opacidade, sem translação, sem escala e sem loop — a regra está no
+            próprio <code className="font-mono">index.css</code>, então vale para componente
+            novo sem ninguém precisar lembrar.
+          </p>
         </Card>
       </Secao>
 

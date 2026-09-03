@@ -65,9 +65,33 @@ do Tailwind, já em múltiplos de 4px.
 Altura mínima de 56px em ação principal (operador pode estar de luva) e 60px
 nos botões de fluxo fixos no rodapé.
 
-Movimento: estado 120–160ms, tela/modal 200–260ms (nunca acima de 300ms),
-stagger de lista 20ms só nos 6 primeiros itens, `prefers-reduced-motion`
-reduz a opacidade em 80ms sem translação.
+### Movimento
+
+Toda animação do sistema é definida em `web/src/index.css` e demonstrada na
+página de estilos. A regra que sustenta os 60fps: animação só toca `transform`
+e `opacity`, as únicas propriedades que o compositor resolve sem layout nem
+repaint. Nunca animar `width`, `height`, `top`, `left`, `margin` ou
+`box-shadow`. O script `npm run check:motion` verifica isso no CSS gerado.
+
+| Token / classe | Valor | Uso |
+|---|---|---|
+| `--ease-soufer` | `cubic-bezier(.2, 0, 0, 1)` | Easing único do sistema |
+| `--motion-state` | 140ms | Hover, foco, pressionado |
+| `--motion-screen` | 240ms | Tela e modal (nunca acima de 300ms) |
+| `--motion-stagger` | 20ms | Intervalo entre itens de lista |
+| `--motion-reduced` | 80ms | `prefers-reduced-motion` |
+| `animate-entrada` | 240ms | Fade + 8px de subida: página, card, linha |
+| `animate-reconhecido` | 420ms | Leitura de código aceita |
+| `animate-erro` | 260ms | Código recusado — nega o gesto, não pisca cor |
+| `animate-atraso` | 2s, loop | Único loop permitido, só no KPI de atrasadas |
+| `.lista-stagger` | — | Escalona só os 6 primeiros filhos |
+
+`--default-transition-duration` e `--default-transition-timing-function`
+apontam para esses tokens, então todo utilitário `transition-*` do Tailwind já
+sai no tempo certo sem repetir `duration-*`/`ease-*` nas telas.
+
+Com `prefers-reduced-motion: reduce` os keyframes são redefinidos globalmente
+para só opacidade em 80ms — sem translação, sem escala e sem loop.
 
 ## Componentes reutilizáveis
 
