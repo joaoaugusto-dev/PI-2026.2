@@ -112,3 +112,24 @@ flowchart TD
 
 3. **Plano de Contingência (Plano B):**
    - Caso haja impedimento na AWS ou necessidade de failover ágil, a API e o banco PostgreSQL poderão ser hospedados em plataformas PaaS alternativas (**Render** ou **Railway**) sem alteração no código-fonte ou modelagem SQL.
+   - Alternativamente, foi modelada a adição de uma 2ª instância em standby (IaaS) para failover automatizado com custo adicional de ~$9.99/mês.
+
+---
+
+## 5. Estimativa de Custos em Nuvem (INFRA-02)
+
+O dimensionamento financeiro completo e a comparação com os demais provedores de mercado (**Microsoft Azure** e **Google Cloud Platform**) estão consolidados na planilha e documento oficiais:
+
+* **Planilha Excel Oficial:** [`/docs/custos-nuvem.xlsx`](custos-nuvem.xlsx) (contém fórmulas dinâmicas, abas detalhadas e prints anexados).
+* **Documento Técnico de Custos:** [`/docs/custos-nuvem.md`](custos-nuvem.md).
+* **Prints de Auditoria das Calculadoras:** [`/docs/prints/`](prints/).
+
+### Resumo Comparativo dos Provedores (Cenário Base - Banco Gerenciado)
+
+| Provedor | Custo Mensal (USD) | Custo Mensal (BRL)* | Custo Anual (USD) | Destaque Técnico |
+|---|---|---|---|---|
+| **AWS (Amazon Web Services)** | **$29.51** | **R$ 162,31** | **$354.12** | **Menor custo total** (Free Tier do CloudFront de 1TB/mês) |
+| **Google Cloud Platform (GCP)** | $32.52 | R$ 178,86 | $390.24 | Cloud Logging com 50GB gratuitos |
+| **Microsoft Azure** | $36.51 | R$ 200,81 | $438.12 | Instância de banco B1ms com 2GB RAM |
+
+*\*Cotação de referência: USD 1.00 = R$ 5,50.*

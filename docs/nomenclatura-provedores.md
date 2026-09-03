@@ -8,23 +8,25 @@ Comparar os serviços dos provedores de nuvem que podem ser utilizados na infrae
 
 ### Serviços Considerados
 
-| Serviço                   | AWS               | Utilização no Projeto                          |
-| ------------------------- | ----------------- | ---------------------------------------------- |
-| Armazenamento de objetos  | Amazon S3         | Armazenamento de arquivos e objetos            |
-| Banco de dados relacional | Amazon RDS        | Banco de dados relacional gerenciado           |
-| CDN                       | Amazon CloudFront | Distribuição de conteúdo                       |
-| Monitoramento             | Amazon CloudWatch | Monitoramento da infraestrutura e dos serviços |
+| Serviço | AWS | Microsoft Azure | Google Cloud (GCP) | Utilização no Projeto |
+| --- | --- | --- | --- | --- |
+| **Computação / API (IaaS)** | Amazon EC2 (`t3.micro`) | Azure Virtual Machines (`B1s`) | Compute Engine (`e2-micro`) | Execução da API Node.js/Express, Nginx e PM2 |
+| **Armazenamento de objetos** | Amazon S3 | Azure Blob Storage | Cloud Storage | Hospedagem da SPA React compilada (estáticos) |
+| **Banco de dados relacional** | Amazon RDS PostgreSQL | Azure Database for PostgreSQL Flexible | Cloud SQL for PostgreSQL | Banco relacional gerenciado com conformidade ACID |
+| **CDN & Aceleração** | Amazon CloudFront | Azure CDN Standard / Front Door | Cloud CDN + External LB | Distribuição global de baixa latência e HTTPS |
+| **Monitoramento & Logs** | Amazon CloudWatch | Azure Monitor (Log Analytics) | Cloud Logging & Monitoring | Coleta de telemetria, logs PM2/Nginx e alarmes |
 
 ### Possível Operação Futura
 
-O **AWS Lambda** foi analisado como uma possível opção para operações futuras. O serviço permite executar funções sem a necessidade de manter servidores diretamente, porém **não é um requisito para a implementação atual do projeto**.
+O **AWS Lambda** (Azure Functions / Cloud Functions) foi analisado como uma possível opção para operações futuras (ex: processamento de relatórios assíncronos ou webhooks de importação). O serviço permite executar funções sem a necessidade de manter servidores diretamente, porém **não é um requisito para a implementação atual do projeto**.
 
-| Serviço           | AWS        | Status              |
-| ----------------- | ---------- | ------------------- |
-| Função serverless | AWS Lambda | Possível uso futuro |
+| Serviço | AWS | Azure | GCP | Status |
+| --- | --- | --- | --- | --- |
+| **Função Serverless** | AWS Lambda | Azure Functions | Cloud Functions | Possível uso futuro |
 
-### Conclusão
+### Conclusão & Referência de Custos
 
-Após a revisão, foram considerados como principais serviços da AWS o **Amazon S3**, **Amazon RDS**, **Amazon CloudFront** e **Amazon CloudWatch**.
+Após a revisão arquitetural e simulação financeira detalhada na planilha [`/docs/custos-nuvem.xlsx`](custos-nuvem.xlsx) e no documento [`/docs/custos-nuvem.md`](custos-nuvem.md):
+- A **AWS** foi selecionada como provedora primária recomendada devido ao menor custo total mensal (**$29.51/mês** no cenário base com banco gerenciado), impulsionada pelo *Always Free Tier* do CloudFront (1 TB/mês incluso) e facilidade de integração dos serviços.
+- **Azure** e **GCP** foram validadas com paridade funcional para cenários de contingência ou migração futura.
 
-O **AWS Lambda** permanece apenas como uma possibilidade para futuras necessidades do sistema, não sendo necessário para a implementação atual.
