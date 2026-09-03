@@ -9,6 +9,26 @@
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;
     --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    /* Escala tipografica (FE-01) — corpo 16px e nada de texto corrido abaixo
+       de 14px; `rotulo` (11px) e a unica excecao, so em label caixa-alta. */
+    --text-display: 2.5rem;
+    --text-display--line-height: 1.1;
+    --text-display--font-weight: 600;
+    --text-titulo: 1.5625rem;
+    --text-titulo--line-height: 1.2;
+    --text-titulo--font-weight: 600;
+    --text-secao: 1rem;
+    --text-secao--line-height: 1.4;
+    --text-secao--font-weight: 600;
+    --text-corpo: 1rem;
+    --text-corpo--line-height: 1.5;
+    --text-rotulo: 0.6875rem;
+    --text-rotulo--line-height: 1.2;
+    --text-rotulo--font-weight: 500;
+    --text-kpi: 2.375rem;
+    --text-kpi--line-height: 1.05;
+    --text-kpi--font-weight: 600;
     --color-brand-red: var(--brand-red);
     --color-brand-red-dark: var(--brand-red-dark);
     --color-status-disponivel: var(--status-disponivel);
@@ -63,6 +83,10 @@
     --status-em-uso: #575756;
     --status-indisponivel: #E30613;
     --status-atraso: #C77700;
+
+    /* Altura minima de controle — o operador pode estar de luva (FE-01) */
+    --control-h: 3.5rem;
+    --control-h-fluxo: 3.75rem;
 
     /* Movimento — durações e easing (FE-01) */
     --motion-state: 140ms cubic-bezier(.2, 0, 0, 1);

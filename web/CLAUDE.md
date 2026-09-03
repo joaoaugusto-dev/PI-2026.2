@@ -97,6 +97,32 @@ não filhas do layout autenticado.
   movimento (`--motion-state` 140ms, `--motion-screen` 240ms,
   `--motion-stagger` 20ms, `--motion-reduced` 80ms) ficam como tokens prontos
   para a FE-08/FE-06 consumirem.
+  A **página de estilos** da issue vive em `src/pages/DesignSystemPage.tsx`
+  (rota `/design-system`, link no grupo "Referência" da sidebar): é ela que
+  documenta paleta, escala tipográfica, os 4 estados de status, estados de
+  botão/campo, KPI cards, movimento e uso dos logos — substitui a página do
+  Figma prevista no enunciado da FE-01. Ao mudar um token, atualizar a página
+  junto.
+  Tokens de tipografia (`--text-display` 40px, `--text-titulo` 25px,
+  `--text-secao`/`--text-corpo` 16px, `--text-rotulo` 11px, `--text-kpi` 38px)
+  geram utilitários Tailwind (`text-display`, `text-corpo`, ...) — usar esses
+  em vez de `text-2xl`/`text-sm` avulsos. Texto corrido nunca abaixo de 14px;
+  `text-rotulo` (11px) é exceção só para label caixa-alta.
+  Altura mínima de controle: `--control-h` (56px, qualquer ação principal —
+  operador de luva) e `--control-h-fluxo` (60px, botões fixos de retirada/
+  devolução). Os primitivos do shadcn vêm com alturas menores (`h-8`); os
+  wrappers dimensionados são responsabilidade da **FE-08**, até lá aplicar
+  `h-(--control-h)` na chamada.
+- **`StatusBadge` (`src/components/StatusBadge.tsx`)** é o único jeito de
+  exibir status: cada estado tem forma própria além da cor (círculo cheio /
+  círculo vazado / quadrado / triângulo) — status nunca é comunicado só por
+  cor. `atraso` sempre mostra o número de dias.
+- **Logos** ficam em `web/public/brand/` (`soufer-negativo.svg`,
+  `soufer-assinatura.svg`, `soufer-industrial.svg`). Negativo = sidebar e
+  login; assinatura = documentos/etiquetas em fundo claro; industrial =
+  exclusivo do quiosque de consulta. **Os arquivos ainda não foram
+  adicionados ao repositório** — a página de estilos mostra o caminho
+  esperado como pendente até alguém subir os SVGs.
 - **Sidebar/login sempre no visual negativo** (fundo escuro, logo branco) é
   regra de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
   `index.css`.

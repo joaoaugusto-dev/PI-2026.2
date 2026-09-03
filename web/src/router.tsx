@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
+import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import { StatusPage } from '@/pages/StatusPage'
 
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'cadastros/categorias', element: placeholder('Categorias') },
       { path: 'cadastros/atividades', element: placeholder('Atividades') },
       { path: 'importar', element: placeholder('Importar CSV') },
+      { path: 'design-system', element: <DesignSystemPage /> },
     ],
   },
   { path: '/login', element: placeholder('Login') },
