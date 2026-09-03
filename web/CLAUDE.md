@@ -117,12 +117,13 @@ não filhas do layout autenticado.
   exibir status: cada estado tem forma própria além da cor (círculo cheio /
   círculo vazado / quadrado / triângulo) — status nunca é comunicado só por
   cor. `atraso` sempre mostra o número de dias.
-- **Logos** ficam em `web/public/brand/` (`soufer-negativo.svg`,
-  `soufer-assinatura.svg`, `soufer-industrial.svg`). Negativo = sidebar e
-  login; assinatura = documentos/etiquetas em fundo claro; industrial =
-  exclusivo do quiosque de consulta. **Os arquivos ainda não foram
-  adicionados ao repositório** — a página de estilos mostra o caminho
-  esperado como pendente até alguém subir os SVGs.
+- **Logos** ficam em `web/public/brand/` (PNG com transparência, versionados
+  no repositório): `soufer-negativo.png` = sidebar e login (ambiente
+  administrativo); `soufer-assinatura.png` = documentos, etiquetas grandes e
+  impressos em fundo claro; `soufer-industrial.png` = exclusivo do quiosque
+  de consulta pública; `soufer-branco.png` = monocromático, só quando a
+  esfera vermelha não é possível. Referenciar sempre por esses caminhos, sem
+  copiar o arquivo para dentro de `src/`.
 - **Sidebar/login sempre no visual negativo** (fundo escuro, logo branco) é
   regra de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
   `index.css`.

@@ -60,19 +60,28 @@ const kpis = [
 
 const logos = [
   {
-    arquivo: '/brand/soufer-negativo.svg',
+    arquivo: '/brand/soufer-negativo.png',
     fundo: 'bg-[#1D1D1B]',
-    texto: 'Negativo — sidebar do sistema e painel escuro do login. É o logo do ambiente administrativo.',
+    texto:
+      'Negativo — sidebar do sistema e painel escuro do login. É o logo do ambiente administrativo.',
   },
   {
-    arquivo: '/brand/soufer-assinatura.svg',
+    arquivo: '/brand/soufer-assinatura.png',
     fundo: 'bg-white',
-    texto: 'Positivo com assinatura — documentos, etiquetas grandes e materiais impressos sobre fundo claro.',
+    texto:
+      'Positivo com assinatura — documentos, etiquetas grandes e materiais impressos sobre fundo claro.',
   },
   {
-    arquivo: '/brand/soufer-industrial.svg',
+    arquivo: '/brand/soufer-industrial.png',
     fundo: 'bg-[#1D1D1B]',
-    texto: 'Industrial — exclusivo do quiosque de consulta pública, que precisa se anunciar como outra coisa.',
+    texto:
+      'Industrial — exclusivo do quiosque de consulta pública, que precisa se anunciar como outra coisa.',
+  },
+  {
+    arquivo: '/brand/soufer-branco.png',
+    fundo: 'bg-status-em-uso',
+    texto:
+      'Monocromático branco — só quando a aplicação não permite a esfera vermelha (impressão de uma cor, fundo de foto).',
   },
 ]
 
@@ -296,23 +305,11 @@ export function DesignSystemPage() {
       </Secao>
 
       <Secao titulo="Uso dos logos">
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {logos.map((logo) => (
             <div key={logo.arquivo} className="overflow-hidden rounded-lg border bg-card">
               <div className={cn('flex h-28 items-center justify-center p-6', logo.fundo)}>
-                <img
-                  src={logo.arquivo}
-                  alt=""
-                  className="max-h-full"
-                  onError={(e) => {
-                    e.currentTarget.replaceWith(
-                      Object.assign(document.createElement('span'), {
-                        className: 'font-mono text-sm text-neutral-500',
-                        textContent: `${logo.arquivo} (pendente)`,
-                      }),
-                    )
-                  }}
-                />
+                <img src={logo.arquivo} alt="" className="max-h-full" />
               </div>
               <p className="p-3 text-sm text-muted-foreground">{logo.texto}</p>
             </div>
