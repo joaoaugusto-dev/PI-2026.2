@@ -94,6 +94,7 @@
     --motion-screen: 240ms;
     --motion-stagger: 20ms;
     --motion-reduced: 80ms;
+    --motion-ambiente: 3.2s;
 
     --background: oklch(1 0 0);
     --foreground: #1D1D1B;
@@ -183,6 +184,8 @@
     --animate-reconhecido: reconhecido 420ms var(--ease-soufer);
     --animate-erro: erro 260ms var(--ease-soufer);
     --animate-atraso: atraso 2s var(--ease-soufer) infinite;
+    --animate-respiro: respiro var(--motion-ambiente) var(--ease-soufer) infinite;
+    --animate-brilho: brilho 1.4s linear infinite;
 
     /* Entrada de tela, card e linha de lista. */
     @keyframes entrada {
@@ -223,7 +226,30 @@
         }
     }
 
-    /* Único loop permitido, e só no indicador de atraso. */
+    /* Halo do estado contínuo: escala + opacidade, nunca a cor em si — cor
+       é repaint, escala e opacidade o compositor resolve sozinho. */
+    @keyframes respiro {
+        0%,
+        100% {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.06;
+            transform: scale(2);
+        }
+    }
+
+    /* Varredura de carregamento: translada, não muda gradiente. */
+    @keyframes brilho {
+        from {
+            transform: translate3d(-100%, 0, 0);
+        }
+        to {
+            transform: translate3d(100%, 0, 0);
+        }
+    }
+
     @keyframes atraso {
         0%,
         100% {
@@ -236,6 +262,50 @@
 }
 
 @layer components {
+    /* Movimento contínuo (respiração) de um estado em andamento.
+       Só em elemento singular — cabeçalho de detalhe, KPI, chip de filtro.
+       NUNCA dentro de linha de tabela: 400 linhas respirando são 400 camadas
+       compostas por quadro. */
+    .status-vivo {
+        position: relative;
+    }
+    .status-vivo::after {
+        content: "";
+        position: absolute;
+        inset: -0.3rem;
+        border-radius: 9999px;
+        background: currentColor;
+        animation: var(--animate-respiro);
+        pointer-events: none;
+    }
+
+    /* Mudança de status (disponível -> em uso) atravessa a cor em 240ms em vez
+       de saltar. É transição, não loop: acontece uma vez, quando o dado muda. */
+    .transicao-status {
+        transition-property: color, background-color, border-color;
+        transition-duration: var(--motion-screen);
+        transition-timing-function: var(--ease-soufer);
+    }
+
+    /* Carregamento: faixa que varre a superfície. Vive num container com
+       overflow-hidden e substitui o pulse de opacidade do skeleton. */
+    .brilho {
+        position: relative;
+        overflow: hidden;
+    }
+    .brilho::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in oklch, var(--foreground) 8%, transparent),
+            transparent
+        );
+        animation: var(--animate-brilho);
+    }
+
     /* Lista escalonada: só os 6 primeiros itens animam. Do 7º em diante a
        espera acumulada passa a ser percebida como lentidão, e uma lista de
        400 ferramentas viraria uma cascata infinita. */
@@ -299,6 +369,13 @@
         to {
             transform: none;
         }
+    }
+
+    /* Movimento contínuo simplesmente não existe em reduced motion — parar o
+       loop no meio deixaria o halo congelado sobre o marcador. */
+    .status-vivo::after,
+    .brilho::after {
+        display: none;
     }
 }
 

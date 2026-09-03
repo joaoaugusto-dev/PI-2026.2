@@ -85,6 +85,15 @@ repaint. Nunca animar `width`, `height`, `top`, `left`, `margin` ou
 | `animate-erro` | 260ms | Código recusado — nega o gesto, não pisca cor |
 | `animate-atraso` | 2s, loop | Único loop permitido, só no KPI de atrasadas |
 | `.lista-stagger` | — | Escalona só os 6 primeiros filhos |
+| `.status-vivo` | 3,2s, loop | Halo que respira num status em andamento |
+| `.transicao-status` | 240ms | Troca de status atravessa a cor, não salta |
+| `.brilho` | 1,4s, loop | Varredura de carregamento (skeleton) |
+
+Movimento contínuo é para estado em andamento, não decoração, e o halo anima
+escala e opacidade — nunca a cor, que é repaint a cada quadro. Loop só em
+elemento singular (cabeçalho de detalhe, KPI, chip de filtro): 400 linhas de
+tabela respirando são 400 camadas compostas por quadro. A exceção é o
+skeleton, temporário e limitado a uma tela.
 
 `--default-transition-duration` e `--default-transition-timing-function`
 apontam para esses tokens, então todo utilitário `transition-*` do Tailwind já

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CheckCircle2Icon } from 'lucide-react'
-import { StatusBadge } from '@/components/StatusBadge'
+import { StatusBadge, type Status } from '@/components/StatusBadge'
 import { cn } from '@/lib/utils'
 
 /**
@@ -119,6 +119,7 @@ const botoes = [
 export function DesignSystemPage() {
   const [foco, setFoco] = useState('')
   const [replay, setReplay] = useState(0)
+  const [trocaStatus, setTrocaStatus] = useState<Status>('em-uso')
 
   return (
     <div className="space-y-8 p-6">
@@ -442,6 +443,72 @@ export function DesignSystemPage() {
             para 80ms de opacidade, sem translação, sem escala e sem loop — a regra está no
             próprio <code className="font-mono">index.css</code>, então vale para componente
             novo sem ninguém precisar lembrar.
+          </p>
+        </Card>
+      </Secao>
+
+      <Secao titulo="Movimento contínuo">
+        <Card className="space-y-4">
+          <p className="text-corpo text-muted-foreground">
+            Estado em andamento respira; estado em repouso fica parado. A respiração é um halo
+            que muda de <code className="font-mono">escala</code> e{' '}
+            <code className="font-mono">opacidade</code> — nunca a cor em si, porque cor é
+            repaint a cada quadro. E vale só em elemento singular: cabeçalho de detalhe, KPI,
+            chip de filtro. <strong>Nunca dentro de linha de tabela</strong> — 400 linhas
+            respirando são 400 camadas compostas por quadro, e aí os 60fps vão embora.
+          </p>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Demo
+              nome="Status vivo"
+              classe="status-vivo"
+              nota="Em uso e atraso são estados em andamento: o marcador respira em 3,2s. Disponível e indisponível são repouso e ficam estáticos."
+            >
+              <div className="flex flex-wrap gap-3">
+                <StatusBadge status="em-uso" vivo />
+                <StatusBadge status="atraso" dias={9} vivo />
+                <StatusBadge status="disponivel" />
+              </div>
+            </Demo>
+
+            <Demo
+              nome="Troca de status"
+              classe="transicao-status"
+              nota="Quando a devolução entra, a ferramenta não salta de cor: atravessa em 240ms. É transição, acontece uma vez quando o dado muda — não é loop."
+            >
+              <div className="space-y-2">
+                <StatusBadge status={trocaStatus} dias={9} />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTrocaStatus((atual) => (atual === 'em-uso' ? 'disponivel' : 'em-uso'))
+                  }
+                  className="h-(--control-h) w-full rounded-lg border bg-background px-4 text-corpo font-medium transition-colors hover:bg-muted active:translate-y-px"
+                >
+                  Registrar devolução
+                </button>
+              </div>
+            </Demo>
+
+            <Demo
+              nome="Carregando"
+              classe="brilho"
+              nota="Faixa que varre a superfície por translação, no lugar do pulse de opacidade. Enquanto a lista de ferramentas não chega da API."
+            >
+              <div className="space-y-2">
+                {['w-full', 'w-4/5', 'w-3/5'].map((largura) => (
+                  <div
+                    key={largura}
+                    className={cn('brilho h-6 rounded-md bg-muted', largura)}
+                  />
+                ))}
+              </div>
+            </Demo>
+          </div>
+
+          <p className="text-corpo text-muted-foreground">
+            Nada disso sobrevive ao <code className="font-mono">prefers-reduced-motion</code>: o
+            halo e a varredura somem por completo, em vez de congelarem no meio do ciclo.
           </p>
         </Card>
       </Secao>

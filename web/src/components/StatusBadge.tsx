@@ -35,10 +35,17 @@ type StatusBadgeProps = {
   status: Status
   /** Obrigatorio em `atraso`: o badge sempre mostra o numero de dias. */
   dias?: number
+  /**
+   * Liga a respiracao continua do marcador, para estado em andamento.
+   * So em elemento singular — cabecalho de detalhe, KPI, chip de filtro.
+   * Nunca dentro de linha de tabela: 400 linhas respirando sao 400 camadas
+   * compostas por quadro.
+   */
+  vivo?: boolean
   className?: string
 }
 
-export function StatusBadge({ status, dias, className }: StatusBadgeProps) {
+export function StatusBadge({ status, dias, vivo, className }: StatusBadgeProps) {
   const estado = estados[status]
   const texto =
     status === 'atraso' && dias !== undefined
@@ -48,12 +55,12 @@ export function StatusBadge({ status, dias, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex w-fit items-center gap-1.5 rounded-md border px-2 py-1 text-sm font-medium whitespace-nowrap',
+        'transicao-status inline-flex w-fit items-center gap-1.5 rounded-md border px-2 py-1 text-sm font-medium whitespace-nowrap',
         estado.className,
         className,
       )}
     >
-      <span aria-hidden className={estado.marca} />
+      <span aria-hidden className={cn(estado.marca, vivo && 'status-vivo')} />
       {texto}
     </span>
   )

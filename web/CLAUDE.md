@@ -134,8 +134,23 @@ não filhas do layout autenticado.
   - **`prefers-reduced-motion`** é tratado globalmente (os keyframes são
     redefinidos para só opacidade em 80ms) — componente novo já entra
     coberto, ninguém precisa lembrar.
+  - **Movimento contínuo (loop)** é para estado *em andamento*, não para
+    decoração: `animate-atraso` (KPI de atrasadas), `.status-vivo` (halo que
+    respira em `--motion-ambiente` 3,2s no marcador de um status em
+    andamento — `StatusBadge` liga com a prop `vivo`) e `.brilho`
+    (varredura de carregamento). O halo anima **escala e opacidade**, nunca a
+    cor: cor é repaint a cada quadro, escala/opacidade o compositor resolve
+    sozinho.
+  - **Loop só em elemento singular** — cabeçalho de detalhe, KPI, chip de
+    filtro. Nunca dentro de linha de tabela: 400 linhas respirando são 400
+    camadas compostas por quadro. A exceção é `.brilho` no skeleton, que é
+    temporário e limitado a uma tela.
+  - **`.transicao-status`** faz a mudança de status (disponível → em uso)
+    atravessar a cor em `--motion-screen` em vez de saltar. É transição
+    disparada por mudança de dado, não loop — o `StatusBadge` já a aplica.
   - Animação nova não entra direto na tela: entra como token/keyframe aqui e
-    é demonstrada na seção "Animações · demonstração" da página de estilos.
+    é demonstrada na página de estilos (seções "Animações · demonstração" e
+    "Movimento contínuo").
 - **`StatusBadge` (`src/components/StatusBadge.tsx`)** é o único jeito de
   exibir status: cada estado tem forma própria além da cor (círculo cheio /
   círculo vazado / quadrado / triângulo) — status nunca é comunicado só por
