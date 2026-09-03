@@ -93,10 +93,9 @@ não filhas do layout autenticado.
   nunca usar verde/âmbar em botão ou área de marca. Espaçamento reaproveita a
   escala padrão do Tailwind (já em múltiplos de 4px, sem token custom).
   Tipografia usa Geist Variable (`--font-sans`) e uma stack mono nativa
-  (`--font-mono`, sem dependência nova) para código de patrimônio. Durações de
-  movimento (`--motion-state` 140ms, `--motion-screen` 240ms,
-  `--motion-stagger` 20ms, `--motion-reduced` 80ms) ficam como tokens prontos
-  para a FE-08/FE-06 consumirem.
+  (`--font-mono`, sem dependência nova) para código de patrimônio. Movimento vive no
+  bloco "Movimento (FE-01)" do `index.css` e é a única fonte de animação do
+  front — ver o item de movimento abaixo.
   A **página de estilos** da issue vive em `src/pages/DesignSystemPage.tsx`
   (rota `/design-system`, link no grupo "Referência" da sidebar): é ela que
   documenta paleta, escala tipográfica, os 4 estados de status, estados de
@@ -113,6 +112,30 @@ não filhas do layout autenticado.
   devolução). Os primitivos do shadcn vêm com alturas menores (`h-8`); os
   wrappers dimensionados são responsabilidade da **FE-08**, até lá aplicar
   `h-(--control-h)` na chamada.
+- **Movimento e animação (FE-01)** ficam centralizados em `src/index.css`:
+  - **Regra de 60fps:** animação só toca `transform` e `opacity` — as duas
+    propriedades que o compositor resolve sem layout nem repaint. Nunca
+    animar `width`/`height`/`top`/`left`/`margin`/`box-shadow`.
+    `npm run check:motion` (depois do `build`) falha se algum keyframe do CSS
+    gerado animar propriedade de layout.
+  - **Durações:** `--motion-state` 140ms (hover/foco/pressionado),
+    `--motion-screen` 240ms (tela e modal, nunca acima de 300ms),
+    `--motion-stagger` 20ms, `--motion-reduced` 80ms. Easing único:
+    `--ease-soufer` (`cubic-bezier(.2, 0, 0, 1)`).
+  - **`--default-transition-duration`/`--default-transition-timing-function`
+    apontam para esses tokens**, então todo utilitário `transition-*` do
+    Tailwind já nasce no tempo do design system — não repetir
+    `duration-*`/`ease-*` em cada tela.
+  - **Animações nomeadas:** `animate-entrada` (fade + 8px, toda página e
+    card), `animate-reconhecido` (leitura de código aceita, FE-09),
+    `animate-erro` (código recusado — nega o gesto, não pisca cor),
+    `animate-atraso` (único loop permitido no sistema, só no KPI de
+    atrasadas). A classe `.lista-stagger` escalona só os 6 primeiros filhos.
+  - **`prefers-reduced-motion`** é tratado globalmente (os keyframes são
+    redefinidos para só opacidade em 80ms) — componente novo já entra
+    coberto, ninguém precisa lembrar.
+  - Animação nova não entra direto na tela: entra como token/keyframe aqui e
+    é demonstrada na seção "Animações · demonstração" da página de estilos.
 - **`StatusBadge` (`src/components/StatusBadge.tsx`)** é o único jeito de
   exibir status: cada estado tem forma própria além da cor (círculo cheio /
   círculo vazado / quadrado / triângulo) — status nunca é comunicado só por
