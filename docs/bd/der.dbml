@@ -1,0 +1,275 @@
+// ============================================================
+// SOUFER Tools — Modelo Lógico do Banco de Dados (DER)
+// Issue: DB-02 — Modelo conceitual e lógico (DER)
+// Responsável: Henrique de Oliveira Molinari
+// Revisão 02/09/2026 — pós visita técnica de 31/08/2026
+// Gerado a partir de api/db/migrations/0001_init.sql
+// Importar em https://dbdiagram.io para editar visualmente.
+// ============================================================
+
+Project soufer_tools {
+  database_type: 'PostgreSQL'
+  Note: '''
+    SOUFER Tools — controle de retirada/devolução do ferramental da
+    manutenção da Soufer. 13 tabelas em 4 domínios visuais: Cadastro (azul),
+    Movimentação (verde), Segurança (roxo) e Apoio/externo (cinza).
+    Banco PostgreSQL próprio, sem Supabase.
+  '''
+}
+
+// ---------------- ENUMS ----------------
+Enum status_ferramenta {
+  disponivel
+  em_uso
+  indisponivel
+}
+
+Enum motivo_indisponibilidade {
+  avaria
+  perda
+  manutencao_preventiva
+  baixada
+}
+
+Enum condicao_devolucao {
+  ok
+  avaria
+  perda
+}
+
+Enum status_ocorrencia {
+  aberta
+  em_reparo
+  cobrada
+  resolvida
+  baixada
+}
+
+Enum papel_usuario {
+  almoxarife
+}
+
+Enum tipo_notificacao {
+  devolucao_hoje
+  atraso
+  ocorrencia_pendente
+  sistema
+}
+
+// ---------------- DOMÍNIO: CADASTRO (azul) ----------------
+
+Table setores {
+  id integer [pk, increment]
+  nome varchar(100) [not null, unique]
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table grupos_ferramentas {
+  id integer [pk, increment]
+  nome varchar(100) [not null, unique]
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Nível 1 de classificação (era "categorias"). Sem campo descricao.'
+}
+
+Table subgrupos_ferramentas {
+  id integer [pk, increment]
+  grupo_id integer [not null, ref: > grupos_ferramentas.id]
+  nome varchar(100) [not null]
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (grupo_id, nome) [unique]
+  }
+
+  Note: 'Nível 2 (ex.: grupo "Ferramentas Manuais" -> subgrupo "Chave 3/8"). NOVO em 02/09/2026.'
+}
+
+Table atividades {
+  id integer [pk, increment]
+  nome varchar(100) [not null, unique]
+  descricao text
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Catálogo rápido para seleção no front. Campo livre complementar mora em emprestimos.atividade_observacao.'
+}
+
+// ---------------- DOMÍNIO: SEGURANÇA (roxo) ----------------
+
+Table usuarios {
+  id integer [pk, increment]
+  nome varchar(150) [not null]
+  email varchar(150) [not null, unique]
+  senha_hash varchar(255) [not null, note: 'bcrypt — auth própria, sem Supabase']
+  papel papel_usuario [not null, default: 'almoxarife']
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table auditoria {
+  id integer [pk, increment]
+  tabela varchar(50) [not null]
+  operacao varchar(20) [not null]
+  registro_id integer
+  dados_anteriores jsonb
+  dados_novos jsonb
+  usuario_id integer [ref: > usuarios.id]
+  ip_origem varchar(50)
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Sem FK para a tabela/registro auditado (referência genérica por nome + id).'
+}
+
+// ---------------- DOMÍNIO: OPERAÇÃO (azul) ----------------
+
+Table colaboradores {
+  id integer [pk, increment]
+  nome varchar(150) [not null]
+  matricula varchar(50) [not null, unique]
+  setor_id integer [not null, ref: > setores.id]
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    Simplificado em 02/09/2026: sem codigo_cracha nem cargo (Regra 5).
+    setor_id continua obrigatório — o fluxo real precisa "puxar nome e
+    setor" a partir da matrícula digitada (relatório da visita técnica).
+  '''
+}
+
+Table ferramentas {
+  id integer [pk, increment]
+  nome varchar(150) [not null]
+  descricao text
+  marca varchar(100)
+  modelo varchar(100)
+  codigo_identificacao int16 [note: 'smallint 1-9999, gerado por trigger, reaproveitável']
+  grupo_id integer [not null, ref: > grupos_ferramentas.id]
+  subgrupo_id integer [ref: > subgrupos_ferramentas.id]
+  setor_id integer [ref: > setores.id]
+  localizacao varchar(150) [note: 'endereçamento específico, ex.: "Gaveta B3" — além do setor']
+  status status_ferramenta [not null, default: 'disponivel']
+  motivo_indisponivel motivo_indisponibilidade
+  eh_kit boolean [not null, default: false]
+  valor_aquisicao decimal(10,2)
+  foto_url text
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    codigo_identificacao [unique, note: 'PARCIAL: WHERE ativo = true — permite reaproveitar código de ferramenta baixada']
+  }
+
+  Note: '''
+    codigo_identificacao substitui codigo_patrimonio (SF+6 dígitos, obsoleto).
+    Gerado automaticamente (trigger fn_gera_codigo_identificacao), gravado
+    fisicamente a lápis elétrico pela manutenção. Sem etiqueta/Code128.
+  '''
+}
+
+Table itens_kit {
+  id integer [pk, increment]
+  ferramenta_id integer [not null, ref: > ferramentas.id]
+  nome varchar(100) [not null]
+  ativo boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (ferramenta_id, nome) [unique]
+  }
+
+  Note: '''
+    NOVO em 02/09/2026. Peça individual de um kit (ferramenta com eh_kit=true).
+    Trigger fn_valida_item_kit garante que só existe sob uma ferramenta-kit.
+  '''
+}
+
+// ---------------- DOMÍNIO: MOVIMENTAÇÃO (verde) ----------------
+
+Table emprestimos {
+  id integer [pk, increment]
+  ferramenta_id integer [not null, ref: > ferramentas.id]
+  item_kit_id integer [ref: > itens_kit.id, note: 'nulo = kit inteiro (se eh_kit) ou ferramenta simples']
+  colaborador_id integer [not null, ref: > colaboradores.id]
+  setor_destino_id integer [not null, ref: > setores.id]
+  atividade_id integer [ref: > atividades.id, note: 'OPCIONAL — corrigido 02/09/2026, ver Regra 4']
+  atividade_observacao text [note: 'campo livre complementar, ex. quando atividade = "Outro"']
+  usuario_retirada_id integer [not null, ref: > usuarios.id]
+  usuario_devolucao_id integer [ref: > usuarios.id]
+  data_retirada timestamptz [not null, default: `now()`]
+  previsao_devolucao timestamptz [not null]
+  data_devolucao timestamptz
+  condicao_devolucao condicao_devolucao
+  observacoes_retirada text
+  observacoes_devolucao text
+  ordem_servico varchar(50)
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (ferramenta_id, item_kit_id) [unique, note: 'PARCIAL: WHERE data_devolucao IS NULL. COALESCE(item_kit_id,0) na prática.']
+  }
+
+  Note: '''
+    Núcleo transacional.
+    REGRA 1: no máximo um empréstimo aberto por (ferramenta, item_kit).
+    REGRA 11 (kit): trigger fn_valida_kit_exclusividade impede emprestar o
+    kit inteiro com peça aberta, e vice-versa — o índice sozinho não cobre
+    esse cruzamento.
+  '''
+}
+
+Table ocorrencias {
+  id integer [pk, increment]
+  emprestimo_id integer [ref: > emprestimos.id]
+  ferramenta_id integer [not null, ref: > ferramentas.id]
+  item_kit_id integer [ref: > itens_kit.id]
+  colaborador_id integer [ref: > colaboradores.id]
+  tipo varchar(50) [not null]
+  descricao text [not null]
+  status status_ocorrencia [not null, default: 'aberta']
+  custo_estimado decimal(10,2)
+  custo_real decimal(10,2)
+  data_resolucao timestamptz
+  observacoes_resolucao text
+  registrada_por integer [not null, ref: > usuarios.id]
+  resolvida_por integer [ref: > usuarios.id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Aberta automaticamente pela trigger fn_abre_ocorrencia na devolução com avaria/perda.'
+}
+
+Table notificacoes {
+  id integer [pk, increment]
+  usuario_id integer [ref: > usuarios.id]
+  tipo tipo_notificacao [not null]
+  titulo varchar(150) [not null]
+  mensagem text [not null]
+  lida boolean [not null, default: false]
+  link varchar(255)
+  created_at timestamptz [not null, default: `now()`]
+}
+
+// ---------------- APOIO / EXTERNO (cinza) ----------------
+
+Table feriados {
+  id integer [pk, increment]
+  data date [not null, unique]
+  nome varchar(150) [not null]
+  tipo varchar(50)
+  ano integer [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Cache local da BrasilAPI. Sem FK — só consultada pela aplicação para cálculo de dias úteis.'
+}
