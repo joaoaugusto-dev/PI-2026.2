@@ -153,7 +153,7 @@ Table ferramentas {
   descricao text
   marca varchar(100)
   modelo varchar(100)
-  codigo_identificacao int16 [note: 'smallint 1-9999, gerado por trigger, reaproveitável']
+  codigo_identificacao smallint [note: 'smallint 1-9999, gerado por trigger, reaproveitável']
   grupo_id integer [not null, ref: > grupos_ferramentas.id]
   subgrupo_id integer [ref: > subgrupos_ferramentas.id]
   setor_id integer [ref: > setores.id]

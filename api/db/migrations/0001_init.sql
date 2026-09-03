@@ -153,8 +153,8 @@ CREATE TABLE IF NOT EXISTS ferramentas (
     foto_url TEXT,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_subgrupo_pertence_grupo_check CHECK (TRUE) -- validado por trigger (subgrupo x grupo), ver fn_valida_subgrupo
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    -- subgrupo x grupo é validado pela trigger fn_valida_subgrupo, não por CHECK
 );
 
 -- Unicidade do código só entre ferramentas ativas (permite reaproveitar o

@@ -135,7 +135,7 @@ Duas formas simples, sem precisar escrever nada:
    *Tables* e escolha **ER Diagram For Tables**. Gera o diagrama a partir do banco
    real, já com os dados existentes.
 2. **[dbdiagram.io](https://dbdiagram.io)** (gratuito, sem instalar nada) — cole o
-   conteúdo do arquivo `docs/der.dbml` do projeto e o diagrama aparece na hora,
+   conteúdo do arquivo `docs/bd/der.dbml` do projeto e o diagrama aparece na hora,
    editável.
 
 ## Como conectar

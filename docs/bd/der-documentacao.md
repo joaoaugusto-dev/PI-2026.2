@@ -1,7 +1,7 @@
 # DB-02 — Modelo Conceitual e Lógico (DER) — Revisão 02/09/2026
 
 **Issue:** [#21](https://github.com/joaoaugusto-dev/PI-2026.2/issues/21) · **Responsável:** Henrique de Oliveira Molinari
-**Entregáveis:** `docs/der.png`, `docs/der.dbml`
+**Entregáveis:** `docs/bd/der-visual-dbdiagram.png`, `docs/bd/der.dbml`
 
 ---
 
@@ -17,7 +17,7 @@ o schema:
 | Identificação da ferramenta | `codigo_patrimonio` (`SF` + 6 dígitos, calculado do `id`, com etiqueta Code128) | `codigo_identificacao` (smallint, 4 dígitos, gerado por trigger, **reaproveitável** quando a ferramenta é baixada) |
 | Classificação de ferramentas | `categorias` (tabela única, com `descricao`) | `grupos_ferramentas` (sem `descricao`) + **nova** `subgrupos_ferramentas` (nível 2) |
 | Jogo de ferramentas (chaves) | Não resolvido — bloqueio explícito da issue | **Nova tabela `itens_kit`** + campo `ferramentas.eh_kit` + trigger de exclusividade |
-| Campos novos em `ferramentas` | — | `marca`, `modelo`, `localizacao`, `foto_url` |
+| Campos novos em `ferramentas` | — | `marca`, `modelo`, `valor_aquisicao` (`localizacao_padrao` foi renomeado para `localizacao`; `foto_url` já existia) |
 | `emprestimos.atividade_id` | `NOT NULL` | **Opcional** — corrigido nesta revisão (ver Seção 3) |
 | Dono do processo | "almoxarifado" (nas telas/nomes de issue) | Manutenção — o almoxarifado geral só cuida de consumíveis |
 | Total de tabelas | 11 | **13** |
@@ -85,7 +85,7 @@ cadastro de ferramenta, não um evento.
 
 ## 3. Como usar os arquivos entregues
 
-- **`der.png`** — imagem final, para os slides de apresentação e o README.
+- **`der-visual-dbdiagram.png`** — imagem final, para os slides de apresentação e o README.
 - **`der.dbml`** — cole em [dbdiagram.io](https://dbdiagram.io) → "Import
   DBML" para editar visualmente. Exporte de volta como `.dbml` para manter os
   dois em sincronia.

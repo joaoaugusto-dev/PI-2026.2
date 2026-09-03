@@ -104,8 +104,9 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
 3. **Avaria ou perda na devolução abre uma ocorrência automaticamente**, herdando
    o colaborador responsável, e move a ferramenta para `indisponivel` com o
    motivo gravado.
-4. **Atividade é campo obrigatório** na retirada — para que a ferramenta vai ser
-   usada.
+4. **Atividade é campo opcional** na retirada — para que a ferramenta vai ser
+   usada, quando informada. Correção feita após a visita técnica (issue DB-01):
+   o relatório da visita é explícito em "motivo/atividade opcional".
 5. **Identificação do colaborador** aceita matrícula, código de crachá ou nome. Se
    não encontrar, abre cadastro rápido no meio do fluxo, sem perder o que já foi
    preenchido.
