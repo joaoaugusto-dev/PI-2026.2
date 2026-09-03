@@ -31,7 +31,7 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 
 ## Banco
 
-- [Modelagem e regras do banco](docs/banco.md)
+- [Modelagem e regras do banco](docs/bd/banco.md)
 
 ## API
 
