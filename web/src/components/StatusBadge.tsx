@@ -7,6 +7,12 @@ export type Status = 'disponivel' | 'em-uso' | 'indisponivel' | 'atraso'
  * Cada estado tem forma propria (circulo cheio / circulo vazado / quadrado /
  * triangulo) alem do rotulo em texto.
  */
+/*
+ * Todo marcador ocupa a mesma caixa `size-2`, centrada — inclusive o
+ * triangulo, desenhado com `clip-path` em vez de borda. Se a caixa nao for
+ * simetrica em todos os estados, o halo de `.status-vivo` (que se ancora no
+ * `inset` desse elemento) sai descentralizado so no estado que for diferente.
+ */
 const estados = {
   disponivel: {
     label: 'Disponível',
@@ -27,7 +33,7 @@ const estados = {
   atraso: {
     label: 'Atrasado',
     className: 'border-status-atraso/30 bg-status-atraso/10 text-status-atraso',
-    marca: 'size-0 border-x-4 border-x-transparent border-b-[7px] border-b-current',
+    marca: 'size-2 bg-current [clip-path:polygon(50%_6%,95%_94%,5%_94%)]',
   },
 } as const
 
