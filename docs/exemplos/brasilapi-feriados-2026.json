@@ -1,0 +1,86 @@
+[
+  {
+    "date": "2026-01-01",
+    "name": "Confraternização mundial",
+    "type": "national",
+    "weekday": "quinta-feira"
+  },
+  {
+    "date": "2026-02-16",
+    "name": "Carnaval",
+    "type": "national",
+    "weekday": "segunda-feira"
+  },
+  {
+    "date": "2026-02-17",
+    "name": "Carnaval",
+    "type": "national",
+    "weekday": "terça-feira"
+  },
+  {
+    "date": "2026-04-03",
+    "name": "Sexta-feira Santa",
+    "type": "national",
+    "weekday": "sexta-feira"
+  },
+  {
+    "date": "2026-04-05",
+    "name": "Páscoa",
+    "type": "national",
+    "weekday": "domingo"
+  },
+  {
+    "date": "2026-04-21",
+    "name": "Tiradentes",
+    "type": "national",
+    "weekday": "terça-feira"
+  },
+  {
+    "date": "2026-05-01",
+    "name": "Dia do trabalho",
+    "type": "national",
+    "weekday": "sexta-feira"
+  },
+  {
+    "date": "2026-06-04",
+    "name": "Corpus Christi",
+    "type": "national",
+    "weekday": "quinta-feira"
+  },
+  {
+    "date": "2026-09-07",
+    "name": "Independência do Brasil",
+    "type": "national",
+    "weekday": "segunda-feira"
+  },
+  {
+    "date": "2026-10-12",
+    "name": "Nossa Senhora Aparecida",
+    "type": "national",
+    "weekday": "segunda-feira"
+  },
+  {
+    "date": "2026-11-02",
+    "name": "Finados",
+    "type": "national",
+    "weekday": "segunda-feira"
+  },
+  {
+    "date": "2026-11-15",
+    "name": "Proclamação da República",
+    "type": "national",
+    "weekday": "domingo"
+  },
+  {
+    "date": "2026-11-20",
+    "name": "Dia da consciência negra",
+    "type": "national",
+    "weekday": "sexta-feira"
+  },
+  {
+    "date": "2026-12-25",
+    "name": "Natal",
+    "type": "national",
+    "weekday": "sexta-feira"
+  }
+]
