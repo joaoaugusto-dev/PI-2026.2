@@ -41,9 +41,11 @@ const nav = [
   },
   {
     label: 'Sistema',
-    items: [
-      { to: '/status', label: 'Status da API' },
-    ],
+    items: [{ to: '/status', label: 'Status da API' }],
+  },
+  {
+    label: 'Referência',
+    items: [{ to: '/design-system', label: 'Design system' }],
   },
 ]
 

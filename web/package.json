@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:motion": "! grep -oE '@keyframes [a-z-]+\\{[^@]*\\}\\}' dist/assets/*.css | grep -E '(width|height|top|left|right|bottom|margin|padding|box-shadow):' && echo 'motion ok: nenhum keyframe anima propriedade de layout'"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

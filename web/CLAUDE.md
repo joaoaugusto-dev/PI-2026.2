@@ -93,10 +93,75 @@ não filhas do layout autenticado.
   nunca usar verde/âmbar em botão ou área de marca. Espaçamento reaproveita a
   escala padrão do Tailwind (já em múltiplos de 4px, sem token custom).
   Tipografia usa Geist Variable (`--font-sans`) e uma stack mono nativa
-  (`--font-mono`, sem dependência nova) para código de patrimônio. Durações de
-  movimento (`--motion-state` 140ms, `--motion-screen` 240ms,
-  `--motion-stagger` 20ms, `--motion-reduced` 80ms) ficam como tokens prontos
-  para a FE-08/FE-06 consumirem.
+  (`--font-mono`, sem dependência nova) para código de patrimônio. Movimento vive no
+  bloco "Movimento (FE-01)" do `index.css` e é a única fonte de animação do
+  front — ver o item de movimento abaixo.
+  A **página de estilos** da issue vive em `src/pages/DesignSystemPage.tsx`
+  (rota `/design-system`, link no grupo "Referência" da sidebar): é ela que
+  documenta paleta, escala tipográfica, os 4 estados de status, estados de
+  botão/campo, KPI cards, movimento e uso dos logos — substitui a página do
+  Figma prevista no enunciado da FE-01. Ao mudar um token, atualizar a página
+  junto.
+  Tokens de tipografia (`--text-display` 40px, `--text-titulo` 25px,
+  `--text-secao`/`--text-corpo` 16px, `--text-rotulo` 11px, `--text-kpi` 38px)
+  geram utilitários Tailwind (`text-display`, `text-corpo`, ...) — usar esses
+  em vez de `text-2xl`/`text-sm` avulsos. Texto corrido nunca abaixo de 14px;
+  `text-rotulo` (11px) é exceção só para label caixa-alta.
+  Altura mínima de controle: `--control-h` (56px, qualquer ação principal —
+  operador de luva) e `--control-h-fluxo` (60px, botões fixos de retirada/
+  devolução). Os primitivos do shadcn vêm com alturas menores (`h-8`); os
+  wrappers dimensionados são responsabilidade da **FE-08**, até lá aplicar
+  `h-(--control-h)` na chamada.
+- **Movimento e animação (FE-01)** ficam centralizados em `src/index.css`:
+  - **Regra de 60fps:** animação só toca `transform` e `opacity` — as duas
+    propriedades que o compositor resolve sem layout nem repaint. Nunca
+    animar `width`/`height`/`top`/`left`/`margin`/`box-shadow`.
+    `npm run check:motion` (depois do `build`) falha se algum keyframe do CSS
+    gerado animar propriedade de layout.
+  - **Durações:** `--motion-state` 140ms (hover/foco/pressionado),
+    `--motion-screen` 240ms (tela e modal, nunca acima de 300ms),
+    `--motion-stagger` 20ms, `--motion-reduced` 80ms. Easing único:
+    `--ease-soufer` (`cubic-bezier(.2, 0, 0, 1)`).
+  - **`--default-transition-duration`/`--default-transition-timing-function`
+    apontam para esses tokens**, então todo utilitário `transition-*` do
+    Tailwind já nasce no tempo do design system — não repetir
+    `duration-*`/`ease-*` em cada tela.
+  - **Animações nomeadas:** `animate-entrada` (fade + 8px, toda página e
+    card), `animate-reconhecido` (leitura de código aceita, FE-09),
+    `animate-erro` (código recusado — nega o gesto, não pisca cor),
+    `animate-atraso` (único loop permitido no sistema, só no KPI de
+    atrasadas). A classe `.lista-stagger` escalona só os 6 primeiros filhos.
+  - **`prefers-reduced-motion`** é tratado globalmente (os keyframes são
+    redefinidos para só opacidade em 80ms) — componente novo já entra
+    coberto, ninguém precisa lembrar.
+  - **Movimento contínuo (loop)** é para estado *em andamento*, não para
+    decoração: `animate-atraso` (KPI de atrasadas), `.status-vivo` (halo que
+    respira em `--motion-ambiente` 3,2s no marcador de um status em
+    andamento — `StatusBadge` liga com a prop `vivo`) e `.brilho`
+    (varredura de carregamento). O halo anima **escala e opacidade**, nunca a
+    cor: cor é repaint a cada quadro, escala/opacidade o compositor resolve
+    sozinho.
+  - **Loop só em elemento singular** — cabeçalho de detalhe, KPI, chip de
+    filtro. Nunca dentro de linha de tabela: 400 linhas respirando são 400
+    camadas compostas por quadro. A exceção é `.brilho` no skeleton, que é
+    temporário e limitado a uma tela.
+  - **`.transicao-status`** faz a mudança de status (disponível → em uso)
+    atravessar a cor em `--motion-screen` em vez de saltar. É transição
+    disparada por mudança de dado, não loop — o `StatusBadge` já a aplica.
+  - Animação nova não entra direto na tela: entra como token/keyframe aqui e
+    é demonstrada na página de estilos (seções "Animações · demonstração" e
+    "Movimento contínuo").
+- **`StatusBadge` (`src/components/StatusBadge.tsx`)** é o único jeito de
+  exibir status: cada estado tem forma própria além da cor (círculo cheio /
+  círculo vazado / quadrado / triângulo) — status nunca é comunicado só por
+  cor. `atraso` sempre mostra o número de dias.
+- **Logos** ficam em `web/public/brand/` (PNG com transparência, versionados
+  no repositório): `soufer-negativo.png` = sidebar e login (ambiente
+  administrativo); `soufer-assinatura.png` = documentos, etiquetas grandes e
+  impressos em fundo claro; `soufer-industrial.png` = exclusivo do quiosque
+  de consulta pública; `soufer-branco.png` = monocromático, só quando a
+  esfera vermelha não é possível. Referenciar sempre por esses caminhos, sem
+  copiar o arquivo para dentro de `src/`.
 - **Sidebar/login sempre no visual negativo** (fundo escuro, logo branco) é
   regra de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
   `index.css`.

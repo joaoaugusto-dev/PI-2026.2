@@ -9,6 +9,26 @@
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;
     --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    /* Escala tipografica (FE-01) — corpo 16px e nada de texto corrido abaixo
+       de 14px; `rotulo` (11px) e a unica excecao, so em label caixa-alta. */
+    --text-display: 2.5rem;
+    --text-display--line-height: 1.1;
+    --text-display--font-weight: 600;
+    --text-titulo: 1.5625rem;
+    --text-titulo--line-height: 1.2;
+    --text-titulo--font-weight: 600;
+    --text-secao: 1rem;
+    --text-secao--line-height: 1.4;
+    --text-secao--font-weight: 600;
+    --text-corpo: 1rem;
+    --text-corpo--line-height: 1.5;
+    --text-rotulo: 0.6875rem;
+    --text-rotulo--line-height: 1.2;
+    --text-rotulo--font-weight: 500;
+    --text-kpi: 2.375rem;
+    --text-kpi--line-height: 1.05;
+    --text-kpi--font-weight: 600;
     --color-brand-red: var(--brand-red);
     --color-brand-red-dark: var(--brand-red-dark);
     --color-status-disponivel: var(--status-disponivel);
@@ -64,11 +84,17 @@
     --status-indisponivel: #E30613;
     --status-atraso: #C77700;
 
-    /* Movimento — durações e easing (FE-01) */
-    --motion-state: 140ms cubic-bezier(.2, 0, 0, 1);
-    --motion-screen: 240ms cubic-bezier(.2, 0, 0, 1);
+    /* Altura minima de controle — o operador pode estar de luva (FE-01) */
+    --control-h: 3.5rem;
+    --control-h-fluxo: 3.75rem;
+
+    /* Movimento — durações (FE-01). O easing fica em --ease-soufer, no
+       @theme abaixo, para o Tailwind gerar os utilitários a partir dele. */
+    --motion-state: 140ms;
+    --motion-screen: 240ms;
     --motion-stagger: 20ms;
     --motion-reduced: 80ms;
+    --motion-ambiente: 3.2s;
 
     --background: oklch(1 0 0);
     --foreground: #1D1D1B;
@@ -136,6 +162,221 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* ---------------------------------------------------------------------------
+   Movimento (FE-01)
+
+   Regra de 60fps: animação só toca `transform` e `opacity` — as duas
+   propriedades que o compositor resolve sem layout nem repaint. Nunca animar
+   width/height/top/left/margin/box-shadow: cada quadro vira reflow e o
+   almoxarifado roda em máquina fraca.
+--------------------------------------------------------------------------- */
+@theme {
+    --ease-soufer: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Todo utilitário `transition-*` do Tailwind já nasce no tempo de estado
+       do design system — não precisa repetir duration/ease em cada tela. */
+    --default-transition-duration: var(--motion-state);
+    --default-transition-timing-function: var(--ease-soufer);
+
+    --animate-entrada: entrada var(--motion-screen) var(--ease-soufer) both;
+    --animate-reconhecido: reconhecido 420ms var(--ease-soufer);
+    --animate-erro: erro 260ms var(--ease-soufer);
+    --animate-atraso: atraso 2s var(--ease-soufer) infinite;
+    --animate-respiro: respiro var(--motion-ambiente) var(--ease-soufer) infinite;
+    --animate-brilho: brilho 1.4s linear infinite;
+
+    /* Entrada de tela, card e linha de lista. */
+    @keyframes entrada {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 8px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* Leitura de código aceita (FE-09): confirma sem tirar o foco do campo. */
+    @keyframes reconhecido {
+        0% {
+            transform: scale(1);
+        }
+        45% {
+            transform: scale(1.025);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    /* Código inválido: nega o gesto, não pisca cor. */
+    @keyframes erro {
+        0%,
+        100% {
+            transform: none;
+        }
+        25% {
+            transform: translate3d(-4px, 0, 0);
+        }
+        65% {
+            transform: translate3d(3px, 0, 0);
+        }
+    }
+
+    /* Halo do estado contínuo: escala + opacidade, nunca a cor em si — cor
+       é repaint, escala e opacidade o compositor resolve sozinho. */
+    @keyframes respiro {
+        0%,
+        100% {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.06;
+            transform: scale(2);
+        }
+    }
+
+    /* Varredura de carregamento: translada, não muda gradiente. */
+    @keyframes brilho {
+        from {
+            transform: translate3d(-100%, 0, 0);
+        }
+        to {
+            transform: translate3d(100%, 0, 0);
+        }
+    }
+
+    @keyframes atraso {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.55;
+        }
+    }
+}
+
+@layer components {
+    /* Movimento contínuo (respiração) de um estado em andamento.
+       Só em elemento singular — cabeçalho de detalhe, KPI, chip de filtro.
+       NUNCA dentro de linha de tabela: 400 linhas respirando são 400 camadas
+       compostas por quadro. */
+    .status-vivo {
+        position: relative;
+    }
+    .status-vivo::after {
+        content: "";
+        position: absolute;
+        inset: -0.3rem;
+        border-radius: 9999px;
+        background: currentColor;
+        animation: var(--animate-respiro);
+        pointer-events: none;
+    }
+
+    /* Mudança de status (disponível -> em uso) atravessa a cor em 240ms em vez
+       de saltar. É transição, não loop: acontece uma vez, quando o dado muda. */
+    .transicao-status {
+        transition-property: color, background-color, border-color;
+        transition-duration: var(--motion-screen);
+        transition-timing-function: var(--ease-soufer);
+    }
+
+    /* Carregamento: faixa que varre a superfície. Vive num container com
+       overflow-hidden e substitui o pulse de opacidade do skeleton. */
+    .brilho {
+        position: relative;
+        overflow: hidden;
+    }
+    .brilho::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in oklch, var(--foreground) 8%, transparent),
+            transparent
+        );
+        animation: var(--animate-brilho);
+    }
+
+    /* Lista escalonada: só os 6 primeiros itens animam. Do 7º em diante a
+       espera acumulada passa a ser percebida como lentidão, e uma lista de
+       400 ferramentas viraria uma cascata infinita. */
+    .lista-stagger > * {
+        animation: var(--animate-entrada);
+    }
+    .lista-stagger > *:nth-child(1) {
+        animation-delay: 0ms;
+    }
+    .lista-stagger > *:nth-child(2) {
+        animation-delay: var(--motion-stagger);
+    }
+    .lista-stagger > *:nth-child(3) {
+        animation-delay: calc(2 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(4) {
+        animation-delay: calc(3 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(5) {
+        animation-delay: calc(4 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(6) {
+        animation-delay: calc(5 * var(--motion-stagger));
+    }
+    .lista-stagger > *:nth-child(n + 7) {
+        animation: none;
+    }
+}
+
+/* prefers-reduced-motion: some a translação, mantém só a opacidade em 80ms.
+   Redefinir o keyframe aqui é o que garante que nada mais se move — não
+   adianta só encurtar a duração. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: var(--motion-reduced) !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: var(--motion-reduced) !important;
+        scroll-behavior: auto !important;
+    }
+
+    @keyframes entrada {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes reconhecido {
+        from,
+        to {
+            transform: none;
+        }
+    }
+
+    @keyframes erro {
+        from,
+        to {
+            transform: none;
+        }
+    }
+
+    /* Movimento contínuo simplesmente não existe em reduced motion — parar o
+       loop no meio deixaria o halo congelado sobre o marcador. */
+    .status-vivo::after,
+    .brilho::after {
+        display: none;
+    }
 }
 
 @layer base {
