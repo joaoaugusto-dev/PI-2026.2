@@ -1,3 +1,27 @@
+<div style="text-align:center; margin-top:1.5cm;">
+
+<p style="text-align:center; font-weight:bold; margin:0;">UNIFEOB</p>
+<p style="text-align:center; font-weight:bold; margin:0.5em 0 0 0; line-height:1.4;">CENTRO UNIVERSITÁRIO DA FUNDAÇÃO DE ENSINO<br>OCTÁVIO BASTOS</p>
+<p style="text-align:center; font-weight:bold; margin:0.5em 0 0 0;">ESCOLA DE NEGÓCIOS</p>
+
+<p style="text-align:center; font-weight:bold; margin:2.2cm 0 0 0;">ANÁLISE E DESENVOLVIMENTO DE SISTEMAS</p>
+<p style="text-align:center; font-weight:bold; margin:0.5em 0 0 0;">CIÊNCIAS DA COMPUTAÇÃO</p>
+
+<p style="text-align:center; font-weight:bold; margin:2.2cm 0 0 0;">Computação em Nuvem</p>
+
+<p style="text-align:center; font-weight:bold; text-decoration:underline; margin:2.2cm 0 0 0;">ESTUDANTES:</p>
+<p style="text-align:center; margin:0.8em 0 0 0;">25000151 - Guilherme Portilho da Rosa Santi</p>
+<p style="text-align:center; margin:0.3em 0 0 0;">25001176 - Henrique de Oliveira Molinari</p>
+<p style="text-align:center; margin:0.3em 0 0 0;">25000019 - João Augusto de Freitas</p>
+<p style="text-align:center; margin:0.3em 0 0 0;">25000795 - Kauan Leander Leandrini</p>
+
+<p style="text-align:center; margin:2.8cm 0 0 0;">São João da Boa Vista&ndash;SP</p>
+<p style="text-align:center; margin:0.5em 0 0 0;">2026</p>
+
+</div>
+
+<div style="page-break-after: always;"></div>
+
 # Configuração do Ambiente e Criação da Estrutura da API
 
 **Disciplina:** Projeto Integrador (PI 2026.2)  
