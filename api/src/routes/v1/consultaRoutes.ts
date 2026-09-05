@@ -23,7 +23,7 @@ const router = Router();
  *             properties:
  *               identificador:
  *                 type: string
- *                 description: Matrícula ou código do crachá do colaborador
+ *                 description: Matrícula do colaborador (mesmo número impresso/codificado no crachá)
  *                 example: MAT001
  *     responses:
  *       200:

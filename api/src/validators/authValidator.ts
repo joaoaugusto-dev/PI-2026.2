@@ -9,7 +9,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const consultaSessaoSchema = z.object({
   identificador: z
-    .string({ required_error: 'Matrícula ou código do crachá é obrigatório' })
+    .string({ required_error: 'Matrícula é obrigatória' })
     .min(1, 'Identificador não pode ser vazio')
     .trim(),
 });

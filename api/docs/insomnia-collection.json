@@ -1,0 +1,115 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-05T13:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v8.6.1",
+  "resources": [
+    {
+      "_id": "wrk_soufer_tools",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "SOUFER Tools API",
+      "description": "Colecao inicial (API-02) -- health, auth e consulta",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_soufer_tools",
+      "name": "Base Environment",
+      "data": {
+        "baseUrl": "http://localhost:3000",
+        "token": ""
+      }
+    },
+    {
+      "_id": "req_root",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET / (info da API)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/",
+      "headers": []
+    },
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/health",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/health",
+      "headers": []
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/auth/login",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"almoxarife@soufer.com.br\",\n  \"senha\": \"123456\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_login_invalido",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/auth/login (senha invalida)",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"almoxarife@soufer.com.br\",\n  \"senha\": \"errada\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_me",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/auth/me",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/auth/me",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_consulta_sessao",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/consulta/sessao",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"MAT001\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_consulta_sessao_nao_encontrado",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/consulta/sessao (matricula inexistente)",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"NAOEXISTE\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    }
+  ]
+}

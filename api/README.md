@@ -95,7 +95,7 @@ Crie as tabelas, triggers e popule os dados de teste:
 # Executa a migration inicial (11 tabelas, enums, triggers, views e índices)
 npm run db:migrate
 
-# Popula setores, categorias, atividades, colaboradores e ferramentas de teste
+# Popula setores, grupos de ferramentas, atividades, colaboradores e ferramentas de teste
 npm run db:seed
 ```
 
@@ -173,7 +173,7 @@ O sistema possui dois modos de acesso via JWT:
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**
-   - Autenticado via `POST /v1/consulta/sessao` informando matrícula ou crachá (sem senha).
+   - Autenticado via `POST /v1/consulta/sessao` informando matrícula (sem senha). O crachá não é um código à parte: fisicamente é a própria matrícula, por isso `colaboradores` não tem coluna `codigo_cracha` (removida na revisão DB-02) e a busca por matrícula já cobre os dois casos.
    - Token temporário válido por **15 minutos**.
    - Acesso restrito somente a rotas de leitura de disponibilidade.
 
@@ -192,9 +192,9 @@ import { z } from 'zod';
 
 export const criarFerramentaSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  categoria_id: z.number().int().positive(),
+  grupo_id: z.number().int().positive(),
   setor_id: z.number().int().positive(),
-  localizacao_padrao: z.string().optional(),
+  localizacao: z.string().optional(),
 });
 
 export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
@@ -288,4 +288,4 @@ router.use('/ferramentas', ferramentasRoutes);
 | Perfil | Identificador / E-mail | Senha | Finalidade |
 |---|---|---|---|
 | **Almoxarife** | `almoxarife@soufer.com.br` | `123456` | Acesso operacional completo |
-| **Consulta (Quiosque)** | Matrícula `MAT001` ou Crachá `CRACH001` | *Sem senha* | Acesso temporário de 15 min |
+| **Consulta (Quiosque)** | Matrícula `MAT001` | *Sem senha* | Acesso temporário de 15 min |

@@ -74,15 +74,17 @@ export class AuthService {
 
   /**
    * Cria uma sessão temporária de 15 minutos para modo consulta (quiosque)
-   * Regra 8 do CLAUDE.md: identificação no quiosque estritamente por matrícula ou crachá
+   * O crachá do colaborador não é um código à parte: fisicamente é a própria
+   * matrícula (impressa/codificada no crachá), por isso colaboradores não
+   * tem coluna codigo_cracha — a busca por matrícula já cobre os dois casos.
    */
   static async criarSessaoConsulta(identificador: string): Promise<ConsultaSessaoResult> {
     const termo = identificador.trim();
 
     const result = await query(
-      `SELECT id, nome, matricula, codigo_cracha, setor_id, ativo 
-       FROM colaboradores 
-       WHERE (matricula = $1 OR codigo_cracha = $1) AND ativo = true
+      `SELECT id, nome, matricula, setor_id, ativo
+       FROM colaboradores
+       WHERE matricula = $1 AND ativo = true
        LIMIT 1`,
       [termo]
     );
@@ -91,7 +93,7 @@ export class AuthService {
 
     if (!colaborador) {
       throw new NotFoundError(
-        'Colaborador não encontrado com a matrícula/crachá informada ou cadastro inativo',
+        'Colaborador não encontrado com a matrícula informada ou cadastro inativo',
         'COLABORADOR_NOT_FOUND'
       );
     }
