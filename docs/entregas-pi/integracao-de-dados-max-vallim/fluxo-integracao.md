@@ -21,8 +21,8 @@ Soufer):
 
 | Arquivo | Formato | Conteúdo |
 |---|---|---|
-| `docs/dados_soufer/LISTA-DE-ITENS-DA-MANUTENÇÃO.docx` | Word, lista de parágrafos | Ferramentas e equipamentos de uso da manutenção (chaves, grifos, escadas, parafusadeira, paleteira, extensões elétricas, torquímetro etc.) |
-| `docs/dados_soufer/RELAÇAO-DE-MATERIAIS-NO-SETOR DE-MANUTENÇÃO.xlsx` | Excel, 2 colunas (`ITEM`, `QUANTIDADE`) | ~123 linhas, majoritariamente peças de reposição e material de consumo da manutenção (rolamentos, parafusos, correias, graxa, óleo) |
+| `dados_soufer/LISTA-DE-ITENS-DA-MANUTENÇÃO.docx` | Word, lista de parágrafos | Ferramentas e equipamentos de uso da manutenção (chaves, grifos, escadas, parafusadeira, paleteira, extensões elétricas, torquímetro etc.) |
+| `dados_soufer/RELAÇAO-DE-MATERIAIS-NO-SETOR DE-MANUTENÇÃO.xlsx` | Excel, 2 colunas (`ITEM`, `QUANTIDADE`) | ~123 linhas, majoritariamente peças de reposição e material de consumo da manutenção (rolamentos, parafusos, correias, graxa, óleo) |
 
 ### Exemplo real de conteúdo
 
@@ -79,7 +79,7 @@ como está, ver observação abaixo):
 ### Uso previsto
 
 Importação para a tabela `ferramentas` (fluxo completo descrito em
-`docs/dados.md`), com a estratégia de carga combinada na visita técnica:
+`dados.md`), com a estratégia de carga combinada na visita técnica:
 
 - **Não importar tudo de uma vez.** Priorizar por valor/giro: primeiro
   máquinas e equipamentos maiores (ex.: parafusadeira, paleteira, escadas,
@@ -102,7 +102,7 @@ em 03/09/2026 para o ano de 2026.
 ### Exemplo real de retorno
 
 Resposta HTTP 200 completa salva em
-[`docs/exemplos/brasilapi-feriados-2026.json`](./exemplos/brasilapi-feriados-2026.json).
+[`exemplos/brasilapi-feriados-2026.json`](./exemplos/brasilapi-feriados-2026.json).
 Trecho:
 
 ```json
@@ -141,14 +141,14 @@ Array de objetos com 4 campos, todos string:
 - Classificação de empréstimo atrasado.
 - Fallback se a API estiver fora: usar o cache local já existente; se o
   cache também estiver vazio, considerar apenas sábado/domingo como não
-  úteis e registrar aviso em log (detalhado em `docs/dados.md`).
+  úteis e registrar aviso em log (detalhado em `dados.md`).
 
 ---
 
 ## Referências relacionadas
 
-- `docs/dados.md` — pipeline de importação/normalização e regras de
+- `dados.md` — pipeline de importação/normalização e regras de
   qualidade de dados (`data:check`).
-- `docs/bd/dicionario-de-dados.md` — schema completo das 13 tabelas,
+- `../../banco-de-dados/dicionario-de-dados.md` — schema completo das 13 tabelas,
   incluindo `ferramentas` e `feriados`.
 - `CLAUDE.md`, Seção 3 — regras de negócio inegociáveis.

@@ -26,7 +26,7 @@ O **AWS Lambda** (Azure Functions / Cloud Functions) foi analisado como uma poss
 
 ### Conclusão & Referência de Custos
 
-Após a revisão arquitetural e simulação financeira detalhada na planilha [`/docs/custos-nuvem.xlsx`](custos-nuvem.xlsx) e no documento [`/docs/custos-nuvem.md`](custos-nuvem.md):
+Após a revisão arquitetural e simulação financeira detalhada na planilha [`/docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/custos-nuvem.xlsx`](custos-nuvem.xlsx) e no documento [`/docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/custos-nuvem.md`](custos-nuvem.md):
 - A **AWS** foi selecionada como provedora primária recomendada devido ao menor custo total mensal (**$29.51/mês** no cenário base com banco gerenciado), impulsionada pelo *Always Free Tier* do CloudFront (1 TB/mês incluso) e facilidade de integração dos serviços.
 - **Azure** e **GCP** foram validadas com paridade funcional para cenários de contingência ou migração futura.
 

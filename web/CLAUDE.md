@@ -173,7 +173,7 @@ concluída (regra do guia raiz, Seção 5).
 
 ---
 
-## Requisitos do PI extraídos de `/docs/Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf`
+## Requisitos do PI extraídos de `/docs/orientacoes/Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf`
 
 Este documento é a fonte oficial de avaliação do módulo. As regras abaixo
 foram extraídas dele e têm prioridade sobre qualquer suposição própria — em

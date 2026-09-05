@@ -37,7 +37,7 @@ Marque os itens validados antes de solicitar a aprovação:
 - [ ] **Limpeza & Segurança:** Sem `console.log`, variáveis não utilizadas, credenciais ou segredos expostos.
 - [ ] **Responsividade (Front-end):** Tela testada e validada em **360px**, **768px** e **1280px**.
 - [ ] **Testes de API (Back-end):** Rota testada no Insomnia/Swagger cobrindo cenário de **sucesso** e de **erro**.
-- [ ] **Documentação:** Documentação afetada atualizada (`/docs/arquitetura.md`, README, dicionário de dados ou diagramas).
+- [ ] **Documentação:** Documentação afetada atualizada (`/docs/backend/arquitetura.md`, README, dicionário de dados ou diagramas).
 - [ ] **Rastreabilidade:** Título do PR e commits seguem Conventional Commits e referenciam a Issue.
 
 ## 🔗 Issues Relacionadas
