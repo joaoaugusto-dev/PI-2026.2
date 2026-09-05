@@ -171,7 +171,7 @@ xychart-beta
 
 ---
 
-## 5. Estrutura da Planilha `docs/custos-nuvem.xlsx`
+## 5. Estrutura da Planilha `docs/nuvem/custos-nuvem.xlsx`
 
 A planilha oficial foi gerada com formatação corporativa, fórmulas dinâmicas e imagens integradas:
 
@@ -195,8 +195,8 @@ A planilha oficial foi gerada com formatação corporativa, fórmulas dinâmicas
 
 Os demonstrativos visuais gerados a partir dos cálculos oficiais encontram-se arquivados em [`prints/`](prints/):
 
-1. **Dashboard Consolidado:** `docs/prints/comparativo_custos_resumo.png`
-2. **Simulação AWS:** `docs/prints/aws_calculator_estimate.png`
-3. **Simulação Azure:** `docs/prints/azure_calculator_estimate.png`
-4. **Simulação GCP:** `docs/prints/gcp_calculator_estimate.png`
+1. **Dashboard Consolidado:** `docs/nuvem/prints/comparativo_custos_resumo.png`
+2. **Simulação AWS:** `docs/nuvem/prints/aws_calculator_estimate.png`
+3. **Simulação Azure:** `docs/nuvem/prints/azure_calculator_estimate.png`
+4. **Simulação GCP:** `docs/nuvem/prints/gcp_calculator_estimate.png`
 

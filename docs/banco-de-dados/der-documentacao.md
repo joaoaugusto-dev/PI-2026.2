@@ -1,7 +1,7 @@
 # DB-02 — Modelo Conceitual e Lógico (DER) — Revisão 02/09/2026
 
 **Issue:** [#21](https://github.com/joaoaugusto-dev/PI-2026.2/issues/21) · **Responsável:** Henrique de Oliveira Molinari
-**Entregáveis:** `docs/bd/der-visual-dbdiagram.png`, `docs/bd/der.dbml`
+**Entregáveis:** `docs/banco-de-dados/der-visual-dbdiagram.png`, `docs/banco-de-dados/der.dbml`
 
 ---
 

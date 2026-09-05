@@ -15,46 +15,49 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 
 # Documentação
 
-Índice da documentação técnica e de projeto do SOUFER Tools.
+Índice da documentação técnica e de projeto do SOUFER Tools, organizada em `/docs`.
 
-## Equipe
+## Orientações
 
-- [Equipe e responsabilidades](docs/equipe.md)
+- [Orientação oficial do PI 2026-2](<docs/orientacoes/Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf>)
+- [Relatório da visita técnica ao almoxarifado/manutenção](docs/orientacoes/VisitaTecnica.pdf)
+- [Equipe e responsabilidades](docs/orientacoes/equipe.md)
+- [Milestones, padrões e checklist](docs/orientacoes/projeto.md)
 
-## Requisitos
+## Entregas PI
 
-- [Relatório da visita técnica ao almoxarifado/manutenção](docs/requisitos.pdf)
+- **Integração de Dados — Max Vallim**
+  - [Entrega 05/09](docs/entregas-pi/integracao-de-dados-max-vallim/entrega-max-05-09-2026.pdf)
+- **Tecnologias para Desenvolvimento Web — Nivaldo Andrade**
+  - [Entrega 05/09](docs/entregas-pi/tecnologias-desenvolvimento-web-nivaldo-andrade/entrega-nivaldo-05-09-2026.pdf)
+- **Computação em Nuvem — Rodrigo Marudi**
+  - _(entregas ainda não versionadas nesta pasta)_
+- **Desenvolvimento de Interfaces de Usuário para Web — Marcelo Ciacco**
+  - _(entregas ainda não versionadas nesta pasta)_
 
-## Arquitetura
+## Frontend
 
-- [Arquitetura geral](docs/arquitetura.md)
+- [Rotas, componentes e interface](docs/frontend/front.md)
 
-## Banco
+## Backend
 
-- [Modelagem e regras do banco](docs/bd/banco.md)
+- [Arquitetura geral](docs/backend/arquitetura.md)
+- [Endpoints e convenções da API](docs/backend/api.md)
+- [Regras de negócio e fluxos](docs/backend/processos.md)
+- [Exemplo de retorno da BrasilAPI](docs/backend/exemplos/brasilapi-feriados-2026.json)
 
-## API
+## Banco de Dados
 
-- [Endpoints e convenções](docs/api.md)
+- [Modelagem e regras do banco](docs/banco-de-dados/banco.md)
+- [Dicionário de dados](docs/banco-de-dados/dicionario-de-dados.md)
+- [Documentação do DER](docs/banco-de-dados/der-documentacao.md)
+- [Integração, importação e qualidade de dados](docs/banco-de-dados/dados.md)
+- [Fluxo de integração de dados externos](docs/banco-de-dados/fluxo-integracao.md)
 
-## Front-end
+## Nuvem
 
-- [Rotas, componentes e interface](docs/front.md)
-
-## Dados
-
-- [Integração, importação e qualidade](docs/dados.md)
-
-## Infraestrutura
-
-- [Infraestrutura, deploy e custos](docs/infraestrutura.md)
-- [Plano de infraestrutura e modelos em nuvem (M2)](docs/infra-plano.md)
-- [Guia de deploy no Dokploy](docs/dokploy.md)
-
-## Processos
-
-- [Regras de negócio e fluxos](docs/processos.md)
-
-## Projeto
-
-- [Milestones, padrões e checklist](docs/projeto.md)
+- [Infraestrutura, deploy e custos](docs/nuvem/infraestrutura.md)
+- [Guia de deploy no Dokploy](docs/nuvem/dokploy.md)
+- [Plano de infraestrutura e modelos em nuvem (M2)](docs/nuvem/infra-plano.md)
+- [Comparativo de custos AWS/Azure/GCP](docs/nuvem/custos-nuvem.md)
+- [Nomenclatura e comparação de serviços entre provedores](docs/nuvem/nomenclatura-provedores.md)
