@@ -85,6 +85,69 @@ Rotas registradas em `api/src/routes/v1/index.ts`.
   Insomnia/Swagger (`/docs`) antes de abrir o PR, conforme o Definition of
   Done padrão (Seção 6 do `CLAUDE.md`).
 
+## Linha do tempo do processo (registro de apoio para o relatório da entrega)
+
+Este registro serve de base para o relatório da atividade a ser anexado na
+entrega parcial — documenta não só o código produzido, mas o processo (branch,
+PR, conflito e revisão) pelo qual ele passou até ficar pronto para merge.
+
+1. **05/09, ~10:40–10:41** — Criada a branch `fix/db-01-integracao-dados` a
+   partir da `main` e feitos 4 commits: correção do `api/db/seed.sql`,
+   integração com a BrasilAPI de feriados, CRUD básico de ferramentas e a
+   primeira versão deste `.md`.
+2. **05/09, ~11:05** — Aberto o PR #115 direcionando para `main`, mas com uma
+   descrição livre, fora do template oficial do repositório
+   (`.github/pull_request_template.md`) e sem referenciar as issues do board
+   do GitHub.
+3. **05/09, ~11:09** — A pedido, o PR #115 foi **fechado** e reaberto como
+   **PR #116**, agora seguindo à risca o template oficial: seções de
+   Descrição, Tipo de Mudança, Área Afetada, Como Testar, Evidências e
+   Definition of Done, além de referenciar as issues reais do board
+   (`Ref #35` DATA-02, `Ref #34` DB-08, `Ref #40` API-05, `Ref #43` API-07)
+   com `Ref` em vez de `Closes`, já que o escopo implementado é parcial em
+   relação ao "pronto quando" de cada uma dessas issues.
+4. **Conflito de merge detectado no PR #116.** Enquanto esta branch estava em
+   andamento, João Augusto de Freitas mergeou o PR #114
+   (`chore/nivaldo-01-09-setup-ambiente-api` — nome de branch referente ao
+   relatório da atividade de extensão do dia 01/09 para o Prof. Nivaldo, não
+   ao conteúdo técnico do PR) na `main`, às 10:58. Esse PR incluía, entre
+   outras coisas, o commit `fix(api-02): corrigir seed.sql para o schema pos
+   revisao DB-02` (10:11) — uma correção **equivalente** à que esta branch já
+   havia feito de forma independente no mesmo arquivo (`api/db/seed.sql`),
+   já que ambos os commits corrigiam a mesma dessincronização com o schema
+   pós-revisão de 02/09. Resultado: dois colaboradores corrigiram o mesmo
+   arquivo em paralelo, e o PR #116 passou a aparecer como `CONFLICTING`
+   contra a `main` atualizada.
+5. **Resolução do conflito:** a branch foi rebaseada sobre a `main`
+   atualizada. No conflito em `api/db/seed.sql`, o commit próprio desta
+   branch foi descartado (`git rebase --skip`) em favor da versão já mergeada
+   pelo PR #114, por ser equivalente e já estar em `main` — evitando reverter
+   ou duplicar o trabalho do colega. Este `.md` foi atualizado para refletir
+   que o ponto do seed não é mais parte desta branch, e a branch foi
+   atualizada no remoto com `git push --force-with-lease` (seguro porque é
+   uma branch de feature individual, sem outros colaboradores commitando
+   nela).
+6. **Revisão automatizada do bot `claude[bot]` no PR #116** apontou dois
+   problemas no código de `api/src/services/feriadoService.ts` e
+   `api/src/validators/feriadoValidator.ts`:
+   - O `catch` de `listarPorAno` tratava **qualquer** erro (inclusive falha
+     do Postgres no `INSERT`/upsert da tabela `feriados`, não só falha da
+     BrasilAPI) como "fonte externa fora do ar", respondendo `200` com o
+     fallback de fim de semana e mascarando um problema de infraestrutura.
+   - `GET /v1/feriados/dia-util` aceitava qualquer ano na data (sem a mesma
+     faixa 2000–ano atual+5 já usada em `GET /v1/feriados`), o que permite
+     repetir chamadas de saída à BrasilAPI para anos fora de alcance a cada
+     requisição anônima — o projeto ainda não tem `express-rate-limit`
+     configurado em nenhuma rota.
+   - Ambos os apontamentos foram avaliados como válidos (o segundo, só
+     parcialmente — a sugestão de exigir autenticação nessa rota **não**
+     fazia sentido, já que é informação pública equivalente a
+     `GET /v1/feriados`) e corrigidos no commit `fix(data-02): nao mascarar
+     falha de banco como fallback de feriados`. As duas threads de revisão
+     foram respondidas e marcadas como resolvidas.
+7. PR #116 permanece aberto, `MERGEABLE`, aguardando aprovação de pelo menos
+   um integrante da equipe conforme o fluxo de PR do `CONTRIBUTING.md`.
+
 ## O que ainda fica de fora desta entrega
 
 - A segunda fonte externa mencionada em `docs/fluxo-integracao.md` (planilhas
