@@ -150,8 +150,8 @@ export function AppLayout() {
       */}
       <div style={sidebarNegativoStyle} className="contents">
         <Sidebar>
-          <SidebarHeader className="items-center px-4 py-4">
-            <img src="/brand/soufer-negativo.png" alt="Soufer Tools" className="w-[85%]" />
+          <SidebarHeader className="px-4 py-4">
+            <img src="/brand/soufer-negativo.png" alt="Soufer Tools" className="mx-auto block w-[85%]" />
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
