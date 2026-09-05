@@ -93,7 +93,7 @@ export class AuthService {
 
     if (!colaborador) {
       throw new NotFoundError(
-        'Colaborador não encontrado com a matrícula/crachá informada ou cadastro inativo',
+        'Colaborador não encontrado com a matrícula informada ou cadastro inativo',
         'COLABORADOR_NOT_FOUND'
       );
     }
