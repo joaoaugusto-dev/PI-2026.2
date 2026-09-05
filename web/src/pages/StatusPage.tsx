@@ -114,7 +114,7 @@ export function StatusPage() {
   const isOffline = isError || (!isLoading && !healthData)
 
   return (
-    <div className="animate-entrada flex-1 space-y-6 p-4 md:p-8 max-w-7xl mx-auto w-full">
+    <div className="flex-1 space-y-6 p-4 md:p-8 max-w-7xl mx-auto w-full">
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
