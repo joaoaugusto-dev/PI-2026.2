@@ -146,7 +146,7 @@ export function StatusPage() {
             size="sm"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-2 text-rotulo"
+            className="flex items-center gap-2 text-rotulo text-primary-foreground"
           >
             <RefreshCw className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`} />
             {isFetching ? 'Verificando...' : 'Verificar Agora'}
@@ -256,7 +256,7 @@ export function StatusPage() {
                     isOffline ? 'bg-status-indisponivel' : 'bg-status-disponivel'
                   }`}
                 />
-                <span className="text-titulo">
+                <span className="text-secao">
                   {isOffline ? 'Inacessível' : 'Online'}
                 </span>
               </div>
@@ -294,7 +294,7 @@ export function StatusPage() {
                       : 'bg-status-atraso'
                   }`}
                 />
-                <span className="text-titulo capitalize">
+                <span className="text-secao capitalize">
                   {healthData?.data?.database?.status === 'connected' ? 'Conectado' : 'Desconectado'}
                 </span>
               </div>
@@ -324,7 +324,7 @@ export function StatusPage() {
             {isLoading && !healthData ? (
               <Skeleton className="h-6 w-24" />
             ) : (
-              <div className="text-titulo font-mono">
+              <div className="text-secao font-mono">
                 {healthData?.data?.uptime !== undefined
                   ? formatUptime(healthData.data.uptime)
                   : 'N/A'}
@@ -354,7 +354,7 @@ export function StatusPage() {
               <Skeleton className="h-6 w-24" />
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-titulo font-mono">
+                <span className="text-secao font-mono">
                   {latency !== null ? `${latency} ms` : 'N/A'}
                 </span>
                 {latency !== null && (
