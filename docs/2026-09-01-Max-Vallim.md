@@ -78,12 +78,35 @@ Rotas registradas em `api/src/routes/v1/index.ts`.
 
 - `npx tsc --noEmit` (dentro de `/api`) rodou sem erros após todas as
   alterações.
-- Não foi possível validar as rotas novas ponta a ponta contra um banco
-  PostgreSQL local nesta sessão (sem credenciais de acesso ao Postgres
-  instalado na máquina) — recomenda-se rodar `npm run db:migrate` seguido de
-  `npm run db:seed` e testar manualmente os endpoints acima via
-  Insomnia/Swagger (`/docs`) antes de abrir o PR, conforme o Definition of
-  Done padrão (Seção 6 do `CLAUDE.md`).
+- **Fonte externa testada de verdade, fora do código da API:** chamada direta
+  à BrasilAPI confirmando que o endpoint que `feriadoService.ts` consome
+  responde e traz dado real:
+
+  ```
+  $ curl -s -w "\nHTTP_STATUS:%{http_code}\n" https://brasilapi.com.br/api/feriados/v1/2026
+
+  [{"date":"2026-01-01","name":"Confraternização mundial","type":"national","weekday":"quinta-feira"},
+   ...
+   {"date":"2026-09-07","name":"Independência do Brasil","type":"national","weekday":"segunda-feira"},
+   ...
+   {"date":"2026-12-25","name":"Natal","type":"national","weekday":"sexta-feira"}]
+  HTTP_STATUS:200
+  ```
+
+  O dia `2026-09-07` (Independência) aparece na resposta, confirmando que
+  `GET /v1/feriados/dia-util?data=2026-09-07` retornaria `diaUtil: false`
+  assim que a API sincronizar esse ano.
+- **Não foi possível validar as rotas novas ponta a ponta contra um banco
+  PostgreSQL** nesta sessão: a instância local já instalada na máquina tem
+  senha do usuário `postgres` desconhecida, e resetá-la exigiria reiniciar o
+  serviço do Windows (`postgresql-x64-18`), ação que exige permissão de
+  administrador que não estava disponível. A tentativa foi abandonada sem
+  deixar alteração nenhuma no sistema (a edição temporária de teste em
+  `pg_hba.conf` foi revertida e conferida byte a byte contra o backup antes
+  de desistir). Fica como pendência para quem for validar localmente:
+  `npm run db:migrate` seguido de `npm run db:seed` e teste manual dos
+  endpoints via Insomnia/Swagger (`/docs`), conforme o Definition of Done
+  padrão (Seção 6 do `CLAUDE.md`).
 
 ## Linha do tempo do processo (registro de apoio para o relatório da entrega)
 
@@ -145,8 +168,20 @@ PR, conflito e revisão) pelo qual ele passou até ficar pronto para merge.
      `GET /v1/feriados`) e corrigidos no commit `fix(data-02): nao mascarar
      falha de banco como fallback de feriados`. As duas threads de revisão
      foram respondidas e marcadas como resolvidas.
-7. PR #116 permanece aberto, `MERGEABLE`, aguardando aprovação de pelo menos
-   um integrante da equipe conforme o fluxo de PR do `CONTRIBUTING.md`.
+7. **PR #116 mergeado na `main`** (commit de merge `72702e1`), encerrando esta
+   atividade.
+
+## Resultado
+
+A integração com a BrasilAPI e o CRUD básico de ferramentas estão
+implementados, com typecheck limpo e a fonte externa confirmada por chamada
+real (seção "Verificação"). O código passou por uma rodada de revisão
+automatizada que identificou e corrigiu dois problemas reais antes do merge
+(fallback mascarando falha de banco; endpoint público sem faixa de ano). A
+validação de ponta a ponta contra um Postgres local — migrations, seed e
+chamada aos endpoints novos autenticados — não foi possível nesta sessão por
+falta de acesso administrativo à instância já instalada na máquina, e fica
+como pendência para quem revisar localmente. O PR está mergeado na `main`.
 
 ## O que ainda fica de fora desta entrega
 
