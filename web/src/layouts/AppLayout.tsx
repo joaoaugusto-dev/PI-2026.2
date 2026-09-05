@@ -58,7 +58,7 @@ export function AppLayout() {
         <SidebarHeader className="px-4 py-3 font-semibold flex items-center justify-between">
           <span>SOUFER Tools</span>
           <span className="text-[10px] font-mono font-normal bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-            v1.0
+            v0.0.2-beta
           </span>
         </SidebarHeader>
         <SidebarContent>
