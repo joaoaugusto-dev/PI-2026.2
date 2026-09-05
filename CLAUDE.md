@@ -58,7 +58,7 @@ Code — deve:
 
 Este arquivo cobre **processo e sequenciamento**. O contrato técnico completo (DDL
 SQL, lista de endpoints, páginas do front) já foi definido antes e deve ser
-versionado como `/docs/arquitetura.md` no repositório — este guia referencia esse
+versionado como `/docs/backend/arquitetura.md` no repositório — este guia referencia esse
 documento em vez de repetir o SQL inteiro.
 
 ---
@@ -139,7 +139,7 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
   Plano B: Render ou Railway.
 
 Referência completa do schema (DDL, triggers, views), lista de endpoints e mapa de
-páginas: `/docs/arquitetura.md` (versionar a partir do plano já fechado com a
+páginas: `/docs/backend/arquitetura.md` (versionar a partir do plano já fechado com a
 equipe).
 
 ---
@@ -169,7 +169,7 @@ equipe).
 - [ ] Tela nova testada em 360px, 768px e 1280px (quando for front)
 - [ ] Rota nova testada no Insomnia/Swagger com caso de sucesso e caso de erro
       (quando for back)
-- [ ] Documentação afetada atualizada (`/docs/arquitetura.md`, README ou
+- [ ] Documentação afetada atualizada (`/docs/backend/arquitetura.md`, README ou
       dicionário de dados)
 - [ ] Commit e PR referenciam o ID da issue
 
