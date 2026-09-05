@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { CheckCircle2Icon } from 'lucide-react'
 import { StatusBadge, type Status } from '@/components/StatusBadge'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,53 @@ function Demo({
       </div>
       {children}
       <p className="text-sm text-muted-foreground">{nota}</p>
+    </div>
+  )
+}
+
+/**
+ * Mesma técnica do indicador de item ativo da sidebar (`AppLayout`): mede a
+ * posição do item ativo via DOM e desliza a barra até lá com
+ * `transform`/`opacity`, nunca `box-shadow` — versão isolada só para
+ * demonstração aqui na página de estilos.
+ */
+function IndicadorSidebarDemo() {
+  const itens = ['Dashboard', 'Ferramentas', 'Cadastros']
+  const [ativo, setAtivo] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; height: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const ativoEl = containerRef.current?.querySelector<HTMLElement>(`[data-index="${ativo}"]`)
+    if (!ativoEl) return
+    setPos({ top: ativoEl.offsetTop, height: ativoEl.offsetHeight })
+  }, [ativo])
+
+  return (
+    <div ref={containerRef} className="relative w-56 space-y-1 rounded-lg bg-foreground p-2">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-2 w-0.5 rounded-full bg-brand-red transition-[transform,opacity,height]"
+        style={{
+          height: pos?.height ?? 0,
+          transform: `translateY(${pos?.top ?? 0}px)`,
+          opacity: pos ? 1 : 0,
+        }}
+      />
+      {itens.map((item, index) => (
+        <button
+          key={item}
+          type="button"
+          data-index={index}
+          onClick={() => setAtivo(index)}
+          className={cn(
+            'block w-full rounded-md py-2 pl-4 text-left text-corpo text-white/70 transition-colors hover:bg-white/5',
+            ativo === index && 'bg-white/8 font-medium text-white'
+          )}
+        >
+          {item}
+        </button>
+      ))}
     </div>
   )
 }
@@ -436,6 +483,19 @@ export function DesignSystemPage() {
                 Confirmar
               </div>
             </Demo>
+
+            <div className="space-y-2 rounded-lg border p-4">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <p className="text-secao">Indicador da sidebar</p>
+                <code className="font-mono text-sm text-muted-foreground">transform + opacity</code>
+              </div>
+              <IndicadorSidebarDemo />
+              <p className="text-sm text-muted-foreground">
+                Barra única que desliza até o item ativo (FE-06) em vez de aparecer/sumir seco em
+                cada botão — mede a posição real do item ativo e anima só transform/opacidade,
+                nunca box-shadow. Clique nos itens.
+              </p>
+            </div>
           </div>
 
           <p className="text-corpo text-muted-foreground">
