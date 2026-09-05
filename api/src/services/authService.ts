@@ -74,15 +74,17 @@ export class AuthService {
 
   /**
    * Cria uma sessão temporária de 15 minutos para modo consulta (quiosque)
-   * Regra 8 do CLAUDE.md: identificação no quiosque estritamente por matrícula ou crachá
+   * ponytail: colaboradores não tem mais codigo_cracha (removido na revisão
+   * DB-02 pós visita técnica) — busca só por matrícula até a equipe decidir
+   * a reposição do crachá (ver "em revisão" no CLAUDE.md raiz, Regra 7/8).
    */
   static async criarSessaoConsulta(identificador: string): Promise<ConsultaSessaoResult> {
     const termo = identificador.trim();
 
     const result = await query(
-      `SELECT id, nome, matricula, codigo_cracha, setor_id, ativo 
-       FROM colaboradores 
-       WHERE (matricula = $1 OR codigo_cracha = $1) AND ativo = true
+      `SELECT id, nome, matricula, setor_id, ativo
+       FROM colaboradores
+       WHERE matricula = $1 AND ativo = true
        LIMIT 1`,
       [termo]
     );

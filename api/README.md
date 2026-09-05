@@ -173,7 +173,7 @@ O sistema possui dois modos de acesso via JWT:
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**
-   - Autenticado via `POST /v1/consulta/sessao` informando matrícula ou crachá (sem senha).
+   - Autenticado via `POST /v1/consulta/sessao` informando matrícula (sem senha). Busca por crachá fica pendente — a coluna `codigo_cracha` foi removida de `colaboradores` na revisão pós visita técnica (DB-02); ver "em revisão" no `/CLAUDE.md` raiz.
    - Token temporário válido por **15 minutos**.
    - Acesso restrito somente a rotas de leitura de disponibilidade.
 
@@ -288,4 +288,4 @@ router.use('/ferramentas', ferramentasRoutes);
 | Perfil | Identificador / E-mail | Senha | Finalidade |
 |---|---|---|---|
 | **Almoxarife** | `almoxarife@soufer.com.br` | `123456` | Acesso operacional completo |
-| **Consulta (Quiosque)** | Matrícula `MAT001` ou Crachá `CRACH001` | *Sem senha* | Acesso temporário de 15 min |
+| **Consulta (Quiosque)** | Matrícula `MAT001` | *Sem senha* | Acesso temporário de 15 min |
