@@ -27,15 +27,11 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 ## Entregas PI
 
 - **Integração de Dados — Max Vallim**
-  - [Integração, importação e qualidade de dados](docs/entregas-pi/integracao-de-dados-max-vallim/dados.md)
-  - [Fluxo de integração de dados externos](docs/entregas-pi/integracao-de-dados-max-vallim/fluxo-integracao.md)
   - [Entrega 05/09](docs/entregas-pi/integracao-de-dados-max-vallim/entrega-max-05-09-2026.pdf)
 - **Tecnologias para Desenvolvimento Web — Nivaldo Andrade**
   - [Entrega 05/09](docs/entregas-pi/tecnologias-desenvolvimento-web-nivaldo-andrade/entrega-nivaldo-05-09-2026.pdf)
 - **Computação em Nuvem — Rodrigo Marudi**
-  - [Plano de infraestrutura e modelos em nuvem (M2)](docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/infra-plano.md)
-  - [Comparativo de custos AWS/Azure/GCP](docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/custos-nuvem.md)
-  - [Nomenclatura e comparação de serviços entre provedores](docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/nomenclatura-provedores.md)
+  - _(entregas ainda não versionadas nesta pasta)_
 - **Desenvolvimento de Interfaces de Usuário para Web — Marcelo Ciacco**
   - _(entregas ainda não versionadas nesta pasta)_
 
@@ -48,14 +44,20 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 - [Arquitetura geral](docs/backend/arquitetura.md)
 - [Endpoints e convenções da API](docs/backend/api.md)
 - [Regras de negócio e fluxos](docs/backend/processos.md)
+- [Exemplo de retorno da BrasilAPI](docs/backend/exemplos/brasilapi-feriados-2026.json)
 
 ## Banco de Dados
 
 - [Modelagem e regras do banco](docs/banco-de-dados/banco.md)
 - [Dicionário de dados](docs/banco-de-dados/dicionario-de-dados.md)
 - [Documentação do DER](docs/banco-de-dados/der-documentacao.md)
+- [Integração, importação e qualidade de dados](docs/banco-de-dados/dados.md)
+- [Fluxo de integração de dados externos](docs/banco-de-dados/fluxo-integracao.md)
 
 ## Nuvem
 
 - [Infraestrutura, deploy e custos](docs/nuvem/infraestrutura.md)
 - [Guia de deploy no Dokploy](docs/nuvem/dokploy.md)
+- [Plano de infraestrutura e modelos em nuvem (M2)](docs/nuvem/infra-plano.md)
+- [Comparativo de custos AWS/Azure/GCP](docs/nuvem/custos-nuvem.md)
+- [Nomenclatura e comparação de serviços entre provedores](docs/nuvem/nomenclatura-provedores.md)

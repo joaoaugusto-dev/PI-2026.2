@@ -102,7 +102,7 @@ em 03/09/2026 para o ano de 2026.
 ### Exemplo real de retorno
 
 Resposta HTTP 200 completa salva em
-[`exemplos/brasilapi-feriados-2026.json`](./exemplos/brasilapi-feriados-2026.json).
+[`backend/exemplos/brasilapi-feriados-2026.json`](../backend/exemplos/brasilapi-feriados-2026.json).
 Trecho:
 
 ```json
@@ -149,6 +149,6 @@ Array de objetos com 4 campos, todos string:
 
 - `dados.md` — pipeline de importação/normalização e regras de
   qualidade de dados (`data:check`).
-- `../../banco-de-dados/dicionario-de-dados.md` — schema completo das 13 tabelas,
+- `dicionario-de-dados.md` — schema completo das 13 tabelas,
   incluindo `ferramentas` e `feriados`.
 - `CLAUDE.md`, Seção 3 — regras de negócio inegociáveis.

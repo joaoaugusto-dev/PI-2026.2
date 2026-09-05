@@ -120,9 +120,9 @@ flowchart TD
 
 O dimensionamento financeiro completo e a comparação com os demais provedores de mercado (**Microsoft Azure** e **Google Cloud Platform**) estão consolidados na planilha e documento oficiais:
 
-* **Planilha Excel Oficial:** [`/docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/custos-nuvem.xlsx`](custos-nuvem.xlsx) (contém fórmulas dinâmicas, abas detalhadas e prints anexados).
-* **Documento Técnico de Custos:** [`/docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/custos-nuvem.md`](custos-nuvem.md).
-* **Prints de Auditoria das Calculadoras:** [`/docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/prints/`](prints/).
+* **Planilha Excel Oficial:** [`/docs/nuvem/custos-nuvem.xlsx`](custos-nuvem.xlsx) (contém fórmulas dinâmicas, abas detalhadas e prints anexados).
+* **Documento Técnico de Custos:** [`/docs/nuvem/custos-nuvem.md`](custos-nuvem.md).
+* **Prints de Auditoria das Calculadoras:** [`/docs/nuvem/prints/`](prints/).
 
 ### Resumo Comparativo dos Provedores (Cenário Base - Banco Gerenciado)
 
