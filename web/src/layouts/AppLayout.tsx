@@ -54,6 +54,13 @@ function tituloDaPagina(pathname: string) {
   return rota?.label ?? titulosExtras[pathname] ?? 'Dashboard'
 }
 
+function useTituloDaAba(pathname: string) {
+  useEffect(() => {
+    const titulo = tituloDaPagina(pathname)
+    document.title = titulo === 'Dashboard' ? 'SOUFER Tools' : `${titulo} - SOUFER Tools`
+  }, [pathname])
+}
+
 /**
  * Indicador deslizante do item ativo da sidebar: mede a posição do botão
  * `data-active` dentro do container via `getBoundingClientRect` (funciona
@@ -123,6 +130,7 @@ export function AppLayout() {
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
     `${location.pathname}-${cadastrosOpen}`
   )
+  useTituloDaAba(location.pathname)
   const agora = useRelogio()
   const dataFormatada = agora
     .toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
@@ -142,11 +150,8 @@ export function AppLayout() {
       */}
       <div style={sidebarNegativoStyle} className="contents">
         <Sidebar>
-          <SidebarHeader className="gap-1 px-4 py-4">
-            <img src="/brand/soufer-negativo.png" alt="Soufer" className="h-8 w-auto self-start" />
-            <span className="text-rotulo tracking-widest text-sidebar-foreground/60">
-              TOOLS · ALMOXARIFADO
-            </span>
+          <SidebarHeader className="items-center px-4 py-4">
+            <img src="/brand/soufer-negativo.png" alt="Soufer Tools" className="w-[85%]" />
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
