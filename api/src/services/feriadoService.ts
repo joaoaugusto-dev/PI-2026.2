@@ -120,7 +120,10 @@ export async function listarPorAno(ano: number): Promise<{ feriados: Feriado[]; 
     const sincronizados = await sincronizarFeriados(ano);
     return { feriados: sincronizados, fonte: 'brasil_api' };
   } catch (error) {
-    return { feriados: gerarFallbackFinsDeSemana(ano), fonte: 'fallback_fim_de_semana' };
+    if (error instanceof AppError && error.code === 'BRASIL_API_UNAVAILABLE') {
+      return { feriados: gerarFallbackFinsDeSemana(ano), fonte: 'fallback_fim_de_semana' };
+    }
+    throw error;
   }
 }
 

@@ -17,7 +17,11 @@ export type ListarFeriadosQuery = z.infer<typeof listarFeriadosQuerySchema>;
 export const verificarDiaUtilQuerySchema = z.object({
   data: z
     .string({ required_error: 'Parâmetro "data" é obrigatório (formato YYYY-MM-DD)' })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Parâmetro "data" deve estar no formato YYYY-MM-DD'),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Parâmetro "data" deve estar no formato YYYY-MM-DD')
+    .refine((data) => {
+      const ano = Number(data.slice(0, 4));
+      return ano >= 2000 && ano <= anoAtual + 5;
+    }, `Ano deve estar entre 2000 e ${anoAtual + 5}`),
 });
 
 export type VerificarDiaUtilQuery = z.infer<typeof verificarDiaUtilQuerySchema>;
