@@ -95,7 +95,7 @@ Crie as tabelas, triggers e popule os dados de teste:
 # Executa a migration inicial (11 tabelas, enums, triggers, views e índices)
 npm run db:migrate
 
-# Popula setores, categorias, atividades, colaboradores e ferramentas de teste
+# Popula setores, grupos de ferramentas, atividades, colaboradores e ferramentas de teste
 npm run db:seed
 ```
 
@@ -192,9 +192,9 @@ import { z } from 'zod';
 
 export const criarFerramentaSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  categoria_id: z.number().int().positive(),
+  grupo_id: z.number().int().positive(),
   setor_id: z.number().int().positive(),
-  localizacao_padrao: z.string().optional(),
+  localizacao: z.string().optional(),
 });
 
 export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
