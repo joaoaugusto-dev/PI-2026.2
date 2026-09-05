@@ -74,9 +74,9 @@ export class AuthService {
 
   /**
    * Cria uma sessão temporária de 15 minutos para modo consulta (quiosque)
-   * ponytail: colaboradores não tem mais codigo_cracha (removido na revisão
-   * DB-02 pós visita técnica) — busca só por matrícula até a equipe decidir
-   * a reposição do crachá (ver "em revisão" no CLAUDE.md raiz, Regra 7/8).
+   * O crachá do colaborador não é um código à parte: fisicamente é a própria
+   * matrícula (impressa/codificada no crachá), por isso colaboradores não
+   * tem coluna codigo_cracha — a busca por matrícula já cobre os dois casos.
    */
   static async criarSessaoConsulta(identificador: string): Promise<ConsultaSessaoResult> {
     const termo = identificador.trim();

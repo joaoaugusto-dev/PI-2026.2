@@ -173,7 +173,7 @@ O sistema possui dois modos de acesso via JWT:
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**
-   - Autenticado via `POST /v1/consulta/sessao` informando matrícula (sem senha). Busca por crachá fica pendente — a coluna `codigo_cracha` foi removida de `colaboradores` na revisão pós visita técnica (DB-02); ver "em revisão" no `/CLAUDE.md` raiz.
+   - Autenticado via `POST /v1/consulta/sessao` informando matrícula (sem senha). O crachá não é um código à parte: fisicamente é a própria matrícula, por isso `colaboradores` não tem coluna `codigo_cracha` (removida na revisão DB-02) e a busca por matrícula já cobre os dois casos.
    - Token temporário válido por **15 minutos**.
    - Acesso restrito somente a rotas de leitura de disponibilidade.
 
