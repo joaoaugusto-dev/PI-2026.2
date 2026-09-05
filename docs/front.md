@@ -46,6 +46,12 @@ A página de estilos (FE-01) foi feita em código, não no Figma: os tokens vive
 em `web/src/index.css` e a página de referência é a rota `/design-system`
 (`web/src/pages/DesignSystemPage.tsx`).
 
+Wireframes (FE-02) e protótipo navegável (FE-03) ficam no Figma:
+https://www.figma.com/design/jARhREffx0KXWn1UTUpxmE/SOUFER-Tools
+
+Protótipo validado com o almoxarife (FE-04) na visita técnica registrada em
+DB-01 — detalhes em `/docs/atas/`.
+
 | Token | Valor | Uso |
 |---|---|---|
 | `--brand-red` | `#E30613` | Ação primária e marca |
