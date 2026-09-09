@@ -3,6 +3,10 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
 import { useIsMobile } from "@/hooks/use-mobile"
+import {
+  useSidebarEdgeSwipeToOpen,
+  useSidebarSwipeToClose,
+} from "@/hooks/use-sidebar-swipe"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -106,6 +110,10 @@ function SidebarProvider({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [toggleSidebar])
 
+  // Deslizar da borda esquerda abre a sidebar no mobile (ambiente fabril,
+  // gesto mais natural que caçar o botão do trigger com a luva).
+  useSidebarEdgeSwipeToOpen(isMobile, openMobile, setOpenMobile)
+
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed"
@@ -160,6 +168,7 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const swipeToClose = useSidebarSwipeToClose(setOpenMobile)
 
   if (collapsible === "none") {
     return (
@@ -191,6 +200,7 @@ function Sidebar({
             } as React.CSSProperties
           }
           side={side}
+          {...swipeToClose}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Sidebar</SheetTitle>
