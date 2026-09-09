@@ -130,6 +130,20 @@
     --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Sidebar/login sempre no visual negativo (FE-01), independente do tema —
+   aplicado direto no elemento com data-slot="sidebar" (nao herdado de um
+   ancestral) porque a versao mobile do shadcn Sidebar renderiza via Portal
+   (Sheet), fora da arvore do AppLayout: um override so no ancestral nao
+   chegava la, deixando a sidebar branca no celular. */
+[data-slot="sidebar"] {
+    --sidebar: var(--foreground);
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-border: rgba(255, 255, 255, .1);
+    --sidebar-accent: rgba(255, 255, 255, .08);
+    --sidebar-accent-foreground: #FFFFFF;
+    --sidebar-ring: rgba(255, 255, 255, .3);
+}
+
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
