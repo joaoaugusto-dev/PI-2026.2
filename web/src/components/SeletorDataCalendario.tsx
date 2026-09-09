@@ -81,29 +81,31 @@ export function SeletorDataCalendario({
   const trigger = value && !ehHojeSelecionado && !ehAmanhaSelecionado
 
   return (
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={() => selecionar(hoje)}
-        className={cn(
-          'h-(--control-h) flex-1 rounded-lg border px-3 text-corpo font-medium transition-colors hover:bg-muted',
-          ehHojeSelecionado && 'border-transparent bg-foreground text-white hover:bg-foreground',
-        )}
-      >
-        Hoje
-      </button>
-      <button
-        type="button"
-        onClick={() => selecionar(amanha)}
-        className={cn(
-          'h-(--control-h) flex-1 rounded-lg border px-3 text-corpo font-medium transition-colors hover:bg-muted',
-          ehAmanhaSelecionado && 'border-transparent bg-foreground text-white hover:bg-foreground',
-        )}
-      >
-        Amanhã
-      </button>
+    <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex gap-2 sm:flex-[2]">
+        <button
+          type="button"
+          onClick={() => selecionar(hoje)}
+          className={cn(
+            'h-(--control-h) flex-1 rounded-lg border px-3 text-corpo font-medium transition-colors hover:bg-muted',
+            ehHojeSelecionado && 'border-transparent bg-foreground text-white hover:bg-foreground',
+          )}
+        >
+          Hoje
+        </button>
+        <button
+          type="button"
+          onClick={() => selecionar(amanha)}
+          className={cn(
+            'h-(--control-h) flex-1 rounded-lg border px-3 text-corpo font-medium transition-colors hover:bg-muted',
+            ehAmanhaSelecionado && 'border-transparent bg-foreground text-white hover:bg-foreground',
+          )}
+        >
+          Amanhã
+        </button>
+      </div>
 
-      <div className="flex flex-[1.4] flex-col">
+      <div className="flex w-full flex-col sm:flex-[1.4]">
         <button
           type="button"
           onClick={() => setAberto((a) => !a)}
