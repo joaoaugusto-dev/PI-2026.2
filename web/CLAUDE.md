@@ -185,6 +185,15 @@ não filhas do layout autenticado.
   nenhum `z-index` resolve isso de fora) e desconectado visualmente do
   restante do formulário. Empilha em coluna única abaixo de `sm` (grade de 7
   colunas fica ilegível/difícil de tocar na largura de um celular).
+- **Tela de devolução (`src/pages/DevolucaoPage.tsx`, FE-15)** segue o mesmo
+  padrão mockado da retirada (API-12 e a extração do campo de identificação
+  em FE-09 ainda não existem): busca o empréstimo aberto por código local,
+  mostra o cartão de detalhes (quem retirou, matrícula/setor, atividade,
+  saída, registrado por) com uma faixa `status-atraso` no topo quando a
+  previsão de devolução já passou, e só exibe descrição da ocorrência/custo
+  estimado/checkbox de confirmação quando a condição selecionada é "Avaria"
+  ou "Perda" — "OK" confirma direto, sem exigir ocorrência (regra de negócio
+  3 do guia raiz).
 
 ## Responsividade
 
