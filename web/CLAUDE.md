@@ -34,9 +34,11 @@ web/
 │   ├── pages/
 │   │   └── PlaceholderPage.tsx  # placeholder genérico das rotas ainda não implementadas
 │   ├── components/ui/      # componentes gerados pelo shadcn (não editar à mão sem motivo)
+│   ├── assets/sfx/          # efeitos sonoros (ex.: confirmation.mp3), importados via Vite
 │   ├── hooks/               # hooks compartilhados (ex.: use-mobile do shadcn)
 │   └── lib/
 │       ├── api.ts          # instância Axios (baseURL = VITE_API_URL)
+│       ├── som-confirmacao.ts # preferência de som (localStorage) + player
 │       └── utils.ts         # helper `cn()` do shadcn
 ├── components.json          # config do shadcn (style radix-nova, alias @/*)
 ├── .env.example             # VITE_API_URL
@@ -165,6 +167,24 @@ não filhas do layout autenticado.
 - **Sidebar/login sempre no visual negativo** (fundo escuro, logo branco) é
   regra de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
   `index.css`.
+- **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
+  padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
+  `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,
+  devolução, cópia de dado). O toggle da sidebar (`AppLayout`) só escreve a
+  preferência — quem lê usa o hook `useSomConfirmacaoAtivo()`, que assina um
+  evento (`window.dispatchEvent`) disparado a cada mudança, já que
+  `localStorage` sozinho não notifica outros componentes já montados na
+  mesma aba. O arquivo de áudio fica em `src/assets/sfx/` (importado via
+  Vite, resolve para URL).
+- **Calendário próprio do sistema** (`src/components/SeletorDataCalendario.tsx`)
+  em vez do shadcn/`react-day-picker`: grade de mês construída com `Date`
+  nativo, sem dependência nova, com atalhos "Hoje"/"Amanhã" ao lado da grade.
+  Abre em fluxo normal (empurra o conteúdo abaixo, preso à coluna do botão)
+  em vez de `position: absolute`/popover flutuante — um painel absoluto ficava
+  atrás de rodapés `sticky` (que criam seu próprio contexto de empilhamento;
+  nenhum `z-index` resolve isso de fora) e desconectado visualmente do
+  restante do formulário. Empilha em coluna única abaixo de `sm` (grade de 7
+  colunas fica ilegível/difícil de tocar na largura de um celular).
 
 ## Responsividade
 
