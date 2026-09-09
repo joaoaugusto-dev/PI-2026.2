@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { playSomConfirmacao } from '@/lib/som-confirmacao'
 
 export interface HealthResponse {
   data: {
@@ -104,6 +105,7 @@ export function StatusPage() {
       navigator.clipboard.writeText(JSON.stringify(healthData, null, 2))
       setCopied(true)
       toast.success('Resposta JSON copiada para a área de transferência!')
+      playSomConfirmacao()
       setTimeout(() => setCopied(false), 2000)
     }
   }

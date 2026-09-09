@@ -24,6 +24,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { playSomConfirmacao, setSomConfirmacaoAtivo, somConfirmacaoAtivo } from '@/lib/som-confirmacao'
 
 const navPrincipal = [
   { to: '/', label: 'Dashboard' },
@@ -110,7 +111,7 @@ function useRelogio() {
 export function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [somConfirmacao, setSomConfirmacao] = useState(true)
+  const [somConfirmacao, setSomConfirmacao] = useState(somConfirmacaoAtivo)
   const cadastrosAtivo = navCadastros.some((item) => location.pathname.startsWith(item.to))
   const [cadastrosOpen, setCadastrosOpen] = useState(cadastrosAtivo)
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
@@ -204,7 +205,14 @@ export function AppLayout() {
           <SidebarSeparator />
           <div className="flex items-center justify-between px-2">
             <span className="text-corpo text-sidebar-foreground/80">Som de confirmação</span>
-            <Switch checked={somConfirmacao} onCheckedChange={setSomConfirmacao} />
+            <Switch
+              checked={somConfirmacao}
+              onCheckedChange={(ativo) => {
+                setSomConfirmacao(ativo)
+                setSomConfirmacaoAtivo(ativo)
+                if (ativo) playSomConfirmacao()
+              }}
+            />
           </div>
           <a
             href="/consulta"
