@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { CheckCircle2Icon } from 'lucide-react'
+import { CheckCircle2Icon, Volume2Icon } from 'lucide-react'
 import { StatusBadge, type Status } from '@/components/StatusBadge'
 import { cn } from '@/lib/utils'
+import { playSomConfirmacao, somConfirmacaoAtivo } from '@/lib/som-confirmacao'
 
 /**
  * FE-01 — pagina de estilos do SOUFER Tools.
@@ -569,6 +570,30 @@ export function DesignSystemPage() {
           <p className="text-corpo text-muted-foreground">
             Nada disso sobrevive ao <code className="font-mono">prefers-reduced-motion</code>: o
             halo e a varredura somem por completo, em vez de congelarem no meio do ciclo.
+          </p>
+        </Card>
+      </Secao>
+
+      <Secao titulo="Som de confirmação">
+        <Card className="space-y-3">
+          <p className="text-corpo text-muted-foreground">
+            Um único bipe curto confirma uma ação concluída (retirada, devolução, cópia de dado) —
+            reforço sonoro para o operador que não está com os olhos fixos na tela. Controlado pelo
+            toggle "Som de confirmação" no rodapé da sidebar, persistido em{' '}
+            <code className="font-mono">localStorage</code> e ligado por padrão.
+          </p>
+          <button
+            type="button"
+            onClick={() => playSomConfirmacao()}
+            className="flex h-(--control-h) w-fit items-center gap-2 rounded-lg border bg-background px-4 text-corpo font-medium transition-colors hover:bg-muted active:translate-y-px"
+          >
+            <Volume2Icon className="size-4" />
+            Testar som
+          </button>
+          <p className="text-sm text-muted-foreground">
+            {somConfirmacaoAtivo()
+              ? 'Ativado agora — silencie pelo toggle da sidebar.'
+              : 'Desativado na sidebar — o botão acima não toca nada.'}
           </p>
         </Card>
       </Secao>

@@ -3,6 +3,7 @@ import { AppLayout } from '@/layouts/AppLayout'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
+import { RetiradaPage } from '@/pages/RetiradaPage'
 import { StatusPage } from '@/pages/StatusPage'
 
 const placeholder = (title: string) => <PlaceholderPage title={title} />
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
       { path: 'ferramentas', element: placeholder('Ferramentas') },
       { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
-      { path: 'retiradas/nova', element: placeholder('Retirada') },
+      { path: 'retiradas/nova', element: <RetiradaPage /> },
       { path: 'devolucoes', element: placeholder('Devolução') },
       { path: 'indisponiveis', element: placeholder('Indisponíveis') },
       { path: 'calendario', element: placeholder('Calendário') },
