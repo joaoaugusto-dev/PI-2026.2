@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { Popover } from 'radix-ui'
+import { useEffect, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -30,10 +29,12 @@ function formatarLabel(iso: string) {
 
 /**
  * Calendário próprio do sistema (não é o shadcn/react-day-picker) — grade de
- * mês construída com `Date` nativo, sem dependência nova. O painel usa
- * `Popover` do Radix (portal para `document.body`) porque um painel
- * posicionado só com `absolute` ficava atrás do rodapé fixo de confirmação,
- * que é `sticky` e cria seu próprio contexto de empilhamento.
+ * mês construída com `Date` nativo, sem dependência nova. O painel abre em
+ * fluxo normal (empurra o resto do card para baixo, preso à coluna do botão
+ * "Calendário") em vez de flutuar por cima do formulário: um popover
+ * absoluto ficava desconectado do resto da tela e, pior, atrás do rodapé
+ * fixo de confirmação (que é `sticky` e cria seu próprio contexto de
+ * empilhamento — nenhuma quantidade de z-index resolve isso de fora).
  */
 export function SeletorDataCalendario({
   value,
@@ -45,12 +46,19 @@ export function SeletorDataCalendario({
   const hoje = inicioDoDia(new Date())
   const [aberto, setAberto] = useState(false)
   const [mesVisivel, setMesVisivel] = useState(() => (value ? deISO(value) : hoje))
-  const painelRef = useRef<HTMLDivElement>(null)
 
-  /** Quem opera tem pressa (leitor de código + luva) — ao abrir, o próprio
-   * painel rola até ficar visível, sem exigir que a pessoa role a tela. */
+  /** Quem opera tem pressa (leitor de código + luva) — ao abrir, a própria
+   * tela rola até o fim, sem exigir que a pessoa role ela mesma. Rola a
+   * janela inteira (não só até o painel aparecer) porque o rodapé de
+   * confirmação é fixo (`sticky bottom-0`): parar a meio caminho deixa o
+   * rodapé grudado por cima da grade, já que ele só sai do caminho quando a
+   * página chega no fim de verdade. */
   useEffect(() => {
-    if (aberto) painelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    if (!aberto) return
+    const id = requestAnimationFrame(() => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(id)
   }, [aberto])
 
   const primeiroDoMes = new Date(mesVisivel.getFullYear(), mesVisivel.getMonth(), 1)
@@ -95,30 +103,24 @@ export function SeletorDataCalendario({
         Amanhã
       </button>
 
-      <Popover.Root open={aberto} onOpenChange={setAberto}>
-        <Popover.Trigger asChild>
-          <button
-            type="button"
-            className={cn(
-              'flex h-(--control-h) flex-[1.4] items-center gap-2 rounded-lg border px-3 text-corpo outline-none transition-colors',
-              aberto ? 'border-brand-red ring-2 ring-brand-red/20' : 'hover:bg-muted',
-              trigger && 'border-transparent bg-foreground text-white hover:bg-foreground',
-            )}
-          >
-            <CalendarDays className="size-5 shrink-0" />
-            <span className={cn('flex-1 truncate text-left', !value && 'text-muted-foreground')}>
-              {trigger ? formatarLabel(value) : 'Calendário'}
-            </span>
-          </button>
-        </Popover.Trigger>
+      <div className="flex flex-[1.4] flex-col">
+        <button
+          type="button"
+          onClick={() => setAberto((a) => !a)}
+          className={cn(
+            'flex h-(--control-h) w-full items-center gap-2 border px-3 text-corpo outline-none transition-colors',
+            aberto ? 'rounded-t-lg border-brand-red ring-2 ring-brand-red/20' : 'rounded-lg hover:bg-muted',
+            trigger && 'border-transparent bg-foreground text-white hover:bg-foreground',
+          )}
+        >
+          <CalendarDays className="size-5 shrink-0" />
+          <span className={cn('flex-1 truncate text-left', !value && 'text-muted-foreground')}>
+            {trigger ? formatarLabel(value) : 'Calendário'}
+          </span>
+        </button>
 
-        <Popover.Portal>
-          <Popover.Content
-            ref={painelRef}
-            align="end"
-            sideOffset={8}
-            className="animate-entrada z-50 w-72 space-y-3 rounded-lg border bg-card p-3 shadow-md outline-none"
-          >
+        {aberto && (
+          <div className="animate-entrada w-full space-y-3 rounded-b-lg border border-t-0 border-brand-red/40 bg-card p-3">
             <div className="flex items-center justify-between">
               <button
                 type="button"
@@ -141,14 +143,14 @@ export function SeletorDataCalendario({
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center">
+            <div className="grid grid-cols-7 gap-1">
               {DIAS_SEMANA.map((d, i) => (
-                <span key={i} className="text-rotulo text-muted-foreground uppercase">
+                <div key={i} className="flex h-6 items-center justify-center text-rotulo text-muted-foreground uppercase">
                   {d}
-                </span>
+                </div>
               ))}
               {Array.from({ length: celulasVazias }, (_, i) => (
-                <span key={`vazio-${i}`} />
+                <div key={`vazio-${i}`} />
               ))}
               {dias.map((dia) => {
                 const data = new Date(mesVisivel.getFullYear(), mesVisivel.getMonth(), dia)
@@ -163,7 +165,7 @@ export function SeletorDataCalendario({
                     disabled={passado}
                     onClick={() => selecionar(data)}
                     className={cn(
-                      'flex size-9 items-center justify-center rounded-md text-sm font-medium transition-colors',
+                      'flex aspect-square w-full items-center justify-center rounded-md text-base font-bold transition-colors',
                       passado && 'text-muted-foreground/40',
                       !passado && !selecionado && 'hover:bg-muted',
                       ehHoje && !selecionado && 'border border-brand-red text-brand-red',
@@ -175,9 +177,9 @@ export function SeletorDataCalendario({
                 )
               })}
             </div>
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
