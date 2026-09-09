@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
+import { DevolucaoPage } from '@/pages/DevolucaoPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import { RetiradaPage } from '@/pages/RetiradaPage'
 import { StatusPage } from '@/pages/StatusPage'
@@ -20,7 +21,7 @@ export const router = createBrowserRouter([
       { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
       { path: 'retiradas/nova', element: <RetiradaPage /> },
-      { path: 'devolucoes', element: placeholder('Devolução') },
+      { path: 'devolucoes', element: <DevolucaoPage /> },
       { path: 'indisponiveis', element: placeholder('Indisponíveis') },
       { path: 'calendario', element: placeholder('Calendário') },
       { path: 'emprestimos', element: placeholder('Histórico de empréstimos') },
