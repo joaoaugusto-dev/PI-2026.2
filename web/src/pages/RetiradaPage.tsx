@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { SeletorDataCalendario } from '@/components/SeletorDataCalendario'
+import { StatusBadge } from '@/components/StatusBadge'
 
 /**
  * Tela mockada (Sprint 4 — FE-08): não há endpoint de retirada ainda, então
@@ -41,12 +42,10 @@ function buscarFerramenta(valor: string) {
   return porNome ? { codigo: porNome[0], ...porNome[1] } : null
 }
 
-function buscarColaborador(valor: string) {
+function buscarColaborador(valor: string, colaboradores: typeof COLABORADORES_MOCK) {
   const chave = valor.trim().toLowerCase()
   if (chave.length < 2) return null
-  return (
-    COLABORADORES_MOCK.find((c) => c.matricula === chave || c.nome.toLowerCase().includes(chave)) ?? null
-  )
+  return colaboradores.find((c) => c.matricula === chave || c.nome.toLowerCase().includes(chave)) ?? null
 }
 
 const schema = z.object({
@@ -60,7 +59,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function RetiradaPage() {
-  const [replay, setReplay] = useState(0)
+  const [colaboradores, setColaboradores] = useState(COLABORADORES_MOCK)
   const [cadastroRapido, setCadastroRapido] = useState({ nome: '', matricula: '' })
 
   const {
@@ -92,12 +91,15 @@ export function RetiradaPage() {
   const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
   const ferramentaNaoEncontrada = ferramentaCodigo.trim().length >= 3 && !ferramenta
 
-  const colaboradorEncontrado = useMemo(() => buscarColaborador(colaborador), [colaborador])
+  const colaboradorEncontrado = useMemo(
+    () => buscarColaborador(colaborador, colaboradores),
+    [colaborador, colaboradores],
+  )
   const colaboradorNaoEncontrado = colaborador.trim().length >= 3 && !colaboradorEncontrado
 
   const faltando = [
     !ferramenta || ferramentaBloqueada ? 'ferramenta' : null,
-    !colaborador.trim() ? 'colaborador' : null,
+    !colaborador.trim() || colaboradorNaoEncontrado ? 'colaborador' : null,
     !setor ? 'setor de destino' : null,
     !previsaoDevolucao ? 'previsão de devolução' : null,
   ].filter(Boolean) as string[]
@@ -114,19 +116,20 @@ export function RetiradaPage() {
       setor: '',
       previsaoDevolucao: '',
     })
-    setReplay((n) => n + 1)
     setFocus('ferramentaCodigo')
   }
 
   function simularLeitura(codigo: string) {
     setValue('ferramentaCodigo', codigo, { shouldValidate: true })
-    setReplay((n) => n + 1)
     setFocus('colaborador')
   }
 
   function usarCadastroRapido() {
-    if (!cadastroRapido.nome.trim() || !cadastroRapido.matricula.trim()) return
-    setValue('colaborador', `${cadastroRapido.nome} · ${cadastroRapido.matricula}`, { shouldValidate: true })
+    const nome = cadastroRapido.nome.trim()
+    const matricula = cadastroRapido.matricula.trim()
+    if (!nome || !matricula) return
+    setColaboradores((atual) => [...atual, { nome, matricula }])
+    setValue('colaborador', matricula, { shouldValidate: true })
     setCadastroRapido({ nome: '', matricula: '' })
   }
 
@@ -141,7 +144,7 @@ export function RetiradaPage() {
             </p>
           </div>
 
-          <div key={`ferramenta-${replay}`} className="space-y-2">
+          <div className="space-y-2">
             <div
               className={cn(
                 'flex h-(--control-h) items-center gap-2 rounded-lg border-2 bg-background px-3 focus-within:border-brand-red focus-within:ring-2 focus-within:ring-brand-red/20',
@@ -169,17 +172,19 @@ export function RetiradaPage() {
                 <span className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Enter</span>
               )}
             </div>
+            {ferramenta && (
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={ferramenta.status} />
+                <span className="text-sm text-muted-foreground">{ferramenta.nome}</span>
+              </div>
+            )}
             {ferramenta && ferramentaBloqueada && (
               <p className="text-sm text-destructive">
-                {ferramenta.nome} está {ferramenta.status === 'em-uso' ? 'em uso' : 'indisponível'} — só um
-                empréstimo aberto por ferramenta.
+                Só um empréstimo aberto por ferramenta — não é possível retirar.
               </p>
             )}
             {ferramentaNaoEncontrada && (
               <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
-            )}
-            {ferramenta && !ferramentaBloqueada && (
-              <p className="text-sm text-status-disponivel">{ferramenta.nome} · disponível</p>
             )}
           </div>
 

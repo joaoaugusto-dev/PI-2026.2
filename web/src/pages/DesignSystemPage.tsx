@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { CheckCircle2Icon, Volume2Icon } from 'lucide-react'
 import { StatusBadge, type Status } from '@/components/StatusBadge'
 import { cn } from '@/lib/utils'
-import { playSomConfirmacao, somConfirmacaoAtivo } from '@/lib/som-confirmacao'
+import { playSomConfirmacao, useSomConfirmacaoAtivo } from '@/lib/som-confirmacao'
 
 /**
  * FE-01 — pagina de estilos do SOUFER Tools.
@@ -168,6 +168,7 @@ export function DesignSystemPage() {
   const [foco, setFoco] = useState('')
   const [replay, setReplay] = useState(0)
   const [trocaStatus, setTrocaStatus] = useState<Status>('em-uso')
+  const somAtivo = useSomConfirmacaoAtivo()
 
   return (
     <div className="space-y-8 p-6">
@@ -591,7 +592,7 @@ export function DesignSystemPage() {
             Testar som
           </button>
           <p className="text-sm text-muted-foreground">
-            {somConfirmacaoAtivo()
+            {somAtivo
               ? 'Ativado agora — silencie pelo toggle da sidebar.'
               : 'Desativado na sidebar — o botão acima não toca nada.'}
           </p>
