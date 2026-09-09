@@ -29,6 +29,12 @@ function formatarData(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR')
 }
 
+/** Máscara de centavos: cada dígito empurra a casa decimal, igual ao valor do Pix no app do Mercado Pago. */
+function formatarMoeda(digitos: string) {
+  const centavos = Number.parseInt(digitos, 10)
+  return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 const EMPRESTIMOS_MOCK: Record<
   string,
   {
@@ -148,6 +154,7 @@ export function DevolucaoPage() {
   const ferramentaCodigo = watch('ferramentaCodigo')
   const condicao = watch('condicao')
   const descricaoOcorrencia = watch('descricaoOcorrencia') ?? ''
+  const custoEstimado = watch('custoEstimado') ?? ''
   const confirmacaoOcorrencia = watch('confirmacaoOcorrencia') ?? false
 
   const emprestimo = useMemo(() => buscarEmprestimo(ferramentaCodigo), [ferramentaCodigo])
@@ -346,9 +353,13 @@ export function DevolucaoPage() {
                 <div className="space-y-2">
                   <p className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Custo estimado</p>
                   <input
-                    {...register('custoEstimado')}
-                    inputMode="decimal"
-                    placeholder="0,00"
+                    value={custoEstimado}
+                    onChange={(e) => {
+                      const digitos = e.target.value.replace(/\D/g, '')
+                      setValue('custoEstimado', digitos ? formatarMoeda(digitos) : '')
+                    }}
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
                     className="h-9 w-40 rounded-md border px-2.5 text-sm outline-none focus-visible:border-brand-red"
                   />
                   <p className="text-sm text-muted-foreground">Opcional. Pode ser ajustado depois na tratativa.</p>
