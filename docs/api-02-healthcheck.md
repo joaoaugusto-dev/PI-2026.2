@@ -58,6 +58,34 @@ Content-Type: application/json; charset=utf-8
 Rota respondeu `200` com o banco conectado, atendendo ao "Pronto quando" da
 issue.
 
+Também reproduzido o caso de erro (apontado na revisão do PR #131): derrubada
+a conexão temporariamente (`DB_PORT` inválido no `.env` local, revertido logo
+em seguida) e chamado `GET /v1/health` de novo:
+
+```
+HTTP/1.1 503 Service Unavailable
+Content-Type: application/json; charset=utf-8
+
+{
+  "data": {
+    "status": "degraded",
+    "timestamp": "2026-09-11T01:09:35.647Z",
+    "uptime": 2.3694795,
+    "environment": "development",
+    "database": {
+      "status": "disconnected",
+      "name": null,
+      "serverTime": null,
+      "error": "connect ECONNREFUSED 127.0.0.1:5999"
+    }
+  }
+}
+```
+
+Rota respondeu `503` com `status: "degraded"` e o erro real de conexão em
+`database.error`, cobrindo o cenário de erro exigido pelo `CLAUDE.md` (Seção
+6, "Rota nova testada... com caso de sucesso e caso de erro").
+
 ## Pontos de atenção (divergências entre o texto da issue e as decisões atuais do projeto)
 
 - A issue pede o formato literal `{ status: "ok", db: "ok" }`. A resposta real
