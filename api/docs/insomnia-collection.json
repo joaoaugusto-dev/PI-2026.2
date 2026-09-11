@@ -82,6 +82,15 @@
       ]
     },
     {
+      "_id": "req_me_sem_token",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/auth/me (sem token)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/auth/me",
+      "headers": []
+    },
+    {
       "_id": "req_consulta_sessao",
       "_type": "request",
       "parentId": "wrk_soufer_tools",
