@@ -42,4 +42,18 @@ export class FeriadoController {
       return next(error);
     }
   }
+
+  /**
+   * GET /v1/feriados/dias-uteis?dataInicio=2026-04-20&dias=2
+   */
+  static async calcularDiasUteis(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { dataInicio, dias } = req.query as unknown as { dataInicio: string; dias: number };
+      const dataFinal = await feriadoService.diasUteis(dataInicio, Number(dias));
+      return sendSuccess(res, { dataInicio, dias: Number(dias), dataFinal }, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }
+

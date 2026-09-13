@@ -3,7 +3,11 @@ import { FeriadoController } from '../../controllers/feriadoController.js';
 import { validate } from '../../middlewares/validate.js';
 import { authenticate } from '../../middlewares/auth.js';
 import { authorize } from '../../middlewares/authorize.js';
-import { listarFeriadosQuerySchema, verificarDiaUtilQuerySchema } from '../../validators/feriadoValidator.js';
+import {
+  listarFeriadosQuerySchema,
+  verificarDiaUtilQuerySchema,
+  calcularDiasUteisQuerySchema,
+} from '../../validators/feriadoValidator.js';
 
 const router = Router();
 
@@ -49,6 +53,35 @@ router.get('/', validate({ query: listarFeriadosQuerySchema }), FeriadoControlle
  *         description: Parâmetro "data" inválido
  */
 router.get('/dia-util', validate({ query: verificarDiaUtilQuerySchema }), FeriadoController.verificarDiaUtil);
+
+/**
+ * @openapi
+ * /feriados/dias-uteis:
+ *   get:
+ *     summary: Calcula a data final somando N dias úteis a partir de uma data inicial (pula fins de semana e feriados)
+ *     tags:
+ *       - Feriados
+ *     parameters:
+ *       - in: query
+ *         name: dataInicio
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "2026-04-20"
+ *       - in: query
+ *         name: dias
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 2
+ *     responses:
+ *       200:
+ *         description: Data calculada considerando dias úteis
+ *       400:
+ *         description: Parâmetros inválidos
+ */
+router.get('/dias-uteis', validate({ query: calcularDiasUteisQuerySchema }), FeriadoController.calcularDiasUteis);
+
 
 /**
  * @openapi

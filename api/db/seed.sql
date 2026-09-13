@@ -51,8 +51,8 @@ ON CONFLICT (nome) DO NOTHING;
 -- 4. Usuários do Almoxarifado (Senha padrão para testes: '123456')
 -- Hashes bcrypt reais, gerados com bcryptjs (mesma lib usada pelo AuthService).
 INSERT INTO usuarios (nome, email, senha_hash, papel, ativo) VALUES
-('Almoxarife Principal', 'almoxarife@soufer.com.br', '$2b$10$aVJ0wpiXaidQ.PdN9EoXI.N3Hv8Qk.HkNock5/NVL9KIz37p4jmga', 'almoxarife', true),
-('Almoxarife Suporte', 'almoxarife2@soufer.com.br', '$2b$10$XbtUd/Ec6WjBvxSv8AUxqOtI0mURMOEikQ5JnVe9Wdx2SJ6ecSr3y', 'almoxarife', true)
+('Almoxarife Principal', 'almoxarife@soufer.com.br', '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'almoxarife', true),
+('Almoxarife Suporte', 'almoxarife2@soufer.com.br', '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'almoxarife', true)
 ON CONFLICT (email) DO NOTHING;
 
 -- 5. Colaboradores (20)
@@ -170,88 +170,85 @@ WHERE NOT EXISTS (SELECT 1 FROM ferramentas);
 -- fechamento (status da ferramenta e abertura de ocorrência) em UPDATE, não
 -- em INSERT — o mesmo comportamento já validado manualmente na DB-06.
 --
--- Guarda \if pelo psql em vez de WHERE NOT EXISTS em cada statement: a seção
--- inteira é um fluxo de várias etapas (INSERT + UPDATE) que só faz sentido
--- rodar do zero. Sem essa guarda, rodar o seed.sql de novo tentaria abrir
--- empréstimo em ferramenta que já está em_uso/indisponivel e falharia na
--- trigger fn_valida_retirada.
-SELECT NOT EXISTS (SELECT 1 FROM emprestimos) AS seed_emprestimos \gset
-\if :seed_emprestimos
+-- Guarda DO $$ IF em vez de \if psql: funciona no psql e via conexões de cliente (node-postgres).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM emprestimos) THEN
+    -- 7.1 Empréstimos em aberto (6) — 2 propositalmente atrasados para a KPI
+    -- "atrasadas" do dashboard não nascer zerada.
+    INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao, observacoes_retirada)
+    SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.previsao_devolucao, v.observacoes
+    FROM (VALUES
+      ('Furadeira de Impacto Bosch GSB 13 RE', 'MAT001', 'Manutenção Preventiva', 'almoxarife@soufer.com.br', NOW() - INTERVAL '1 day', NOW() + INTERVAL '2 days', NULL),
+      ('Parafusadeira DeWalt 20V Max', 'MAT002', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '6 hours', NOW() + INTERVAL '1 day', NULL),
+      ('Esmerilhadeira Angular Makita 4.1/2 840W', 'MAT003', 'Corte e Furação', 'almoxarife@soufer.com.br', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'OS-4471 — corte de chapa para suporte'),
+      ('Máquina de Solda MIG/MAG Schulz Bivolt 200A', 'MAT009', 'Soldagem TIG/MIG', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '2 days', NOW() + INTERVAL '3 days', NULL),
+      ('Trena a Laser Bosch GLM 50 C', 'MAT004', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '4 hours', NOW() + INTERVAL '1 day', NULL),
+      ('Parafusadeira Pneumática de Impacto Ingersoll Rand 2135TiMAX', 'MAT007', 'Apoio de Linha', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '4 days', NOW() - INTERVAL '2 days', 'OS-4459 — linha 3 parada aguardando peça')
+    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada, previsao_devolucao, observacoes)
+    JOIN ferramentas f ON f.nome = v.ferramenta_nome
+    JOIN colaboradores c ON c.matricula = v.colaborador_matricula
+    JOIN atividades a ON a.nome = v.atividade_nome
+    JOIN usuarios u ON u.email = v.usuario_email;
 
--- 7.1 Empréstimos em aberto (6) — 2 propositalmente atrasados para a KPI
--- "atrasadas" do dashboard não nascer zerada.
-INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao, observacoes_retirada)
-SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.previsao_devolucao, v.observacoes
-FROM (VALUES
-  ('Furadeira de Impacto Bosch GSB 13 RE', 'MAT001', 'Manutenção Preventiva', 'almoxarife@soufer.com.br', NOW() - INTERVAL '1 day', NOW() + INTERVAL '2 days', NULL),
-  ('Parafusadeira DeWalt 20V Max', 'MAT002', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '6 hours', NOW() + INTERVAL '1 day', NULL),
-  ('Esmerilhadeira Angular Makita 4.1/2 840W', 'MAT003', 'Corte e Furação', 'almoxarife@soufer.com.br', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'OS-4471 — corte de chapa para suporte'),
-  ('Máquina de Solda MIG/MAG Schulz Bivolt 200A', 'MAT009', 'Soldagem TIG/MIG', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '2 days', NOW() + INTERVAL '3 days', NULL),
-  ('Trena a Laser Bosch GLM 50 C', 'MAT004', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '4 hours', NOW() + INTERVAL '1 day', NULL),
-  ('Parafusadeira Pneumática de Impacto Ingersoll Rand 2135TiMAX', 'MAT007', 'Apoio de Linha', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '4 days', NOW() - INTERVAL '2 days', 'OS-4459 — linha 3 parada aguardando peça')
-) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada, previsao_devolucao, observacoes)
-JOIN ferramentas f ON f.nome = v.ferramenta_nome
-JOIN colaboradores c ON c.matricula = v.colaborador_matricula
-JOIN atividades a ON a.nome = v.atividade_nome
-JOIN usuarios u ON u.email = v.usuario_email;
+    -- 7.2 Empréstimos já devolvidos, condição OK (6, sem ocorrência)
+    INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
+    SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.data_retirada + INTERVAL '1 day'
+    FROM (VALUES
+      ('Paquímetro Digital Mitutoyo 150mm', 'MAT005', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '5 days'),
+      ('Jogo de Chaves Combinadas 6 a 32mm', 'MAT008', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '6 days'),
+      ('Micrômetro Externo 0-25mm Mitutoyo', 'MAT010', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '3 days'),
+      ('Chave de Impacto Pneumática 1/2 Polegada', 'MAT011', 'Manutenção Corretiva', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '7 days'),
+      ('Lixadeira Orbital Makita BO3711', 'MAT012', 'Corte e Furação', 'almoxarife@soufer.com.br', NOW() - INTERVAL '4 days'),
+      ('Serra Circular Bosch GKS 150', 'MAT013', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '2 days')
+    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada)
+    JOIN ferramentas f ON f.nome = v.ferramenta_nome
+    JOIN colaboradores c ON c.matricula = v.colaborador_matricula
+    JOIN atividades a ON a.nome = v.atividade_nome
+    JOIN usuarios u ON u.email = v.usuario_email;
 
--- 7.2 Empréstimos já devolvidos, condição OK (6, sem ocorrência)
-INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
-SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.data_retirada + INTERVAL '1 day'
-FROM (VALUES
-  ('Paquímetro Digital Mitutoyo 150mm', 'MAT005', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '5 days'),
-  ('Jogo de Chaves Combinadas 6 a 32mm', 'MAT008', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '6 days'),
-  ('Micrômetro Externo 0-25mm Mitutoyo', 'MAT010', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '3 days'),
-  ('Chave de Impacto Pneumática 1/2 Polegada', 'MAT011', 'Manutenção Corretiva', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '7 days'),
-  ('Lixadeira Orbital Makita BO3711', 'MAT012', 'Corte e Furação', 'almoxarife@soufer.com.br', NOW() - INTERVAL '4 days'),
-  ('Serra Circular Bosch GKS 150', 'MAT013', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '2 days')
-) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada)
-JOIN ferramentas f ON f.nome = v.ferramenta_nome
-JOIN colaboradores c ON c.matricula = v.colaborador_matricula
-JOIN atividades a ON a.nome = v.atividade_nome
-JOIN usuarios u ON u.email = v.usuario_email;
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'ok', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife@soufer.com.br')
+    WHERE ferramenta_id IN (
+      SELECT id FROM ferramentas WHERE nome IN (
+        'Paquímetro Digital Mitutoyo 150mm', 'Jogo de Chaves Combinadas 6 a 32mm', 'Micrômetro Externo 0-25mm Mitutoyo',
+        'Chave de Impacto Pneumática 1/2 Polegada', 'Lixadeira Orbital Makita BO3711', 'Serra Circular Bosch GKS 150'
+      )
+    ) AND data_devolucao IS NULL;
 
-UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'ok', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife@soufer.com.br')
-WHERE ferramenta_id IN (
-  SELECT id FROM ferramentas WHERE nome IN (
-    'Paquímetro Digital Mitutoyo 150mm', 'Jogo de Chaves Combinadas 6 a 32mm', 'Micrômetro Externo 0-25mm Mitutoyo',
-    'Chave de Impacto Pneumática 1/2 Polegada', 'Lixadeira Orbital Makita BO3711', 'Serra Circular Bosch GKS 150'
-  )
-) AND data_devolucao IS NULL;
+    -- 7.3 Empréstimos devolvidos com avaria (3) — trg_abre_ocorrencia cria a
+    -- ocorrência automaticamente a partir do UPDATE abaixo.
+    INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
+    SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.data_retirada + INTERVAL '1 day'
+    FROM (VALUES
+      ('Furadeira de Bancada Vonder FBV 550', 'MAT014', 'Usinagem Mecânica', 'almoxarife@soufer.com.br', NOW() - INTERVAL '10 days'),
+      ('Soprador Térmico Bosch GHG 20-63', 'MAT015', 'Instalação Elétrica', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '8 days'),
+      ('Máscara de Solda Automática Esab Sentinel', 'MAT016', 'Soldagem TIG/MIG', 'almoxarife@soufer.com.br', NOW() - INTERVAL '12 days')
+    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada)
+    JOIN ferramentas f ON f.nome = v.ferramenta_nome
+    JOIN colaboradores c ON c.matricula = v.colaborador_matricula
+    JOIN atividades a ON a.nome = v.atividade_nome
+    JOIN usuarios u ON u.email = v.usuario_email;
 
--- 7.3 Empréstimos devolvidos com avaria (3) — trg_abre_ocorrencia cria a
--- ocorrência automaticamente a partir do UPDATE abaixo.
-INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
-SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.data_retirada + INTERVAL '1 day'
-FROM (VALUES
-  ('Furadeira de Bancada Vonder FBV 550', 'MAT014', 'Usinagem Mecânica', 'almoxarife@soufer.com.br', NOW() - INTERVAL '10 days'),
-  ('Soprador Térmico Bosch GHG 20-63', 'MAT015', 'Instalação Elétrica', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '8 days'),
-  ('Máscara de Solda Automática Esab Sentinel', 'MAT016', 'Soldagem TIG/MIG', 'almoxarife@soufer.com.br', NOW() - INTERVAL '12 days')
-) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada)
-JOIN ferramentas f ON f.nome = v.ferramenta_nome
-JOIN colaboradores c ON c.matricula = v.colaborador_matricula
-JOIN atividades a ON a.nome = v.atividade_nome
-JOIN usuarios u ON u.email = v.usuario_email;
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Mandril travado após uso, necessita troca de rolamento'
+    WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Furadeira de Bancada Vonder FBV 550') AND data_devolucao IS NULL;
 
-UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Mandril travado após uso, necessita troca de rolamento'
-WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Furadeira de Bancada Vonder FBV 550') AND data_devolucao IS NULL;
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife@soufer.com.br'), observacoes_devolucao = 'Resistência queimada, sem aquecimento'
+    WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Soprador Térmico Bosch GHG 20-63') AND data_devolucao IS NULL;
 
-UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife@soufer.com.br'), observacoes_devolucao = 'Resistência queimada, sem aquecimento'
-WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Soprador Térmico Bosch GHG 20-63') AND data_devolucao IS NULL;
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Sensor de escurecimento automático não funciona'
+    WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Máscara de Solda Automática Esab Sentinel') AND data_devolucao IS NULL;
 
-UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Sensor de escurecimento automático não funciona'
-WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Máscara de Solda Automática Esab Sentinel') AND data_devolucao IS NULL;
+    -- 7.4 Empréstimo devolvido com perda (1)
+    INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
+    SELECT f.id, c.id, c.setor_id, a.id, u.id, NOW() - INTERVAL '15 days', NOW() - INTERVAL '14 days'
+    FROM ferramentas f, colaboradores c, atividades a, usuarios u
+    WHERE f.nome = 'Multímetro Digital Minipa ET-2042C'
+      AND c.matricula = 'MAT017'
+      AND a.nome = 'Instalação Elétrica'
+      AND u.email = 'almoxarife@soufer.com.br';
 
--- 7.4 Empréstimo devolvido com perda (1)
-INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
-SELECT f.id, c.id, c.setor_id, a.id, u.id, NOW() - INTERVAL '15 days', NOW() - INTERVAL '14 days'
-FROM ferramentas f, colaboradores c, atividades a, usuarios u
-WHERE f.nome = 'Multímetro Digital Minipa ET-2042C'
-  AND c.matricula = 'MAT017'
-  AND a.nome = 'Instalação Elétrica'
-  AND u.email = 'almoxarife@soufer.com.br';
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'perda', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Equipamento não foi localizado após o turno, colaborador relatou extravio'
+    WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Multímetro Digital Minipa ET-2042C') AND data_devolucao IS NULL;
+  END IF;
+END $$;
 
-UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'perda', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Equipamento não foi localizado após o turno, colaborador relatou extravio'
-WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Multímetro Digital Minipa ET-2042C') AND data_devolucao IS NULL;
-
-\endif

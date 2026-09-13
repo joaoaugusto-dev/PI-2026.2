@@ -25,3 +25,22 @@ export const verificarDiaUtilQuerySchema = z.object({
 });
 
 export type VerificarDiaUtilQuery = z.infer<typeof verificarDiaUtilQuerySchema>;
+
+export const calcularDiasUteisQuerySchema = z.object({
+  dataInicio: z
+    .string({ required_error: 'Parâmetro "dataInicio" é obrigatório (formato YYYY-MM-DD)' })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Parâmetro "dataInicio" deve estar no formato YYYY-MM-DD')
+    .refine((data) => {
+      const ano = Number(data.slice(0, 4));
+      return ano >= 2000 && ano <= anoAtual + 5;
+    }, `Ano deve estar entre 2000 e ${anoAtual + 5}`),
+  dias: z.coerce
+    .number({ invalid_type_error: 'Parâmetro "dias" deve ser numérico' })
+    .int('Parâmetro "dias" deve ser um número inteiro')
+    .min(0, 'Quantidade de dias úteis deve ser maior ou igual a zero')
+    .max(365, 'Quantidade máxima suportada é 365 dias úteis')
+    .default(1),
+});
+
+export type CalcularDiasUteisQuery = z.infer<typeof calcularDiasUteisQuerySchema>;
+
