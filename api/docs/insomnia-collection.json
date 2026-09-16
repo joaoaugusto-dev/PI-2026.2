@@ -9,7 +9,7 @@
       "_type": "workspace",
       "parentId": null,
       "name": "SOUFER Tools API",
-      "description": "Colecao inicial (API-02) -- health, auth e consulta",
+      "description": "Colecao da API SOUFER Tools -- health, auth, consulta e ferramentas (API-02, API-05, API-06)",
       "scope": "collection"
     },
     {
@@ -118,6 +118,121 @@
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_listar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas",
+      "parameters": [
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "20" },
+        { "name": "status", "value": "disponivel", "disabled": true },
+        { "name": "q", "value": "furadeira", "disabled": true },
+        { "name": "grupoId", "value": "1", "disabled": true },
+        { "name": "sort", "value": "nome", "disabled": true }
+      ],
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_listar_sem_token",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas (sem token)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas",
+      "headers": []
+    },
+    {
+      "_id": "req_ferramentas_criar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/ferramentas",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Furadeira de Impacto\",\n  \"descricao\": \"Furadeira de impacto 750W\",\n  \"marca\": \"Bosch\",\n  \"modelo\": \"GSB 550\",\n  \"grupoId\": 1,\n  \"localizacao\": \"Prateleira A1\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_criar_invalido",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/ferramentas (sem nome/grupoId)",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"descricao\": \"Faltando campos obrigatorios\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_buscar_por_id",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas/{id}",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_buscar_por_id_nao_encontrado",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas/{id} (nao encontrada)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_buscar_por_codigo",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas/por-codigo/{codigo}",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/por-codigo/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_buscar_por_codigo_nao_encontrado",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas/por-codigo/{codigo} (nao encontrada)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/por-codigo/9999",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_historico",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas/{id}/historico",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/historico",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ]
     }
   ]
