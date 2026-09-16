@@ -51,4 +51,19 @@ describe('ferramentaService — API-07 (criar/editar/status/baixa)', () => {
       await expect(ferramentaService.atualizar(999999999, { nome: 'x' })).rejects.toThrow(NotFoundError);
     });
   });
+
+  describe('marcarEtiquetaImpressa', () => {
+    it('grava a data/hora de impressão sem alterar o status', async () => {
+      const antes = await ferramentaService.buscarPorId(ferramentaId);
+      expect(antes.etiqueta_impressa_em).toBeNull();
+
+      const depois = await ferramentaService.marcarEtiquetaImpressa(ferramentaId);
+      expect(depois.etiqueta_impressa_em).not.toBeNull();
+      expect(depois.status).toBe('disponivel');
+    });
+
+    it('lança NotFoundError quando a ferramenta não existe', async () => {
+      await expect(ferramentaService.marcarEtiquetaImpressa(999999999)).rejects.toThrow(NotFoundError);
+    });
+  });
 });

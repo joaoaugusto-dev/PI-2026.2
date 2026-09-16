@@ -14,6 +14,8 @@ export interface Ferramenta {
   setor_id: number | null;
   localizacao: string | null;
   status: 'disponivel' | 'em_uso' | 'indisponivel';
+  motivo_indisponivel: 'avaria' | 'perda' | 'manutencao_preventiva' | 'baixada' | null;
+  etiqueta_impressa_em: string | null;
   ativo: boolean;
   created_at: string;
 }
@@ -31,6 +33,10 @@ const COLUNAS_ORDENACAO: Record<string, string> = {
   nome: 'nome',
   status: 'status',
 };
+
+const COLUNAS_FERRAMENTA = `id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
+            subgrupo_id, setor_id, localizacao, status, motivo_indisponivel,
+            etiqueta_impressa_em, ativo, created_at`;
 
 // Escapa os coringas do ILIKE (%, _ e a própria barra invertida) para que
 // caracteres digitados pelo usuário em "q" sejam tratados como texto literal,
@@ -82,8 +88,7 @@ export async function listar({
 
   params.push(limit, offset);
   const rowsResult = await query<Ferramenta>(
-    `SELECT id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-            subgrupo_id, setor_id, localizacao, status, ativo, created_at
+    `SELECT ${COLUNAS_FERRAMENTA}
      FROM ferramentas
      ${where}
      ORDER BY ${ordenacao}, id
@@ -96,8 +101,7 @@ export async function listar({
 
 export async function buscarPorId(id: number): Promise<Ferramenta> {
   const result = await query<Ferramenta>(
-    `SELECT id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-            subgrupo_id, setor_id, localizacao, status, ativo, created_at
+    `SELECT ${COLUNAS_FERRAMENTA}
      FROM ferramentas
      WHERE id = $1 AND ativo = true`,
     [id]
@@ -113,8 +117,7 @@ export async function buscarPorId(id: number): Promise<Ferramenta> {
 
 export async function buscarPorCodigo(codigo: number): Promise<Ferramenta> {
   const result = await query<Ferramenta>(
-    `SELECT id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-            subgrupo_id, setor_id, localizacao, status, ativo, created_at
+    `SELECT ${COLUNAS_FERRAMENTA}
      FROM ferramentas
      WHERE codigo_identificacao = $1 AND ativo = true`,
     [codigo]
@@ -164,8 +167,7 @@ export async function criar(input: CriarFerramentaInput): Promise<Ferramenta> {
   const result = await query<Ferramenta>(
     `INSERT INTO ferramentas (nome, descricao, marca, modelo, grupo_id, subgrupo_id, setor_id, localizacao)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-               subgrupo_id, setor_id, localizacao, status, ativo, created_at`,
+     RETURNING ${COLUNAS_FERRAMENTA}`,
     [
       input.nome,
       input.descricao ?? null,
@@ -211,9 +213,26 @@ export async function atualizar(id: number, input: AtualizarFerramentaInput): Pr
     `UPDATE ferramentas
      SET ${campos.join(', ')}, updated_at = NOW()
      WHERE id = $${params.length} AND ativo = true
-     RETURNING id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-               subgrupo_id, setor_id, localizacao, status, ativo, created_at`,
+     RETURNING ${COLUNAS_FERRAMENTA}`,
     params
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * PATCH /v1/ferramentas/:id/etiqueta-impressa — só marca a data/hora de
+ * impressão da etiqueta Code128 (FE-09/DOC-08); não afeta status.
+ */
+export async function marcarEtiquetaImpressa(id: number): Promise<Ferramenta> {
+  await buscarPorId(id);
+
+  const result = await query<Ferramenta>(
+    `UPDATE ferramentas
+     SET etiqueta_impressa_em = NOW(), updated_at = NOW()
+     WHERE id = $1 AND ativo = true
+     RETURNING ${COLUNAS_FERRAMENTA}`,
+    [id]
   );
 
   return result.rows[0];

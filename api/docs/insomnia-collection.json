@@ -278,6 +278,28 @@
         { "name": "Content-Type", "value": "application/json" },
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ]
+    },
+    {
+      "_id": "req_ferramentas_etiqueta_impressa",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/etiqueta-impressa",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/etiqueta-impressa",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_etiqueta_impressa_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/etiqueta-impressa (nao encontrada)",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999/etiqueta-impressa",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
     }
   ]
 }

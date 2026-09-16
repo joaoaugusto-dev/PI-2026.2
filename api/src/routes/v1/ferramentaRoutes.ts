@@ -256,4 +256,35 @@ router.put(
   FerramentaController.atualizar
 );
 
+/**
+ * @openapi
+ * /ferramentas/{id}/etiqueta-impressa:
+ *   patch:
+ *     summary: Marca a data/hora de impressão da etiqueta de código de barras da ferramenta
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Etiqueta marcada como impressa
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.patch(
+  '/:id/etiqueta-impressa',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.marcarEtiquetaImpressa
+);
+
 export default router;
