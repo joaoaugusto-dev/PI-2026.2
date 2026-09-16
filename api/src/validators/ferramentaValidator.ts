@@ -34,3 +34,15 @@ export const criarFerramentaSchema = z.object({
 });
 
 export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
+
+// Mesmos campos editáveis do cadastro (nome, descricao, marca, modelo,
+// grupoId, subgrupoId, setorId, localizacao) — status, codigo_identificacao
+// e ativo têm rotas/ações próprias (disponibilizar, DELETE) e não são
+// editados por aqui.
+export const atualizarFerramentaSchema = criarFerramentaSchema
+  .partial()
+  .refine((dados) => Object.keys(dados).length > 0, {
+    message: 'Informe ao menos um campo para atualizar',
+  });
+
+export type AtualizarFerramentaInput = z.infer<typeof atualizarFerramentaSchema>;

@@ -8,6 +8,7 @@ import {
   ferramentaIdParamSchema,
   ferramentaCodigoParamSchema,
   criarFerramentaSchema,
+  atualizarFerramentaSchema,
 } from '../../validators/ferramentaValidator.js';
 
 const router = Router();
@@ -197,6 +198,62 @@ router.get(
   authorize('almoxarife'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.historico
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}:
+ *   put:
+ *     summary: Atualiza os campos editáveis de uma ferramenta
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *               descricao:
+ *                 type: string
+ *               marca:
+ *                 type: string
+ *               modelo:
+ *                 type: string
+ *               grupoId:
+ *                 type: integer
+ *               subgrupoId:
+ *                 type: integer
+ *               setorId:
+ *                 type: integer
+ *               localizacao:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Ferramenta atualizada com sucesso
+ *       400:
+ *         description: Erro de validação nos campos
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.put(
+  '/:id',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
+  FerramentaController.atualizar
 );
 
 export default router;

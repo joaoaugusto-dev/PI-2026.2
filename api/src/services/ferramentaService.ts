@@ -1,6 +1,6 @@
 import { query } from '../config/database.js';
 import { NotFoundError } from '../utils/errors.js';
-import { CriarFerramentaInput } from '../validators/ferramentaValidator.js';
+import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
   id: number;
@@ -176,6 +176,44 @@ export async function criar(input: CriarFerramentaInput): Promise<Ferramenta> {
       input.setorId ?? null,
       input.localizacao ?? null,
     ]
+  );
+
+  return result.rows[0];
+}
+
+const COLUNAS_ATUALIZAVEIS: Record<keyof AtualizarFerramentaInput, string> = {
+  nome: 'nome',
+  descricao: 'descricao',
+  marca: 'marca',
+  modelo: 'modelo',
+  grupoId: 'grupo_id',
+  subgrupoId: 'subgrupo_id',
+  setorId: 'setor_id',
+  localizacao: 'localizacao',
+};
+
+export async function atualizar(id: number, input: AtualizarFerramentaInput): Promise<Ferramenta> {
+  await buscarPorId(id);
+
+  const campos: string[] = [];
+  const params: any[] = [];
+
+  for (const [chave, coluna] of Object.entries(COLUNAS_ATUALIZAVEIS)) {
+    const valor = input[chave as keyof AtualizarFerramentaInput];
+    if (valor !== undefined) {
+      params.push(valor);
+      campos.push(`${coluna} = $${params.length}`);
+    }
+  }
+
+  params.push(id);
+  const result = await query<Ferramenta>(
+    `UPDATE ferramentas
+     SET ${campos.join(', ')}, updated_at = NOW()
+     WHERE id = $${params.length} AND ativo = true
+     RETURNING id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
+               subgrupo_id, setor_id, localizacao, status, ativo, created_at`,
+    params
   );
 
   return result.rows[0];
