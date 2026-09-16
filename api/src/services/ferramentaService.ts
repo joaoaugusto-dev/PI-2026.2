@@ -300,3 +300,35 @@ export async function disponibilizar(id: number, usuarioId: number): Promise<Fer
     client.release();
   }
 }
+
+/**
+ * DELETE /v1/ferramentas/:id — baixa lógica (ativo = false), nunca apaga de
+ * verdade. Só é permitida depois que o empréstimo em aberto (se houver) for
+ * finalizado — inclusive quando finalizado como avaria/perda, já que o
+ * importante é não deixar `emprestimos.data_devolucao` nulo apontando para
+ * uma ferramenta baixada.
+ */
+export async function baixar(id: number): Promise<Ferramenta> {
+  await buscarPorId(id);
+
+  const emprestimoAberto = await query(
+    `SELECT 1 FROM emprestimos WHERE ferramenta_id = $1 AND data_devolucao IS NULL LIMIT 1`,
+    [id]
+  );
+  if ((emprestimoAberto.rowCount ?? 0) > 0) {
+    throw new ConflictError(
+      'Ferramenta possui empréstimo em aberto — finalize a devolução (ou registre a perda/avaria) antes de dar baixa',
+      'FERRAMENTA_COM_EMPRESTIMO_ABERTO'
+    );
+  }
+
+  const result = await query<Ferramenta>(
+    `UPDATE ferramentas
+     SET ativo = false, status = 'indisponivel', motivo_indisponivel = 'baixada', updated_at = NOW()
+     WHERE id = $1 AND ativo = true
+     RETURNING ${COLUNAS_FERRAMENTA}`,
+    [id]
+  );
+
+  return result.rows[0];
+}

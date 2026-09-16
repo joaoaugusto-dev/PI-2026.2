@@ -320,4 +320,37 @@ router.patch(
   FerramentaController.disponibilizar
 );
 
+/**
+ * @openapi
+ * /ferramentas/{id}:
+ *   delete:
+ *     summary: Baixa lógica de uma ferramenta (ativo = false); nunca apaga o registro
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ferramenta baixada com sucesso
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ *       409:
+ *         description: Ferramenta possui empréstimo em aberto
+ */
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.baixar
+);
+
 export default router;

@@ -333,6 +333,39 @@
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ]
+    },
+    {
+      "_id": "req_ferramentas_baixar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "DELETE /v1/ferramentas/{id}",
+      "method": "DELETE",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_baixar_emprestimo_aberto",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "DELETE /v1/ferramentas/{id} (emprestimo em aberto, 409)",
+      "method": "DELETE",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/2",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_baixar_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "DELETE /v1/ferramentas/{id} (nao encontrada)",
+      "method": "DELETE",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
     }
   ]
 }
