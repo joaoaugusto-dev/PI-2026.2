@@ -17,8 +17,8 @@ async function runSeed() {
   const salt = await bcrypt.genSalt(10);
   const senhaHash = await bcrypt.hash('123456', salt);
 
-  // Substitui os hashes de placeholder pelo hash real
-  sql = sql.replace(/\$2a\$10\$tZ9v2R2FfO6lE8u5e9\.X9uVv9\.Gf5fO8x6V6qE9e9\.Gf5fO8x6V6q/g, senhaHash);
+  // Substitui os hashes pelo hash real gerado dinamicamente
+  sql = sql.replace(/\$2[aby]\$10\$[A-Za-z0-9./]{53}/g, () => senhaHash);
 
   const client = await getClient();
 

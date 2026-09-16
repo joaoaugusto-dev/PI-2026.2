@@ -31,7 +31,6 @@ Thumbs.db
 # Testes / cobertura
 coverage/
 .pytest_cache/
-scripts
 
 # Logs
 logs
