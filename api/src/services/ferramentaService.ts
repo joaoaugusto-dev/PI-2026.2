@@ -1,5 +1,5 @@
-import { query } from '../config/database.js';
-import { NotFoundError } from '../utils/errors.js';
+import { query, getClient } from '../config/database.js';
+import { NotFoundError, ConflictError } from '../utils/errors.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
@@ -236,4 +236,67 @@ export async function marcarEtiquetaImpressa(id: number): Promise<Ferramenta> {
   );
 
   return result.rows[0];
+}
+
+/**
+ * PATCH /v1/ferramentas/:id/disponibilizar — ação explícita de retorno de
+ * reparo (Regra de negócio: "após o reparo, a disponibilização deve ser uma
+ * ação explícita e auditável"). Registra em `auditoria` e resolve qualquer
+ * ocorrência ainda em aberto/em reparo/cobrada dessa ferramenta.
+ */
+export async function disponibilizar(id: number, usuarioId: number): Promise<Ferramenta> {
+  const client = await getClient();
+
+  try {
+    await client.query('BEGIN');
+
+    const atual = await client.query<Ferramenta>(
+      `SELECT ${COLUNAS_FERRAMENTA} FROM ferramentas WHERE id = $1 AND ativo = true FOR UPDATE`,
+      [id]
+    );
+    const ferramenta = atual.rows[0];
+    if (!ferramenta) {
+      throw new NotFoundError('Ferramenta não encontrada', 'FERRAMENTA_NOT_FOUND');
+    }
+    if (ferramenta.status !== 'indisponivel') {
+      throw new ConflictError(
+        `Ferramenta não está indisponível (status atual: ${ferramenta.status})`,
+        'FERRAMENTA_JA_DISPONIVEL'
+      );
+    }
+
+    const atualizado = await client.query<Ferramenta>(
+      `UPDATE ferramentas
+       SET status = 'disponivel', motivo_indisponivel = NULL, updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${COLUNAS_FERRAMENTA}`,
+      [id]
+    );
+
+    await client.query(
+      `INSERT INTO auditoria (tabela, operacao, registro_id, dados_anteriores, dados_novos, usuario_id)
+       VALUES ('ferramentas', 'disponibilizar', $1, $2, $3, $4)`,
+      [
+        id,
+        JSON.stringify({ status: ferramenta.status, motivo_indisponivel: ferramenta.motivo_indisponivel }),
+        JSON.stringify({ status: 'disponivel', motivo_indisponivel: null }),
+        usuarioId,
+      ]
+    );
+
+    await client.query(
+      `UPDATE ocorrencias
+       SET status = 'resolvida', resolvida_por = $2, data_resolucao = NOW(), updated_at = NOW()
+       WHERE ferramenta_id = $1 AND status IN ('aberta', 'em_reparo', 'cobrada')`,
+      [id, usuarioId]
+    );
+
+    await client.query('COMMIT');
+    return atualizado.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }

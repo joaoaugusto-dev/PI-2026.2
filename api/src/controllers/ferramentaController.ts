@@ -98,4 +98,17 @@ export class FerramentaController {
       return next(error);
     }
   }
+
+  /**
+   * PATCH /v1/ferramentas/:id/disponibilizar
+   */
+  static async disponibilizar(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      const ferramenta = await ferramentaService.disponibilizar(id, req.usuario!.id);
+      return sendSuccess(res, ferramenta, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }

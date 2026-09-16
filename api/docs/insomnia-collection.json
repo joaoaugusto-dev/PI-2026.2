@@ -300,6 +300,39 @@
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ]
+    },
+    {
+      "_id": "req_ferramentas_disponibilizar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/disponibilizar",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/disponibilizar",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_disponibilizar_ja_disponivel",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/disponibilizar (ja disponivel, 409)",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/disponibilizar",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_disponibilizar_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/disponibilizar (nao encontrada)",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999/disponibilizar",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
     }
   ]
 }

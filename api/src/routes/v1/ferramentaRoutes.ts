@@ -287,4 +287,37 @@ router.patch(
   FerramentaController.marcarEtiquetaImpressa
 );
 
+/**
+ * @openapi
+ * /ferramentas/{id}/disponibilizar:
+ *   patch:
+ *     summary: Retira a ferramenta de "indisponivel" após reparo (ação explícita e auditável)
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ferramenta disponibilizada com sucesso
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ *       409:
+ *         description: Ferramenta não está indisponível
+ */
+router.patch(
+  '/:id/disponibilizar',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.disponibilizar
+);
+
 export default router;
