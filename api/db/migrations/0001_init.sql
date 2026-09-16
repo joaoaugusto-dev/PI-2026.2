@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS ferramentas (
     eh_kit BOOLEAN NOT NULL DEFAULT FALSE,
     valor_aquisicao NUMERIC(10, 2),
     foto_url TEXT,
+    etiqueta_impressa_em TIMESTAMP WITH TIME ZONE,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
