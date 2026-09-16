@@ -79,7 +79,7 @@ export async function listar({
             subgrupo_id, setor_id, localizacao, status, ativo, created_at
      FROM ferramentas
      ${where}
-     ORDER BY ${ordenacao}
+     ORDER BY ${ordenacao}, id
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );

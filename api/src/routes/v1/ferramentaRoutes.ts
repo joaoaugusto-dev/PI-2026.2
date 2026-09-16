@@ -97,7 +97,12 @@ const router = Router();
  */
 router
   .route('/')
-  .get(authenticate, validate({ query: listarFerramentasQuerySchema }), FerramentaController.listar)
+  .get(
+    authenticate,
+    authorize('almoxarife'),
+    validate({ query: listarFerramentasQuerySchema }),
+    FerramentaController.listar
+  )
   .post(
     authenticate,
     authorize('almoxarife'),
@@ -131,6 +136,7 @@ router
 router.get(
   '/por-codigo/:codigo',
   authenticate,
+  authorize('almoxarife'),
   validate({ params: ferramentaCodigoParamSchema }),
   FerramentaController.buscarPorCodigo
 );
@@ -159,6 +165,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
+  authorize('almoxarife'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.buscarPorId
 );
@@ -187,6 +194,7 @@ router.get(
 router.get(
   '/:id/historico',
   authenticate,
+  authorize('almoxarife'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.historico
 );
