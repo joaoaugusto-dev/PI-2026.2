@@ -31,7 +31,9 @@ async function ensureDatabaseExists() {
       console.log(`✅ Banco de dados "${env.db.database}" criado com sucesso!`);
     }
   } catch (err) {
-    // Se não for possível verificar pelo banco default (ex: restrições de permissão), prossegue
+    console.warn(
+      `⚠️  Não foi possível verificar/criar o banco "${env.db.database}" pelo banco padrão "postgres": ${(err as Error).message}`
+    );
   } finally {
     await adminClient.end().catch(() => {});
   }

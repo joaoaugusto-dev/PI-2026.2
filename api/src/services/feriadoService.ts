@@ -142,7 +142,13 @@ function normalizarDataUTC(data: Date | string): Date {
       const year = parseInt(match[1], 10);
       const month = parseInt(match[2], 10) - 1;
       const day = parseInt(match[3], 10);
-      return new Date(Date.UTC(year, month, day));
+      const parsed = new Date(Date.UTC(year, month, day));
+      const ehDataValida =
+        parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month && parsed.getUTCDate() === day;
+      if (!ehDataValida) {
+        throw new AppError('Data inválida, use o formato YYYY-MM-DD', 400, 'INVALID_DATE');
+      }
+      return parsed;
     }
     const d = new Date(data);
     if (Number.isNaN(d.getTime())) {
@@ -195,7 +201,7 @@ export async function diasUteis(
     throw new AppError('A quantidade de dias úteis deve ser maior ou igual a zero', 400, 'INVALID_DAYS');
   }
 
-  let dataAtual = normalizarDataUTC(dataInicio);
+  const dataAtual = normalizarDataUTC(dataInicio);
 
   if (quantidadeDias === 0) {
     return formatarDataISO(dataAtual);
@@ -206,17 +212,9 @@ export async function diasUteis(
 
   async function getFeriadosSet(ano: number): Promise<Set<string>> {
     if (!cacheFeriadosPorAno.has(ano)) {
-      try {
-        const { feriados } = await listarPorAno(ano);
-        const setDatas = new Set(feriados.map((f) => f.data));
-        cacheFeriadosPorAno.set(ano, setDatas);
-      } catch (err) {
-        console.warn(
-          `[AVISO] Falha ao carregar feriados de ${ano}, aplicando fallback de sábado/domingo:`,
-          (err as Error).message
-        );
-        cacheFeriadosPorAno.set(ano, new Set());
-      }
+      const { feriados } = await listarPorAno(ano);
+      const setDatas = new Set(feriados.map((f) => f.data));
+      cacheFeriadosPorAno.set(ano, setDatas);
     }
     return cacheFeriadosPorAno.get(ano)!;
   }

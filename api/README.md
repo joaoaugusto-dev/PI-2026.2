@@ -97,6 +97,12 @@ npm run db:migrate
 
 # Popula setores, grupos de ferramentas, atividades, colaboradores e ferramentas de teste
 npm run db:seed
+
+# Sincroniza os feriados nacionais (BrasilAPI) na tabela 'feriados' (padrão: 2026 e 2027)
+npm run db:feriados
+
+# Ou informando os anos explicitamente
+npm run db:feriados -- 2028 2029
 ```
 
 ### 5. Iniciar o Servidor

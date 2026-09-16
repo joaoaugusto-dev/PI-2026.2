@@ -48,6 +48,14 @@ describe('Serviço de Feriados e Cálculo de Dias Úteis', () => {
       const resultado = await ehDiaUtil('2026-04-20');
       expect(resultado).toBe(true);
     });
+
+    it('rejeita data de calendário inexistente (dia fora do intervalo do mês) com INVALID_DATE', async () => {
+      await expect(ehDiaUtil('2026-02-30')).rejects.toThrow('Data inválida, use o formato YYYY-MM-DD');
+    });
+
+    it('rejeita data de calendário inexistente (mês fora do intervalo) com INVALID_DATE', async () => {
+      await expect(ehDiaUtil('2026-13-01')).rejects.toThrow('Data inválida, use o formato YYYY-MM-DD');
+    });
   });
 
   describe('diasUteis', () => {
@@ -151,6 +159,18 @@ describe('Serviço de Feriados e Cálculo de Dias Úteis', () => {
       const res = await request(app).get('/v1/feriados/dias-uteis?dataInicio=data-invalida&dias=2');
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('GET /v1/feriados/dia-util retorna 400 INVALID_DATE para dia inexistente no mês (2026-02-30)', async () => {
+      const res = await request(app).get('/v1/feriados/dia-util?data=2026-02-30');
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('INVALID_DATE');
+    });
+
+    it('GET /v1/feriados/dias-uteis retorna 400 INVALID_DATE para mês inexistente (2026-13-01)', async () => {
+      const res = await request(app).get('/v1/feriados/dias-uteis?dataInicio=2026-13-01&dias=2');
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('INVALID_DATE');
     });
   });
 });
