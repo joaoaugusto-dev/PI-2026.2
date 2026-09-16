@@ -19,7 +19,8 @@
       "name": "Base Environment",
       "data": {
         "baseUrl": "http://localhost:3000",
-        "token": ""
+        "token": "",
+        "tokenConsulta": ""
       }
     },
     {
@@ -137,6 +138,17 @@
       ],
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_listar_perfil_consulta",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/ferramentas (perfil consulta, 403)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/ferramentas",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.tokenConsulta }}" }
       ]
     },
     {
