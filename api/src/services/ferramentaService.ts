@@ -32,6 +32,13 @@ const COLUNAS_ORDENACAO: Record<string, string> = {
   status: 'status',
 };
 
+// Escapa os coringas do ILIKE (%, _ e a própria barra invertida) para que
+// caracteres digitados pelo usuário em "q" sejam tratados como texto literal,
+// não como padrão de busca.
+function escaparCoringasLike(valor: string): string {
+  return valor.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 /**
  * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
  * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
@@ -49,7 +56,7 @@ export async function listar({
   const params: any[] = [];
 
   if (q) {
-    params.push(`%${q}%`);
+    params.push(`%${escaparCoringasLike(q)}%`);
     condicoes.push(
       `(nome ILIKE $${params.length} OR descricao ILIKE $${params.length} OR marca ILIKE $${params.length} OR modelo ILIKE $${params.length})`
     );
