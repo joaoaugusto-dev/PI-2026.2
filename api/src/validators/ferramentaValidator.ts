@@ -3,13 +3,23 @@ import { z } from 'zod';
 export const listarFerramentasQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().trim().min(1).max(150).optional(),
   status: z.enum(['disponivel', 'em_uso', 'indisponivel']).optional(),
+  // "categoria" é o nome antigo (pré grupos_ferramentas/subgrupos_ferramentas);
+  // o filtro passado pelo front chega como grupoId.
+  grupoId: z.coerce.number().int().positive().optional(),
+  sort: z.enum(['nome', 'status']).optional(),
 });
 
 export type ListarFerramentasQuery = z.infer<typeof listarFerramentasQuerySchema>;
 
 export const ferramentaIdParamSchema = z.object({
   id: z.coerce.number().int().positive('ID deve ser um número inteiro positivo'),
+});
+
+// codigo_identificacao é SMALLINT entre 1 e 9999 (ver migration 0001).
+export const ferramentaCodigoParamSchema = z.object({
+  codigo: z.coerce.number().int().min(1).max(9999, 'Código deve estar entre 1 e 9999'),
 });
 
 export const criarFerramentaSchema = z.object({

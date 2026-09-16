@@ -30,8 +30,10 @@ Esses valores são determinados pelo back-end.
 | GET | `/v1/auth/me` | Autenticado | Usuário atual |
 | POST | `/v1/consulta/sessao` | Público | Token limitado de consulta |
 | GET | `/v1/consulta/ferramentas` | Consulta | Busca somente leitura |
-| GET | `/v1/ferramentas` | Almoxarife | Lista de ferramentas |
-| GET | `/v1/ferramentas/porcodigo/:codigo` | Almoxarife | Leitura do código |
+| GET | `/v1/ferramentas` | Almoxarife | Lista de ferramentas (filtros `q`, `status`, `grupoId`, `sort`) |
+| GET | `/v1/ferramentas/:id` | Almoxarife | Detalhe de uma ferramenta |
+| GET | `/v1/ferramentas/por-codigo/:codigo` | Almoxarife | Leitura do código |
+| GET | `/v1/ferramentas/:id/historico` | Almoxarife | Histórico de empréstimos e ocorrências |
 | POST | `/v1/ferramentas` | Almoxarife | Cadastro |
 | PUT | `/v1/ferramentas/:id` | Almoxarife | Atualização |
 | PATCH | `/v1/ferramentas/:id/disponibilizar` | Almoxarife | Retorno de reparo |
