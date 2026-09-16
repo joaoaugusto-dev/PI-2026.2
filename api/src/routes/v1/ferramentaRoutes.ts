@@ -6,6 +6,7 @@ import { authorize } from '../../middlewares/authorize.js';
 import {
   listarFerramentasQuerySchema,
   ferramentaIdParamSchema,
+  ferramentaCodigoParamSchema,
   criarFerramentaSchema,
 } from '../../validators/ferramentaValidator.js';
 
@@ -34,6 +35,21 @@ const router = Router();
  *         schema:
  *           type: string
  *           enum: [disponivel, em_uso, indisponivel]
+ *       - in: query
+ *         name: q
+ *         description: Busca textual por nome, descrição, marca ou modelo
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: grupoId
+ *         description: Filtra pelo grupo de ferramentas (antigo "categoria")
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [nome, status]
  *     responses:
  *       200:
  *         description: Lista paginada de ferramentas
@@ -91,6 +107,36 @@ router
 
 /**
  * @openapi
+ * /ferramentas/por-codigo/{codigo}:
+ *   get:
+ *     summary: Busca uma ferramenta pelo código de identificação (usado pela leitura de código de barras)
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: codigo
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 9999
+ *     responses:
+ *       200:
+ *         description: Ferramenta encontrada
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.get(
+  '/por-codigo/:codigo',
+  authenticate,
+  validate({ params: ferramentaCodigoParamSchema }),
+  FerramentaController.buscarPorCodigo
+);
+
+/**
+ * @openapi
  * /ferramentas/{id}:
  *   get:
  *     summary: Busca uma ferramenta pelo ID
@@ -115,6 +161,34 @@ router.get(
   authenticate,
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.buscarPorId
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}/historico:
+ *   get:
+ *     summary: Histórico de empréstimos e ocorrências de uma ferramenta
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Histórico encontrado
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.get(
+  '/:id/historico',
+  authenticate,
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.historico
 );
 
 export default router;
