@@ -36,7 +36,9 @@ Esses valores são determinados pelo back-end.
 | GET | `/v1/ferramentas/:id/historico` | Almoxarife | Histórico de empréstimos e ocorrências |
 | POST | `/v1/ferramentas` | Almoxarife | Cadastro |
 | PUT | `/v1/ferramentas/:id` | Almoxarife | Atualização |
+| PATCH | `/v1/ferramentas/:id/etiqueta-impressa` | Almoxarife | Marca a etiqueta como impressa |
 | PATCH | `/v1/ferramentas/:id/disponibilizar` | Almoxarife | Retorno de reparo |
+| DELETE | `/v1/ferramentas/:id` | Almoxarife | Baixa lógica (ativo = false) |
 | GET/POST/PUT/DELETE | `/v1/colaboradores` | Almoxarife | CRUD |
 | GET/POST/PUT/DELETE | `/v1/setores` | Almoxarife | CRUD |
 | GET/POST/PUT/DELETE | `/v1/categorias` | Almoxarife | CRUD |

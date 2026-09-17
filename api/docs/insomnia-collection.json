@@ -246,6 +246,126 @@
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ]
+    },
+    {
+      "_id": "req_ferramentas_atualizar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PUT /v1/ferramentas/{id}",
+      "method": "PUT",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"localizacao\": \"Prateleira B2\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_atualizar_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PUT /v1/ferramentas/{id} (nao encontrada)",
+      "method": "PUT",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"localizacao\": \"Prateleira B2\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_etiqueta_impressa",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/etiqueta-impressa",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/etiqueta-impressa",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_etiqueta_impressa_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/etiqueta-impressa (nao encontrada)",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999/etiqueta-impressa",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_disponibilizar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/disponibilizar",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/disponibilizar",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_disponibilizar_ja_disponivel",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/disponibilizar (ja disponivel, 409)",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1/disponibilizar",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_disponibilizar_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "PATCH /v1/ferramentas/{id}/disponibilizar (nao encontrada)",
+      "method": "PATCH",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999/disponibilizar",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_baixar",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "DELETE /v1/ferramentas/{id}",
+      "method": "DELETE",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_baixar_emprestimo_aberto",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "DELETE /v1/ferramentas/{id} (emprestimo em aberto, 409)",
+      "method": "DELETE",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/2",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_ferramentas_baixar_nao_encontrada",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "DELETE /v1/ferramentas/{id} (nao encontrada)",
+      "method": "DELETE",
+      "url": "{{ _.baseUrl }}/v1/ferramentas/999999",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
     }
   ]
 }
