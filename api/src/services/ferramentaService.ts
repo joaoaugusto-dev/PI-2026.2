@@ -1,6 +1,6 @@
 import { query } from '../config/database.js';
 import { NotFoundError } from '../utils/errors.js';
-import { CriarFerramentaInput } from '../validators/ferramentaValidator.js';
+import { CriarFerramentaInput, EditarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
   id: number;
@@ -14,6 +14,8 @@ export interface Ferramenta {
   setor_id: number | null;
   localizacao: string | null;
   status: 'disponivel' | 'em_uso' | 'indisponivel';
+  valor_aquisicao?: number | null;
+  eh_kit?: boolean;
   ativo: boolean;
   created_at: string;
 }
@@ -83,7 +85,7 @@ export async function listar({
   params.push(limit, offset);
   const rowsResult = await query<Ferramenta>(
     `SELECT id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-            subgrupo_id, setor_id, localizacao, status, ativo, created_at
+            subgrupo_id, setor_id, localizacao, status, valor_aquisicao, eh_kit, ativo, created_at
      FROM ferramentas
      ${where}
      ORDER BY ${ordenacao}, id
@@ -97,7 +99,7 @@ export async function listar({
 export async function buscarPorId(id: number): Promise<Ferramenta> {
   const result = await query<Ferramenta>(
     `SELECT id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-            subgrupo_id, setor_id, localizacao, status, ativo, created_at
+            subgrupo_id, setor_id, localizacao, status, valor_aquisicao, eh_kit, ativo, created_at
      FROM ferramentas
      WHERE id = $1 AND ativo = true`,
     [id]
@@ -114,7 +116,7 @@ export async function buscarPorId(id: number): Promise<Ferramenta> {
 export async function buscarPorCodigo(codigo: number): Promise<Ferramenta> {
   const result = await query<Ferramenta>(
     `SELECT id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-            subgrupo_id, setor_id, localizacao, status, ativo, created_at
+            subgrupo_id, setor_id, localizacao, status, valor_aquisicao, eh_kit, ativo, created_at
      FROM ferramentas
      WHERE codigo_identificacao = $1 AND ativo = true`,
     [codigo]
@@ -162,10 +164,10 @@ export async function historico(id: number): Promise<HistoricoFerramenta> {
 
 export async function criar(input: CriarFerramentaInput): Promise<Ferramenta> {
   const result = await query<Ferramenta>(
-    `INSERT INTO ferramentas (nome, descricao, marca, modelo, grupo_id, subgrupo_id, setor_id, localizacao)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO ferramentas (nome, descricao, marca, modelo, grupo_id, subgrupo_id, setor_id, localizacao, valor_aquisicao, eh_kit)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
-               subgrupo_id, setor_id, localizacao, status, ativo, created_at`,
+               subgrupo_id, setor_id, localizacao, status, valor_aquisicao, eh_kit, ativo, created_at`,
     [
       input.nome,
       input.descricao ?? null,
@@ -175,8 +177,81 @@ export async function criar(input: CriarFerramentaInput): Promise<Ferramenta> {
       input.subgrupoId ?? null,
       input.setorId ?? null,
       input.localizacao ?? null,
+      input.valorAquisicao ?? null,
+      input.ehKit ?? false,
     ]
   );
 
   return result.rows[0];
 }
+
+export async function atualizar(id: number, input: EditarFerramentaInput): Promise<Ferramenta> {
+  await buscarPorId(id);
+
+  const campos: string[] = [];
+  const params: any[] = [];
+
+  if (input.nome !== undefined) {
+    params.push(input.nome);
+    campos.push(`nome = $${params.length}`);
+  }
+  if (input.descricao !== undefined) {
+    params.push(input.descricao);
+    campos.push(`descricao = $${params.length}`);
+  }
+  if (input.marca !== undefined) {
+    params.push(input.marca);
+    campos.push(`marca = $${params.length}`);
+  }
+  if (input.modelo !== undefined) {
+    params.push(input.modelo);
+    campos.push(`modelo = $${params.length}`);
+  }
+  if (input.grupoId !== undefined) {
+    params.push(input.grupoId);
+    campos.push(`grupo_id = $${params.length}`);
+  }
+  if (input.subgrupoId !== undefined) {
+    params.push(input.subgrupoId);
+    campos.push(`subgrupo_id = $${params.length}`);
+  }
+  if (input.setorId !== undefined) {
+    params.push(input.setorId);
+    campos.push(`setor_id = $${params.length}`);
+  }
+  if (input.localizacao !== undefined) {
+    params.push(input.localizacao);
+    campos.push(`localizacao = $${params.length}`);
+  }
+  if (input.valorAquisicao !== undefined) {
+    params.push(input.valorAquisicao);
+    campos.push(`valor_aquisicao = $${params.length}`);
+  }
+  if (input.ehKit !== undefined) {
+    params.push(input.ehKit);
+    campos.push(`eh_kit = $${params.length}`);
+  }
+  if (input.status !== undefined) {
+    params.push(input.status);
+    campos.push(`status = $${params.length}`);
+  }
+
+  if (campos.length === 0) {
+    return buscarPorId(id);
+  }
+
+  campos.push(`updated_at = NOW()`);
+  params.push(id);
+
+  const result = await query<Ferramenta>(
+    `UPDATE ferramentas
+     SET ${campos.join(', ')}
+     WHERE id = $${params.length} AND ativo = true
+     RETURNING id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
+               subgrupo_id, setor_id, localizacao, status, valor_aquisicao, eh_kit, ativo, created_at`,
+    params
+  );
+
+  return result.rows[0];
+}
+
