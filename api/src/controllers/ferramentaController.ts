@@ -72,4 +72,18 @@ export class FerramentaController {
       return next(error);
     }
   }
+
+  /**
+   * PUT /v1/ferramentas/:id
+   */
+  static async atualizar(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      const ferramenta = await ferramentaService.atualizar(id, req.body);
+      return sendSuccess(res, ferramenta, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }
+

@@ -8,6 +8,7 @@ import {
   ferramentaIdParamSchema,
   ferramentaCodigoParamSchema,
   criarFerramentaSchema,
+  editarFerramentaSchema,
 } from '../../validators/ferramentaValidator.js';
 
 const router = Router();
@@ -162,13 +163,26 @@ router.get(
  *       404:
  *         description: Ferramenta não encontrada
  */
-router.get(
-  '/:id',
-  authenticate,
-  authorize('almoxarife'),
-  validate({ params: ferramentaIdParamSchema }),
-  FerramentaController.buscarPorId
-);
+router
+  .route('/:id')
+  .get(
+    authenticate,
+    authorize('almoxarife'),
+    validate({ params: ferramentaIdParamSchema }),
+    FerramentaController.buscarPorId
+  )
+  .put(
+    authenticate,
+    authorize('almoxarife'),
+    validate({ params: ferramentaIdParamSchema, body: editarFerramentaSchema }),
+    FerramentaController.atualizar
+  )
+  .patch(
+    authenticate,
+    authorize('almoxarife'),
+    validate({ params: ferramentaIdParamSchema, body: editarFerramentaSchema }),
+    FerramentaController.atualizar
+  );
 
 /**
  * @openapi
