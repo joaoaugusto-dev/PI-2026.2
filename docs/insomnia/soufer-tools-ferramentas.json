@@ -1,8 +1,8 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-09-18T12:00:00.000Z",
-  "__export_source": "insomnia.desktop.app:v10",
+  "__export_date": "2026-09-19T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v13.1.0",
   "resources": [
     {
       "_id": "wrk_soufer_tools",
@@ -11,7 +11,7 @@
       "modified": 1790000000000,
       "created": 1790000000000,
       "name": "SOUFER Tools — API",
-      "description": "Testes da API do SOUFER Tools. Veja docs/insomnia/teste-api-crud-ferramentas.md.",
+      "description": "# Testes da API SOUFER Tools\nColeção de testes manuais e automáticos da API (`/v1`), começando pelo CRUD de **ferramentas** (issues API-05 e API-07).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado. O passo a passo completo está em `docs/insomnia/teste-api-crud-ferramentas.md`.\n\n**Variáveis de ambiente** (Base Environment): `base_url` e as variáveis gravadas por scripts (`token`, `token_consulta`, `grupo_id`, `ferramenta_id`, `ferramenta_codigo`, `ferramenta_emprestada_id`, `ferramenta_indisponivel_id`). Não é preciso preenchê-las à mão.\n\nUse somente em ambiente de desenvolvimento (`soufer_dev`).",
       "scope": "collection"
     },
     {
@@ -22,7 +22,14 @@
       "created": 1790000000000,
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:3000/v1"
+        "base_url": "http://localhost:3000/v1",
+        "token": "",
+        "token_consulta": "",
+        "grupo_id": "",
+        "ferramenta_id": "",
+        "ferramenta_codigo": "",
+        "ferramenta_emprestada_id": "",
+        "ferramenta_indisponivel_id": ""
       },
       "dataPropertyOrder": null,
       "color": null,
@@ -30,25 +37,97 @@
       "metaSortKey": 1790000000000
     },
     {
-      "_id": "fld_ferramentas",
+      "_id": "fld_1",
       "_type": "request_group",
       "parentId": "wrk_soufer_tools",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "Ferramentas (CRUD)",
-      "description": "Rode na ordem (Collection Runner) ou clique uma a uma.",
+      "name": "1 · Autenticação e preparação",
+      "description": "Requisições que precisam rodar primeiro. Obtêm os tokens e o `grupoId` que as demais usam, gravando-os em variáveis de ambiente. Nada aqui altera o banco.",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": -1790000000000
+      "metaSortKey": 1000
     },
     {
-      "_id": "req_login_almoxarife",
-      "_type": "request",
-      "parentId": "fld_ferramentas",
+      "_id": "fld_2",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "00 · Login almoxarife (rode primeiro)",
-      "description": "Obrigatório antes das demais. As outras requisições leem o token da última resposta desta.",
+      "name": "2 · CRUD — fluxo de sucesso",
+      "description": "Ciclo de vida normal de uma ferramenta: cadastrar, consultar de várias formas, editar e marcar a etiqueta como impressa. A ferramenta criada aqui (variável `ferramenta_id`) é reutilizada pelas pastas seguintes e removida (baixa lógica) na pasta 7.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "fld_3",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "3 · Regras de negócio (status e conflitos 409)",
+      "description": "Testa as regras que o projeto considera inegociáveis: mudança de status, empréstimo aberto impede a baixa e uma ferramenta só volta de \"indisponível\" por ação explícita. Usa dados do seed. As requisições marcadas \"(auxiliar)\" só localizam um id e gravam em variável; não alteram nada.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000
+    },
+    {
+      "_id": "fld_4",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "4 · Autenticação e autorização (401 e 403)",
+      "description": "Provam que a rota é protegida: sem token, token inválido e perfil sem permissão. Não alteram o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000
+    },
+    {
+      "_id": "fld_5",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "5 · Validação de entrada (400)",
+      "description": "Enviam dados inválidos de propósito para provar que a API rejeita com HTTP 400 e o envelope de erro padrão (`VALIDATION_ERROR`). Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000
+    },
+    {
+      "_id": "fld_6",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "6 · Recurso inexistente (404)",
+      "description": "Usam um id que não existe (999999) para provar que cada rota responde HTTP 404 `FERRAMENTA_NOT_FOUND`. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6000
+    },
+    {
+      "_id": "fld_7",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "7 · Encerramento — baixa lógica (DELETE)",
+      "description": "Remove (baixa lógica) a ferramenta criada na pasta 2 e confirma que ela deixa de existir para a API. É o \"D\" do CRUD e fica por último porque as pastas anteriores usam essa ferramenta.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7000
+    },
+    {
+      "_id": "req_01",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "01 · Login do almoxarife — 200",
+      "description": "## O que faz\nAutentica o almoxarife e devolve um token JWT válido por 8 horas.\n\n## Por que existe\nTodas as rotas de `/ferramentas` exigem perfil `almoxarife`. Sem este login nenhuma outra requisição funciona. É a primeira a ser executada.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** e-mail e senha do almoxarife criado pelo seed (`almoxarife@soufer.com.br` / `123456`).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `token` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.token` e `data.usuario` (perfil `almoxarife`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é almoxarife\n\n## Observações\nO token dura 8 horas. Se as demais requisições passarem a retornar 401, rode esta de novo. Requer que o seed (`npm run db:seed`) tenha sido executado.",
       "method": "POST",
       "url": "{{ _.base_url }}/auth/login",
       "body": {
@@ -63,8 +142,9 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": -1790000000000,
+      "metaSortKey": 1000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é almoxarife\", () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('almoxarife');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token', String(corpo.data.token));\n}",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -73,13 +153,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_login_consulta",
+      "_id": "req_02",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_1",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "01 · Login consulta (matrícula MAT001)",
-      "description": "Token de perfil consulta, usado só no teste de 403.",
+      "name": "02 · Login do perfil consulta — 200",
+      "description": "## O que faz\nAbre uma sessão de consulta (somente leitura) para um colaborador, identificado pela matrícula.\n\n## Por que existe\nPrecisamos de um token de perfil diferente do almoxarife para provar que a API bloqueia esse perfil nas rotas de ferramentas (teste de HTTP 403, requisição 19).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/consulta/sessao`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula `MAT001`, de um colaborador criado pelo seed.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `token_consulta` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.token` (validade de 15 minutos) e os dados do colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Perfil é consulta\n\n## Observações\nA sessão de consulta expira em 15 minutos. Se o teste 403 falhar por token expirado, rode esta requisição de novo.",
       "method": "POST",
       "url": "{{ _.base_url }}/consulta/sessao",
       "body": {
@@ -94,8 +174,9 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": -1789999999000,
+      "metaSortKey": 2000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Perfil é consulta\", () => {\n  insomnia.expect(corpo.data.colaborador.papel).to.eql('consulta');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_consulta', String(corpo.data.token));\n}",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -104,13 +185,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_helper_grupo",
+      "_id": "req_03",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_1",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "02 · (auxiliar) Obter um grupoId válido",
-      "description": "Pega o grupo_id de uma ferramenta existente, para o cadastro não depender de ids fixos.",
+      "name": "03 · Obter um grupoId válido — 200",
+      "description": "## O que faz\nLista apenas 1 ferramenta e guarda o `grupo_id` dela.\n\n## Por que existe\nPara cadastrar uma ferramenta (requisição 04) é obrigatório informar um `grupoId` que exista. Os ids dos grupos mudam conforme quantas vezes o seed foi executado em cada máquina, então não dá para fixar um número. Não existe rota de listagem de grupos, por isso aproveitamos o `grupo_id` de uma ferramenta já cadastrada.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Parâmetros de query:** `limit=1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** `grupo_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com uma ferramenta e `meta.total` maior que zero.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Existe ao menos uma ferramenta cadastrada\n\n## Observações\nSe o banco estiver vazio (seed não executado), esta requisição não grava o grupo e o cadastro (04) falha.",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas?limit=1",
       "body": {},
@@ -118,10 +199,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999998000,
+      "metaSortKey": 3000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Existe ao menos uma ferramenta cadastrada\", () => {\n  insomnia.expect(corpo.data).to.have.lengthOf(1);\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('grupo_id', String(corpo.data[0].grupo_id));\n}",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -130,18 +212,18 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_criar",
+      "_id": "req_04",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "10 · Criar ferramenta — 201",
-      "description": "Espera 201. Guarda o id e o codigo_identificacao usados pelas requisições seguintes.",
+      "name": "04 · Cadastrar ferramenta — 201",
+      "description": "## O que faz\nCadastra uma ferramenta nova, chamada \"Furadeira Teste Insomnia\".\n\n## Por que existe\nÉ o teste do \"C\" do CRUD (Create) e também a base dos demais: gera o `id` e o `codigo_identificacao` que as próximas requisições consultam, editam e, no fim, baixam. Assim os testes usam um registro nosso e não mexem nas ferramentas do seed.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** nome, descrição, marca, modelo, `grupoId` e localização. Só `nome` e `grupoId` são obrigatórios; o `grupoId` vem da variável (o valor é enviado como texto e convertido para número pela API).\n- **Variáveis lidas:** `token`, `grupo_id`\n- **Variáveis gravadas:** `ferramenta_id`, `ferramenta_codigo` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201. A ferramenta volta com `status = disponivel`, `ativo = true` e `codigo_identificacao` gerado automaticamente por trigger do banco.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Nasce disponível e ativa\n- Código de identificação foi gerado (1 a 9999)\n\n## Observações\nO código de identificação não é enviado: o banco o gera (regra de negócio do projeto). Cada execução completa da coleção cria uma ferramenta nova; ela é baixada na requisição 37.",
       "method": "POST",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"nome\": \"Furadeira Teste Insomnia\",\n  \"descricao\": \"Criada pela coleção de testes\",\n  \"marca\": \"Bosch\",\n  \"modelo\": \"TESTE-01\",\n  \"grupoId\": {% response 'body', 'req_ferr_helper_grupo', 'b64::JC5kYXRhWzBdLmdydXBvX2lk::46b', 'never', 60 %},\n  \"localizacao\": \"Prateleira Teste\"\n}"
+        "text": "{\n  \"nome\": \"Furadeira Teste Insomnia\",\n  \"descricao\": \"Criada pela coleção de testes\",\n  \"marca\": \"Bosch\",\n  \"modelo\": \"TESTE-01\",\n  \"grupoId\": \"{{ _.grupo_id }}\",\n  \"localizacao\": \"Prateleira Teste\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -152,10 +234,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999997000,
+      "metaSortKey": 4000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Nasce disponível e ativa\", () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel'); insomnia.expect(corpo.data.ativo).to.eql(true);\n});\n\ninsomnia.test(\"Código de identificação foi gerado (1 a 9999)\", () => {\n  insomnia.expect(corpo.data.codigo_identificacao).to.be.within(1, 9999);\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_id', String(corpo.data.id));\n  insomnia.environment.set('ferramenta_codigo', String(corpo.data.codigo_identificacao));\n}",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -164,13 +247,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_listar",
+      "_id": "req_05",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "11 · Listar (paginado) — 200",
-      "description": "",
+      "name": "05 · Listar ferramentas (paginado) — 200",
+      "description": "## O que faz\nLista as ferramentas ativas, com paginação padrão.\n\n## Por que existe\nTeste do \"R\" (Read) em lista. Garante que a listagem responde com o envelope `{ data, meta }` definido no CLAUDE.md.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a lista em `data` e `meta.page`, `meta.limit`, `meta.total`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- `data` é uma lista\n- `meta` traz page, limit e total",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {},
@@ -178,10 +261,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999996000,
+      "metaSortKey": 5000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"`data` é uma lista\", () => {\n  insomnia.expect(corpo.data).to.be.an('array');\n});\n\ninsomnia.test(\"`meta` traz page, limit e total\", () => {\n  insomnia.expect(corpo.meta).to.include.keys('page', 'limit', 'total');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -190,13 +274,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_listar_filtro",
+      "_id": "req_06",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "12 · Listar com filtros (status, q, page, limit, sort) — 200",
-      "description": "",
+      "name": "06 · Listar com filtros, busca e ordenação — 200",
+      "description": "## O que faz\nLista ferramentas disponíveis cujo nome, descrição, marca ou modelo contenha \"furadeira\", 5 por página, ordenadas por nome.\n\n## Por que existe\nCobre todos os parâmetros de query da listagem (`status`, `q`, `page`, `limit`, `sort`). É o que as telas de busca do front vão usar.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Parâmetros de query:** `status=disponivel&q=furadeira&page=1&limit=5&sort=nome`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200. Só ferramentas `disponivel`, no máximo 5 itens.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Todas as ferramentas retornadas estão disponíveis\n- Limite de página respeitado (5)",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas?status=disponivel&q=furadeira&page=1&limit=5&sort=nome",
       "body": {},
@@ -204,10 +288,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999995000,
+      "metaSortKey": 6000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Todas as ferramentas retornadas estão disponíveis\", () => {\n  corpo.data.forEach((f) => insomnia.expect(f.status).to.eql('disponivel'));\n});\n\ninsomnia.test(\"Limite de página respeitado (5)\", () => {\n  insomnia.expect(corpo.meta.limit).to.eql(5); insomnia.expect(corpo.data.length).to.be.at.most(5);\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -216,24 +301,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_buscar_id",
+      "_id": "req_07",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "13 · Buscar por ID — 200",
-      "description": "",
+      "name": "07 · Buscar ferramenta por ID — 200",
+      "description": "## O que faz\nBusca a ferramenta criada na requisição 04 pelo seu `id`.\n\n## Por que existe\nTeste do \"R\" (Read) de um registro. Confirma que o que foi gravado no cadastro é o que a API devolve.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/:ferramenta_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com os dados completos da ferramenta.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Retornou a ferramenta criada\n\n## Observações\nDepende da requisição 04 (variável `ferramenta_id`).",
       "method": "GET",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999994000,
+      "metaSortKey": 7000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Retornou a ferramenta criada\", () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('ferramenta_id')); insomnia.expect(corpo.data.nome).to.eql('Furadeira Teste Insomnia');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -242,24 +328,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_buscar_codigo",
+      "_id": "req_08",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "14 · Buscar por código de identificação — 200",
-      "description": "",
+      "name": "08 · Buscar ferramenta por código de identificação — 200",
+      "description": "## O que faz\nBusca a ferramenta pelo código numérico de identificação (1 a 9999).\n\n## Por que existe\nÉ a rota usada na leitura do código na retirada/devolução no balcão (leitor de código de barras ou código gravado na ferramenta, ver CLAUDE.md). Validamos que o código gerado no cadastro localiza a mesma ferramenta.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/por-codigo/:ferramenta_codigo`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_codigo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta que tem esse código.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Retornou a ferramenta criada\n\n## Observações\nDepende da requisição 04 (variável `ferramenta_codigo`).",
       "method": "GET",
-      "url": "{{ _.base_url }}/ferramentas/por-codigo/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmNvZGlnb19pZGVudGlmaWNhY2Fv::46b', 'never', 60 %}",
+      "url": "{{ _.base_url }}/ferramentas/por-codigo/{{ _.ferramenta_codigo }}",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999993000,
+      "metaSortKey": 8000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Retornou a ferramenta criada\", () => {\n  insomnia.expect(String(corpo.data.codigo_identificacao)).to.eql(insomnia.environment.get('ferramenta_codigo'));\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -268,24 +355,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_historico",
+      "_id": "req_09",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "15 · Histórico — 200",
-      "description": "",
+      "name": "09 · Consultar histórico da ferramenta — 200",
+      "description": "## O que faz\nRetorna o histórico de empréstimos e ocorrências da ferramenta.\n\n## Por que existe\nCobre a rota de histórico. Como a ferramenta acabou de ser criada, esperamos um histórico vazio, o que prova que a rota funciona mesmo sem movimentações.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/:ferramenta_id/historico`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o histórico (vazio para ferramenta nova).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz `data`\n\n## Observações\nDepende da requisição 04.",
       "method": "GET",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}/historico",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}/historico",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999992000,
+      "metaSortKey": 9000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz `data`\", () => {\n  insomnia.expect(corpo).to.have.property('data');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -294,15 +382,15 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_atualizar",
+      "_id": "req_10",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "16 · Atualizar (PUT parcial) — 200",
-      "description": "",
-      "method": "PUT",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+      "name": "10 · Atualizar ferramenta (PATCH, campos parciais) — 200",
+      "description": "## O que faz\nAltera só a marca e a localização da ferramenta criada.\n\n## Por que existe\nTeste do \"U\" (Update) do CRUD. Enviamos poucos campos de propósito para provar que os demais (nome, grupo etc.) permanecem intactos.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/:ferramenta_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** apenas `marca` e `localizacao`. Os demais campos não são enviados.\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta atualizada.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Campos enviados foram alterados\n- Campo não enviado permaneceu igual\n\n## Observações\nConvenção REST: atualização parcial é PATCH (PUT seria substituição completa). Esta rota era PUT e foi trocada por PATCH na API; o PUT deixou de existir e responde 404. Veja docs/api-07-put-para-patch.md.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"marca\": \"Makita\",\n  \"localizacao\": \"Prateleira Teste 2\"\n}"
@@ -316,10 +404,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999991000,
+      "metaSortKey": 10000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Campos enviados foram alterados\", () => {\n  insomnia.expect(corpo.data.marca).to.eql('Makita'); insomnia.expect(corpo.data.localizacao).to.eql('Prateleira Teste 2');\n});\n\ninsomnia.test(\"Campo não enviado permaneceu igual\", () => {\n  insomnia.expect(corpo.data.nome).to.eql('Furadeira Teste Insomnia');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -328,24 +417,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_etiqueta",
+      "_id": "req_11",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_2",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "17 · Marcar etiqueta impressa — 200",
-      "description": "",
+      "name": "11 · Marcar etiqueta como impressa — 200",
+      "description": "## O que faz\nRegistra a data e hora em que a etiqueta com o código de barras da ferramenta foi impressa.\n\n## Por que existe\nPermite ao almoxarife saber quais ferramentas já têm etiqueta. É uma ação específica de um único campo, por isso é `PATCH` numa sub-rota (não é um cadastro completo).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/:ferramenta_id/etiqueta-impressa`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com `etiqueta_impressa_em` preenchido.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Data de impressão foi preenchida\n\n## Observações\nNão altera o status da ferramenta.",
       "method": "PATCH",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}/etiqueta-impressa",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}/etiqueta-impressa",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999990000,
+      "metaSortKey": 11000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Data de impressão foi preenchida\", () => {\n  insomnia.expect(corpo.data.etiqueta_impressa_em).to.not.be.null;\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -354,21 +444,157 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_sem_token",
+      "_id": "req_12",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_3",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "20 · Listar sem token — 401",
-      "description": "",
+      "name": "12 · Disponibilizar ferramenta que já está disponível — 409",
+      "description": "## O que faz\nTenta \"disponibilizar\" uma ferramenta que já está `disponivel`.\n\n## Por que existe\nA rota `disponibilizar` só faz sentido para ferramentas `indisponivel` (pós-reparo). Este teste garante que a API recusa a operação em outro estado, em vez de gravar auditoria sem necessidade.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/:ferramenta_id/disponibilizar`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 (conflito de estado) com o código `FERRAMENTA_JA_DISPONIVEL`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 409\n- Código de erro `FERRAMENTA_JA_DISPONIVEL`\n\n## Observações\nUsa a ferramenta criada na requisição 04, que está `disponivel`.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}/disponibilizar",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 12000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_JA_DISPONIVEL', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_JA_DISPONIVEL');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "13 · (auxiliar) Localizar ferramenta com empréstimo aberto — 200",
+      "description": "## O que faz\nProcura a \"Furadeira de Impacto Bosch GSB 13 RE\" e grava o id dela.\n\n## Por que existe\nO seed deixa essa ferramenta emprestada (status `em_uso`). Precisamos do id dela para testar a regra de que não se pode dar baixa em ferramenta com empréstimo aberto (requisição seguinte).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Parâmetros de query:** `q=Furadeira de Impacto Bosch`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** `ferramenta_emprestada_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com a furadeira Bosch, `status = em_uso`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- A ferramenta está em uso\n\n## Observações\nSe essa ferramenta já foi devolvida, o teste \"está em uso\" falha e a requisição seguinte deixa de retornar 409. Rode o seed de novo ou escolha outra ferramenta emprestada.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas?q=Furadeira de Impacto Bosch",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 13000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"A ferramenta está em uso\", () => {\n  insomnia.expect(corpo.data[0].status).to.eql('em_uso');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('ferramenta_emprestada_id', String(corpo.data[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "14 · Dar baixa em ferramenta com empréstimo aberto — 409",
+      "description": "## O que faz\nTenta dar baixa (`DELETE`) na ferramenta emprestada.\n\n## Por que existe\nRegra de negócio: uma ferramenta só pode ser baixada depois que o empréstimo em aberto for finalizado, para não deixar um empréstimo sem devolução apontando para uma ferramenta inativa.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/:ferramenta_emprestada_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_emprestada_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 com o código `FERRAMENTA_COM_EMPRESTIMO_ABERTO`. Nada é alterado no banco.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 409\n- Código de erro `FERRAMENTA_COM_EMPRESTIMO_ABERTO`",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_emprestada_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 14000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_COM_EMPRESTIMO_ABERTO', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_COM_EMPRESTIMO_ABERTO');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "15 · (auxiliar) Localizar ferramenta indisponível — 200",
+      "description": "## O que faz\nBusca uma ferramenta em status `indisponivel` e grava o id dela.\n\n## Por que existe\nA próxima requisição precisa de uma ferramenta indisponível. O seed cria algumas (por avaria ou perda numa devolução).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Parâmetros de query:** `status=indisponivel&limit=1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** `ferramenta_indisponivel_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com uma ferramenta `indisponivel`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Existe ao menos uma ferramenta indisponível\n\n## Observações\nA requisição seguinte libera essa ferramenta; portanto, em execuções repetidas, a lista de indisponíveis do seed vai acabando. Para criar uma nova, veja \"Preparar uma ferramenta indisponível\" no tutorial.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas?status=indisponivel&limit=1",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 15000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Existe ao menos uma ferramenta indisponível\", () => {\n  insomnia.expect(corpo.data, 'nenhuma ferramenta indisponivel: veja o tutorial').to.have.lengthOf(1);\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('ferramenta_indisponivel_id', String(corpo.data[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "16 · Disponibilizar ferramenta após reparo — 200",
+      "description": "## O que faz\nVolta a ferramenta indisponível para `disponivel`.\n\n## Por que existe\nRegra de negócio: uma ferramenta só sai de `indisponivel` por ação explícita e auditável do almoxarife. A API registra a ação na tabela de auditoria e resolve as ocorrências abertas dela.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/:ferramenta_indisponivel_id/disponibilizar`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_indisponivel_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com `status = disponivel` e `motivo_indisponivel = null`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Status virou disponível\n\n## Observações\nATENÇÃO: altera dados do seed (a ferramenta passa a disponível e suas ocorrências são resolvidas). Só rode em ambiente de desenvolvimento.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_indisponivel_id }}/disponibilizar",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 16000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Status virou disponível\", () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel'); insomnia.expect(corpo.data.motivo_indisponivel).to.be.null;\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "17 · Listar sem token — 401",
+      "description": "## O que faz\nChama a listagem sem enviar o cabeçalho `Authorization`.\n\n## Por que existe\nGarante que a API não expõe dados de ferramentas a quem não está autenticado.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 com o código `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Código de erro `TOKEN_NOT_PROVIDED`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {},
-      "metaSortKey": -1789999989000,
+      "metaSortKey": 17000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test('Código de erro TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -377,13 +603,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_token_invalido",
+      "_id": "req_18",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_4",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "21 · Listar com token inválido — 401",
-      "description": "",
+      "name": "18 · Listar com token inválido — 401",
+      "description": "## O que faz\nChama a listagem com um token que não é um JWT válido.\n\n## Por que existe\nGarante que a API valida a assinatura do token e não aceita qualquer texto.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** Bearer Token fixo `token.invalido.123`, propositalmente inválido.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 com o código `TOKEN_INVALID`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Código de erro `TOKEN_INVALID`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {},
@@ -393,8 +619,9 @@
         "type": "bearer",
         "token": "token.invalido.123"
       },
-      "metaSortKey": -1789999988000,
+      "metaSortKey": 18000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test('Código de erro TOKEN_INVALID', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -403,13 +630,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_consulta",
+      "_id": "req_19",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_4",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "22 · Listar com perfil consulta — 403",
-      "description": "",
+      "name": "19 · Listar com perfil consulta — 403",
+      "description": "## O que faz\nChama a listagem usando o token do perfil `consulta`.\n\n## Por que existe\nRegra de negócio: só o almoxarife acessa o CRUD de ferramentas; o perfil consulta é somente leitura de disponibilidade. Distingue 401 (não autenticado) de 403 (autenticado, mas sem permissão).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token_consulta` (login do perfil consulta, requisição 02).\n- **Variáveis lidas:** `token_consulta`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 com o código `ACCESS_DENIED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 403\n- Código de erro `ACCESS_DENIED`\n\n## Observações\nDepende da requisição 02. O token de consulta vale 15 minutos.",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {},
@@ -417,10 +644,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_consulta', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token_consulta }}"
       },
-      "metaSortKey": -1789999987000,
+      "metaSortKey": 19000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test('Código de erro ACCESS_DENIED', () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -429,13 +657,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_sem_nome",
+      "_id": "req_20",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "23 · Criar sem nome — 400",
-      "description": "",
+      "name": "20 · Cadastrar sem nome — 400",
+      "description": "## O que faz\nTenta cadastrar uma ferramenta sem informar o nome.\n\n## Por que existe\nO nome é obrigatório. A validação (Zod) roda antes do banco, então o resultado não depende do `grupoId` existir.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** apenas `grupoId`; o `nome` obrigatório foi omitido.\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR` com o campo `nome` em `details`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "POST",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {
@@ -451,10 +679,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999986000,
+      "metaSortKey": 20000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -463,13 +692,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_nome_curto",
+      "_id": "req_21",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "24 · Criar com nome de 1 caractere — 400",
-      "description": "",
+      "name": "21 · Cadastrar com nome de 1 caractere — 400",
+      "description": "## O que faz\nTenta cadastrar com um nome curto demais.\n\n## Por que existe\nCobre o limite mínimo de tamanho do nome (2 a 150 caracteres).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `nome` = \"a\" (mínimo é 2 caracteres).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "POST",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {
@@ -485,10 +714,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999985000,
+      "metaSortKey": 21000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -497,13 +727,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_sem_grupo",
+      "_id": "req_22",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "25 · Criar sem grupoId — 400",
-      "description": "",
+      "name": "22 · Cadastrar sem grupoId — 400",
+      "description": "## O que faz\nTenta cadastrar sem informar o grupo da ferramenta.\n\n## Por que existe\nO `grupoId` é obrigatório: toda ferramenta pertence a um grupo.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** apenas `nome`; o `grupoId` obrigatório foi omitido.\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "POST",
       "url": "{{ _.base_url }}/ferramentas",
       "body": {
@@ -519,10 +749,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999984000,
+      "metaSortKey": 22000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -531,15 +762,50 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_put_vazio",
+      "_id": "req_23",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "26 · Atualizar com body vazio — 400",
-      "description": "",
-      "method": "PUT",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+      "name": "23 · Cadastrar com grupoId inexistente — 400",
+      "description": "## O que faz\nTenta cadastrar com um grupo que não existe no banco.\n\n## Por que existe\nO formato do dado é válido, mas a referência não existe. Prova que a integridade referencial do banco (chave estrangeira) é respeitada e que o erro é devolvido no envelope padrão, em vez de um erro 500.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `grupoId` = 999999, que não existe.\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 com o código `FOREIGN_KEY_VIOLATION`. Nada é gravado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `FOREIGN_KEY_VIOLATION`\n\n## Observações\nPela convenção REST, um recurso referenciado inexistente costuma ser 422 ou 409. A API atual responde 400, e a coleção segue o comportamento real. Ver \"Convenções REST\" no tutorial.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Ferramenta grupo inexistente\",\n  \"grupoId\": 999999\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 23000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro FOREIGN_KEY_VIOLATION', () => {\n  insomnia.expect(corpo.error.code).to.eql('FOREIGN_KEY_VIOLATION');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_24",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "24 · Atualizar com corpo vazio — 400",
+      "description": "## O que faz\nTenta atualizar a ferramenta sem informar nenhum campo.\n\n## Por que existe\nRegra da API: uma atualização precisa alterar pelo menos um campo (\"Informe ao menos um campo para atualizar\").\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/:ferramenta_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `{}` (nenhum campo).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
       "body": {
         "mimeType": "application/json",
         "text": "{}"
@@ -553,10 +819,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999983000,
+      "metaSortKey": 24000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -565,13 +832,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_id_texto",
+      "_id": "req_25",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "27 · ID não numérico — 400",
-      "description": "",
+      "name": "25 · Buscar com ID não numérico — 400",
+      "description": "## O que faz\nUsa o texto `abc` no lugar do id.\n\n## Por que existe\nO id precisa ser um inteiro positivo. Garante que texto vira erro 400, e não um erro interno.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/abc`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas/abc",
       "body": {},
@@ -579,10 +846,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999982000,
+      "metaSortKey": 25000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -591,13 +859,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_id_negativo",
+      "_id": "req_26",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "28 · ID negativo — 400",
-      "description": "",
+      "name": "26 · Buscar com ID negativo — 400",
+      "description": "## O que faz\nUsa `-1` como id.\n\n## Por que existe\nCobre o limite inferior: o id deve ser positivo.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/-1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas/-1",
       "body": {},
@@ -605,10 +873,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999981000,
+      "metaSortKey": 26000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -617,13 +886,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_status_invalido",
+      "_id": "req_27",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "29 · Filtro de status inválido — 400",
-      "description": "",
+      "name": "27 · Listar com status inválido — 400",
+      "description": "## O que faz\nFiltra por um status que não existe (`quebrada`).\n\n## Por que existe\nOs únicos status válidos são `disponivel`, `em_uso` e `indisponivel` (regra de negócio nº 2 do projeto).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Parâmetros de query:** `status=quebrada`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas?status=quebrada",
       "body": {},
@@ -631,10 +900,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999980000,
+      "metaSortKey": 27000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -643,13 +913,40 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_codigo_zero",
+      "_id": "req_28",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "30 · Código 0 — 400",
-      "description": "",
+      "name": "28 · Listar com limit acima do máximo — 400",
+      "description": "## O que faz\nPede 101 itens por página.\n\n## Por que existe\nO máximo é 100 por página, para proteger a API de consultas gigantes.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Parâmetros de query:** `limit=101`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas?limit=101",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 28000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_29",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "29 · Buscar por código 0 — 400",
+      "description": "## O que faz\nConsulta pelo código 0.\n\n## Por que existe\nO código de identificação vai de 1 a 9999. Este é o limite inferior.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/por-codigo/0`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas/por-codigo/0",
       "body": {},
@@ -657,10 +954,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999979000,
+      "metaSortKey": 29000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -669,13 +967,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_codigo_10000",
+      "_id": "req_30",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_5",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "31 · Código 10000 — 400",
-      "description": "",
+      "name": "30 · Buscar por código 10000 — 400",
+      "description": "## O que faz\nConsulta pelo código 10000.\n\n## Por que existe\nLimite superior: acima de 9999 o código é inválido (coluna SMALLINT com 4 dígitos).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/por-codigo/10000`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro `VALIDATION_ERROR`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas/por-codigo/10000",
       "body": {},
@@ -683,10 +981,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999978000,
+      "metaSortKey": 30000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -695,13 +994,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_id_404",
+      "_id": "req_31",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_6",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "32 · Buscar ID inexistente — 404",
-      "description": "",
+      "name": "31 · Buscar ID inexistente — 404",
+      "description": "## O que faz\nBusca a ferramenta de id 999999.\n\n## Por que existe\nGarante 404 (e não 200 vazio ou erro 500) quando o registro não existe.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas/999999",
       "body": {},
@@ -709,10 +1008,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999977000,
+      "metaSortKey": 31000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -721,13 +1021,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_codigo_404",
+      "_id": "req_32",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_6",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "33 · Código inexistente (9999) — 404",
-      "description": "Espera 404 se nenhuma ferramenta ativa tiver o código 9999 (o seed cria só 50).",
+      "name": "32 · Buscar código inexistente — 404",
+      "description": "## O que faz\nBusca pelo código 9999.\n\n## Por que existe\nCódigo válido no formato, mas sem ferramenta ativa com esse número.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/por-codigo/9999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`\n\n## Observações\nO seed cria 50 ferramentas, então o código 9999 não é usado. Se alguém o atribuir, o teste deixa de valer.",
       "method": "GET",
       "url": "{{ _.base_url }}/ferramentas/por-codigo/9999",
       "body": {},
@@ -735,10 +1035,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999976000,
+      "metaSortKey": 32000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -747,14 +1048,41 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_put_404",
+      "_id": "req_33",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_6",
+      "modified": 1790000000000,
+      "created": 1790000000000,
+      "name": "33 · Histórico de ID inexistente — 404",
+      "description": "## O que faz\nConsulta o histórico de uma ferramenta inexistente.\n\n## Por que existe\nCobre o 404 da rota de histórico.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/999999/historico`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/999999/historico",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 33000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_34",
+      "_type": "request",
+      "parentId": "fld_6",
       "modified": 1790000000000,
       "created": 1790000000000,
       "name": "34 · Atualizar ID inexistente — 404",
-      "description": "",
-      "method": "PUT",
+      "description": "## O que faz\nTenta atualizar uma ferramenta inexistente.\n\n## Por que existe\nGarante que a atualização não cria registro nem falha silenciosamente.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `{ \"marca\": \"X\" }` (corpo válido, para o erro ser só o id).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
+      "method": "PATCH",
       "url": "{{ _.base_url }}/ferramentas/999999",
       "body": {
         "mimeType": "application/json",
@@ -769,10 +1097,11 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999975000,
+      "metaSortKey": 34000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -781,24 +1110,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_disp_409",
+      "_id": "req_35",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_6",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "35 · Disponibilizar ferramenta que já está disponível — 409",
-      "description": "A ferramenta criada no passo 10 está \"disponivel\", então deve dar 409.",
+      "name": "35 · Marcar etiqueta de ID inexistente — 404",
+      "description": "## O que faz\nMarca a etiqueta como impressa numa ferramenta inexistente.\n\n## Por que existe\nCobre o 404 da rota `etiqueta-impressa`.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/999999/etiqueta-impressa`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
       "method": "PATCH",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}/disponibilizar",
+      "url": "{{ _.base_url }}/ferramentas/999999/etiqueta-impressa",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999974000,
+      "metaSortKey": 35000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -807,102 +1137,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_helper_emprestada",
+      "_id": "req_36",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_6",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "36 · (auxiliar) Localizar ferramenta emprestada no seed",
-      "description": "Retorna a Furadeira Bosch GSB 13 RE, que o seed deixa com empréstimo aberto.",
-      "method": "GET",
-      "url": "{{ _.base_url }}/ferramentas?q=Furadeira de Impacto Bosch",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {
-        "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
-      },
-      "metaSortKey": -1789999973000,
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global"
-    },
-    {
-      "_id": "req_ferr_err_delete_409",
-      "_type": "request",
-      "parentId": "fld_ferramentas",
-      "modified": 1790000000000,
-      "created": 1790000000000,
-      "name": "37 · Baixar ferramenta com empréstimo aberto — 409",
-      "description": "",
-      "method": "DELETE",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_helper_emprestada', 'b64::JC5kYXRhWzBdLmlk::46b', 'never', 60 %}",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {
-        "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
-      },
-      "metaSortKey": -1789999972000,
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global"
-    },
-    {
-      "_id": "req_ferr_helper_indisponivel",
-      "_type": "request",
-      "parentId": "fld_ferramentas",
-      "modified": 1790000000000,
-      "created": 1790000000000,
-      "name": "40 · (auxiliar) Localizar uma ferramenta indisponível",
-      "description": "Precisa existir ao menos uma ferramenta indisponível. Veja o tutorial, seção \"Preparar uma ferramenta indisponível\".",
-      "method": "GET",
-      "url": "{{ _.base_url }}/ferramentas?status=indisponivel&limit=1",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {
-        "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
-      },
-      "metaSortKey": -1789999971000,
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global"
-    },
-    {
-      "_id": "req_ferr_disponibilizar",
-      "_type": "request",
-      "parentId": "fld_ferramentas",
-      "modified": 1790000000000,
-      "created": 1790000000000,
-      "name": "41 · Disponibilizar após reparo — 200",
-      "description": "",
+      "name": "36 · Disponibilizar ID inexistente — 404",
+      "description": "## O que faz\nTenta disponibilizar uma ferramenta inexistente.\n\n## Por que existe\nCobre o 404 da rota `disponibilizar`.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/999999/disponibilizar`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
       "method": "PATCH",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_helper_indisponivel', 'b64::JC5kYXRhWzBdLmlk::46b', 'never', 60 %}/disponibilizar",
+      "url": "{{ _.base_url }}/ferramentas/999999/disponibilizar",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999970000,
+      "metaSortKey": 36000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -911,24 +1164,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_baixar",
+      "_id": "req_37",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_7",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "50 · Baixar ferramenta criada (DELETE) — 200",
-      "description": "",
+      "name": "37 · Dar baixa na ferramenta criada — 200",
+      "description": "## O que faz\nDá baixa na ferramenta de teste.\n\n## Por que existe\nTeste do \"D\" (Delete). A baixa é lógica: o registro não é apagado, apenas marcado como `ativo = false`, status `indisponivel` e motivo `baixada`, preservando o histórico.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/:ferramenta_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta baixada (`ativo = false`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Ferramenta ficou inativa e baixada\n\n## Observações\nConvenção REST: um `DELETE` costuma responder 204 sem corpo. A API atual devolve 200 com o registro baixado; a coleção segue o comportamento real. Ver \"Convenções REST\" no tutorial.",
       "method": "DELETE",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999969000,
+      "metaSortKey": 37000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Ferramenta ficou inativa e baixada\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false); insomnia.expect(corpo.data.status).to.eql('indisponivel'); insomnia.expect(corpo.data.motivo_indisponivel).to.eql('baixada');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -937,24 +1191,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_pos_baixa",
+      "_id": "req_38",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_7",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "51 · Buscar ferramenta baixada — 404",
-      "description": "",
+      "name": "38 · Buscar ferramenta já baixada — 404",
+      "description": "## O que faz\nBusca de novo a ferramenta que acabou de ser baixada.\n\n## Por que existe\nProva que a baixa surtiu efeito: ferramentas inativas não aparecem mais nas consultas.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/:ferramenta_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
       "method": "GET",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999968000,
+      "metaSortKey": 38000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -963,24 +1218,25 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_baixar_2x",
+      "_id": "req_39",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_7",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "52 · Baixar novamente — 404",
-      "description": "",
+      "name": "39 · Dar baixa duas vezes — 404",
+      "description": "## O que faz\nRepete a baixa na mesma ferramenta.\n\n## Por que existe\nVerifica o comportamento em repetição: a segunda chamada não deve corromper nada e informa que a ferramenta não existe mais.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/:ferramenta_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
       "method": "DELETE",
-      "url": "{{ _.base_url }}/ferramentas/{% response 'body', 'req_ferr_criar', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
       "body": {},
       "parameters": [],
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999967000,
+      "metaSortKey": 39000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -989,13 +1245,13 @@
       "settingFollowRedirects": "global"
     },
     {
-      "_id": "req_ferr_err_delete_404",
+      "_id": "req_40",
       "_type": "request",
-      "parentId": "fld_ferramentas",
+      "parentId": "fld_7",
       "modified": 1790000000000,
       "created": 1790000000000,
-      "name": "53 · Baixar ID inexistente — 404",
-      "description": "",
+      "name": "40 · Dar baixa em ID inexistente — 404",
+      "description": "## O que faz\nTenta dar baixa numa ferramenta que nunca existiu.\n\n## Por que existe\nCobre o 404 do `DELETE`.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro `FERRAMENTA_NOT_FOUND`",
       "method": "DELETE",
       "url": "{{ _.base_url }}/ferramentas/999999",
       "body": {},
@@ -1003,10 +1259,11 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{% response 'body', 'req_login_almoxarife', 'b64::JC5kYXRhLnRva2Vu::46b', 'never', 60 %}"
+        "token": "{{ _.token }}"
       },
-      "metaSortKey": -1789999966000,
+      "metaSortKey": 40000,
       "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
