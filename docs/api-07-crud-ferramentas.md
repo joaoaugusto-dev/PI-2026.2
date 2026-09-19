@@ -51,7 +51,7 @@ suporte a essa marcação no schema anterior.
 [`ferramentaService.ts`](../api/src/services/ferramentaService.ts) /
 [`ferramentaValidator.ts`](../api/src/validators/ferramentaValidator.ts):
 
-- `PUT /v1/ferramentas/:id`: atualização parcial dos campos editáveis (nome,
+- `PATCH /v1/ferramentas/:id`: atualização parcial dos campos editáveis (nome,
   descricao, marca, modelo, grupoId, subgrupoId, setorId, localizacao) — pelo
   menos um campo é obrigatório. `status`, `codigo_identificacao` e `ativo`
   continuam fora daqui (têm ações próprias).
@@ -98,9 +98,9 @@ Testado manualmente (`npm run dev` local, banco `soufer_dev` com seed real),
 sucesso e os casos de erro exigidos pelo DoD (Seção 6 do `CLAUDE.md`):
 
 ```
-PUT /v1/ferramentas/48 {"localizacao":"..."}          -> 200
-PUT /v1/ferramentas/999999 {"localizacao":"..."}       -> 404 FERRAMENTA_NOT_FOUND
-PUT /v1/ferramentas/48 {}                              -> 400 VALIDATION_ERROR (nenhum campo)
+PATCH /v1/ferramentas/48 {"localizacao":"..."}          -> 200
+PATCH /v1/ferramentas/999999 {"localizacao":"..."}       -> 404 FERRAMENTA_NOT_FOUND
+PATCH /v1/ferramentas/48 {}                              -> 400 VALIDATION_ERROR (nenhum campo)
 
 PATCH /v1/ferramentas/48/etiqueta-impressa             -> 200, etiqueta_impressa_em preenchido
 PATCH /v1/ferramentas/999999/etiqueta-impressa         -> 404 FERRAMENTA_NOT_FOUND
@@ -122,7 +122,7 @@ restaurados ao estado original (`ativo=true`, `status='disponivel'`,
 
 - [`docs/backend/api.md`](backend/api.md): adicionadas as linhas de
   `PATCH .../etiqueta-impressa` e `DELETE /v1/ferramentas/:id` na tabela de
-  endpoints (o `PUT` e o `PATCH .../disponibilizar` já constavam).
+  endpoints (o `PATCH /v1/ferramentas/:id`, antigo `PUT`, e o `PATCH .../disponibilizar` já constavam).
 - [`api/docs/insomnia-collection.json`](../api/docs/insomnia-collection.json):
   requests de sucesso e erro para as 4 rotas novas.
 

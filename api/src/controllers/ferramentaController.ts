@@ -74,7 +74,7 @@ export class FerramentaController {
   }
 
   /**
-   * PUT /v1/ferramentas/:id
+   * PATCH /v1/ferramentas/:id
    */
   static async atualizar(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
