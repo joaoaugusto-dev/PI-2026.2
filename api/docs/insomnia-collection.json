@@ -251,8 +251,8 @@
       "_id": "req_ferramentas_atualizar",
       "_type": "request",
       "parentId": "wrk_soufer_tools",
-      "name": "PUT /v1/ferramentas/{id}",
-      "method": "PUT",
+      "name": "PATCH /v1/ferramentas/{id}",
+      "method": "PATCH",
       "url": "{{ _.baseUrl }}/v1/ferramentas/1",
       "body": {
         "mimeType": "application/json",
@@ -267,8 +267,8 @@
       "_id": "req_ferramentas_atualizar_nao_encontrada",
       "_type": "request",
       "parentId": "wrk_soufer_tools",
-      "name": "PUT /v1/ferramentas/{id} (nao encontrada)",
-      "method": "PUT",
+      "name": "PATCH /v1/ferramentas/{id} (nao encontrada)",
+      "method": "PATCH",
       "url": "{{ _.baseUrl }}/v1/ferramentas/999999",
       "body": {
         "mimeType": "application/json",
