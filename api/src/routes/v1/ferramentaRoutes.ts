@@ -8,7 +8,7 @@ import {
   ferramentaIdParamSchema,
   ferramentaCodigoParamSchema,
   criarFerramentaSchema,
-  editarFerramentaSchema,
+  atualizarFerramentaSchema,
 } from '../../validators/ferramentaValidator.js';
 
 const router = Router();
@@ -163,26 +163,13 @@ router.get(
  *       404:
  *         description: Ferramenta não encontrada
  */
-router
-  .route('/:id')
-  .get(
-    authenticate,
-    authorize('almoxarife'),
-    validate({ params: ferramentaIdParamSchema }),
-    FerramentaController.buscarPorId
-  )
-  .put(
-    authenticate,
-    authorize('almoxarife'),
-    validate({ params: ferramentaIdParamSchema, body: editarFerramentaSchema }),
-    FerramentaController.atualizar
-  )
-  .patch(
-    authenticate,
-    authorize('almoxarife'),
-    validate({ params: ferramentaIdParamSchema, body: editarFerramentaSchema }),
-    FerramentaController.atualizar
-  );
+router.get(
+  '/:id',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.buscarPorId
+);
 
 /**
  * @openapi
@@ -211,6 +198,167 @@ router.get(
   authorize('almoxarife'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.historico
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}:
+ *   put:
+ *     summary: Atualiza os campos editáveis de uma ferramenta
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *               descricao:
+ *                 type: string
+ *               marca:
+ *                 type: string
+ *               modelo:
+ *                 type: string
+ *               grupoId:
+ *                 type: integer
+ *               subgrupoId:
+ *                 type: integer
+ *               setorId:
+ *                 type: integer
+ *               localizacao:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Ferramenta atualizada com sucesso
+ *       400:
+ *         description: Erro de validação nos campos
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.put(
+  '/:id',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
+  FerramentaController.atualizar
+);
+
+router.patch(
+  '/:id',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
+  FerramentaController.atualizar
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}/etiqueta-impressa:
+ *   patch:
+ *     summary: Marca a data/hora de impressão da etiqueta de código de barras da ferramenta
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Etiqueta marcada como impressa
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.patch(
+  '/:id/etiqueta-impressa',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.marcarEtiquetaImpressa
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}/disponibilizar:
+ *   patch:
+ *     summary: Retira a ferramenta de "indisponivel" após reparo (ação explícita e auditável)
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ferramenta disponibilizada com sucesso
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ *       409:
+ *         description: Ferramenta não está indisponível
+ */
+router.patch(
+  '/:id/disponibilizar',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.disponibilizar
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}:
+ *   delete:
+ *     summary: Baixa lógica de uma ferramenta (ativo = false); nunca apaga o registro
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ferramenta baixada com sucesso
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ *       409:
+ *         description: Ferramenta possui empréstimo em aberto
+ */
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('almoxarife'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.baixar
 );
 
 export default router;
