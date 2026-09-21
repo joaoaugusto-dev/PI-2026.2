@@ -39,6 +39,4 @@ export const editarColaboradorSchema = criarColaboradorSchema
     message: 'Pelo menos um campo deve ser fornecido para edição',
   });
 
-export const atualizarColaboradorSchema = editarColaboradorSchema;
-
 export type EditarColaboradorInput = z.infer<typeof editarColaboradorSchema>;

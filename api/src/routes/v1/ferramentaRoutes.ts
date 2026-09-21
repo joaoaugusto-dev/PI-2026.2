@@ -256,14 +256,6 @@ router.patch(
   FerramentaController.atualizar
 );
 
-router.patch(
-  '/:id',
-  authenticate,
-  authorize('almoxarife'),
-  validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
-  FerramentaController.atualizar
-);
-
 /**
  * @openapi
  * /ferramentas/{id}/etiqueta-impressa:
