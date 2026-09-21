@@ -85,7 +85,6 @@ export class FerramentaController {
       return next(error);
     }
   }
-
   /**
    * PATCH /v1/ferramentas/:id/etiqueta-impressa
    */
