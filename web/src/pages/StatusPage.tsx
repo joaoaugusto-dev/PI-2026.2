@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   Database,
-  ExternalLink,
   Globe,
   RefreshCw,
   Server,
@@ -18,10 +17,13 @@ import {
   Terminal,
 } from 'lucide-react'
 import { api } from '@/lib/api'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { BannerStatus } from '@/components/status/BannerStatus'
+import { CardServico, LinhaDetalhe } from '@/components/status/CardServico'
+import { LinkExterno } from '@/components/status/LinkExterno'
 import { toast } from 'sonner'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 
@@ -170,227 +172,145 @@ export function StatusPage() {
           </CardContent>
         </Card>
       ) : isHealthy ? (
-        <Card className="border-status-disponivel/30 bg-status-disponivel/5">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-status-disponivel/15 p-2.5 text-status-disponivel">
-                  <CheckCircle2 className="size-7" />
-                </div>
-                <div>
-                  <h2 className="text-secao text-status-disponivel">
-                    Todos os sistemas operacionais
-                  </h2>
-                  <p className="text-corpo text-muted-foreground">
-                    A API REST e o banco de dados PostgreSQL estão respondendo normalmente com integridade transacional.
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline" className="bg-status-disponivel/10 text-status-disponivel border-status-disponivel/40 text-rotulo px-3 py-1">
-                100% Operacional
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <BannerStatus
+          tom="disponivel"
+          icone={CheckCircle2}
+          titulo="Todos os sistemas operacionais"
+          selo="100% Operacional"
+        >
+          A API REST e o banco de dados PostgreSQL estão respondendo normalmente com integridade transacional.
+        </BannerStatus>
       ) : isDegraded ? (
-        <Card className="border-status-atraso/40 bg-status-atraso/5">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-status-atraso/15 p-2.5 text-status-atraso">
-                  <AlertTriangle className="size-7" />
-                </div>
-                <div>
-                  <h2 className="text-secao text-status-atraso">
-                    Serviço em estado degradado
-                  </h2>
-                  <p className="text-corpo text-muted-foreground">
-                    A API está online, mas há instabilidade ou desconexão com o banco de dados PostgreSQL.
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline" className="bg-status-atraso/10 text-status-atraso border-status-atraso/40 text-rotulo px-3 py-1">
-                Degradado (Sem Banco)
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <BannerStatus
+          tom="atraso"
+          icone={AlertTriangle}
+          titulo="Serviço em estado degradado"
+          selo="Degradado (Sem Banco)"
+        >
+          A API está online, mas há instabilidade ou desconexão com o banco de dados PostgreSQL.
+        </BannerStatus>
       ) : (
-        <Card className="border-status-indisponivel/40 bg-status-indisponivel/5">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-status-indisponivel/15 p-2.5 text-status-indisponivel">
-                  <XCircle className="size-7" />
-                </div>
-                <div>
-                  <h2 className="text-secao text-status-indisponivel">
-                    API Inacessível ou Offline
-                  </h2>
-                  <p className="text-corpo text-muted-foreground">
-                    Não foi possível estabelecer conexão com o endpoint da API em <code className="text-rotulo bg-muted px-1 py-0.5 rounded">{healthEndpointURL}</code>.
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline" className="bg-status-indisponivel/10 text-status-indisponivel border-status-indisponivel/40 text-rotulo px-3 py-1">
-                Offline
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <BannerStatus tom="indisponivel" icone={XCircle} titulo="API Inacessível ou Offline" selo="Offline">
+          Não foi possível estabelecer conexão com o endpoint da API em{' '}
+          <code className="text-rotulo bg-muted px-1 py-0.5 rounded">{healthEndpointURL}</code>.
+        </BannerStatus>
       )}
 
       {/* Grid de Detalhes dos Componentes */}
       <div className="lista-stagger grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1: API REST */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-rotulo font-medium tracking-wide uppercase">API REST (Node / Express)</CardTitle>
-            <Server className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {isLoading && !healthData ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="flex items-center gap-2">
-                <span
-                  className={`transicao-status size-2.5 rounded-full ${
-                    isOffline ? 'bg-status-indisponivel' : 'bg-status-disponivel'
-                  }`}
-                />
-                <span className="text-secao">
-                  {isOffline ? 'Inacessível' : 'Online'}
-                </span>
-              </div>
-            )}
-            <div className="text-rotulo text-muted-foreground flex flex-col gap-1 pt-1 border-t border-border/50">
-              <div className="flex justify-between">
-                <span>Ambiente:</span>
+        <CardServico
+          titulo="API REST (Node / Express)"
+          icone={Server}
+          carregando={isLoading && !healthData}
+          detalhes={
+            <>
+              <LinhaDetalhe rotulo="Ambiente:">
                 <span className="font-medium text-foreground uppercase bg-muted px-1.5 py-0.5 rounded">
                   {healthData?.data?.environment || 'Desconhecido'}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Versão:</span>
+              </LinhaDetalhe>
+              <LinhaDetalhe rotulo="Versão:">
                 <span className="font-medium text-foreground">v1 (Node.js 20)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </LinhaDetalhe>
+            </>
+          }
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className={`transicao-status size-2.5 rounded-full ${
+                isOffline ? 'bg-status-indisponivel' : 'bg-status-disponivel'
+              }`}
+            />
+            <span className="text-secao">{isOffline ? 'Inacessível' : 'Online'}</span>
+          </div>
+        </CardServico>
 
-        {/* Card 2: Banco de Dados PostgreSQL */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-rotulo font-medium tracking-wide uppercase">PostgreSQL Relacional</CardTitle>
-            <Database className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {isLoading && !healthData ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="flex items-center gap-2">
-                <span
-                  className={`transicao-status size-2.5 rounded-full ${
-                    healthData?.data?.database?.status === 'connected'
-                      ? 'bg-status-disponivel'
-                      : 'bg-status-atraso'
-                  }`}
-                />
-                <span className="text-secao capitalize">
-                  {healthData?.data?.database?.status === 'connected' ? 'Conectado' : 'Desconectado'}
-                </span>
-              </div>
-            )}
-            <div className="text-rotulo text-muted-foreground flex flex-col gap-1 pt-1 border-t border-border/50">
-              <div className="flex justify-between">
-                <span>Banco de dados:</span>
+        <CardServico
+          titulo="PostgreSQL Relacional"
+          icone={Database}
+          carregando={isLoading && !healthData}
+          detalhes={
+            <>
+              <LinhaDetalhe rotulo="Banco de dados:">
                 <span className="font-mono text-foreground font-medium">
                   {healthData?.data?.database?.name || 'N/A'}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Pool Driver:</span>
+              </LinhaDetalhe>
+              <LinhaDetalhe rotulo="Pool Driver:">
                 <span className="font-medium text-foreground">pg (node-postgres)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </LinhaDetalhe>
+            </>
+          }
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className={`transicao-status size-2.5 rounded-full ${
+                healthData?.data?.database?.status === 'connected' ? 'bg-status-disponivel' : 'bg-status-atraso'
+              }`}
+            />
+            <span className="text-secao capitalize">
+              {healthData?.data?.database?.status === 'connected' ? 'Conectado' : 'Desconectado'}
+            </span>
+          </div>
+        </CardServico>
 
-        {/* Card 3: Uptime do Servidor */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-rotulo font-medium tracking-wide uppercase">Tempo de Atividade (Uptime)</CardTitle>
-            <Clock className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {isLoading && !healthData ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="text-secao font-mono">
-                {healthData?.data?.uptime !== undefined
-                  ? formatUptime(healthData.data.uptime)
-                  : 'N/A'}
-              </div>
-            )}
-            <div className="text-rotulo text-muted-foreground flex flex-col gap-1 pt-1 border-t border-border/50">
-              <div className="flex justify-between">
-                <span>Início contínuo:</span>
+        <CardServico
+          titulo="Tempo de Atividade (Uptime)"
+          icone={Clock}
+          carregando={isLoading && !healthData}
+          detalhes={
+            <>
+              <LinhaDetalhe rotulo="Início contínuo:">
                 <span className="font-medium text-foreground">Processo Ativo</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Graceful Shutdown:</span>
+              </LinhaDetalhe>
+              <LinhaDetalhe rotulo="Graceful Shutdown:">
                 <span className="font-medium text-status-disponivel">Ativo</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </LinhaDetalhe>
+            </>
+          }
+        >
+          <div className="text-secao font-mono">
+            {healthData?.data?.uptime !== undefined ? formatUptime(healthData.data.uptime) : 'N/A'}
+          </div>
+        </CardServico>
 
-        {/* Card 4: Latência & Rede */}
-        <Card className="shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-rotulo font-medium tracking-wide uppercase">Latência de Rede (Ping)</CardTitle>
-            <Wifi className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {isLoading && !healthData ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-secao font-mono">
-                  {latency !== null ? `${latency} ms` : 'N/A'}
-                </span>
-                {latency !== null && (
-                  <Badge
-                    variant="outline"
-                    className={`text-rotulo px-1.5 py-0 ${
-                      latency < 80
-                        ? 'text-status-disponivel border-status-disponivel/30'
-                        : latency < 200
-                        ? 'text-status-atraso border-status-atraso/30'
-                        : 'text-status-indisponivel border-status-indisponivel/30'
-                    }`}
-                  >
-                    {latency < 80 ? 'Ótima' : latency < 200 ? 'Normal' : 'Lenta'}
-                  </Badge>
-                )}
-              </div>
-            )}
-            <div className="text-rotulo text-muted-foreground flex flex-col gap-1 pt-1 border-t border-border/50">
-              <div className="flex justify-between">
-                <span>Última checagem:</span>
+        <CardServico
+          titulo="Latência de Rede (Ping)"
+          icone={Wifi}
+          carregando={isLoading && !healthData}
+          detalhes={
+            <>
+              <LinhaDetalhe rotulo="Última checagem:">
                 <span className="font-medium text-foreground">
                   {lastCheckTime ? lastCheckTime.toLocaleTimeString() : 'N/A'}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Protocolo:</span>
+              </LinhaDetalhe>
+              <LinhaDetalhe rotulo="Protocolo:">
                 <span className="font-medium text-foreground uppercase">
                   {window.location.protocol.replace(':', '')}
                 </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </LinhaDetalhe>
+            </>
+          }
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-secao font-mono">{latency !== null ? `${latency} ms` : 'N/A'}</span>
+            {latency !== null && (
+              <Badge
+                variant="outline"
+                className={`text-rotulo px-1.5 py-0 ${
+                  latency < 80
+                    ? 'text-status-disponivel border-status-disponivel/30'
+                    : latency < 200
+                    ? 'text-status-atraso border-status-atraso/30'
+                    : 'text-status-indisponivel border-status-indisponivel/30'
+                }`}
+              >
+                {latency < 80 ? 'Ótima' : latency < 200 ? 'Normal' : 'Lenta'}
+              </Badge>
+            )}
+          </div>
+        </CardServico>
       </div>
 
       {/* Seção de Diagnóstico Detalhado */}
@@ -415,25 +335,12 @@ export function StatusPage() {
             </div>
 
             <div className="space-y-2 pt-2">
-              <Button variant="outline" size="sm" asChild className="w-full justify-between text-rotulo">
-                <a href={docsURL} target="_blank" rel="noopener noreferrer">
-                  <span className="flex items-center gap-2">
-                    <Globe className="size-3.5" />
-                    Swagger UI (/docs)
-                  </span>
-                  <ExternalLink className="size-3 text-muted-foreground" />
-                </a>
-              </Button>
-
-              <Button variant="outline" size="sm" asChild className="w-full justify-between text-rotulo">
-                <a href={healthEndpointURL} target="_blank" rel="noopener noreferrer">
-                  <span className="flex items-center gap-2">
-                    <Terminal className="size-3.5" />
-                    Healthcheck Direto (/v1/health)
-                  </span>
-                  <ExternalLink className="size-3 text-muted-foreground" />
-                </a>
-              </Button>
+              <LinkExterno href={docsURL} icone={Globe}>
+                Swagger UI (/docs)
+              </LinkExterno>
+              <LinkExterno href={healthEndpointURL} icone={Terminal}>
+                Healthcheck Direto (/v1/health)
+              </LinkExterno>
             </div>
           </CardContent>
         </Card>

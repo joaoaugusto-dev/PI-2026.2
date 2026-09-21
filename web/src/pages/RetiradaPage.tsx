@@ -2,12 +2,18 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, Barcode, CheckCircle2, IdCard, XCircle } from 'lucide-react'
+import { Barcode, CheckCircle2, IdCard, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { SeletorDataCalendario } from '@/components/SeletorDataCalendario'
 import { StatusBadge } from '@/components/StatusBadge'
+import { AtalhosDeTeste } from '@/components/fluxo/AtalhosDeTeste'
+import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
+import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
+import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
+import { RotuloCampo } from '@/components/fluxo/RotuloCampo'
+import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 
 /**
  * Tela mockada (Sprint 4 — FE-08): não há endpoint de retirada ainda, então
@@ -60,7 +66,6 @@ type FormValues = z.infer<typeof schema>
 
 export function RetiradaPage() {
   const [colaboradores, setColaboradores] = useState(COLABORADORES_MOCK)
-  const [cadastroRapido, setCadastroRapido] = useState({ nome: '', matricula: '' })
 
   const {
     register,
@@ -104,8 +109,6 @@ export function RetiradaPage() {
     !previsaoDevolucao ? 'previsão de devolução' : null,
   ].filter(Boolean) as string[]
 
-  const podeConfirmar = faltando.length === 0
-
   function onConfirmar(data: FormValues) {
     playSomConfirmacao()
     toast.success(`Retirada registrada: ${ferramenta?.nome} para ${data.colaborador}`)
@@ -124,54 +127,42 @@ export function RetiradaPage() {
     setFocus('colaborador')
   }
 
-  function usarCadastroRapido() {
-    const nome = cadastroRapido.nome.trim()
-    const matricula = cadastroRapido.matricula.trim()
-    if (!nome || !matricula) return
+  function usarCadastroRapido({ nome, matricula }: { nome: string; matricula: string }) {
     setColaboradores((atual) => [...atual, { nome, matricula }])
     setValue('colaborador', matricula, { shouldValidate: true })
-    setCadastroRapido({ nome: '', matricula: '' })
   }
 
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
       <div className="animate-entrada flex-1 space-y-8 p-6 pb-28">
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-secao">1. Ferramenta</h2>
-            <p className="text-corpo text-muted-foreground">
-              Dispare o leitor no código de patrimônio ou digite o código / nome
-            </p>
-          </div>
-
+        <SecaoFluxo
+          titulo="1. Ferramenta"
+          descricao="Dispare o leitor no código de patrimônio ou digite o código / nome"
+        >
           <div className="space-y-2">
-            <div
-              className={cn(
-                'flex h-(--control-h) items-center gap-2 rounded-lg border-2 bg-background px-3 focus-within:border-brand-red focus-within:ring-2 focus-within:ring-brand-red/20',
+            <CampoIdentificacao
+              {...register('ferramentaCodigo')}
+              icone={Barcode}
+              mono
+              autoFocus
+              placeholder="Código de patrimônio ou nome da ferramenta"
+              estadoClassName={cn(
+                'border-2',
                 ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
                 (ferramentaBloqueada || ferramentaNaoEncontrada) && 'animate-erro border-destructive',
                 !ferramentaCodigo && 'border-brand-red',
               )}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (ferramenta && !ferramentaBloqueada) setFocus('colaborador')
+                }
+              }}
             >
-              <Barcode className="size-5 shrink-0 text-muted-foreground" />
-              <input
-                {...register('ferramentaCodigo')}
-                autoFocus
-                placeholder="Código de patrimônio ou nome da ferramenta"
-                className="h-full flex-1 bg-transparent font-mono text-corpo outline-none placeholder:font-sans"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (ferramenta && !ferramentaBloqueada) setFocus('colaborador')
-                  }
-                }}
-              />
               {ferramenta && !ferramentaBloqueada && <CheckCircle2 className="size-5 shrink-0 text-status-disponivel" />}
               {(ferramentaBloqueada || ferramentaNaoEncontrada) && <XCircle className="size-5 shrink-0 text-destructive" />}
-              {!ferramentaCodigo && (
-                <span className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Enter</span>
-              )}
-            </div>
+              {!ferramentaCodigo && <DicaEnter />}
+            </CampoIdentificacao>
             {ferramenta && (
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={ferramenta.status} />
@@ -188,90 +179,41 @@ export function RetiradaPage() {
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <p className="w-full text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Atalhos de teste</p>
-            <button
-              type="button"
-              onClick={() => simularLeitura('SF000452')}
-              className="h-9 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              Simular leitura · SF000452
-            </button>
-            <button
-              type="button"
-              onClick={() => simularLeitura('SF000093')}
-              className="h-9 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              Ler ferramenta já emprestada
-            </button>
-          </div>
-        </section>
+          <AtalhosDeTeste
+            onSimular={simularLeitura}
+            atalhos={[
+              { codigo: 'SF000452', label: 'Simular leitura · SF000452' },
+              { codigo: 'SF000093', label: 'Ler ferramenta já emprestada' },
+            ]}
+          />
+        </SecaoFluxo>
 
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-secao">2. Colaborador</h2>
-            <p className="text-corpo text-muted-foreground">Matrícula, crachá ou nome</p>
-          </div>
-
-          <div className="flex h-(--control-h) items-center gap-2 rounded-lg border px-3 focus-within:border-brand-red focus-within:ring-2 focus-within:ring-brand-red/20">
-            <IdCard className="size-5 shrink-0 text-muted-foreground" />
-            <input
-              {...register('colaborador')}
-              placeholder="Matrícula ou nome do colaborador"
-              className="h-full flex-1 bg-transparent text-corpo outline-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  if (colaborador.trim()) setFocus('atividade')
-                }
-              }}
-            />
+        <SecaoFluxo titulo="2. Colaborador" descricao="Matrícula, crachá ou nome">
+          <CampoIdentificacao
+            {...register('colaborador')}
+            icone={IdCard}
+            placeholder="Matrícula ou nome do colaborador"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                if (colaborador.trim()) setFocus('atividade')
+              }
+            }}
+          >
             {colaboradorEncontrado && <CheckCircle2 className="size-5 shrink-0 text-status-disponivel" />}
-            {!colaborador && (
-              <span className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Enter</span>
-            )}
-          </div>
+            {!colaborador && <DicaEnter />}
+          </CampoIdentificacao>
 
-          {colaboradorNaoEncontrado && (
-            <div className="space-y-2 rounded-lg border border-status-atraso/40 bg-status-atraso/5 p-3">
-              <p className="flex items-center gap-1.5 text-sm font-medium text-status-atraso">
-                <AlertTriangle className="size-4" />
-                Colaborador não encontrado — cadastro rápido, sem perder o que já foi preenchido
-              </p>
-              <div className="grid gap-2 sm:grid-cols-[1fr_10rem_auto]">
-                <input
-                  value={cadastroRapido.nome}
-                  onChange={(e) => setCadastroRapido((c) => ({ ...c, nome: e.target.value }))}
-                  placeholder="Nome completo"
-                  className="h-9 rounded-md border px-2.5 text-sm outline-none focus-visible:border-brand-red"
-                />
-                <input
-                  value={cadastroRapido.matricula}
-                  onChange={(e) => setCadastroRapido((c) => ({ ...c, matricula: e.target.value }))}
-                  placeholder="Matrícula"
-                  className="h-9 rounded-md border px-2.5 text-sm outline-none focus-visible:border-brand-red"
-                />
-                <button
-                  type="button"
-                  onClick={usarCadastroRapido}
-                  className="h-9 rounded-md border bg-background px-3 text-sm font-medium hover:bg-muted"
-                >
-                  Usar
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
+          {colaboradorNaoEncontrado && <CadastroRapidoColaborador onUsar={usarCadastroRapido} />}
+        </SecaoFluxo>
 
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-secao">3. Detalhes da retirada</h2>
-            <p className="text-corpo text-muted-foreground">Setor de destino é obrigatório; atividade é opcional</p>
-          </div>
-
+        <SecaoFluxo
+          titulo="3. Detalhes da retirada"
+          descricao="Setor de destino é obrigatório; atividade é opcional"
+        >
           <div className="space-y-4 rounded-lg border p-4">
             <div className="space-y-2">
-              <p className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Atividade / motivo</p>
+              <RotuloCampo>Atividade / motivo</RotuloCampo>
               <textarea
                 {...register('atividade')}
                 rows={2}
@@ -281,7 +223,7 @@ export function RetiradaPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Setor de destino</p>
+              <RotuloCampo>Setor de destino</RotuloCampo>
               <div className="flex flex-wrap gap-2">
                 {SETORES.map((s) => (
                   <button
@@ -301,35 +243,22 @@ export function RetiradaPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Previsão de devolução</p>
+              <RotuloCampo>Previsão de devolução</RotuloCampo>
               <SeletorDataCalendario
                 value={previsaoDevolucao}
                 onChange={(iso) => setValue('previsaoDevolucao', iso, { shouldValidate: true })}
               />
             </div>
           </div>
-        </section>
+        </SecaoFluxo>
       </div>
 
-      <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background/95 px-6 py-3 backdrop-blur">
-        <div>
-          <p className="text-corpo">
-            Registrado por: <span className="font-medium">{USUARIO_LOGADO}</span>
-          </p>
-          {faltando.length > 0 ? (
-            <p className="text-sm text-status-atraso">Falta preencher: {faltando.join(', ')}</p>
-          ) : (
-            <p className="text-sm text-status-disponivel">Pronto para confirmar</p>
-          )}
-        </div>
-        <button
-          type="submit"
-          disabled={!podeConfirmar}
-          className="h-(--control-h-fluxo) shrink-0 rounded-lg bg-brand-red px-6 text-corpo font-medium text-white transition-colors hover:bg-brand-red-dark active:translate-y-px disabled:pointer-events-none disabled:opacity-40"
-        >
-          Confirmar retirada
-        </button>
-      </div>
+      <RodapeFluxo
+        rotuloUsuario="Registrado por"
+        usuario={USUARIO_LOGADO}
+        faltando={faltando}
+        textoBotao="Confirmar retirada"
+      />
     </form>
   )
 }

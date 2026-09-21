@@ -1,11 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Activity, BellIcon, ChevronDown, ExternalLink, LogOut } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
-import { NavLink, Outlet, useLocation, Link, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -18,13 +17,9 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
-  SidebarSeparator,
-  SidebarTrigger,
-} from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { playSomConfirmacao, setSomConfirmacaoAtivo, useSomConfirmacaoAtivo } from '@/lib/som-confirmacao'
+} from '@/components/ui/Sidebar'
+import { CabecalhoApp } from '@/components/layout/CabecalhoApp'
+import { RodapeSidebar } from '@/components/layout/RodapeSidebar'
 
 const navPrincipal = [
   { to: '/', label: 'Dashboard' },
@@ -110,8 +105,6 @@ function useRelogio() {
 
 export function AppLayout() {
   const location = useLocation()
-  const navigate = useNavigate()
-  const somConfirmacao = useSomConfirmacaoAtivo()
   const cadastrosAtivo = navCadastros.some((item) => location.pathname.startsWith(item.to))
   const [cadastrosOpen, setCadastrosOpen] = useState(cadastrosAtivo)
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
@@ -201,73 +194,14 @@ export function AppLayout() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="gap-3 px-2 pb-3">
-          <SidebarSeparator />
-          <div className="flex items-center justify-between px-2">
-            <span className="text-corpo text-sidebar-foreground/80">Som de confirmação</span>
-            <Switch
-              checked={somConfirmacao}
-              onCheckedChange={(ativo) => {
-                setSomConfirmacaoAtivo(ativo)
-                if (ativo) playSomConfirmacao()
-              }}
-            />
-          </div>
-          <a
-            href="/consulta"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2 text-corpo text-sidebar-foreground/60 hover:text-sidebar-foreground"
-          >
-            Abrir consulta pública
-            <ExternalLink className="size-3.5" />
-          </a>
-          <button
-            type="button"
-            onClick={() => navigate('/login')}
-            className="flex items-center gap-1.5 px-2 text-left text-corpo text-sidebar-foreground/60 hover:text-sidebar-foreground"
-          >
-            <LogOut className="size-3.5" />
-            Sair
-          </button>
-          <span className="px-2 font-mono text-rotulo text-sidebar-foreground/30">v0.0.2-beta</span>
-        </SidebarFooter>
+        <RodapeSidebar />
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-16 items-center gap-2 border-b px-4 justify-between">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger />
-            <h1 className="text-secao font-semibold">{tituloDaPagina(location.pathname)}</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-corpo text-muted-foreground hidden md:inline">
-              {dataFormatada} · {horaFormatada}
-            </span>
-            <Link to="/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-              <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <Activity className="size-3 text-muted-foreground" />
-                <span className="text-[11px] font-medium hidden sm:inline">Status API</span>
-              </Badge>
-            </Link>
-            <button type="button" className="relative cursor-pointer">
-              <BellIcon className="size-4 text-muted-foreground hover:text-foreground transition-colors" />
-              <Badge className="absolute -top-2 -right-2 size-4 justify-center rounded-full p-0 text-[10px] bg-[var(--brand-red)] text-white">
-                4
-              </Badge>
-            </button>
-            <div className="flex items-center gap-2 border-l pl-4">
-              <Avatar className="size-8">
-                <AvatarFallback className="text-xs font-medium">MA</AvatarFallback>
-              </Avatar>
-              <div className="hidden sm:flex flex-col leading-tight">
-                <span className="text-corpo font-medium">Marcos Andrade</span>
-                <span className="text-rotulo text-muted-foreground">Almoxarife · Turno A</span>
-              </div>
-            </div>
-          </div>
-        </header>
+        <CabecalhoApp
+          titulo={tituloDaPagina(location.pathname)}
+          dataFormatada={dataFormatada}
+          horaFormatada={horaFormatada}
+        />
         <div key={location.pathname} className="animate-entrada flex-1">
           <Outlet />
         </div>
