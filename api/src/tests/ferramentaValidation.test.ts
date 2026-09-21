@@ -81,7 +81,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
     });
 
     it('aceita edição parcial de ferramenta com nome e grupo válidos', async () => {
-      const res = await request(app).put('/v1/ferramentas/10').send({ nome: 'Furadeira', grupoId: 3 });
+      const res = await request(app).patch('/v1/ferramentas/10').send({ nome: 'Furadeira', grupoId: 3 });
 
       expect(res.status).toBe(200);
       expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira', grupoId: 3 });
@@ -183,7 +183,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
     });
 
     it('rejeita parâmetro :id não numérico ou inválido', async () => {
-      const res = await request(app).put('/v1/ferramentas/abc').send({ nome: 'Nova Ferramenta' });
+      const res = await request(app).patch('/v1/ferramentas/abc').send({ nome: 'Nova Ferramenta' });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
@@ -221,7 +221,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
     });
 
     it('rejeita edição sem nenhum campo editável', async () => {
-      const res = await request(app).put('/v1/ferramentas/1').send({ valorAquisicao: -25.5 });
+      const res = await request(app).patch('/v1/ferramentas/1').send({ valorAquisicao: -25.5 });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
