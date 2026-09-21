@@ -203,4 +203,4 @@ cadastro até a baixa. Passo a passo com as requests da collection:
 - Regras de negócio (avaria/perda, disponibilizar, baixa lógica):
   [`docs/backend/processos.md`](processos.md)
 - Execução e decisões da issue que introduziu editar/status/baixa:
-  [`docs/api-07-crud-ferramentas.md`](../api-07-crud-ferramentas.md)
+  [`docs/issues/api-07-crud-ferramentas.md`](../issues/api-07-crud-ferramentas.md)

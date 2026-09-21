@@ -203,7 +203,7 @@ router.get(
 /**
  * @openapi
  * /ferramentas/{id}:
- *   put:
+ *   patch:
  *     summary: Atualiza os campos editáveis de uma ferramenta
  *     tags:
  *       - Ferramentas
@@ -248,7 +248,7 @@ router.get(
  *       404:
  *         description: Ferramenta não encontrada
  */
-router.put(
+router.patch(
   '/:id',
   authenticate,
   authorize('almoxarife'),
