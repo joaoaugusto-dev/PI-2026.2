@@ -1,8 +1,10 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
+import { RotaProtegida } from '@/lib/auth'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
+import { LoginPage } from '@/pages/LoginPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import { RetiradaPage } from '@/pages/RetiradaPage'
 import { StatusPage } from '@/pages/StatusPage'
@@ -12,7 +14,11 @@ const placeholder = (title: string) => <PlaceholderPage title={title} />
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <AppLayout />,
+    element: (
+      <RotaProtegida>
+        <AppLayout />
+      </RotaProtegida>
+    ),
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'status', element: <StatusPage /> },
@@ -33,7 +39,7 @@ export const router = createBrowserRouter([
       { path: 'design-system', element: <DesignSystemPage /> },
     ],
   },
-  { path: '/login', element: placeholder('Login') },
+  { path: '/login', element: <LoginPage /> },
   { path: '/consulta', element: placeholder('Consulta') },
   { path: '*', element: placeholder('404') },
 ])
