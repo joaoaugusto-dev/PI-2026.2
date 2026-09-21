@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express, { Request, Response } from 'express';
 import { validate } from '../middlewares/validate.js';
 import { errorHandler } from '../middlewares/errorHandler.js';
+import ferramentaRoutes from '../routes/v1/ferramentaRoutes.js';
+import * as ferramentaService from '../services/ferramentaService.js';
 import {
   criarFerramentaSchema,
-  editarFerramentaSchema,
   ferramentaIdParamSchema,
 } from '../validators/ferramentaValidator.js';
 import {
@@ -13,6 +14,17 @@ import {
   editarColaboradorSchema,
   colaboradorIdParamSchema,
 } from '../validators/colaboradorValidator.js';
+
+// A edição é testada contra o router real (ferramentaRoutes) para garantir que
+// o schema aplicado em produção (atualizarFerramentaSchema) é o que está sendo
+// exercitado. Auth e service são mockados: aqui só interessa a validação.
+vi.mock('../middlewares/auth.js', () => ({
+  authenticate: (req: Request, _res: Response, next: () => void) => {
+    (req as any).usuario = { id: 1, nome: 'Almoxarife', papel: 'almoxarife' };
+    next();
+  },
+}));
+vi.mock('../services/ferramentaService.js');
 
 describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07)', () => {
   const app = express();
@@ -23,14 +35,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
     res.status(201).json({ data: req.body });
   });
 
-  // Rota de edição de ferramenta com middleware validate
-  app.put(
-    '/test/ferramentas/:id',
-    validate({ params: ferramentaIdParamSchema, body: editarFerramentaSchema }),
-    (req: Request, res: Response) => {
-      res.status(200).json({ data: { id: req.params.id, ...req.body } });
-    }
-  );
+  app.use('/v1/ferramentas', ferramentaRoutes);
 
   // Rota de criação de colaborador (Bônus: reaproveitamento do padrão)
   app.post('/test/colaboradores', validate({ body: criarColaboradorSchema }), (req: Request, res: Response) => {
@@ -47,6 +52,11 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
   );
 
   app.use(errorHandler);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(ferramentaService.atualizar).mockImplementation(async (id: number, dados: any) => ({ id, ...dados }) as any);
+  });
 
   describe('Sucesso (dados válidos)', () => {
     it('aceita cadastro com dados válidos completos e preço positivo', async () => {
@@ -70,17 +80,20 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.body.data.valorAquisicao).toBe(450.90);
     });
 
-    it('aceita edição parcial de ferramenta com preço e grupo válidos', async () => {
-      const payload = {
-        valorAquisicao: 599.99,
-        grupoId: 3,
-      };
-
-      const res = await request(app).put('/test/ferramentas/10').send(payload);
+    it('aceita edição parcial de ferramenta com nome e grupo válidos', async () => {
+      const res = await request(app).put('/v1/ferramentas/10').send({ nome: 'Furadeira', grupoId: 3 });
 
       expect(res.status).toBe(200);
-      expect(res.body.data.valorAquisicao).toBe(599.99);
-      expect(res.body.data.grupoId).toBe(3);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira', grupoId: 3 });
+    });
+
+    it('descarta valorAquisicao, ehKit e status na edição (não são editáveis por PUT/PATCH /:id)', async () => {
+      const res = await request(app)
+        .patch('/v1/ferramentas/10')
+        .send({ nome: 'Furadeira', valorAquisicao: 10, ehKit: true, status: 'indisponivel' });
+
+      expect(res.status).toBe(200);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
     });
   });
 
@@ -170,7 +183,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
     });
 
     it('rejeita parâmetro :id não numérico ou inválido', async () => {
-      const res = await request(app).put('/test/ferramentas/abc').send({ nome: 'Nova Ferramenta' });
+      const res = await request(app).put('/v1/ferramentas/abc').send({ nome: 'Nova Ferramenta' });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
@@ -207,23 +220,12 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       );
     });
 
-    it('rejeita preço negativo na edição de ferramenta', async () => {
-      const payload = {
-        valorAquisicao: -25.5,
-      };
-
-      const res = await request(app).put('/test/ferramentas/1').send(payload);
+    it('rejeita edição sem nenhum campo editável', async () => {
+      const res = await request(app).put('/v1/ferramentas/1').send({ valorAquisicao: -25.5 });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.details).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            field: 'valorAquisicao',
-            message: 'Valor de aquisição não pode ser negativo',
-          }),
-        ])
-      );
+      expect(ferramentaService.atualizar).not.toHaveBeenCalled();
     });
 
     it('rejeita nome vazio ou contendo apenas espaços', async () => {
@@ -261,25 +263,6 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
           expect.objectContaining({
             field: 'grupoId',
             message: 'grupoId deve ser um número positivo',
-          }),
-        ])
-      );
-    });
-
-    it('rejeita status fora dos valores permitidos do enum na edição', async () => {
-      const payload = {
-        status: 'status_inexistente',
-      };
-
-      const res = await request(app).put('/test/ferramentas/1').send(payload);
-
-      expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.details).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            field: 'status',
-            message: 'Status deve ser disponivel, em_uso ou indisponivel',
           }),
         ])
       );

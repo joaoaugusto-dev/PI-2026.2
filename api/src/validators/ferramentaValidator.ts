@@ -65,17 +65,9 @@ export const criarFerramentaSchema = z.object({
 
 export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
 
-export const editarFerramentaSchema = criarFerramentaSchema
-  .extend({
-    status: z.enum(['disponivel', 'em_uso', 'indisponivel'], {
-      errorMap: () => ({ message: 'Status deve ser disponivel, em_uso ou indisponivel' }),
-    }).optional()
-  })
-  .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: 'Pelo menos um campo deve ser fornecido para edição',
-  });
-
+// status, codigo_identificacao e ativo têm rotas/ações próprias (disponibilizar,
+// DELETE) e não são editados por aqui. valorAquisicao e ehKit também ficam
+// fora: chaves desconhecidas são descartadas silenciosamente pelo Zod.
 export const atualizarFerramentaSchema = criarFerramentaSchema
   .omit({ valorAquisicao: true, ehKit: true })
   .partial()
@@ -84,4 +76,3 @@ export const atualizarFerramentaSchema = criarFerramentaSchema
   });
 
 export type AtualizarFerramentaInput = z.infer<typeof atualizarFerramentaSchema>;
-export type EditarFerramentaInput = z.infer<typeof editarFerramentaSchema>;
