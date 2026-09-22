@@ -1,6 +1,6 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { api, setAuthToken } from '@/lib/api'
+import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {
   id: number
@@ -17,18 +17,69 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null)
+const CHAVE_SESSAO = 'soufer:sessao'
 
-  const login = async (email: string, senha: string) => {
-    const { data } = await api.post('/auth/login', { email, senha })
-    setAuthToken(data.data.token)
-    setUsuario(data.data.usuario)
+interface SessaoPersistida {
+  token: string
+  usuario: Usuario
+}
+
+// Decodifica só o payload do JWT (base64url) pra ler o `exp` — não precisa
+// validar assinatura aqui, quem valida de verdade é a API a cada requisição;
+// isso só evita restaurar uma sessão que a gente já sabe que vai ser
+// rejeitada.
+function expiracaoDoToken(token: string): number | null {
+  try {
+    const payload = token.split('.')[1]
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const { exp } = JSON.parse(atob(base64))
+    return typeof exp === 'number' ? exp * 1000 : null
+  } catch {
+    return null
   }
+}
+
+function lerSessaoPersistida(): SessaoPersistida | null {
+  try {
+    const bruto = localStorage.getItem(CHAVE_SESSAO)
+    if (!bruto) return null
+    const sessao = JSON.parse(bruto) as SessaoPersistida
+    const expiraEm = expiracaoDoToken(sessao.token)
+    if (!expiraEm || expiraEm <= Date.now()) {
+      localStorage.removeItem(CHAVE_SESSAO)
+      return null
+    }
+    return sessao
+  } catch {
+    localStorage.removeItem(CHAVE_SESSAO)
+    return null
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+    const sessao = lerSessaoPersistida()
+    if (sessao) setAuthToken(sessao.token)
+    return sessao?.usuario ?? null
+  })
 
   const logout = () => {
     setAuthToken(null)
     setUsuario(null)
+    localStorage.removeItem(CHAVE_SESSAO)
+  }
+
+  useEffect(() => {
+    setHandler401(logout)
+    return () => setHandler401(null)
+  }, [])
+
+  const login = async (email: string, senha: string) => {
+    const { data } = await api.post('/auth/login', { email, senha })
+    const { token, usuario: usuarioLogado } = data.data
+    setAuthToken(token)
+    setUsuario(usuarioLogado)
+    localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ token, usuario: usuarioLogado }))
   }
 
   const value = useMemo(() => ({ usuario, login, logout }), [usuario])

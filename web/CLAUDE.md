@@ -183,6 +183,19 @@ não filhas do layout autenticado.
   industrial de chão de fábrica), não uma tela administrativa fixa — fundo
   escuro prejudica a leitura ali. Corrigido na FE-07 depois de o almoxarife
   reportar o problema no chão de fábrica.
+- **Sessão do almoxarife persiste em `localStorage`** (`soufer:sessao` em
+  `src/lib/auth.tsx`, chave `{ token, usuario }`) com token de 7 dias — mudou
+  de "só em memória" (spec original da FE-07) porque forçar login toda vez
+  que a aba fecha era ruim demais no dia a dia. O JWT em si também passou a
+  expirar em 7d no backend (`api/.env` `JWT_EXPIRES_IN`, antes 8h/turno — ver
+  `/CLAUDE.md` raiz, decisão arquitetural). Ao carregar, o `AuthProvider`
+  decodifica o `exp` do próprio token (só o payload, sem checar assinatura —
+  quem valida de verdade é a API) pra não restaurar uma sessão já vencida.
+  Um interceptor de resposta do axios (`setHandler401` em `src/lib/api.ts`)
+  desloga automaticamente em qualquer 401 — cobre o caso de o token ainda
+  parecer válido no cliente mas ter sido invalidado no servidor (usuário
+  desativado, segredo rotacionado). Consulta (quiosque) continua sem
+  persistência nenhuma — sessão de 15 min é descartável por design.
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,
