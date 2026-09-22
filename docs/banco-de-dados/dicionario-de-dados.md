@@ -115,11 +115,17 @@ Funcionários que retiram ferramentas — não têm login no sistema.
 | `matricula` | varchar(50) | Sim | único | Digitado |
 | `setor_id` | integer (FK) | Sim | referencia `setores` | Selecionado |
 | `ativo` | boolean | Sim | true / false — default true | Calculado (default) |
+| `criado_por` | integer (FK) | Não | referencia `usuarios` — nulo em registros do seed | **Token** |
 | `created_at` | timestamptz | Sim | — | Calculado (default) |
 | `updated_at` | timestamptz | Sim | — | Calculado (default) |
 
 **Índices/constraints relevantes:** `UNIQUE(matricula)`. FK `setor_id` com
-`ON DELETE RESTRICT`.
+`ON DELETE RESTRICT`. FK `criado_por` com `ON DELETE SET NULL`.
+`idx_colaboradores_nome_trgm` — GIN (`gin_trgm_ops`) sobre
+`f_unaccent(lower(nome))`, usado na busca por nome do
+`GET /v1/colaboradores/identificar` (tolerante a acento e erro de digitação).
+`f_unaccent` é um wrapper `IMMUTABLE` de `unaccent()`, necessário para poder
+indexar a expressão.
 
 > Simplificado na revisão de 02/09/2026: **sem** `codigo_cracha`, **sem**
 > `cargo`, **sem** `ramal` — o fluxo real validado na visita técnica usa só

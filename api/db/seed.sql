@@ -55,7 +55,9 @@ INSERT INTO usuarios (nome, email, senha_hash, papel, ativo) VALUES
 ('Almoxarife Suporte', 'almoxarife2@soufer.com.br', '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'almoxarife', true)
 ON CONFLICT (email) DO NOTHING;
 
--- 5. Colaboradores (20)
+-- 5. Colaboradores (50)
+-- Ampliado na API-09 (de 20 para 50) para dar massa realista ao teste de
+-- desempenho do indice gin_trgm da busca por nome (item "se sobrar tempo").
 -- Simplificado 02/09 (DB-02): sem codigo_cracha nem cargo, ver 0001_init.sql.
 -- setor_id por subquery (nome), não por id literal: SERIAL não é
 -- transacional, então um id fixo quebra depois de qualquer seed que tenha
@@ -82,7 +84,37 @@ FROM (VALUES
   ('Marcelo Vinícius Correia', 'MAT017', 'Usinagem CNC'),
   ('Priscila Andrade Monteiro', 'MAT018', 'Montagem Industrial'),
   ('Eduardo Henrique Nascimento Barros', 'MAT019', 'Manutenção Geral'),
-  ('Simone Cristina Farias', 'MAT020', 'Controle de Qualidade')
+  ('Simone Cristina Farias', 'MAT020', 'Controle de Qualidade'),
+  ('Rafael Souza Lopes', 'MAT021', 'Manutenção Geral'),
+  ('Beatriz Carvalho Dias', 'MAT022', 'Usinagem CNC'),
+  ('André Luiz Ferreira Gomes', 'MAT023', 'Montagem Industrial'),
+  ('Larissa Mendes Cunha', 'MAT024', 'Controle de Qualidade'),
+  ('Fábio Ricardo Azevedo', 'MAT025', 'Estamparia'),
+  ('Tatiane Aparecida Rocha', 'MAT026', 'Manutenção Geral'),
+  ('Leonardo Vieira Castro', 'MAT027', 'Usinagem CNC'),
+  ('Débora Cristina Pinto', 'MAT028', 'Montagem Industrial'),
+  ('Marcos Antônio Barbosa Silva', 'MAT029', 'Controle de Qualidade'),
+  ('Cíntia Regina Duarte', 'MAT030', 'Estamparia'),
+  ('Vinícius Oliveira Ramos', 'MAT031', 'Manutenção Geral'),
+  ('Amanda Cristina Melo', 'MAT032', 'Usinagem CNC'),
+  ('José Carlos Nogueira Filho', 'MAT033', 'Montagem Industrial'),
+  ('Paula Regina Machado', 'MAT034', 'Controle de Qualidade'),
+  ('Rodrigo Silva Andrade', 'MAT035', 'Estamparia'),
+  ('Cristiane Aparecida Souza', 'MAT036', 'Manutenção Geral'),
+  ('Alexandre Freitas Lima', 'MAT037', 'Usinagem CNC'),
+  ('Josiane Pereira Costa', 'MAT038', 'Montagem Industrial'),
+  ('Ricardo Gomes Teixeira', 'MAT039', 'Controle de Qualidade'),
+  ('Sandra Regina Alves', 'MAT040', 'Estamparia'),
+  ('Wesley Rodrigues Martins', 'MAT041', 'Manutenção Geral'),
+  ('Michele Cristina Barros', 'MAT042', 'Usinagem CNC'),
+  ('Anderson Luiz Correia', 'MAT043', 'Montagem Industrial'),
+  ('Viviane Aparecida Nunes', 'MAT044', 'Controle de Qualidade'),
+  ('Gabriel Henrique Moraes', 'MAT045', 'Estamparia'),
+  ('Elaine Cristina Ribeiro', 'MAT046', 'Manutenção Geral'),
+  ('Daniel Augusto Farias', 'MAT047', 'Usinagem CNC'),
+  ('Kelly Cristina Monteiro', 'MAT048', 'Montagem Industrial'),
+  ('Sérgio Ricardo Batista', 'MAT049', 'Controle de Qualidade'),
+  ('Natália Fernandes Rezende', 'MAT050', 'Estamparia')
 ) AS v(nome, matricula, setor_nome)
 JOIN setores s ON s.nome = v.setor_nome
 ON CONFLICT (matricula) DO NOTHING;

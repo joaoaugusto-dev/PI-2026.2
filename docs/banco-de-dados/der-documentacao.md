@@ -81,14 +81,36 @@ sem nenhuma FK e sem papel transacional. `itens_kit` entrou no grupo
 "Cadastro" (mesma cor de `ferramentas`), já que é uma extensão direta do
 cadastro de ferramenta, não um evento.
 
+### 2.7 `colaboradores.criado_por` e índice de busca por nome (API-09)
+A API-09 (identificação e cadastro rápido de colaborador) exigiu duas
+adições em `colaboradores`, sem mudar o restante do modelo:
+- **`criado_por`** (FK opcional para `usuarios`, `ON DELETE SET NULL`): guarda
+  quem fez o cadastro, sempre a partir do JWT (Regra 6). É nulo nos registros
+  do seed. Nova relação no diagrama: `usuarios` 1 — N `colaboradores`.
+- **`idx_colaboradores_nome_trgm`**: índice GIN (`gin_trgm_ops`) sobre
+  `f_unaccent(lower(nome))`, para achar "joao augusto" em "João Augusto".
+  `f_unaccent` é um wrapper `IMMUTABLE` de `unaccent()`, exigido pelo Postgres
+  para indexar expressões. Índices não aparecem no desenho, só nas notas do
+  `der.dbml` e no dicionário de dados.
+
 ---
 
 ## 3. Como usar os arquivos entregues
 
 - **`der-visual-dbdiagram.png`** — imagem final, para os slides de apresentação e o README.
+  Regerar sempre que o `der.dbml` mudar (passo a passo abaixo).
 - **`der.dbml`** — cole em [dbdiagram.io](https://dbdiagram.io) → "Import
   DBML" para editar visualmente. Exporte de volta como `.dbml` para manter os
   dois em sincronia.
+
+### Como regerar o PNG
+1. Abra [dbdiagram.io](https://dbdiagram.io) e crie um diagrama novo (ou abra
+   o existente).
+2. Apague o conteúdo do editor e cole todo o `der.dbml`.
+3. Confira as cores dos grupos de tabelas e reposicione as tabelas se
+   necessário (`criado_por` cria uma linha de `usuarios` para `colaboradores`).
+4. Menu **Export → Export to PNG** e salve como `der-visual-dbdiagram.png`,
+   substituindo o arquivo desta pasta.
 
 ---
 
