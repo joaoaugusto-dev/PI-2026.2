@@ -12,6 +12,7 @@ export const listarAuxiliaresQuerySchema = z.object({
     }, z.boolean().optional())
     .optional(),
   sort: z.enum(['nome', 'id', 'created_at']).optional(),
+  order: z.enum(['asc', 'desc', 'ASC', 'DESC']).optional(),
 });
 
 export type ListarAuxiliaresQuery = z.infer<typeof listarAuxiliaresQuerySchema>;

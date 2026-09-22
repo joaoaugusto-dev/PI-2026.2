@@ -119,7 +119,17 @@ describe('CRUD Categorias / Grupos de Ferramentas (/v1/categorias)', () => {
         .send({ nome: `${PREFIXO}Elétricas` });
 
       expect(res.status).toBe(409);
-      expect(res.body.error.code).toBe('CONFLICT');
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
+    });
+
+    it('retorna 409 para duplicidade case-insensitive (maiúsculas/minúsculas)', async () => {
+      const res = await request(app)
+        .post('/v1/categorias')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ nome: `${PREFIXO}elétricas`.toLowerCase() });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
     });
   });
 
@@ -151,7 +161,7 @@ describe('CRUD Categorias / Grupos de Ferramentas (/v1/categorias)', () => {
         .send({ nome: `${PREFIXO}Elétricas` });
 
       expect(res.status).toBe(409);
-      expect(res.body.error.code).toBe('CONFLICT');
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
     });
 
     it('retorna 404 ao tentar atualizar categoria inexistente', async () => {

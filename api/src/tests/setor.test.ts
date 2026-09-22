@@ -65,6 +65,22 @@ describe('CRUD Setores (/v1/setores)', () => {
       expect(res.body.data.length).toBe(1);
       expect(res.body.data[0].id).toBe(setor1Id);
     });
+
+    it('ordena setores por ID (padrão DESC e explícito ASC)', async () => {
+      const resDesc = await request(app)
+        .get(`/v1/setores?q=${PREFIXO}&sort=id`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(resDesc.status).toBe(200);
+      expect(resDesc.body.data[0].id).toBeGreaterThan(resDesc.body.data[1].id);
+
+      const resAsc = await request(app)
+        .get(`/v1/setores?q=${PREFIXO}&sort=id&order=asc`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(resAsc.status).toBe(200);
+      expect(resAsc.body.data[0].id).toBeLessThan(resAsc.body.data[1].id);
+    });
   });
 
   describe('GET /v1/setores/:id', () => {
@@ -127,7 +143,17 @@ describe('CRUD Setores (/v1/setores)', () => {
         .send({ nome: `${PREFIXO}Usinagem` });
 
       expect(res.status).toBe(409);
-      expect(res.body.error.code).toBe('CONFLICT');
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
+    });
+
+    it('retorna 409 para duplicidade case-insensitive (maiúsculas/minúsculas)', async () => {
+      const res = await request(app)
+        .post('/v1/setores')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ nome: `${PREFIXO}usinagem`.toLowerCase() });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
     });
   });
 
@@ -159,7 +185,7 @@ describe('CRUD Setores (/v1/setores)', () => {
         .send({ nome: `${PREFIXO}Usinagem` });
 
       expect(res.status).toBe(409);
-      expect(res.body.error.code).toBe('CONFLICT');
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
     });
 
     it('retorna 404 ao tentar atualizar setor inexistente', async () => {

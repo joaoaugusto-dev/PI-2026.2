@@ -41,9 +41,16 @@ const router = Router();
  *           type: boolean
  *       - in: query
  *         name: sort
+ *         description: Campo para ordenação (padrão 'nome').
  *         schema:
  *           type: string
  *           enum: [nome, id, created_at]
+ *       - in: query
+ *         name: order
+ *         description: Direção da ordenação ('asc' ou 'desc'). Padrão 'asc' para sort=nome e 'desc' para sort=id/created_at.
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
  *     responses:
  *       200:
  *         description: Lista paginada de atividades

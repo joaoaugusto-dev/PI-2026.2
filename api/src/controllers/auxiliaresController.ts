@@ -13,6 +13,7 @@ export class SetorController {
       const q = req.query.q as string | undefined;
       const incluirInativos = String(req.query.incluirInativos) === 'true';
       const sort = req.query.sort as 'nome' | 'id' | 'created_at' | undefined;
+      const order = req.query.order as 'asc' | 'desc' | 'ASC' | 'DESC' | undefined;
 
       const { rows, total } = await auxiliaresService.listarSetores({
         offset,
@@ -20,6 +21,7 @@ export class SetorController {
         q,
         incluirInativos,
         sort,
+        order,
       });
 
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
@@ -78,6 +80,7 @@ export class CategoriaController {
       const q = req.query.q as string | undefined;
       const incluirInativos = String(req.query.incluirInativos) === 'true';
       const sort = req.query.sort as 'nome' | 'id' | 'created_at' | undefined;
+      const order = req.query.order as 'asc' | 'desc' | 'ASC' | 'DESC' | undefined;
 
       const { rows, total } = await auxiliaresService.listarCategorias({
         offset,
@@ -85,6 +88,7 @@ export class CategoriaController {
         q,
         incluirInativos,
         sort,
+        order,
       });
 
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
@@ -143,6 +147,7 @@ export class AtividadeController {
       const q = req.query.q as string | undefined;
       const incluirInativos = String(req.query.incluirInativos) === 'true';
       const sort = req.query.sort as 'nome' | 'id' | 'created_at' | undefined;
+      const order = req.query.order as 'asc' | 'desc' | 'ASC' | 'DESC' | undefined;
 
       const { rows, total } = await auxiliaresService.listarAtividades({
         offset,
@@ -150,6 +155,7 @@ export class AtividadeController {
         q,
         incluirInativos,
         sort,
+        order,
       });
 
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);

@@ -135,7 +135,17 @@ describe('CRUD Atividades (/v1/atividades)', () => {
         .send({ nome: `${PREFIXO}Manutenção de Motores` });
 
       expect(res.status).toBe(409);
-      expect(res.body.error.code).toBe('CONFLICT');
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
+    });
+
+    it('retorna 409 para duplicidade case-insensitive (maiúsculas/minúsculas)', async () => {
+      const res = await request(app)
+        .post('/v1/atividades')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ nome: `${PREFIXO}manutenção de motores`.toLowerCase() });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
     });
   });
 
@@ -172,7 +182,7 @@ describe('CRUD Atividades (/v1/atividades)', () => {
         .send({ nome: `${PREFIXO}Manutenção de Motores` });
 
       expect(res.status).toBe(409);
-      expect(res.body.error.code).toBe('CONFLICT');
+      expect(res.body.error.code).toBe('DUPLICATE_ENTRY');
     });
 
     it('retorna 404 ao tentar atualizar atividade inexistente', async () => {

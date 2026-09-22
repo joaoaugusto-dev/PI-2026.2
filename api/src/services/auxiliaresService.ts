@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { NotFoundError, ConflictError } from '../utils/errors.js';
+import { NotFoundError } from '../utils/errors.js';
 import {
   CriarSetorInput,
   AtualizarSetorInput,
@@ -40,6 +40,7 @@ export interface ListarParams {
   q?: string;
   incluirInativos?: boolean;
   sort?: 'nome' | 'id' | 'created_at';
+  order?: 'asc' | 'desc' | 'ASC' | 'DESC';
 }
 
 export interface OpcoesCombinadas {
@@ -62,6 +63,7 @@ export async function listarSetores({
   q,
   incluirInativos = false,
   sort = 'nome',
+  order,
 }: ListarParams): Promise<{ rows: Setor[]; total: number }> {
   const condicoes: string[] = [];
   const params: any[] = [];
@@ -78,7 +80,8 @@ export async function listarSetores({
   const whereSql = condicoes.length > 0 ? `WHERE ${condicoes.join(' AND ')}` : '';
 
   const colunaOrdenacao = sort === 'id' ? 'id' : sort === 'created_at' ? 'created_at' : 'nome';
-  const direcao = sort === 'id' || sort === 'created_at' ? 'DESC' : 'ASC';
+  const direcaoPadrao = sort === 'id' || sort === 'created_at' ? 'DESC' : 'ASC';
+  const direcao = order ? order.toUpperCase() : direcaoPadrao;
 
   const countSql = `SELECT COUNT(*) AS total FROM setores ${whereSql}`;
   const countResult = await query<{ total: string }>(countSql, params);
@@ -108,11 +111,6 @@ export async function buscarSetorPorId(id: number): Promise<Setor> {
 }
 
 export async function criarSetor(dados: CriarSetorInput): Promise<Setor> {
-  const existente = await query('SELECT id FROM setores WHERE LOWER(nome) = LOWER($1)', [dados.nome]);
-  if (existente.rows.length > 0) {
-    throw new ConflictError('Já existe um setor cadastrado com este nome');
-  }
-
   const result = await query<Setor>(
     `INSERT INTO setores (nome, ativo, created_at, updated_at)
      VALUES ($1, true, NOW(), NOW())
@@ -124,16 +122,6 @@ export async function criarSetor(dados: CriarSetorInput): Promise<Setor> {
 
 export async function atualizarSetor(id: number, dados: AtualizarSetorInput): Promise<Setor> {
   await buscarSetorPorId(id);
-
-  if (dados.nome) {
-    const conflito = await query(
-      'SELECT id FROM setores WHERE LOWER(nome) = LOWER($1) AND id <> $2',
-      [dados.nome, id]
-    );
-    if (conflito.rows.length > 0) {
-      throw new ConflictError('Já existe outro setor cadastrado com este nome');
-    }
-  }
 
   const updates: string[] = ['updated_at = NOW()'];
   const params: any[] = [id];
@@ -182,6 +170,7 @@ export async function listarCategorias({
   q,
   incluirInativos = false,
   sort = 'nome',
+  order,
 }: ListarParams): Promise<{ rows: Categoria[]; total: number }> {
   const condicoes: string[] = [];
   const params: any[] = [];
@@ -198,7 +187,8 @@ export async function listarCategorias({
   const whereSql = condicoes.length > 0 ? `WHERE ${condicoes.join(' AND ')}` : '';
 
   const colunaOrdenacao = sort === 'id' ? 'id' : sort === 'created_at' ? 'created_at' : 'nome';
-  const direcao = sort === 'id' || sort === 'created_at' ? 'DESC' : 'ASC';
+  const direcaoPadrao = sort === 'id' || sort === 'created_at' ? 'DESC' : 'ASC';
+  const direcao = order ? order.toUpperCase() : direcaoPadrao;
 
   const countSql = `SELECT COUNT(*) AS total FROM grupos_ferramentas ${whereSql}`;
   const countResult = await query<{ total: string }>(countSql, params);
@@ -228,11 +218,6 @@ export async function buscarCategoriaPorId(id: number): Promise<Categoria> {
 }
 
 export async function criarCategoria(dados: CriarCategoriaInput): Promise<Categoria> {
-  const existente = await query('SELECT id FROM grupos_ferramentas WHERE LOWER(nome) = LOWER($1)', [dados.nome]);
-  if (existente.rows.length > 0) {
-    throw new ConflictError('Já existe uma categoria cadastrada com este nome');
-  }
-
   const result = await query<Categoria>(
     `INSERT INTO grupos_ferramentas (nome, ativo, created_at, updated_at)
      VALUES ($1, true, NOW(), NOW())
@@ -244,16 +229,6 @@ export async function criarCategoria(dados: CriarCategoriaInput): Promise<Catego
 
 export async function atualizarCategoria(id: number, dados: AtualizarCategoriaInput): Promise<Categoria> {
   await buscarCategoriaPorId(id);
-
-  if (dados.nome) {
-    const conflito = await query(
-      'SELECT id FROM grupos_ferramentas WHERE LOWER(nome) = LOWER($1) AND id <> $2',
-      [dados.nome, id]
-    );
-    if (conflito.rows.length > 0) {
-      throw new ConflictError('Já existe outra categoria cadastrada com este nome');
-    }
-  }
 
   const updates: string[] = ['updated_at = NOW()'];
   const params: any[] = [id];
@@ -302,6 +277,7 @@ export async function listarAtividades({
   q,
   incluirInativos = false,
   sort = 'nome',
+  order,
 }: ListarParams): Promise<{ rows: Atividade[]; total: number }> {
   const condicoes: string[] = [];
   const params: any[] = [];
@@ -318,7 +294,8 @@ export async function listarAtividades({
   const whereSql = condicoes.length > 0 ? `WHERE ${condicoes.join(' AND ')}` : '';
 
   const colunaOrdenacao = sort === 'id' ? 'id' : sort === 'created_at' ? 'created_at' : 'nome';
-  const direcao = sort === 'id' || sort === 'created_at' ? 'DESC' : 'ASC';
+  const direcaoPadrao = sort === 'id' || sort === 'created_at' ? 'DESC' : 'ASC';
+  const direcao = order ? order.toUpperCase() : direcaoPadrao;
 
   const countSql = `SELECT COUNT(*) AS total FROM atividades ${whereSql}`;
   const countResult = await query<{ total: string }>(countSql, params);
@@ -348,11 +325,6 @@ export async function buscarAtividadePorId(id: number): Promise<Atividade> {
 }
 
 export async function criarAtividade(dados: CriarAtividadeInput): Promise<Atividade> {
-  const existente = await query('SELECT id FROM atividades WHERE LOWER(nome) = LOWER($1)', [dados.nome]);
-  if (existente.rows.length > 0) {
-    throw new ConflictError('Já existe uma atividade cadastrada com este nome');
-  }
-
   const result = await query<Atividade>(
     `INSERT INTO atividades (nome, descricao, ativo, created_at, updated_at)
      VALUES ($1, $2, true, NOW(), NOW())
@@ -364,16 +336,6 @@ export async function criarAtividade(dados: CriarAtividadeInput): Promise<Ativid
 
 export async function atualizarAtividade(id: number, dados: AtualizarAtividadeInput): Promise<Atividade> {
   await buscarAtividadePorId(id);
-
-  if (dados.nome) {
-    const conflito = await query(
-      'SELECT id FROM atividades WHERE LOWER(nome) = LOWER($1) AND id <> $2',
-      [dados.nome, id]
-    );
-    if (conflito.rows.length > 0) {
-      throw new ConflictError('Já existe outra atividade cadastrada com este nome');
-    }
-  }
 
   const updates: string[] = ['updated_at = NOW()'];
   const params: any[] = [id];
