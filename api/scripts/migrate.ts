@@ -44,15 +44,21 @@ async function runMigration() {
 
   await ensureDatabaseExists();
 
-  const migrationPath = path.resolve(__dirname, '../db/migrations/0001_init.sql');
-  const sql = fs.readFileSync(migrationPath, 'utf8');
+  const migrationsDir = path.resolve(__dirname, '../db/migrations');
+  const migrationFiles = fs
+    .readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
 
   const client = await getClient();
 
   try {
     await client.query('BEGIN');
-    console.log(`📄 Executando: 0001_init.sql`);
-    await client.query(sql);
+    for (const file of migrationFiles) {
+      console.log(`📄 Executando: ${file}`);
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      await client.query(sql);
+    }
     await client.query('COMMIT');
     console.log('✅ Migrations executadas com sucesso!');
   } catch (error) {
