@@ -100,9 +100,18 @@ export async function buscarPorId(id: number): Promise<Colaborador> {
  *   1. matrícula exata (mesmo crachá — não existe codigo_cracha separado);
  *   2. nome com unaccent/pg_trgm, tolerante a acento e erro de digitação
  *      (usa idx_colaboradores_nome_trgm, migration 0001).
- * A segunda etapa exige um mínimo de similaridade (0.2, limiar padrão do
- * pg_trgm) para não devolver qualquer nome parecido; o resultado mais
- * similar vem primeiro.
+ * A segunda etapa exige um mínimo de similaridade (`%`, limiar padrão de
+ * `pg_trgm.similarity_threshold`) para não devolver qualquer nome parecido;
+ * o resultado mais similar vem primeiro.
+ *
+ * Desempenho (API-09, item "se sobrar tempo"): com os 50 colaboradores do
+ * seed, a busca por nome leva ~1ms (média de 20 execuções, round-trip
+ * incluso). O planner do Postgres prefere Seq Scan a
+ * idx_colaboradores_nome_trgm nesse volume — comportamento esperado, não é
+ * sinal de índice mal configurado: forçando o uso do índice
+ * (`SET enable_seqscan = off`) o tempo de execução medido por EXPLAIN
+ * ANALYZE ficou igual (~0.5ms), confirmando que o índice é válido e será
+ * usado pelo planner conforme a tabela crescer. Índice mantido como está.
  */
 export async function identificar(termo: string): Promise<Colaborador> {
   const porMatricula = await query<Colaborador>(

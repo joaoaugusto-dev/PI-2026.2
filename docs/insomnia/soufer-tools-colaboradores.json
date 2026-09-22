@@ -1,0 +1,857 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-22T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v13.1.0",
+  "resources": [
+    {
+      "_id": "wrk_soufer_tools_colaboradores",
+      "_type": "workspace",
+      "parentId": null,
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "SOUFER Tools — Colaboradores",
+      "description": "# Testes da API SOUFER Tools — Colaboradores\nColeção de testes manuais e automáticos das rotas de `/v1/colaboradores` (issue #45, API-09: CRUD de colaboradores + identificação).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação e preparação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url` e as variáveis gravadas por scripts (`token`, `token_consulta`, `setor_id`, `colaborador_id`, `colaborador_matricula`). Não é preciso preenchê-las à mão.\n\nUse somente em ambiente de desenvolvimento (`soufer_dev`), com o seed (`npm run db:seed`) já executado — várias requisições dependem de colaboradores do seed (matrícula `MAT001`, nome \"José Carlos Nogueira Filho\" / `MAT033`).",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base_colaboradores",
+      "_type": "environment",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000/v1",
+        "token": "",
+        "token_consulta": "",
+        "setor_id": "",
+        "colaborador_id": "",
+        "colaborador_matricula": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1790200000000
+    },
+    {
+      "_id": "fld_1",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "1 · Autenticação e preparação",
+      "description": "Requisições que precisam rodar primeiro. Obtêm os tokens e o `setorId` que as demais usam, gravando-os em variáveis de ambiente. Nada aqui altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "fld_2",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "2 · Identificação (GET /identificar)",
+      "description": "O endpoint mais importante do fluxo de retirada (Regra 5 do CLAUDE.md): resolve o colaborador por matrícula exata ou nome, tolerante a acento e erro de digitação. Usa colaboradores do seed, não altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "fld_3",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "3 · Cadastro rápido — fluxo de sucesso (ponta a ponta)",
+      "description": "Ciclo de vida completo do cadastro rápido: criar, identificar de volta pelo nome (fecha o fluxo \"não achou -> cadastra -> identifica\" da Regra 5), consultar por ID, listar, editar e inativar. O colaborador criado aqui (variável `colaborador_id`) é reaproveitado pelas pastas seguintes.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000
+    },
+    {
+      "_id": "fld_4",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "4 · Regras de negócio e conflitos (409)",
+      "description": "Matrícula duplicada e a prova de que `criado_por` vem sempre do JWT, mesmo quando o corpo da requisição tenta forjar esse campo (Regra 6 do CLAUDE.md).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000
+    },
+    {
+      "_id": "fld_5",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "5 · Autenticação e autorização (401 e 403)",
+      "description": "Provam que as rotas são protegidas e exclusivas do perfil almoxarife: sem token, e com o token do perfil consulta. Não alteram o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000
+    },
+    {
+      "_id": "fld_6",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "6 · Validação de entrada (400)",
+      "description": "Enviam dados inválidos de propósito para provar que a API rejeita com HTTP 400 e o envelope de erro padrão (`VALIDATION_ERROR`). Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6000
+    },
+    {
+      "_id": "fld_7",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_colaboradores",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "7 · Recurso inexistente (404)",
+      "description": "Usam um id que não existe (999999999) para provar que cada rota responde HTTP 404 `COLABORADOR_NOT_FOUND`. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7000
+    },
+    {
+      "_id": "req_01",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "01 · Login do almoxarife — 200",
+      "description": "## O que faz\nAutentica o almoxarife e devolve um token JWT válido por 8 horas.\n\n## Por que existe\nTodas as rotas de `/colaboradores` exigem perfil `almoxarife`. Sem este login nenhuma outra requisição funciona. É a primeira a ser executada.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** e-mail e senha do almoxarife criado pelo seed (`almoxarife@soufer.com.br` / `123456`).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `token` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.token` e `data.usuario` (perfil `almoxarife`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é almoxarife\n\n## Observações\nO token dura 8 horas. Se as demais requisições passarem a retornar 401, rode esta de novo. Requer que o seed (`npm run db:seed`) tenha sido executado.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"almoxarife@soufer.com.br\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resposta traz um token', () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test('Perfil é almoxarife', () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('almoxarife');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_02",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "02 · Login do perfil consulta — 200",
+      "description": "## O que faz\nAbre uma sessão de consulta (somente leitura) para um colaborador, identificado pela matrícula.\n\n## Por que existe\nPrecisamos de um token de perfil diferente do almoxarife para provar que a API bloqueia esse perfil nas rotas de colaboradores (testes de HTTP 403, pasta 5).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/consulta/sessao`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula `MAT001`, de um colaborador criado pelo seed.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `token_consulta` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.token` (validade de 15 minutos) e os dados do colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Perfil é consulta\n\n## Observações\nA sessão de consulta expira em 15 minutos. Se o teste 403 falhar por token expirado, rode esta requisição de novo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"MAT001\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Perfil é consulta', () => {\n  insomnia.expect(corpo.data.colaborador.papel).to.eql('consulta');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_consulta', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_03",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "03 · Obter um setorId válido — 200",
+      "description": "## O que faz\nLista apenas 1 colaborador e guarda o `setor_id` dele.\n\n## Por que existe\nPara cadastrar um colaborador (pasta 3) é obrigatório informar um `setorId` que exista. Os ids dos setores mudam conforme quantas vezes o seed foi executado em cada máquina, então não dá para fixar um número. Não existe rota de listagem de setores, por isso aproveitamos o `setor_id` de um colaborador já cadastrado (mesmo truque usado com `grupo_id` na coleção de ferramentas).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores`\n- **Parâmetros de query:** `limit=1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** `setor_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com um colaborador e `meta.total` maior que zero.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Existe ao menos um colaborador cadastrado\n\n## Observações\nSe o banco estiver vazio (seed não executado), esta requisição não grava o setor e o cadastro (pasta 3) falha.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores?limit=1",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Existe ao menos um colaborador cadastrado', () => {\n  insomnia.expect(corpo.data).to.have.lengthOf(1);\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('setor_id', String(corpo.data[0].setor_id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_04",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "04 · Identificar por matrícula exata — 200",
+      "description": "## O que faz\nBusca o colaborador do seed pela matrícula exata `MAT001`.\n\n## Por que existe\nÉ a primeira tentativa do endpoint (Regra 5 do CLAUDE.md): o crachá é a própria matrícula, então a matrícula exata é testada antes do nome.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Parâmetros de query:** `termo=MAT001`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador de matrícula `MAT001`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Retornou o colaborador de matrícula MAT001\n\n## Observações\nDepende do seed (`npm run db:seed`).",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=MAT001",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Retornou o colaborador de matrícula MAT001', () => {\n  insomnia.expect(corpo.data.matricula).to.eql('MAT001');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_05",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "05 · Identificar por nome, sem acento e com erro de digitação — 200",
+      "description": "## O que faz\nBusca \"jose carlos nogueira\" (sem acento) e espera achar \"José Carlos Nogueira Filho\" (matrícula `MAT033` do seed).\n\n## Por que existe\nSegunda tentativa do endpoint (Regra 5): quando a matrícula exata não bate, a busca cai para nome com `unaccent` + `pg_trgm`, tolerante a acento e erro de digitação — é o critério de aceite da issue #45 (\"buscar 'joao augusto' acha 'João Augusto'\").\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Parâmetros de query:** `termo=jose carlos nogueira`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com \"José Carlos Nogueira Filho\" (matrícula MAT033), mesmo sem o termo ter acento.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Encontrou José Carlos Nogueira Filho (MAT033)\n\n## Observações\nUsa o índice `idx_colaboradores_nome_trgm` (GIN, `gin_trgm_ops`) sobre `f_unaccent(lower(nome))`, criado na migration da API-09.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=jose carlos nogueira",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Encontrou José Carlos Nogueira Filho (MAT033)', () => {\n  insomnia.expect(corpo.data.matricula).to.eql('MAT033'); insomnia.expect(corpo.data.nome).to.eql('José Carlos Nogueira Filho');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_06",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "06 · Identificar termo inexistente — 404",
+      "description": "## O que faz\nBusca um termo que não bate com nenhuma matrícula nem nome, nem por similaridade.\n\n## Por que existe\nQuando o `/identificar` não acha ninguém, é o sinal para o front abrir o cadastro rápido (Regra 5) — por isso o 404 precisa ser confiável.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Parâmetros de query:** `termo=ZZINEXISTENTE9999XYZ`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 com o código `COLABORADOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro COLABORADOR_NOT_FOUND",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=ZZINEXISTENTE9999XYZ",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 6000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro COLABORADOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('COLABORADOR_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_07",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "07 · Identificar sem informar termo — 400",
+      "description": "## O que faz\nChama o `/identificar` sem o parâmetro `termo`.\n\n## Por que existe\n`termo` é obrigatório no schema Zod. Garante que a rota devolve 400 de validação em vez de tentar interpretar `undefined` como matrícula/nome, e também prova que `/identificar` não é confundido com o parâmetro `:id` da rota seguinte.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR` com o campo `termo` em `details`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 7000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_08",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "08 · Cadastrar colaborador (cadastro rápido) — 201",
+      "description": "## O que faz\nCadastra o colaborador \"João Augusto Teste Insomnia\", com matrícula gerada a partir do timestamp da requisição.\n\n## Por que existe\nÉ o teste do \"C\" do CRUD (Create) e do cadastro rápido descrito na issue #45: quando o `/identificar` não acha ninguém, o front cadastra na hora. Também gera o `id` e a `matricula` que as próximas requisições consultam, editam e, no fim, inativam — assim os testes usam um registro nosso e não mexem nos colaboradores do seed.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `nome`, `matricula` (com `{{ _.timestamp }}` do próprio Insomnia, para não colidir em execuções repetidas) e `setorId` (variável gravada na requisição 03).\n- **Variáveis lidas:** `token`, `setor_id`\n- **Variáveis gravadas:** `colaborador_id`, `colaborador_matricula` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201. O colaborador volta com `ativo = true` e `criado_por` preenchido com o `id` do usuário logado (nunca vindo do corpo da requisição — Regra 6 do CLAUDE.md).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Nasce ativo\n- `criado_por` foi preenchido (vem do JWT)\n\n## Observações\nCada execução completa da coleção cria um colaborador novo; ele é inativado na requisição 14.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"João Augusto Teste Insomnia\",\n  \"matricula\": \"ZZINSOMNIA{{ _.timestamp }}\",\n  \"setorId\": \"{{ _.setor_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 8000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce ativo', () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});\n\ninsomnia.test('`criado_por` foi preenchido (vem do JWT)', () => {\n  insomnia.expect(corpo.data.criado_por).to.be.a('number');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('colaborador_id', String(corpo.data.id));\n  insomnia.environment.set('colaborador_matricula', String(corpo.data.matricula));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_09",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "09 · Identificar o colaborador recém-cadastrado por nome — 200",
+      "description": "## O que faz\nBusca \"joao augusto\" (sem acento, minúsculo) logo após o cadastro da requisição 08.\n\n## Por que existe\nFecha o fluxo de ponta a ponta descrito na issue #45: identificar → não achar → cadastrar → identificar de novo, agora encontrando o colaborador recém-criado. É também o critério de aceite literal da issue (\"buscar 'joao augusto' acha 'João Augusto'\").\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Parâmetros de query:** `termo=joao augusto`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador criado na requisição 08.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Encontrou o colaborador recém-cadastrado\n\n## Observações\nDepende da requisição 08.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=joao augusto",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Encontrou o colaborador recém-cadastrado', () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('colaborador_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_10",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "10 · Buscar colaborador por ID — 200",
+      "description": "## O que faz\nBusca o colaborador criado na requisição 08 pelo seu `id`.\n\n## Por que existe\nTeste do \"R\" (Read) de um registro. Confirma que o que foi gravado no cadastro é o que a API devolve.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/:colaborador_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com os dados completos do colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Retornou o colaborador criado\n\n## Observações\nDepende da requisição 08 (variável `colaborador_id`).",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 10000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Retornou o colaborador criado', () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('colaborador_id')); insomnia.expect(corpo.data.nome).to.eql('João Augusto Teste Insomnia');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_11",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "11 · Listar colaboradores (paginado) — 200",
+      "description": "## O que faz\nLista os colaboradores ativos, com paginação padrão.\n\n## Por que existe\nTeste do \"R\" (Read) em lista, para a tela de CRUD. Garante que a listagem responde com o envelope `{ data, meta }` definido no CLAUDE.md.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a lista em `data` e `meta.page`, `meta.limit`, `meta.total`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- `data` é uma lista\n- `meta` traz page, limit e total",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 11000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('`data` é uma lista', () => {\n  insomnia.expect(corpo.data).to.be.an('array');\n});\n\ninsomnia.test('`meta` traz page, limit e total', () => {\n  insomnia.expect(corpo.meta).to.include.keys('page', 'limit', 'total');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_12",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "12 · Listar com busca textual e paginação — 200",
+      "description": "## O que faz\nLista colaboradores cujo nome ou matrícula contenha \"Teste Insomnia\", 5 por página, ordenados por nome.\n\n## Por que existe\nCobre os parâmetros de query da listagem (`q`, `page`, `limit`, `sort`, `setorId`). É o que a tela de CRUD do front vai usar para buscar.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores`\n- **Parâmetros de query:** `q=Teste Insomnia&page=1&limit=5&sort=nome`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200. Encontra o colaborador da requisição 08 (nome contém \"Teste Insomnia\"), no máximo 5 itens.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Encontrou o colaborador de teste na busca\n- Limite de página respeitado (5)\n\n## Observações\nDepende da requisição 08.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores?q=Teste Insomnia&page=1&limit=5&sort=nome",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 12000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Encontrou o colaborador de teste na busca', () => {\n  insomnia.expect(corpo.data.map((c) => String(c.id))).to.include(insomnia.environment.get('colaborador_id'));\n});\n\ninsomnia.test('Limite de página respeitado (5)', () => {\n  insomnia.expect(corpo.meta.limit).to.eql(5); insomnia.expect(corpo.data.length).to.be.at.most(5);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "13 · Atualizar colaborador (PATCH, campos parciais) — 200",
+      "description": "## O que faz\nAltera só o nome do colaborador criado.\n\n## Por que existe\nTeste do \"U\" (Update) do CRUD. Enviamos um campo só de propósito para provar que os demais (matrícula, setor) permanecem intactos.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/colaboradores/:colaborador_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** apenas `nome`. Os demais campos não são enviados.\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador atualizado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Campo enviado foi alterado\n- Campo não enviado permaneceu igual\n\n## Observações\nConvenção adotada na API (mesma decisão da API-07 em ferramentas): atualização parcial é `PATCH`, não `PUT`.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"João Augusto Editado Insomnia\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 13000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Campo enviado foi alterado', () => {\n  insomnia.expect(corpo.data.nome).to.eql('João Augusto Editado Insomnia');\n});\n\ninsomnia.test('Campo não enviado permaneceu igual', () => {\n  insomnia.expect(corpo.data.matricula).to.eql(insomnia.environment.get('colaborador_matricula'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "14 · Inativar colaborador (DELETE) — 200",
+      "description": "## O que faz\nInativa (`ativo = false`) o colaborador criado na requisição 08.\n\n## Por que existe\nÉ o \"D\" do CRUD, mas como baixa lógica: colaboradores nunca são apagados de verdade. Fica por último porque as pastas anteriores usam esse colaborador.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/colaboradores/:colaborador_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com `ativo = false`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Colaborador ficou inativo",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 14000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Colaborador ficou inativo', () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "15 · Buscar colaborador já inativado — 404",
+      "description": "## O que faz\nBusca de novo o colaborador que acabou de ser inativado.\n\n## Por que existe\nProva que a inativação surtiu efeito: colaboradores inativos não aparecem mais nas consultas (mesma regra usada em ferramentas.ativo).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/:colaborador_id`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `COLABORADOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro COLABORADOR_NOT_FOUND\n\n## Observações\nDepende da requisição 14.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 15000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro COLABORADOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('COLABORADOR_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "16 · Cadastrar com matrícula duplicada — 409",
+      "description": "## O que faz\nTenta cadastrar um colaborador novo usando a matrícula `MAT001`, que já existe no seed.\n\n## Por que existe\nMatrícula é `UNIQUE` no banco (`colaboradores_matricula_key`). Garante que a API recusa o cadastro com 409 em vez de deixar o Postgres estourar um erro cru.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `nome`, `matricula = MAT001` (já existe) e `setorId`.\n- **Variáveis lidas:** `token`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 com o código `DUPLICATE_ENTRY` (o `errorHandler` global traduz a violação de índice único do Postgres, código `23505`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 409\n- Código de erro DUPLICATE_ENTRY",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Duplicado Teste\",\n  \"matricula\": \"MAT001\",\n  \"setorId\": \"{{ _.setor_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 16000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test('Código de erro DUPLICATE_ENTRY', () => {\n  insomnia.expect(corpo.error.code).to.eql('DUPLICATE_ENTRY');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "17 · criado_por vem do JWT mesmo com o corpo tentando forjar o campo — 201",
+      "description": "## O que faz\nCadastra outro colaborador enviando `criadoPor` e `criado_por` forjados (`999999`) no corpo da requisição.\n\n## Por que existe\nRegra 6 do CLAUDE.md: `criado_por` nunca pode vir do corpo da requisição, só do usuário logado (JWT). O schema Zod (`criarColaboradorSchema`) só aceita `nome`, `matricula` e `setorId` — qualquer chave a mais é descartada em silêncio. Este teste prova isso na prática, e não só lendo o código.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `nome`, `matricula` (com `{{ _.timestamp }}`), `setorId`, e as chaves forjadas `criadoPor`/`criado_por`, ambas com valor `999999` (id que não existe).\n- **Variáveis lidas:** `token`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 201. `criado_por` na resposta é o id do almoxarife logado, nunca `999999`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- criado_por não é o valor forjado (999999)\n- criado_por foi preenchido com um número (o id do usuário logado)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Teste Criado Por\",\n  \"matricula\": \"ZZINSOMNIACRIADOPOR{{ _.timestamp }}\",\n  \"setorId\": \"{{ _.setor_id }}\",\n  \"criadoPor\": 999999,\n  \"criado_por\": 999999\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 17000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('criado_por não é o valor forjado (999999)', () => {\n  insomnia.expect(corpo.data.criado_por).to.not.eql(999999);\n});\n\ninsomnia.test('criado_por foi preenchido com um número (o id do usuário logado)', () => {\n  insomnia.expect(corpo.data.criado_por).to.be.a('number');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_18",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "18 · Identificar sem token — 401",
+      "description": "## O que faz\nChama o `/identificar` sem enviar o cabeçalho `Authorization`.\n\n## Por que existe\nGarante que a API não expõe dados de colaboradores a quem não está autenticado.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 com o código `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Código de erro TOKEN_NOT_PROVIDED",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=MAT001",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 18000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test('Código de erro TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_19",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "19 · Identificar com perfil consulta — 403",
+      "description": "## O que faz\nChama o `/identificar` usando o token do perfil `consulta`.\n\n## Por que existe\nDecisão de escopo da API-09: `/identificar` é exclusivo do almoxarife (é ele quem opera a retirada), o perfil consulta só lê disponibilidade (Regra 8 do CLAUDE.md). Distingue 401 (não autenticado) de 403 (autenticado, mas sem permissão).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Autenticação:** Bearer Token = variável de ambiente `token_consulta` (login do perfil consulta, requisição 02).\n- **Variáveis lidas:** `token_consulta`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 com o código `ACCESS_DENIED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 403\n- Código de erro ACCESS_DENIED\n\n## Observações\nDepende da requisição 02. O token de consulta vale 15 minutos.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=MAT001",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_consulta }}"
+      },
+      "metaSortKey": 19000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test('Código de erro ACCESS_DENIED', () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_20",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "20 · Listar sem token — 401",
+      "description": "## O que faz\nChama a listagem sem enviar o cabeçalho `Authorization`.\n\n## Por que existe\nGarante que a listagem também é protegida, não só o `/identificar`.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 com o código `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Código de erro TOKEN_NOT_PROVIDED",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 20000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test('Código de erro TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_21",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "21 · Cadastrar sem nome — 400",
+      "description": "## O que faz\nTenta cadastrar um colaborador sem informar o nome.\n\n## Por que existe\nO nome é obrigatório. A validação (Zod) roda antes do banco, então o resultado não depende do `setorId` existir.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** apenas `matricula` e `setorId`; o `nome` obrigatório foi omitido.\n- **Variáveis lidas:** `token`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR` com o campo `nome` em `details`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"ZZINSOMNIASEMNOME\",\n  \"setorId\": \"{{ _.setor_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 21000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_22",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "22 · Editar sem nenhum campo — 400",
+      "description": "## O que faz\nTenta editar o colaborador de id 1 sem enviar nenhum campo no corpo.\n\n## Por que existe\n`editarColaboradorSchema` exige ao menos um campo (`.refine`), para não gerar um `UPDATE ... SET` vazio. O id usado não precisa existir de verdade: a validação roda antes da consulta ao banco.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/colaboradores/1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** objeto vazio `{}`.\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/colaboradores/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 22000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_23",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "23 · Buscar colaborador por ID inexistente — 404",
+      "description": "## O que faz\nBusca um colaborador com um id que nunca existiu.\n\n## Por que existe\nCobre o 404 do `GET /:id`.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/999999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `COLABORADOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro COLABORADOR_NOT_FOUND",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/999999999",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 23000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro COLABORADOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('COLABORADOR_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_24",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "24 · Editar colaborador inexistente — 404",
+      "description": "## O que faz\nTenta editar um colaborador com um id que nunca existiu.\n\n## Por que existe\nCobre o 404 do `PATCH /:id`.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/colaboradores/999999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Corpo (JSON):** `nome` qualquer, só para passar da validação de \"ao menos um campo\".\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `COLABORADOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro COLABORADOR_NOT_FOUND",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/colaboradores/999999999",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"x\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 24000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro COLABORADOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('COLABORADOR_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_25",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "25 · Inativar colaborador inexistente — 404",
+      "description": "## O que faz\nTenta inativar um colaborador com um id que nunca existiu.\n\n## Por que existe\nCobre o 404 do `DELETE /:id`.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/colaboradores/999999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do almoxarife, requisição 01).\n- **Variáveis lidas:** `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `COLABORADOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro COLABORADOR_NOT_FOUND",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/colaboradores/999999999",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 25000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro COLABORADOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('COLABORADOR_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    }
+  ]
+}

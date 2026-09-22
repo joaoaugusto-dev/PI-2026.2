@@ -39,7 +39,8 @@ Esses valores são determinados pelo back-end.
 | PATCH | `/v1/ferramentas/:id/etiqueta-impressa` | Almoxarife | Marca a etiqueta como impressa |
 | PATCH | `/v1/ferramentas/:id/disponibilizar` | Almoxarife | Retorno de reparo |
 | DELETE | `/v1/ferramentas/:id` | Almoxarife | Baixa lógica (ativo = false) |
-| GET/POST/PUT/DELETE | `/v1/colaboradores` | Almoxarife | CRUD |
+| GET | `/v1/colaboradores/identificar` | Almoxarife | Identifica por matrícula exata ou nome (unaccent + pg_trgm), 404 se não achar |
+| GET/POST/PATCH/DELETE | `/v1/colaboradores` | Almoxarife | CRUD (edição parcial via `PATCH /v1/colaboradores/:id`; `DELETE` é inativação lógica) |
 | GET/POST/PUT/DELETE | `/v1/setores` | Almoxarife | CRUD |
 | GET/POST/PUT/DELETE | `/v1/categorias` | Almoxarife | CRUD |
 | GET/POST/PUT/DELETE | `/v1/atividades` | Almoxarife | CRUD |
