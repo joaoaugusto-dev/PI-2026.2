@@ -1270,6 +1270,430 @@
       "settingEncodeUrl": true,
       "settingRebuildPath": true,
       "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_8",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "name": "8 · Feriados (BrasilAPI e Calendário)",
+      "description": "Rotas de consulta e sincronização de feriados nacionais e cálculo de dias úteis.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 8000
+    },
+    {
+      "_id": "fld_9",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "name": "9 · Cadastros Auxiliares (Setores, Categorias, Atividades)",
+      "description": "Rotas completas de CRUD para Setores, Categorias (Grupos) e Atividades.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 9000
+    },
+    {
+      "_id": "fld_10",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools",
+      "name": "10 · Opções Consolidadas e Sistema",
+      "description": "Healthcheck do sistema e rota combinada /v1/opcoes para selects de formulários.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 10000
+    },
+    {
+      "_id": "req_feriado_listar",
+      "_type": "request",
+      "parentId": "fld_8",
+      "name": "01 · Listar feriados do ano — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/feriados",
+      "parameters": [
+        {
+          "name": "ano",
+          "value": "2026"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 8100
+    },
+    {
+      "_id": "req_feriado_dia_util",
+      "_type": "request",
+      "parentId": "fld_8",
+      "name": "02 · Verificar dia útil — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/feriados/dia-util",
+      "parameters": [
+        {
+          "name": "data",
+          "value": "2026-09-07"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 8200
+    },
+    {
+      "_id": "req_feriado_dias_uteis",
+      "_type": "request",
+      "parentId": "fld_8",
+      "name": "03 · Calcular dias úteis — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/feriados/dias-uteis",
+      "parameters": [
+        {
+          "name": "dataInicio",
+          "value": "2026-04-20"
+        },
+        {
+          "name": "dias",
+          "value": "2"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 8300
+    },
+    {
+      "_id": "req_feriado_sincronizar",
+      "_type": "request",
+      "parentId": "fld_8",
+      "name": "04 · Sincronizar feriados com BrasilAPI — 200",
+      "method": "POST",
+      "url": "{{ _.base_url }}/feriados/sincronizar",
+      "parameters": [
+        {
+          "name": "ano",
+          "value": "2026"
+        }
+      ],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 8400
+    },
+    {
+      "_id": "req_setores_listar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "01 · Listar setores — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/setores",
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1"
+        },
+        {
+          "name": "limit",
+          "value": "20"
+        }
+      ],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9100
+    },
+    {
+      "_id": "req_setores_buscar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "02 · Buscar setor por ID — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/setores/1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9110
+    },
+    {
+      "_id": "req_setores_criar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "03 · Cadastrar novo setor — 201",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Usinagem CNC\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9120
+    },
+    {
+      "_id": "req_setores_atualizar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "04 · Atualizar setor — 200",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/setores/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Usinagem e Ajustagem\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9130
+    },
+    {
+      "_id": "req_setores_excluir_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "05 · Baixa lógica em setor — 200",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/setores/1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9140
+    },
+    {
+      "_id": "req_categorias_listar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "06 · Listar categorias — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/categorias",
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1"
+        },
+        {
+          "name": "limit",
+          "value": "20"
+        }
+      ],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9200
+    },
+    {
+      "_id": "req_categorias_buscar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "07 · Buscar categoria por ID — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/categorias/1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9210
+    },
+    {
+      "_id": "req_categorias_criar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "08 · Cadastrar nova categoria — 201",
+      "method": "POST",
+      "url": "{{ _.base_url }}/categorias",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Ferramentas Pneumáticas\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9220
+    },
+    {
+      "_id": "req_categorias_atualizar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "09 · Atualizar categoria — 200",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/categorias/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Ferramentas Pneumáticas Especiais\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9230
+    },
+    {
+      "_id": "req_categorias_excluir_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "10 · Baixa lógica em categoria — 200",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/categorias/1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9240
+    },
+    {
+      "_id": "req_atividades_listar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "11 · Listar atividades — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/atividades",
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1"
+        },
+        {
+          "name": "limit",
+          "value": "20"
+        }
+      ],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9300
+    },
+    {
+      "_id": "req_atividades_buscar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "12 · Buscar atividade por ID — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/atividades/1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9310
+    },
+    {
+      "_id": "req_atividades_criar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "13 · Cadastrar nova atividade — 201",
+      "method": "POST",
+      "url": "{{ _.base_url }}/atividades",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Troca de Rolamento\",\n  \"descricao\": \"Manutenção preventiva em motores\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9320
+    },
+    {
+      "_id": "req_atividades_atualizar_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "14 · Atualizar atividade — 200",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/atividades/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Troca de Rolamento e Buchas\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9330
+    },
+    {
+      "_id": "req_atividades_excluir_fld",
+      "_type": "request",
+      "parentId": "fld_9",
+      "name": "15 · Baixa lógica em atividade — 200",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/atividades/1",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9340
+    },
+    {
+      "_id": "req_health_fld",
+      "_type": "request",
+      "parentId": "fld_10",
+      "name": "01 · Healthcheck da API — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 10100
+    },
+    {
+      "_id": "req_opcoes_fld",
+      "_type": "request",
+      "parentId": "fld_10",
+      "name": "02 · Obter opções combinadas (Setores + Categorias + Atividades) — 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 10200
     }
   ]
 }

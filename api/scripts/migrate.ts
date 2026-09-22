@@ -35,7 +35,7 @@ async function ensureDatabaseExists() {
       `⚠️  Não foi possível verificar/criar o banco "${env.db.database}" pelo banco padrão "postgres": ${(err as Error).message}`
     );
   } finally {
-    await adminClient.end().catch(() => {});
+    await adminClient.end().catch(() => { });
   }
 }
 
@@ -44,17 +44,54 @@ async function runMigration() {
 
   await ensureDatabaseExists();
 
-  const migrationPath = path.resolve(__dirname, '../db/migrations/0001_init.sql');
-  const sql = fs.readFileSync(migrationPath, 'utf8');
+  const migrationsDir = path.resolve(__dirname, '../db/migrations');
+  const migrationFiles = fs
+    .readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
 
   const client = await getClient();
 
   try {
+    // 1. Garante que a tabela de histórico de migrations existe
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version VARCHAR(255) PRIMARY KEY,
+        executed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS executed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+    `);
+
+    // 2. Consulta quais migrations já foram aplicadas
+    const appliedResult = await client.query<{ version: string }>(
+      'SELECT version FROM schema_migrations ORDER BY version ASC'
+    );
+    const appliedSet = new Set(appliedResult.rows.map((r) => r.version));
+
+    // 3. Filtra apenas as migrations pendentes
+    const pendingFiles = migrationFiles.filter((file) => !appliedSet.has(file));
+
+    if (pendingFiles.length === 0) {
+      console.log('✅ Nenhuma migration pendente. O banco de dados já está atualizado!');
+      return;
+    }
+
+    console.log(`📋 ${pendingFiles.length} migration(s) pendente(s) encontrada(s).`);
+
+    // 4. Executa cada migration pendente dentro de uma transação
     await client.query('BEGIN');
-    console.log(`📄 Executando: 0001_init.sql`);
-    await client.query(sql);
+    for (const file of pendingFiles) {
+      console.log(`📄 Executando migration: ${file}`);
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      await client.query(sql);
+      await client.query(
+        'INSERT INTO schema_migrations (version, executed_at) VALUES ($1, NOW())',
+        [file]
+      );
+      console.log(`  └─ ✅ Concluída: ${file}`);
+    }
     await client.query('COMMIT');
-    console.log('✅ Migrations executadas com sucesso!');
+    console.log('✅ Todas as migrations pendentes foram aplicadas com sucesso!');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Falha ao executar migrations:', error);
