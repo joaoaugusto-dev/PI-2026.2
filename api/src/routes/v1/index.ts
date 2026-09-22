@@ -4,6 +4,7 @@ import authRoutes from './authRoutes.js';
 import consultaRoutes from './consultaRoutes.js';
 import feriadoRoutes from './feriadoRoutes.js';
 import ferramentaRoutes from './ferramentaRoutes.js';
+import colaboradorRoutes from './colaboradorRoutes.js';
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use('/auth', authRoutes);
 router.use('/consulta', consultaRoutes);
 router.use('/feriados', feriadoRoutes);
 router.use('/ferramentas', ferramentaRoutes);
+router.use('/colaboradores', colaboradorRoutes);
 
 export default router;
