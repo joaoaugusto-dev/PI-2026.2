@@ -99,7 +99,7 @@ export async function buscarPorId(id: number): Promise<Colaborador> {
  * fluxo de retirada (Regra 5). Tenta, nessa ordem:
  *   1. matrícula exata (mesmo crachá — não existe codigo_cracha separado);
  *   2. nome com unaccent/pg_trgm, tolerante a acento e erro de digitação
- *      (usa idx_colaboradores_nome_trgm, migration 0001).
+ *      (usa idx_colaboradores_nome_trgm, migration 0003).
  * A segunda etapa exige um mínimo de similaridade (`%`, limiar padrão de
  * `pg_trgm.similarity_threshold`) para não devolver qualquer nome parecido;
  * o resultado mais similar vem primeiro.

@@ -130,25 +130,6 @@ CREATE TABLE IF NOT EXISTS colaboradores (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- API-09: quem cadastrou o colaborador (sempre vem do JWT — Regra 6). Nullable
--- porque os registros do seed e cadastros anteriores não têm autor. ALTER
--- separado (e não dentro do CREATE TABLE) para também atualizar bancos já
--- criados, já que CREATE TABLE IF NOT EXISTS não altera tabela existente.
-ALTER TABLE colaboradores
-    ADD COLUMN IF NOT EXISTS criado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
-
--- unaccent() é STABLE, e índice de expressão exige função IMMUTABLE. O wrapper
--- fixa o dicionário para poder indexar (padrão recomendado para unaccent + GIN).
-CREATE OR REPLACE FUNCTION f_unaccent(text) RETURNS text
-    LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
-    AS $$ SELECT public.unaccent('public.unaccent', $1) $$;
-
--- Busca de colaborador por nome tolerante a acento e erro de digitação
--- (GET /v1/colaboradores/identificar). A query deve usar a mesma expressão:
--- f_unaccent(lower(nome)).
-CREATE INDEX IF NOT EXISTS idx_colaboradores_nome_trgm
-ON colaboradores USING gin (f_unaccent(lower(nome)) gin_trgm_ops);
-
 -- 3.7 Ferramentas
 -- codigo_identificacao substitui codigo_patrimonio: numérico de 4 dígitos
 -- (1-9999), gerado automaticamente (trigger fn_gera_codigo_identificacao) e

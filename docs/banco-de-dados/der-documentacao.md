@@ -83,7 +83,12 @@ cadastro de ferramenta, não um evento.
 
 ### 2.7 `colaboradores.criado_por` e índice de busca por nome (API-09)
 A API-09 (identificação e cadastro rápido de colaborador) exigiu duas
-adições em `colaboradores`, sem mudar o restante do modelo:
+adições em `colaboradores`, sem mudar o restante do modelo. Aplicadas em
+`api/db/migrations/0003_colaboradores_identificacao.sql` (não em `0001`: a
+API-08, mergeada em paralelo, introduziu o rastreamento de migrations já
+aplicadas via tabela `schema_migrations`, então uma mudança em `0001` deixaria
+de ser aplicada em qualquer banco onde `0001` já tivesse rodado — por isso
+virou um arquivo novo em vez de editar o `0001_init.sql`):
 - **`criado_por`** (FK opcional para `usuarios`, `ON DELETE SET NULL`): guarda
   quem fez o cadastro, sempre a partir do JWT (Regra 6). É nulo nos registros
   do seed. Nova relação no diagrama: `usuarios` 1 — N `colaboradores`.

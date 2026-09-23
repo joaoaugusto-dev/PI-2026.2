@@ -179,7 +179,7 @@ O sistema possui dois modos de acesso via JWT:
 
 1. **Almoxarife (`papel: 'almoxarife'`):**
    - Autenticado via `POST /v1/auth/login` com e-mail e senha.
-   - Token válido por **8 horas**.
+   - Token válido por **7 dias** por padrão (`JWT_EXPIRES_IN`); `ativo` é revalidado no banco a cada requisição, então um usuário desativado perde acesso já na próxima chamada, não só no próximo login.
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**

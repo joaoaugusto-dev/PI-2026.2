@@ -124,6 +124,8 @@ Funcionários que retiram ferramentas — não têm login no sistema.
 `idx_colaboradores_nome_trgm` — GIN (`gin_trgm_ops`) sobre
 `f_unaccent(lower(nome))`, usado na busca por nome do
 `GET /v1/colaboradores/identificar` (tolerante a acento e erro de digitação).
+`criado_por` e o índice vêm de `api/db/migrations/0003_colaboradores_identificacao.sql`,
+não do `0001_init.sql`.
 `f_unaccent` é um wrapper `IMMUTABLE` de `unaccent()`, necessário para poder
 indexar a expressão.
 
