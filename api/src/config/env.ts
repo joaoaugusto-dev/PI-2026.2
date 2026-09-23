@@ -70,7 +70,7 @@ export const env = {
   },
   jwt: {
     secret: jwtSecret || 'soufer_tools_fallback_secret',
-    expiresIn: process.env.JWT_EXPIRES_IN || '8h',
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     consultaExpiresIn: process.env.JWT_CONSULTA_EXPIRES_IN || '15m',
   },
 };

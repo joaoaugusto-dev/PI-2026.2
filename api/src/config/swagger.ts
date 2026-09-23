@@ -65,8 +65,10 @@ const swaggerOptions: swaggerJSDoc.Options = {
     },
   },
   apis: [
+    './src/app.ts',
     './src/routes/**/*.ts',
     './src/controllers/**/*.ts',
+    './dist/src/app.js',
     './dist/src/routes/**/*.js',
     './dist/src/controllers/**/*.js',
   ],

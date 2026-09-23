@@ -20,7 +20,9 @@ exige, sinalize o conflito antes de prosseguir.
   (AuthService com `bcryptjs` e `jsonwebtoken`), descartando o uso do Supabase e do
   Supabase Auth. Esta decisão garante independência total de BaaS, conformidade com os
   requisitos de infraestrutura (AWS RDS / EC2 ou servidor próprio Soufer) e controle
-  fino sobre tokens e autorizações (almoxarife de 8h e quiosque de 15min).
+  fino sobre tokens e autorizações (almoxarife de 7 dias — sessão persistida
+  no cliente na FE-07, ajustado de 8h/turno para evitar login diário — e
+  quiosque de 15min, esse sem persistência).
 - **Leitor de código de barras físico (em revisão — ver issue DB-01 no board do
   GitHub):** o campo de identificação (ferramenta e colaborador) opera por
   leitura via scanner físico, não digitação manual — foco automático +

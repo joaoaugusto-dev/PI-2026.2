@@ -2,10 +2,12 @@ import { ExternalLink, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { SidebarFooter, SidebarSeparator } from '@/components/ui/Sidebar'
 import { Switch } from '@/components/ui/Switch'
+import { useAuth } from '@/lib/auth'
 import { playSomConfirmacao, setSomConfirmacaoAtivo, useSomConfirmacaoAtivo } from '@/lib/som-confirmacao'
 
 export function RodapeSidebar() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const somConfirmacao = useSomConfirmacaoAtivo()
 
   return (
@@ -32,7 +34,10 @@ export function RodapeSidebar() {
       </a>
       <button
         type="button"
-        onClick={() => navigate('/login')}
+        onClick={() => {
+          logout()
+          navigate('/login')
+        }}
         className="flex items-center gap-1.5 px-2 text-left text-corpo text-sidebar-foreground/60 hover:text-sidebar-foreground"
       >
         <LogOut className="size-3.5" />

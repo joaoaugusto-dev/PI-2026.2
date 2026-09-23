@@ -23,7 +23,7 @@ INSERT INTO setores (nome, ativo) VALUES
 ('Montagem Industrial', true),
 ('Controle de Qualidade', true),
 ('Estamparia', true)
-ON CONFLICT (nome) DO NOTHING;
+ON CONFLICT (LOWER(nome)) DO NOTHING;
 
 -- 2. Grupos de Ferramentas (era "categorias" — sem campo descricao, ver 0001_init.sql)
 INSERT INTO grupos_ferramentas (nome, ativo) VALUES
@@ -32,7 +32,7 @@ INSERT INTO grupos_ferramentas (nome, ativo) VALUES
 ('Instrumentos de Medição', true),
 ('Equipamentos de Solda', true),
 ('Ferramentas Pneumáticas', true)
-ON CONFLICT (nome) DO NOTHING;
+ON CONFLICT (LOWER(nome)) DO NOTHING;
 
 -- 3. Atividades Pré-definidas
 INSERT INTO atividades (nome, descricao, ativo) VALUES
@@ -46,7 +46,7 @@ INSERT INTO atividades (nome, descricao, ativo) VALUES
 ('Instalação Elétrica', 'Passagem de cabos e conexão de painéis', true),
 ('Limpeza Técnica', 'Higienização de matrizes e ferramentas de precisão', true),
 ('Apoio de Linha', 'Suporte operacional geral na linha de produção', true)
-ON CONFLICT (nome) DO NOTHING;
+ON CONFLICT (LOWER(nome)) DO NOTHING;
 
 -- 4. Usuários do Almoxarifado (Senha padrão para testes: '123456')
 -- Hashes bcrypt reais, gerados com bcryptjs (mesma lib usada pelo AuthService).

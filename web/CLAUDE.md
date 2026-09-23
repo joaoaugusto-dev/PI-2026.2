@@ -63,6 +63,18 @@ não filhas do layout autenticado.
 - Dado remoto é buscado com TanStack Query (hooks `use<Entidade>` por
   domínio, a criar conforme cada tela ganha dado real) — nunca `useEffect` +
   `useState` manual para chamada de API.
+- **Todo componente usa PascalCase — no nome do arquivo (`CampoSenha.tsx`,
+  não `campo-senha.tsx`) e no `export function`/`export const` correspondente.**
+  Hooks são a exceção (seguem o padrão shadcn de arquivo kebab-case com
+  prefixo `use-`, ex. `use-mobile.ts`), assim como os arquivos de config/lib
+  (`api.ts`, `utils.ts`).
+- **Nada de bloco de JSX repetido ou reaproveitável direto numa página —
+  extrai pra componente em `src/components/` (ou subpasta por domínio, ex.
+  `fluxo/`, `dashboard/`) assim que o trecho tem chance de ser usado em outra
+  tela.** Ex.: `TexturaFerramentas`, `CampoSenha` e `CampoComErro` nasceram na
+  tela de login (FE-07) mas já foram extraídos porque o cadastro de
+  colaborador/usuário vai reaproveitar os três — textura de fundo, campo de
+  senha com olho animado e a animação de campo com erro.
 
 ## Decisões já tomadas
 
@@ -158,15 +170,32 @@ não filhas do layout autenticado.
   círculo vazado / quadrado / triângulo) — status nunca é comunicado só por
   cor. `atraso` sempre mostra o número de dias.
 - **Logos** ficam em `web/public/brand/` (PNG com transparência, versionados
-  no repositório): `soufer-negativo.png` = sidebar e login (ambiente
-  administrativo); `soufer-assinatura.png` = documentos, etiquetas grandes e
-  impressos em fundo claro; `soufer-industrial.png` = exclusivo do quiosque
-  de consulta pública; `soufer-branco.png` = monocromático, só quando a
-  esfera vermelha não é possível. Referenciar sempre por esses caminhos, sem
-  copiar o arquivo para dentro de `src/`.
-- **Sidebar/login sempre no visual negativo** (fundo escuro, logo branco) é
-  regra de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
-  `index.css`.
+  no repositório): `soufer-negativo.png` = exclusivo da sidebar (ambiente
+  administrativo, tela fixa); `soufer-assinatura.png` = fundo claro em geral
+  (login, documentos, etiquetas grandes e impressos); `soufer-industrial.png`
+  = exclusivo do quiosque de consulta pública; `soufer-branco.png` =
+  monocromático, só quando a esfera vermelha não é possível. Referenciar
+  sempre por esses caminhos, sem copiar o arquivo para dentro de `src/`.
+- **Sidebar sempre no visual negativo** (fundo escuro, logo branco) é regra
+  de layout, não de tema — implementar na FE-06 (`AppLayout`), não em
+  `index.css`. **Login usa tema claro**, ao contrário da sidebar: é a
+  primeira tela vista no ambiente fabril (reflexo de tela e iluminação
+  industrial de chão de fábrica), não uma tela administrativa fixa — fundo
+  escuro prejudica a leitura ali. Corrigido na FE-07 depois de o almoxarife
+  reportar o problema no chão de fábrica.
+- **Sessão do almoxarife persiste em `localStorage`** (`soufer:sessao` em
+  `src/lib/auth.tsx`, chave `{ token, usuario }`) com token de 7 dias — mudou
+  de "só em memória" (spec original da FE-07) porque forçar login toda vez
+  que a aba fecha era ruim demais no dia a dia. O JWT em si também passou a
+  expirar em 7d no backend (`api/.env` `JWT_EXPIRES_IN`, antes 8h/turno — ver
+  `/CLAUDE.md` raiz, decisão arquitetural). Ao carregar, o `AuthProvider`
+  decodifica o `exp` do próprio token (só o payload, sem checar assinatura —
+  quem valida de verdade é a API) pra não restaurar uma sessão já vencida.
+  Um interceptor de resposta do axios (`setHandler401` em `src/lib/api.ts`)
+  desloga automaticamente em qualquer 401 — cobre o caso de o token ainda
+  parecer válido no cliente mas ter sido invalidado no servidor (usuário
+  desativado, segredo rotacionado). Consulta (quiosque) continua sem
+  persistência nenhuma — sessão de 15 min é descartável por design.
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,

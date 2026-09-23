@@ -57,6 +57,17 @@ app.use(httpLogger);
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     summary: Informações básicas da API e links para documentação
+ *     tags:
+ *       - Sistema
+ *     responses:
+ *       200:
+ *         description: Status e links principais da API
+ */
 // Rota raiz
 app.get('/', (req: Request, res: Response) => {
   res.json({
