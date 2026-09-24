@@ -1,8 +1,7 @@
 export interface UsuarioPayload {
   id: number;
   nome: string;
-  papel: 'almoxarife' | 'consulta';
-  email?: string | null;
+  papel: 'manutencao' | 'admin' | 'consulta';
   matricula?: string | null;
 }
 

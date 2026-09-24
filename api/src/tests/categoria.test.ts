@@ -7,16 +7,16 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_CAT_';
 
-function gerarToken(papel = 'almoxarife') {
+function gerarToken(papel = 'manutencao') {
   return jwt.sign(
-    { id: 1, nome: 'Test User', papel, email: 'test@soufer.com.br' },
+    { id: 1, nome: 'Test User', papel, matricula: '0001' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
 }
 
 describe('CRUD Categorias / Grupos de Ferramentas (/v1/categorias)', () => {
-  const token = gerarToken('almoxarife');
+  const token = gerarToken('manutencao');
   let cat1Id: number;
   let cat2Id: number;
 

@@ -11,6 +11,10 @@ import v1Routes from './routes/v1/index.js';
 
 const app = express();
 
+if (env.trustProxyHops > 0) {
+  app.set('trust proxy', env.trustProxyHops);
+}
+
 // Middlewares de Segurança e Parsing
 app.use(helmet());
 

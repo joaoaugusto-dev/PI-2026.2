@@ -8,9 +8,22 @@ export class AuthController {
    */
   static async login(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      const { email, senha } = req.body;
-      const data = await AuthService.login(email, senha);
+      const { matricula, senha } = req.body;
+      const data = await AuthService.login(matricula, senha);
       return sendSuccess(res, data, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * POST /v1/auth/registro
+   */
+  static async registrar(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { matricula, senha } = req.body;
+      const data = await AuthService.registrar(matricula, senha);
+      return sendSuccess(res, data, null, 201);
     } catch (error) {
       return next(error);
     }

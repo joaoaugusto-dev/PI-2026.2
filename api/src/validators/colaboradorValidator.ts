@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { matriculaSchema } from './matricula.js';
 
 export const listarColaboradoresQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
@@ -20,11 +21,7 @@ export const criarColaboradorSchema = z.object({
     .trim()
     .min(1, 'Nome não pode ser vazio')
     .max(150, 'Nome deve ter no máximo 150 caracteres'),
-  matricula: z
-    .string({ required_error: 'Matrícula é obrigatória', invalid_type_error: 'Matrícula deve ser um texto' })
-    .trim()
-    .min(1, 'Matrícula não pode ser vazia')
-    .max(50, 'Matrícula deve ter no máximo 50 caracteres'),
+  matricula: matriculaSchema,
   setorId: z.coerce
     .number({ required_error: 'setorId é obrigatório', invalid_type_error: 'setorId deve ser um número' })
     .int('setorId deve ser um número inteiro')

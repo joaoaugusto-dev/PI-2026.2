@@ -7,16 +7,16 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_SETOR_';
 
-function gerarToken(papel = 'almoxarife') {
+function gerarToken(papel = 'manutencao') {
   return jwt.sign(
-    { id: 1, nome: 'Test User', papel, email: 'test@soufer.com.br' },
+    { id: 1, nome: 'Test User', papel, matricula: '0001' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
 }
 
 describe('CRUD Setores (/v1/setores)', () => {
-  const token = gerarToken('almoxarife');
+  const token = gerarToken('manutencao');
   let setor1Id: number;
   let setor2Id: number;
 

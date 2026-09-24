@@ -59,6 +59,10 @@ if (isProd && !corsOrigin) {
 export const env = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv,
+  // Quantos proxies reversos (Nginx, Traefik do Dokploy) ficam na frente da API.
+  // 0 = sem proxy (req.ip é o do cliente). Em produção atrás de 1 proxy, use 1:
+  // sem isso todos os clientes compartilhariam o mesmo IP no rate limit.
+  trustProxyHops: parseInt(process.env.TRUST_PROXY_HOPS || '0', 10),
   corsOrigin: corsOrigin || (isProd ? '' : '*'),
   db: {
     host: process.env.DB_HOST || 'localhost',

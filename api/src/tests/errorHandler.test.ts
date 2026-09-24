@@ -37,7 +37,7 @@ describe('Middleware errorHandler e Envelope Padrão de Erro', () => {
   });
 
   app.get('/test/erro-forbidden', () => {
-    throw new ForbiddenError('Acesso restrito a almoxarifes');
+    throw new ForbiddenError('Acesso restrito a usuários da manutenção');
   });
 
   app.get('/test/erro-conflict', () => {
@@ -47,7 +47,7 @@ describe('Middleware errorHandler e Envelope Padrão de Erro', () => {
   app.get('/test/erro-pg-duplicate', () => {
     const err: any = new Error('duplicate key value violates unique constraint');
     err.code = '23505';
-    err.detail = 'Key (matricula)=(MAT001) already exists.';
+    err.detail = 'Key (matricula)=(0003) already exists.';
     err.constraint = 'colaboradores_matricula_key';
     throw err;
   });
