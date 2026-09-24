@@ -20,7 +20,7 @@ exige, sinalize o conflito antes de prosseguir.
   (AuthService com `bcryptjs` e `jsonwebtoken`), descartando o uso do Supabase e do
   Supabase Auth. Esta decisão garante independência total de BaaS, conformidade com os
   requisitos de infraestrutura (AWS RDS / EC2 ou servidor próprio Soufer) e controle
-  fino sobre tokens e autorizações (almoxarife de 7 dias — sessão persistida
+  fino sobre tokens e autorizações (manutenção de 7 dias — sessão persistida
   no cliente na FE-07, ajustado de 8h/turno para evitar login diário — e
   quiosque de 15min, esse sem persistência).
 - **Leitor de código de barras físico (em revisão — ver issue DB-01 no board do
@@ -68,7 +68,7 @@ documento em vez de repetir o SQL inteiro.
 ## 1. Visão geral
 
 **Produto:** SOUFER Tools — controle web de retirada e devolução de ferramentas do
-almoxarifado da Soufer.
+manutenção da Soufer.
 **Título institucional (PI 2026.2):** Desenvolvimento de Soluções Web Inteligentes
 e Integradas.
 **Beneficiado:** Soufer (CNPJ ativo).
@@ -94,7 +94,7 @@ Projects, uma issue por card, coluna por status.
 
 ## 3. Regras de negócio inegociáveis
 
-Estas regras já foram decididas e testadas contra o que o almoxarifado da Soufer
+Estas regras já foram decididas e testadas contra o que a manutenção da Soufer
 precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
 
 1. **Um empréstimo aberto por ferramenta.** Garantido por índice único parcial no
@@ -120,7 +120,7 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    código de barras (Code128). A visita técnica à Soufer levantou um código
    curto de 4 dígitos gravado a lápis elétrico como alternativa — decisão
    pendente de ata.
-8. **Apenas dois perfis:** `almoxarife` (acesso completo, login normal) e
+8. **Apenas dois perfis:** `manutencao` (acesso completo, login normal) e
    `consulta` (sessão de 15 minutos por matrícula/crachá, só leitura de
    disponibilidade, sem senha).
 9. **Feriados vêm da BrasilAPI**, com cache em tabela própria e fallback de
