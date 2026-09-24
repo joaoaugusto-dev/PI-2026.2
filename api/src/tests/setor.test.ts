@@ -7,20 +7,25 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_SETOR_';
 
-function gerarToken(papel = 'almoxarife') {
+function gerarToken(usuarioId: number, papel = 'almoxarife') {
   return jwt.sign(
-    { id: 1, nome: 'Test User', papel, email: 'test@soufer.com.br' },
+    { id: usuarioId, nome: 'Test User', papel, email: 'test@soufer.com.br' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
 }
 
 describe('CRUD Setores (/v1/setores)', () => {
-  const token = gerarToken('almoxarife');
+  let token: string;
   let setor1Id: number;
   let setor2Id: number;
 
   beforeAll(async () => {
+    const usuario = await query<{ id: number }>(
+      "SELECT id FROM usuarios WHERE papel = 'almoxarife' AND ativo = true LIMIT 1"
+    );
+    token = gerarToken(usuario.rows[0].id);
+
     const res1 = await query<{ id: number }>(
       `INSERT INTO setores (nome, ativo) VALUES ($1, true) RETURNING id`,
       [`${PREFIXO}Usinagem`]

@@ -7,20 +7,25 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_ATIV_';
 
-function gerarToken(papel = 'almoxarife') {
+function gerarToken(usuarioId: number, papel = 'almoxarife') {
   return jwt.sign(
-    { id: 1, nome: 'Test User', papel, email: 'test@soufer.com.br' },
+    { id: usuarioId, nome: 'Test User', papel, email: 'test@soufer.com.br' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
 }
 
 describe('CRUD Atividades (/v1/atividades)', () => {
-  const token = gerarToken('almoxarife');
+  let token: string;
   let ativ1Id: number;
   let ativ2Id: number;
 
   beforeAll(async () => {
+    const usuario = await query<{ id: number }>(
+      "SELECT id FROM usuarios WHERE papel = 'almoxarife' AND ativo = true LIMIT 1"
+    );
+    token = gerarToken(usuario.rows[0].id);
+
     const res1 = await query<{ id: number }>(
       `INSERT INTO atividades (nome, descricao, ativo) VALUES ($1, $2, true) RETURNING id`,
       [`${PREFIXO}Manutenção de Motores`, 'Troca de escovas e rolamentos']
