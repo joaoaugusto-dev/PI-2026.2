@@ -24,11 +24,14 @@ BEGIN;
 -- ----------------------------------------------------------------------------
 INSERT INTO setores (nome) VALUES ('Teste DB-06') RETURNING id \gset setor_
 INSERT INTO grupos_ferramentas (nome) VALUES ('Teste DB-06') RETURNING id \gset grupo_
-INSERT INTO usuarios (nome, email, senha_hash)
-VALUES ('Usuario Teste DB-06', 'teste.db06@soufer.local', 'hash-fake-apenas-para-teste')
+INSERT INTO colaboradores (nome, matricula, setor_id)
+VALUES ('Usuario Teste DB-06', '9005', :setor_id)
+RETURNING id \gset colabusuario_
+INSERT INTO usuarios (colaborador_id, senha_hash)
+VALUES (:colabusuario_id, 'hash-fake-apenas-para-teste')
 RETURNING id \gset usuario_
 INSERT INTO colaboradores (nome, matricula, setor_id)
-VALUES ('Colaborador Teste DB-06', 'MAT-DB06', :setor_id)
+VALUES ('Colaborador Teste DB-06', '9006', :setor_id)
 RETURNING id \gset colaborador_
 INSERT INTO ferramentas (nome, grupo_id, setor_id)
 VALUES ('Ferramenta Teste DB-06', :grupo_id, :setor_id)
@@ -69,9 +72,9 @@ BEGIN
         usuario_retirada_id, previsao_devolucao
     ) VALUES (
         (SELECT id FROM ferramentas WHERE nome = 'Ferramenta Teste DB-06' LIMIT 1),
-        (SELECT id FROM colaboradores WHERE matricula = 'MAT-DB06'),
+        (SELECT id FROM colaboradores WHERE matricula = '9006'),
         (SELECT id FROM setores WHERE nome = 'Teste DB-06'),
-        (SELECT id FROM usuarios WHERE email = 'teste.db06@soufer.local'),
+        (SELECT u.id FROM usuarios u JOIN colaboradores cu ON cu.id = u.colaborador_id WHERE cu.matricula = '9005'),
         NOW() + INTERVAL '1 day'
     );
     RAISE EXCEPTION 'FALHA NO TESTE: insert deveria ter sido bloqueado pela fn_valida_retirada';

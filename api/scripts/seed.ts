@@ -28,8 +28,8 @@ async function runSeed() {
     await client.query('COMMIT');
     console.log('✅ Seed executado com sucesso!');
     console.log('🔑 Credenciais de teste:');
-    console.log('   - Almoxarife: almoxarife@soufer.com.br / Senha: 123456');
-    console.log('   - Consulta:   Matrícula "MAT001"');
+    console.log('   - Manutenção: Matrícula 0001 (ou 0002) / Senha: 123456');
+    console.log('   - Consulta:   Matrícula "0003"');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Falha ao executar seed:', error);
