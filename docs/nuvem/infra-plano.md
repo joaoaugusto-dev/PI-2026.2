@@ -31,7 +31,7 @@ Tabela com a classificação de cada peça da solução do **Soufer Tools** no m
 
 ### 2.3 Front-end: AWS S3 + CloudFront (PaaS / Hospedagem Estática)
 * **Classificação:** *Platform as a Service* (PaaS) / *Storage & CDN as a Service*.
-* **Justificativa:** O front-end React compilado é composto puramente por artefatos estáticos (HTML, JS, CSS, imagens). Armazená-los no S3 com distribuição via CDN CloudFront garante alta disponibilidade (99,99%), segurança através de certificados SSL gratuitos gerenciados pela AWS (ACM) e cache global com latência mínima para os almoxarifes e usuários finais, sem gastar ciclos de CPU do servidor de API.
+* **Justificativa:** O front-end React compilado é composto puramente por artefatos estáticos (HTML, JS, CSS, imagens). Armazená-los no S3 com distribuição via CDN CloudFront garante alta disponibilidade (99,99%), segurança através de certificados SSL gratuitos gerenciados pela AWS (ACM) e cache global com latência mínima para os usuários da manutenção e usuários finais, sem gastar ciclos de CPU do servidor de API.
 
 ### 2.4 Monitoramento e Observabilidade: AWS CloudWatch (SaaS)
 * **Classificação:** *Software as a Service* (SaaS) / *Monitoring as a Service*.
@@ -46,8 +46,8 @@ O fluxo de comunicação entre as peças e suas respectivas camadas de serviço:
 ```mermaid
 flowchart TD
     subgraph ClientLayer ["Camada de Acesso & Clientes"]
-        User["👤 Almoxarife / Colaborador"]:::client
-        Scanner["📷 Leitor Code128 / Crachá"]:::client
+        User["👤 Manutenção / Colaborador"]:::client
+        Scanner["📷 Leitor Code128 / Matrícula"]:::client
     end
 
     subgraph FrontLayer ["Front-end (PaaS / CDN)"]
@@ -132,4 +132,4 @@ O dimensionamento financeiro completo e a comparação com os demais provedores 
 | **Google Cloud Platform (GCP)** | $32.52 | R$ 178,86 | $390.24 | Cloud Logging com 50GB gratuitos |
 | **Microsoft Azure** | $36.51 | R$ 200,81 | $438.12 | Instância de banco B1ms com 2GB RAM |
 
-*\*Cotação de referência: USD 1.00 = R$ 5,50.*
+*\*Cotação de referência: USD 1.00 = R$ 5,50.*

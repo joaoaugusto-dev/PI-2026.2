@@ -31,7 +31,7 @@ eram novas.
 - **DELETE (baixa lógica):** só é permitido dar baixa numa ferramenta depois
   que o empréstimo em aberto (se houver) for finalizado — inclusive quando
   finalizado como avaria/perda (a devolução "fecha" o empréstimo mesmo que a
-  ferramenta não volte fisicamente ao almoxarifado). Enquanto existir uma linha
+  ferramenta não volte fisicamente à manutenção). Enquanto existir uma linha
   em `emprestimos` com `data_devolucao IS NULL` apontando pra ferramenta, a
   API responde `409 FERRAMENTA_COM_EMPRESTIMO_ABERTO`.
 - **PATCH /disponibilizar:** grava o registro **tanto** na tabela `auditoria`
@@ -65,7 +65,7 @@ suporte a essa marcação no schema anterior.
   'indisponivel'`, `motivo_indisponivel = 'baixada'`); bloqueia com `409
   FERRAMENTA_COM_EMPRESTIMO_ABERTO` se houver empréstimo aberto.
 
-Todas as rotas usam `authenticate` + `authorize('almoxarife')`, seguindo o
+Todas as rotas usam `authenticate` + `authorize('manutencao')`, seguindo o
 padrão já estabelecido nas rotas de leitura (API-05) — perfil `consulta` não
 tem acesso.
 

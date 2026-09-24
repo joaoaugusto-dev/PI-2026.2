@@ -62,9 +62,10 @@ No Dokploy, a melhor prática para monorepos é criar **dois aplicativos separad
    DB_PASSWORD=sua_senha_do_postgres
    DB_SSL=false
    JWT_SECRET=gere_uma_chave_jwt_secreta_longa_e_aleatoria_aqui
-   JWT_EXPIRES_IN=8h
+   JWT_EXPIRES_IN=7d
    JWT_CONSULTA_EXPIRES_IN=15m
    CORS_ORIGIN=https://app.seudominio.com
+   TRUST_PROXY_HOPS=1
    ```
 4. Na aba **Domains**:
    - Clique em **Add Domain**.
@@ -126,7 +127,7 @@ Com os três serviços no ar, teste os seguintes endpoints pelo navegador ou Ins
 | **Healthcheck da API** | `https://api.seudominio.com/v1/health` | `{"status":"ok","db":"ok", ...}` (HTTP 200) |
 | **Documentação Swagger** | `https://api.seudominio.com/docs` | Interface interativa do Swagger UI |
 | **Aplicação Front-end** | `https://app.seudominio.com` | Tela de Login do SOUFER Tools |
-| **Login do Almoxarife** | Via tela de Login | E-mail `almoxarife@soufer.com.br` / Senha `123456` |
+| **Login da Manutenção** | Via tela de Login | Matrícula `0001` / Senha `123456` |
 
 ---
 

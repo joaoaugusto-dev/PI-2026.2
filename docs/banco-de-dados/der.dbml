@@ -3,7 +3,9 @@
 // Issue: DB-02 — Modelo conceitual e lógico (DER)
 // Responsável: Henrique de Oliveira Molinari
 // Revisão 02/09/2026 — pós visita técnica de 31/08/2026
-// Gerado a partir de api/db/migrations/0001_init.sql
+// Revisão 24/09/2026 — login por matrícula (#150): usuarios aponta para
+// colaboradores; matrícula com exatamente 4 dígitos; papel manutencao/admin.
+// Gerado a partir de api/db/migrations/ (0001 a 0004)
 // Importar em https://dbdiagram.io para editar visualmente.
 // ============================================================
 
@@ -46,7 +48,8 @@ Enum status_ocorrencia {
 }
 
 Enum papel_usuario {
-  almoxarife
+  manutencao [note: 'perfil operacional: quem disponibiliza as ferramentas']
+  admin [note: 'aprova auto-cadastros pendentes']
 }
 
 Enum tipo_notificacao {
@@ -60,7 +63,7 @@ Enum tipo_notificacao {
 
 Table setores {
   id integer [pk, increment]
-  nome varchar(100) [not null, unique]
+  nome varchar(100) [not null, unique, note: 'único ignorando maiúsculas (índice em LOWER(nome), migration 0002)']
   ativo boolean [not null, default: true]
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
@@ -68,7 +71,7 @@ Table setores {
 
 Table grupos_ferramentas {
   id integer [pk, increment]
-  nome varchar(100) [not null, unique]
+  nome varchar(100) [not null, unique, note: 'único ignorando maiúsculas (índice em LOWER(nome), migration 0002)']
   ativo boolean [not null, default: true]
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
@@ -85,7 +88,7 @@ Table subgrupos_ferramentas {
   updated_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (grupo_id, nome) [unique]
+    (grupo_id, nome) [unique, note: 'ignora maiúsculas: índice em (grupo_id, LOWER(nome))']
   }
 
   Note: 'Nível 2 (ex.: grupo "Ferramentas Manuais" -> subgrupo "Chave 3/8"). NOVO em 02/09/2026.'
@@ -93,7 +96,7 @@ Table subgrupos_ferramentas {
 
 Table atividades {
   id integer [pk, increment]
-  nome varchar(100) [not null, unique]
+  nome varchar(100) [not null, unique, note: 'único ignorando maiúsculas (índice em LOWER(nome), migration 0002)']
   descricao text
   ativo boolean [not null, default: true]
   created_at timestamptz [not null, default: `now()`]
@@ -106,13 +109,14 @@ Table atividades {
 
 Table usuarios {
   id integer [pk, increment]
-  nome varchar(150) [not null]
-  email varchar(150) [not null, unique]
+  colaborador_id integer [not null, unique, ref: - colaboradores.id, note: 'nome e matrícula de login vêm de colaboradores']
   senha_hash varchar(255) [not null, note: 'bcrypt — auth própria, sem Supabase']
-  papel papel_usuario [not null, default: 'almoxarife']
-  ativo boolean [not null, default: true]
+  papel papel_usuario [not null, default: 'manutencao']
+  ativo boolean [not null, default: true, note: 'false = cadastro pendente de aprovação por um admin']
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Conta de acesso de um colaborador. Sem e-mail nem nome próprios: login pela matrícula, nome vem de colaboradores.'
 }
 
 Table auditoria {
@@ -134,14 +138,14 @@ Table auditoria {
 Table colaboradores {
   id integer [pk, increment]
   nome varchar(150) [not null]
-  matricula varchar(50) [not null, unique]
+  matricula varchar(4) [not null, unique, note: 'exatamente 4 dígitos, 0001-9999 (CHECK). É a identidade da pessoa e o login']
   setor_id integer [not null, ref: > setores.id]
   ativo boolean [not null, default: true]
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 
   Note: '''
-    Simplificado em 02/09/2026: sem codigo_cracha nem cargo (Regra 5).
+    Simplificado em 02/09/2026: sem código de identificação além da matrícula, nem cargo (Regra 5).
     setor_id continua obrigatório — o fluxo real precisa "puxar nome e
     setor" a partir da matrícula digitada (relatório da visita técnica).
   '''
@@ -163,6 +167,7 @@ Table ferramentas {
   eh_kit boolean [not null, default: false]
   valor_aquisicao decimal(10,2)
   foto_url text
+  etiqueta_impressa_em timestamptz [note: 'legado da etiqueta; ainda gravado por ferramentaService']
   ativo boolean [not null, default: true]
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]

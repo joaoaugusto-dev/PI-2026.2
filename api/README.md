@@ -1,6 +1,6 @@
 # 🚀 SOUFER Tools — API REST (TypeScript)
 
-Base estruturada da API REST em **TypeScript** do **SOUFER Tools**, sistema de controle de retiradas, devoluções, ocorrências e gestão de ferramentas do almoxarifado da Soufer (Projeto Integrado 2026.2).
+Base estruturada da API REST em **TypeScript** do **SOUFER Tools**, sistema de controle de retiradas, devoluções, ocorrências e gestão de ferramentas da manutenção da Soufer (Projeto Integrado 2026.2).
 
 ---
 
@@ -49,7 +49,7 @@ api/
     │   └── authService.ts           # Lógica de autenticação e emissão de tokens
     ├── middlewares/                 # Middlewares globais e de rota
     │   ├── auth.ts                  # Validação de JWT e injeção de req.usuario
-    │   ├── authorize.ts             # RBAC (almoxarife vs consulta)
+    │   ├── authorize.ts             # RBAC (manutenção vs consulta)
     │   ├── errorHandler.ts          # Captura central de erros e padronização
     │   ├── logger.ts                # Logging estruturado com Pino e requestId
     │   └── validate.ts              # Validação de esquemas Zod (body, query, params)
@@ -159,8 +159,8 @@ Qualquer falha tratada ou erro disparado segue o envelope padrão:
     "message": "Erro de validação nos dados enviados",
     "details": [
       {
-        "field": "email",
-        "message": "Formato de e-mail inválido"
+        "field": "matricula",
+        "message": "Matrícula deve ter exatamente 4 dígitos numéricos (0001 a 9999)"
       }
     ]
   }
@@ -173,13 +173,13 @@ Qualquer falha tratada ou erro disparado segue o envelope padrão:
 
 O sistema possui dois modos de acesso via JWT:
 
-1. **Almoxarife (`papel: 'almoxarife'`):**
-   - Autenticado via `POST /v1/auth/login` com e-mail e senha.
-   - Token válido por **8 horas**.
+1. **Manutenção (`papel: 'manutencao'`):**
+   - Autenticado via `POST /v1/auth/login` com matrícula (4 dígitos) e senha.
+   - Token válido por **7 dias**.
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**
-   - Autenticado via `POST /v1/consulta/sessao` informando matrícula (sem senha). O crachá não é um código à parte: fisicamente é a própria matrícula, por isso `colaboradores` não tem coluna `codigo_cracha` (removida na revisão DB-02) e a busca por matrícula já cobre os dois casos.
+   - Autenticado via `POST /v1/consulta/sessao` informando apenas a matrícula (4 dígitos, sem senha), buscada em `colaboradores` (só colaborador ativo entra). Limite de 30 tentativas por minuto por IP (429 `TOO_MANY_REQUESTS`); atrás de proxy, configure `TRUST_PROXY_HOPS`.
    - Token temporário válido por **15 minutos**.
    - Acesso restrito somente a rotas de leitura de disponibilidade.
 
@@ -271,8 +271,8 @@ import { criarFerramentaSchema } from '../../validators/ferramentaValidator.js';
 
 const router = Router();
 
-// Apenas almoxarifes podem listar ou criar ferramentas
-router.use(authenticate, authorize('almoxarife'));
+// Apenas usuários da manutenção podem listar ou criar ferramentas
+router.use(authenticate, authorize('manutencao'));
 
 router.get('/', FerramentasController.listar);
 router.post('/', validate({ body: criarFerramentaSchema }), FerramentasController.criar);
@@ -291,7 +291,7 @@ router.use('/ferramentas', ferramentasRoutes);
 
 ## 🧪 Credenciais Iniciais de Teste (após `npm run db:seed`)
 
-| Perfil | Identificador / E-mail | Senha | Finalidade |
+| Perfil | Matrícula | Senha | Finalidade |
 |---|---|---|---|
-| **Almoxarife** | `almoxarife@soufer.com.br` | `123456` | Acesso operacional completo |
-| **Consulta (Quiosque)** | Matrícula `MAT001` | *Sem senha* | Acesso temporário de 15 min |
+| **Manutenção** | `0001` (e `0002`) | `123456` | Acesso operacional completo |
+| **Consulta (Quiosque)** | Matrícula `0003` | *Sem senha* | Acesso temporário de 15 min |

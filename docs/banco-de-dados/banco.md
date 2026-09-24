@@ -13,7 +13,7 @@ inserindo os dados.
 | Domínio | Tabelas | Papel |
 |---|---|---|
 | Cadastro | `setores`, `grupos_ferramentas`, `subgrupos_ferramentas`, `atividades` | Vocabulário fixo usado para classificar ferramentas e empréstimos |
-| Identidade | `usuarios` | Quem tem acesso operacional ao sistema |
+| Identidade | `usuarios` | Conta de acesso (senha e papel) de um colaborador da manutenção, ligada a `colaboradores` — nome e matrícula vêm de lá |
 | Operação | `colaboradores`, `ferramentas`, `itens_kit` | Quem retira e o que é retirado (inclusive peças de um kit) |
 | Transacional | `emprestimos` | Cada retirada/devolução — onde vivem as regras mais importantes |
 | Suporte | `ocorrencias`, `notificacoes`, `feriados`, `auditoria` | Dados derivados, gerados automaticamente, para gestão e rastreabilidade |
@@ -30,7 +30,7 @@ status_ferramenta          disponivel | em_uso | indisponivel
 motivo_indisponibilidade   avaria | perda | manutencao_preventiva | baixada
 condicao_devolucao         ok | avaria | perda
 status_ocorrencia          aberta | em_reparo | cobrada | resolvida | baixada
-papel_usuario               almoxarife
+papel_usuario               manutenção
 tipo_notificacao            devolucao_hoje | atraso | ocorrencia_pendente | sistema
 ```
 

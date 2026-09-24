@@ -67,7 +67,7 @@ test: adiciona teste de dias úteis
 2. Gerar o patrimônio.
 3. Imprimir a etiqueta.
 4. Ler o código com leitor físico.
-5. Ler o crachá do colaborador.
+5. Informar a matrícula do colaborador.
 6. Demonstrar cadastro rápido de colaborador.
 7. Selecionar atividade e confirmar retirada.
 8. Tentar retirar novamente a mesma ferramenta e demonstrar o `409`.

@@ -18,7 +18,7 @@ isso é `PATCH`. `PUT` significa substituir o recurso inteiro. O método estava
 incoerente com o comportamento.
 
 **Nada mais mudou.** Corpo da requisição, validações, respostas, códigos de erro,
-regras de negócio, autenticação (`almoxarife`) e a função de serviço são
+regras de negócio, autenticação (`manutencao`) e a função de serviço são
 exatamente os mesmos.
 
 ## Antes e depois

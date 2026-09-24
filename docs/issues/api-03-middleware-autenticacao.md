@@ -19,7 +19,7 @@ formalmente fechada:
 
 - **Middleware `authenticate`**: [`api/src/middlewares/auth.ts`](../api/src/middlewares/auth.ts)
   — valida o header `Authorization: Bearer <token>`, verifica o JWT com
-  `jsonwebtoken` e injeta `req.usuario` (id, nome, papel, email, matrícula).
+  `jsonwebtoken` e injeta `req.usuario` (id, nome, papel, matrícula).
   Trata token ausente, malformado, expirado e inválido, cada um com um código
   de erro próprio (`TOKEN_NOT_PROVIDED`, `TOKEN_MALFORMATTED`,
   `TOKEN_EXPIRED`, `TOKEN_INVALID`).

@@ -30,27 +30,27 @@ Esses valores são determinados pelo back-end.
 | GET | `/v1/auth/me` | Autenticado | Usuário atual |
 | POST | `/v1/consulta/sessao` | Público | Token limitado de consulta |
 | GET | `/v1/consulta/ferramentas` | Consulta | Busca somente leitura |
-| GET | `/v1/ferramentas` | Almoxarife | Lista de ferramentas (filtros `q`, `status`, `grupoId`, `sort`) |
-| GET | `/v1/ferramentas/:id` | Almoxarife | Detalhe de uma ferramenta |
-| GET | `/v1/ferramentas/por-codigo/:codigo` | Almoxarife | Leitura do código |
-| GET | `/v1/ferramentas/:id/historico` | Almoxarife | Histórico de empréstimos e ocorrências |
-| POST | `/v1/ferramentas` | Almoxarife | Cadastro |
-| PATCH | `/v1/ferramentas/:id` | Almoxarife | Atualização parcial |
-| PATCH | `/v1/ferramentas/:id/etiqueta-impressa` | Almoxarife | Marca a etiqueta como impressa |
-| PATCH | `/v1/ferramentas/:id/disponibilizar` | Almoxarife | Retorno de reparo |
-| DELETE | `/v1/ferramentas/:id` | Almoxarife | Baixa lógica (ativo = false) |
-| GET/POST/PUT/DELETE | `/v1/colaboradores` | Almoxarife | CRUD |
-| GET/POST/PUT/DELETE | `/v1/setores` | Almoxarife | CRUD |
-| GET/POST/PUT/DELETE | `/v1/categorias` | Almoxarife | CRUD |
-| GET/POST/PUT/DELETE | `/v1/atividades` | Almoxarife | CRUD |
-| GET | `/v1/emprestimos` | Almoxarife | Consulta de empréstimos |
-| POST | `/v1/emprestimos` | Almoxarife | Retirada |
-| PATCH | `/v1/emprestimos/:id/devolucao` | Almoxarife | Devolução |
-| GET/PATCH | `/v1/ocorrencias` | Almoxarife | Ocorrências |
-| GET/PATCH | `/v1/notificacoes` | Almoxarife | Notificações |
-| GET | `/v1/dashboard/kpis` | Almoxarife | KPIs |
-| POST | `/v1/importacoes/ferramentas` | Almoxarife | Importação CSV |
-| GET | `/v1/relatorios/emprestimos.csv` | Almoxarife | Exportação |
+| GET | `/v1/ferramentas` | Manutenção | Lista de ferramentas (filtros `q`, `status`, `grupoId`, `sort`) |
+| GET | `/v1/ferramentas/:id` | Manutenção | Detalhe de uma ferramenta |
+| GET | `/v1/ferramentas/por-codigo/:codigo` | Manutenção | Leitura do código |
+| GET | `/v1/ferramentas/:id/historico` | Manutenção | Histórico de empréstimos e ocorrências |
+| POST | `/v1/ferramentas` | Manutenção | Cadastro |
+| PATCH | `/v1/ferramentas/:id` | Manutenção | Atualização parcial |
+| PATCH | `/v1/ferramentas/:id/etiqueta-impressa` | Manutenção | Marca a etiqueta como impressa |
+| PATCH | `/v1/ferramentas/:id/disponibilizar` | Manutenção | Retorno de reparo |
+| DELETE | `/v1/ferramentas/:id` | Manutenção | Baixa lógica (ativo = false) |
+| GET/POST/PUT/DELETE | `/v1/colaboradores` | Manutenção | CRUD |
+| GET/POST/PUT/DELETE | `/v1/setores` | Manutenção | CRUD |
+| GET/POST/PUT/DELETE | `/v1/categorias` | Manutenção | CRUD |
+| GET/POST/PUT/DELETE | `/v1/atividades` | Manutenção | CRUD |
+| GET | `/v1/emprestimos` | Manutenção | Consulta de empréstimos |
+| POST | `/v1/emprestimos` | Manutenção | Retirada |
+| PATCH | `/v1/emprestimos/:id/devolucao` | Manutenção | Devolução |
+| GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências |
+| GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
+| GET | `/v1/dashboard/kpis` | Manutenção | KPIs |
+| POST | `/v1/importacoes/ferramentas` | Manutenção | Importação CSV |
+| GET | `/v1/relatorios/emprestimos.csv` | Manutenção | Exportação |
 
 ## Resposta de sucesso
 

@@ -19,7 +19,7 @@ ferramenta.
 `GET /v1/ferramentas` (paginação + filtro por `status`), `GET
 /v1/ferramentas/:id` e `POST /v1/ferramentas` já existiam em
 [`api/src/routes/v1/ferramentaRoutes.ts`](../api/src/routes/v1/ferramentaRoutes.ts),
-com o `authorize('almoxarife')` já aplicado no `POST`.
+com o `authorize('manutencao')` já aplicado no `POST`.
 
 ## Divergência sinalizada na issue
 
@@ -53,14 +53,14 @@ explicando o ponto antes de começar a implementação.
 **Correções aplicadas depois da revisão de código do PR #137:**
 
 - **Segurança:** as 4 rotas GET de `/v1/ferramentas` estavam protegidas só
-  por `authenticate`, sem `authorize('almoxarife')`. Isso permitia que um
+  por `authenticate`, sem `authorize('manutencao')`. Isso permitia que um
   token de `consulta` (sessão de quiosque de 15 min, sem senha — Regra 8 do
   `CLAUDE.md`) acessasse dados que vão muito além de "só leitura de
   disponibilidade": nome/matrícula de colaboradores, observações de retirada/
   devolução e custos de ocorrências no histórico. Adicionado
-  `authorize('almoxarife')` nas 4 rotas, alinhado com a classificação já
+  `authorize('manutencao')` nas 4 rotas, alinhado com a classificação já
   documentada em [`docs/backend/api.md`](backend/api.md) (recurso
-  `/v1/ferramentas` é exclusivo do almoxarife; o perfil consulta usa
+  `/v1/ferramentas` é exclusivo da manutenção; o perfil consulta usa
   `/v1/consulta/ferramentas`).
 - **Paginação instável:** `ORDER BY status` sozinho não é determinístico
   entre páginas, já que a coluna só tem 3 valores possíveis. Passou a ser
@@ -94,7 +94,7 @@ Testado manualmente (`npm run dev` local, contra o banco `soufer_dev` com o
 seed real) o caso de sucesso e os casos de erro exigidos pelo DoD (Seção 6):
 
 ```
-[almoxarife]
+[manutenção]
 GET /v1/ferramentas?q=Makita&sort=nome&limit=5           -> 200, 3 resultados (Makita)
 GET /v1/ferramentas/5                                     -> 200, ferramenta encontrada
 GET /v1/ferramentas/por-codigo/2                          -> 200, mesma ferramenta do id 5

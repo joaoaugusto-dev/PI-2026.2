@@ -87,20 +87,19 @@ Catálogo rápido para seleção no formulário de retirada.
 
 ## 5. `usuarios`
 
-Quem tem acesso operacional ao sistema (perfil `almoxarife`).
+Quem tem acesso operacional ao sistema (perfil `manutencao`).
 
 | Campo | Tipo | Obrigatório | Domínio / valores | Origem |
 |---|---|---|---|---|
 | `id` | serial | Sim (PK) | sequencial | Calculado |
-| `nome` | varchar(150) | Sim | texto livre | Digitado |
-| `email` | varchar(150) | Sim | único, formato de e-mail | Digitado |
+| `colaborador_id` | integer | Sim (FK) | único; aponta para `colaboradores.id` — nome e matrícula de login vêm de lá | Selecionado |
 | `senha_hash` | varchar(255) | Sim | hash bcrypt — nunca a senha em texto puro | Calculado (a API faz o hash antes de salvar) |
-| `papel` | enum `papel_usuario` | Sim | `almoxarife` — único valor hoje | Calculado (default) |
+| `papel` | enum `papel_usuario` | Sim | `manutencao` ou `admin` (só `admin` aprova auto-cadastros) | Calculado (default) |
 | `ativo` | boolean | Sim | true / false — default true | Calculado (default) |
 | `created_at` | timestamptz | Sim | — | Calculado (default) |
 | `updated_at` | timestamptz | Sim | — | Calculado (default) |
 
-**Índices/constraints relevantes:** `UNIQUE(email)`.
+**Índices/constraints relevantes:** `UNIQUE(colaborador_id)`, FK `colaborador_id` → `colaboradores(id)` (`ON DELETE RESTRICT`). Não há e-mail nem nome próprios: o login é pela matrícula do colaborador.
 
 ---
 
@@ -112,16 +111,16 @@ Funcionários que retiram ferramentas — não têm login no sistema.
 |---|---|---|---|---|
 | `id` | serial | Sim (PK) | sequencial | Calculado |
 | `nome` | varchar(150) | Sim | texto livre, buscável | Digitado |
-| `matricula` | varchar(50) | Sim | único | Digitado |
+| `matricula` | varchar(4) | Sim | único; exatamente 4 dígitos numéricos, `0001` a `9999` (`CHECK`) | Digitado |
 | `setor_id` | integer (FK) | Sim | referencia `setores` | Selecionado |
 | `ativo` | boolean | Sim | true / false — default true | Calculado (default) |
 | `created_at` | timestamptz | Sim | — | Calculado (default) |
 | `updated_at` | timestamptz | Sim | — | Calculado (default) |
 
-**Índices/constraints relevantes:** `UNIQUE(matricula)`. FK `setor_id` com
+**Índices/constraints relevantes:** `UNIQUE(matricula)`, `CHECK` de formato da matrícula. FK `setor_id` com
 `ON DELETE RESTRICT`.
 
-> Simplificado na revisão de 02/09/2026: **sem** `codigo_cracha`, **sem**
+> Simplificado na revisão de 02/09/2026: **sem** código de identificação além da matrícula, **sem**
 > `cargo`, **sem** `ramal` — o fluxo real validado na visita técnica usa só
 > matrícula digitada. `setor_id` continua **obrigatório** porque o sistema
 > precisa "puxar nome e setor" automaticamente ao digitar a matrícula.
@@ -259,7 +258,7 @@ Avarias, perdas e reparos — em geral geradas automaticamente pela trigger
 | `colaborador_id` | integer (FK) | Não | referencia `colaboradores` | Calculado (herdado) ou selecionado |
 | `tipo` | varchar(50) | Sim | texto livre (ex.: `AVARIA`, `PERDA`) | Calculado (a partir de `condicao_devolucao`) ou digitado |
 | `descricao` | text | Sim | texto livre | Digitado (ou texto padrão gerado automaticamente) |
-| `status` | enum `status_ocorrencia` | Sim | `aberta` \| `em_reparo` \| `cobrada` \| `resolvida` \| `baixada` — default `aberta` | Calculado (default) / atualizado pelo almoxarife |
+| `status` | enum `status_ocorrencia` | Sim | `aberta` \| `em_reparo` \| `cobrada` \| `resolvida` \| `baixada` — default `aberta` | Calculado (default) / atualizado pela manutenção |
 | `custo_estimado` | numeric(10,2) | Não | >= 0 | Digitado |
 | `custo_real` | numeric(10,2) | Não | >= 0 | Digitado |
 | `data_resolucao` | timestamptz | Não | — | Digitado/Calculado |
@@ -343,7 +342,7 @@ para calcular prazos em dias úteis.
 | `motivo_indisponibilidade` | `avaria`, `perda`, `manutencao_preventiva`, `baixada` | `ferramentas.motivo_indisponivel` |
 | `condicao_devolucao` | `ok`, `avaria`, `perda` | `emprestimos.condicao_devolucao` |
 | `status_ocorrencia` | `aberta`, `em_reparo`, `cobrada`, `resolvida`, `baixada` | `ocorrencias.status` |
-| `papel_usuario` | `almoxarife` | `usuarios.papel` |
+| `papel_usuario` | `manutencao` | `usuarios.papel` |
 | `tipo_notificacao` | `devolucao_hoje`, `atraso`, `ocorrencia_pendente`, `sistema` | `notificacoes.tipo` |
 
 ---

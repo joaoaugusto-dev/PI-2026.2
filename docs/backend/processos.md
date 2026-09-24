@@ -3,7 +3,7 @@
 ## Retirada
 
 1. Identificar a ferramenta por código de barras, patrimônio ou nome.
-2. Identificar o colaborador por matrícula, crachá ou nome.
+2. Identificar o colaborador por matrícula ou nome.
 3. Se o colaborador não existir, abrir cadastro rápido.
 4. Informar a atividade.
 5. Informar detalhe e ordem de serviço, quando aplicável.
@@ -46,7 +46,7 @@ Após o reparo, a disponibilização deve ser uma ação explícita e auditável
 
 ## Consulta
 
-O usuário informa matrícula ou utiliza crachá.
+O operador informa a matrícula (4 dígitos, sem senha).
 
 A API valida o colaborador e emite token limitado por 15 minutos.
 

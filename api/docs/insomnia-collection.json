@@ -50,7 +50,7 @@
       "url": "{{ _.baseUrl }}/v1/auth/login",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"almoxarife@soufer.com.br\",\n  \"senha\": \"123456\"\n}"
+        "text": "{\n  \"matricula\": \"0001\",\n  \"senha\": \"123456\"\n}"
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
@@ -65,7 +65,7 @@
       "url": "{{ _.baseUrl }}/v1/auth/login",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"almoxarife@soufer.com.br\",\n  \"senha\": \"errada\"\n}"
+        "text": "{\n  \"matricula\": \"0001\",\n  \"senha\": \"errada\"\n}"
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
@@ -100,7 +100,7 @@
       "url": "{{ _.baseUrl }}/v1/consulta/sessao",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"identificador\": \"MAT001\"\n}"
+        "text": "{\n  \"identificador\": \"0003\"\n}"
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
