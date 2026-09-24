@@ -41,7 +41,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
           </Avatar>
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="text-corpo font-medium">Marcos Andrade</span>
-            <span className="text-rotulo text-muted-foreground">Almoxarife · Turno A</span>
+            <span className="text-rotulo text-muted-foreground">Manutenção · Turno A</span>
           </div>
         </div>
       </div>

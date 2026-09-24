@@ -367,7 +367,7 @@ export function DesignSystemPage() {
             Animação só toca <code className="font-mono">transform</code> e{' '}
             <code className="font-mono">opacity</code> — as duas propriedades que o compositor
             resolve sem layout nem repaint, e por isso as únicas que seguram 60fps na máquina
-            do almoxarifado. Nunca animar <code className="font-mono">width</code>,{' '}
+            da manutenção. Nunca animar <code className="font-mono">width</code>,{' '}
             <code className="font-mono">height</code>, <code className="font-mono">top</code>,{' '}
             <code className="font-mono">left</code>, <code className="font-mono">margin</code> ou{' '}
             <code className="font-mono">box-shadow</code>: cada quadro vira reflow.

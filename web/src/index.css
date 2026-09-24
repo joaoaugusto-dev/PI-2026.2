@@ -184,7 +184,7 @@
    Regra de 60fps: animação só toca `transform` e `opacity` — as duas
    propriedades que o compositor resolve sem layout nem repaint. Nunca animar
    width/height/top/left/margin/box-shadow: cada quadro vira reflow e o
-   almoxarifado roda em máquina fraca.
+   manutenção roda em máquina fraca.
 --------------------------------------------------------------------------- */
 @theme {
     --ease-soufer: cubic-bezier(0.2, 0, 0, 1);

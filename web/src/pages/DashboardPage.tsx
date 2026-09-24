@@ -63,7 +63,7 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-corpo text-muted-foreground">Almoxarifado central · Fábrica 1</p>
+          <p className="text-corpo text-muted-foreground">Manutenção central · Fábrica 1</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
