@@ -10,10 +10,28 @@ export const listarColaboradoresQuerySchema = z.object({
 
 export type ListarColaboradoresQuery = z.infer<typeof listarColaboradoresQuerySchema>;
 
+// GET /v1/colaboradores/identificar?termo= — Regra 5: aceita matrícula ou
+// nome (sem codigo_cracha, ver nota de escopo da issue #45). O termo é
+// testado primeiro como matrícula exata e, se não achar, por nome com
+// unaccent/pg_trgm (ColaboradorService decide a estratégia).
+export const identificarColaboradorQuerySchema = z.object({
+  termo: z
+    .string({ required_error: 'Termo é obrigatório', invalid_type_error: 'Termo deve ser um texto' })
+    .trim()
+    .min(1, 'Termo não pode ser vazio')
+    .max(150, 'Termo deve ter no máximo 150 caracteres'),
+});
+
+export type IdentificarColaboradorQuery = z.infer<typeof identificarColaboradorQuerySchema>;
+
 export const colaboradorIdParamSchema = z.object({
   id: z.coerce.number({ invalid_type_error: 'ID deve ser um número' }).int('ID deve ser um número inteiro').positive('ID deve ser um número inteiro positivo'),
 });
 
+// Escopo final da API-09 (issue #45): matrícula, nome e setor. Sem
+// codigo_cracha (o crachá é a própria matrícula, Regra 5) e sem cargo —
+// nenhum dos dois existe em colaboradores (ver 0001_init.sql). criado_por
+// não entra aqui: vem sempre do JWT (Regra 6), nunca do corpo.
 export const criarColaboradorSchema = z.object({
   nome: z
     .string({ required_error: 'Nome é obrigatório', invalid_type_error: 'Nome deve ser um texto' })

@@ -3,6 +3,7 @@
 // Issue: DB-02 — Modelo conceitual e lógico (DER)
 // Responsável: Henrique de Oliveira Molinari
 // Revisão 02/09/2026 — pós visita técnica de 31/08/2026
+// Atualização API-09: colaboradores.criado_por + índice trigram por nome
 // Gerado a partir de api/db/migrations/0001_init.sql
 // Importar em https://dbdiagram.io para editar visualmente.
 // ============================================================
@@ -137,10 +138,16 @@ Table colaboradores {
   matricula varchar(50) [not null, unique]
   setor_id integer [not null, ref: > setores.id]
   ativo boolean [not null, default: true]
+  criado_por integer [ref: > usuarios.id]
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 
+  indexes {
+    nome [name: 'idx_colaboradores_nome_trgm', note: 'GIN gin_trgm_ops sobre f_unaccent(lower(nome)) — busca por nome tolerante a acento/typo']
+  }
+
   Note: '''
+    criado_por (API-09): quem cadastrou, vindo do JWT (Regra 6); nulo no seed.
     Simplificado em 02/09/2026: sem codigo_cracha nem cargo (Regra 5).
     setor_id continua obrigatório — o fluxo real precisa "puxar nome e
     setor" a partir da matrícula digitada (relatório da visita técnica).
