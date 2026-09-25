@@ -51,8 +51,12 @@ export function CadastroPage() {
       await api.post('/auth/registro', { matricula: dados.matricula, senha: dados.senha })
       setEnviado(true)
     } catch (erroRequisicao: any) {
-      const codigo = erroRequisicao?.response?.data?.error?.code
-      setErro(MENSAGENS_ERRO[codigo] ?? 'Não foi possível concluir o cadastro. Tente novamente.')
+      if (!erroRequisicao?.response) {
+        setErro('Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.')
+      } else {
+        const codigo = erroRequisicao.response.data?.error?.code
+        setErro(MENSAGENS_ERRO[codigo] ?? 'Não foi possível concluir o cadastro. Tente novamente.')
+      }
       setTentativaErro((tentativa) => tentativa + 1)
     }
   }

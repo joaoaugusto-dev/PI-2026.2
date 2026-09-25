@@ -43,7 +43,12 @@ export function LoginPage() {
       navigate(destino, { replace: true })
     } catch (erroRequisicao: any) {
       const codigo = erroRequisicao?.response?.data?.error?.code
-      if (codigo === 'USER_INACTIVE') {
+      if (!erroRequisicao?.response) {
+        // Requisição nem chegou a ter resposta (API fora do ar, CORS, rede
+        // caiu) — não é credencial errada, e mostrar essa mensagem confunde
+        // quem está testando localmente sem a API rodando.
+        setErro('Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.')
+      } else if (codigo === 'USER_INACTIVE') {
         setErro('Usuário inativo. Contate o administrador.')
       } else if (codigo === 'TOO_MANY_REQUESTS') {
         setErro('Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.')
