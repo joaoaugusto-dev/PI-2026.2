@@ -196,6 +196,16 @@ não filhas do layout autenticado.
   parecer válido no cliente mas ter sido invalidado no servidor (usuário
   desativado, segredo rotacionado). Consulta (quiosque) continua sem
   persistência nenhuma — sessão de 15 min é descartável por design.
+- **Login e cadastro de almoxarife usam matrícula (4 dígitos) + senha
+  numérica de 6 dígitos, nunca e-mail** — e-mail não existe no ambiente
+  fabril. A senha é digitada num PIN estilo lock screen de celular
+  (`src/components/CampoPin.tsx`, 6 caixas centralizadas): o último dígito
+  digitado fica visível por 1s antes de virar bolinha, os anteriores já
+  ficam mascarados — substitui o `CampoSenha` (input com olho) da FE-07
+  nas telas de auth. Integrado ao React Hook Form via `Controller` (não dá
+  pra usar `register` direto porque o componente não é um `<input>` nativo).
+  Contrato do back (`/v1/auth/login` e `/v1/auth/registro`) ainda usa e-mail
+  — troca pendente na issue #150 (urgente).
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,
