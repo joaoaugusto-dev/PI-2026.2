@@ -238,14 +238,12 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.details).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            field: 'nome',
-            message: 'Nome não pode ser vazio',
-          }),
-        ])
-      );
+      expect(res.body.error.details).toEqual([
+        expect.objectContaining({
+          field: 'nome',
+          message: 'Nome deve ter no mínimo 2 caracteres',
+        }),
+      ]);
     });
 
     it('rejeita nome com 1 caractere (mínimo é 2)', async () => {
