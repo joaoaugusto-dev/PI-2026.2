@@ -7,9 +7,9 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_ATIV_';
 
-function gerarToken(usuarioId: number, papel = 'almoxarife') {
+function gerarToken(usuarioId: number, papel = 'manutencao') {
   return jwt.sign(
-    { id: usuarioId, nome: 'Test User', papel, email: 'test@soufer.com.br' },
+    { id: usuarioId, nome: 'Test User', papel, matricula: '0001' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
@@ -22,7 +22,7 @@ describe('CRUD Atividades (/v1/atividades)', () => {
 
   beforeAll(async () => {
     const usuario = await query<{ id: number }>(
-      "SELECT id FROM usuarios WHERE papel = 'almoxarife' AND ativo = true LIMIT 1"
+      "SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true LIMIT 1"
     );
     token = gerarToken(usuario.rows[0].id);
 

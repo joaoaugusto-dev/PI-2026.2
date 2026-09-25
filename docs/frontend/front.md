@@ -49,7 +49,7 @@ em `web/src/index.css` e a página de referência é a rota `/design-system`
 Wireframes (FE-02) e protótipo navegável (FE-03) ficam no Figma:
 https://www.figma.com/design/jARhREffx0KXWn1UTUpxmE/SOUFER-Tools
 
-Protótipo validado com o almoxarife (FE-04) na visita técnica registrada em
+Protótipo validado com a manutenção (FE-04) na visita técnica registrada em
 DB-01 — detalhes em `/docs/atas/`.
 
 | Token | Valor | Uso |

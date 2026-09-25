@@ -3,8 +3,8 @@
 --
 -- [DB-08] Popula soufer_dev com dado realista o bastante para o front
 -- trabalhar sem precisar cadastrar tudo na mao: 5 setores, 5 categorias
--- (grupos_ferramentas), 10 atividades, 2 usuarios almoxarife, 20
--- colaboradores, 50 ferramentas variadas e uma massa de emprestimos
+-- (grupos_ferramentas), 10 atividades, 2 usuarios manutenção + 1 admin, 53
+-- colaboradores (incluindo os 2 da manutenção e o admin), 50 ferramentas variadas e uma massa de emprestimos
 -- (abertos, devolvidos sem ocorrencia e devolvidos com ocorrencia) para o
 -- dashboard nao nascer vazio.
 --
@@ -48,76 +48,93 @@ INSERT INTO atividades (nome, descricao, ativo) VALUES
 ('Apoio de Linha', 'Suporte operacional geral na linha de produção', true)
 ON CONFLICT (LOWER(nome)) DO NOTHING;
 
--- 4. Usuários do Almoxarifado (Senha padrão para testes: '123456')
--- Hashes bcrypt reais, gerados com bcryptjs (mesma lib usada pelo AuthService).
-INSERT INTO usuarios (nome, email, senha_hash, papel, ativo) VALUES
-('Almoxarife Principal', 'almoxarife@soufer.com.br', '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'almoxarife', true),
-('Almoxarife Suporte', 'almoxarife2@soufer.com.br', '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'almoxarife', true)
-ON CONFLICT (email) DO NOTHING;
-
--- 5. Colaboradores (50)
--- Ampliado na API-09 (de 20 para 50) para dar massa realista ao teste de
--- desempenho do indice gin_trgm da busca por nome (item "se sobrar tempo").
--- Simplificado 02/09 (DB-02): sem codigo_cracha nem cargo, ver 0001_init.sql.
+-- 5. Colaboradores (52): 2 da manutenção (0001/0002, donos das contas do passo 4) + 50 do chão de fábrica.
+-- A matrícula é a identidade da pessoa e só existe aqui; usuarios aponta para cá (colaborador_id).
+-- Simplificado 02/09 (DB-02): sem código de identificação além da matrícula nem cargo, ver 0001_init.sql.
+-- Ampliado na API-09 (de 20 para 50 do chão de fábrica) para dar massa realista ao teste de
+-- desempenho do índice gin_trgm da busca por nome (item "se sobrar tempo").
 -- setor_id por subquery (nome), não por id literal: SERIAL não é
 -- transacional, então um id fixo quebra depois de qualquer seed que tenha
 -- falhado antes (a sequência avança mesmo com ROLLBACK).
 INSERT INTO colaboradores (nome, matricula, setor_id, ativo)
 SELECT v.nome, v.matricula, s.id, true
 FROM (VALUES
-  ('Carlos Eduardo Souza', 'MAT001', 'Manutenção Geral'),
-  ('Mariana Lima Silva', 'MAT002', 'Usinagem CNC'),
-  ('Rodrigo Alves Ferreira', 'MAT003', 'Montagem Industrial'),
-  ('Fernanda Costa Barbosa', 'MAT004', 'Controle de Qualidade'),
-  ('Lucas Mendes Ramos', 'MAT005', 'Manutenção Geral'),
-  ('Juliana Aparecida Santos', 'MAT006', 'Estamparia'),
-  ('Bruno Henrique Oliveira', 'MAT007', 'Usinagem CNC'),
-  ('Camila Fernandes Rocha', 'MAT008', 'Montagem Industrial'),
-  ('Diego Martins Pereira', 'MAT009', 'Manutenção Geral'),
-  ('Patrícia Gonçalves Nunes', 'MAT010', 'Controle de Qualidade'),
-  ('Thiago Rezende Almeida', 'MAT011', 'Estamparia'),
-  ('Aline Cristina Moraes', 'MAT012', 'Usinagem CNC'),
-  ('Gustavo Henrique Batista da Silva', 'MAT013', 'Montagem Industrial'),
-  ('Vanessa Regina Cardoso', 'MAT014', 'Manutenção Geral'),
-  ('Felipe Augusto Teixeira', 'MAT015', 'Controle de Qualidade'),
-  ('Renata Aparecida de Souza Lima', 'MAT016', 'Estamparia'),
-  ('Marcelo Vinícius Correia', 'MAT017', 'Usinagem CNC'),
-  ('Priscila Andrade Monteiro', 'MAT018', 'Montagem Industrial'),
-  ('Eduardo Henrique Nascimento Barros', 'MAT019', 'Manutenção Geral'),
-  ('Simone Cristina Farias', 'MAT020', 'Controle de Qualidade'),
-  ('Rafael Souza Lopes', 'MAT021', 'Manutenção Geral'),
-  ('Beatriz Carvalho Dias', 'MAT022', 'Usinagem CNC'),
-  ('André Luiz Ferreira Gomes', 'MAT023', 'Montagem Industrial'),
-  ('Larissa Mendes Cunha', 'MAT024', 'Controle de Qualidade'),
-  ('Fábio Ricardo Azevedo', 'MAT025', 'Estamparia'),
-  ('Tatiane Aparecida Rocha', 'MAT026', 'Manutenção Geral'),
-  ('Leonardo Vieira Castro', 'MAT027', 'Usinagem CNC'),
-  ('Débora Cristina Pinto', 'MAT028', 'Montagem Industrial'),
-  ('Marcos Antônio Barbosa Silva', 'MAT029', 'Controle de Qualidade'),
-  ('Cíntia Regina Duarte', 'MAT030', 'Estamparia'),
-  ('Vinícius Oliveira Ramos', 'MAT031', 'Manutenção Geral'),
-  ('Amanda Cristina Melo', 'MAT032', 'Usinagem CNC'),
-  ('José Carlos Nogueira Filho', 'MAT033', 'Montagem Industrial'),
-  ('Paula Regina Machado', 'MAT034', 'Controle de Qualidade'),
-  ('Rodrigo Silva Andrade', 'MAT035', 'Estamparia'),
-  ('Cristiane Aparecida Souza', 'MAT036', 'Manutenção Geral'),
-  ('Alexandre Freitas Lima', 'MAT037', 'Usinagem CNC'),
-  ('Josiane Pereira Costa', 'MAT038', 'Montagem Industrial'),
-  ('Ricardo Gomes Teixeira', 'MAT039', 'Controle de Qualidade'),
-  ('Sandra Regina Alves', 'MAT040', 'Estamparia'),
-  ('Wesley Rodrigues Martins', 'MAT041', 'Manutenção Geral'),
-  ('Michele Cristina Barros', 'MAT042', 'Usinagem CNC'),
-  ('Anderson Luiz Correia', 'MAT043', 'Montagem Industrial'),
-  ('Viviane Aparecida Nunes', 'MAT044', 'Controle de Qualidade'),
-  ('Gabriel Henrique Moraes', 'MAT045', 'Estamparia'),
-  ('Elaine Cristina Ribeiro', 'MAT046', 'Manutenção Geral'),
-  ('Daniel Augusto Farias', 'MAT047', 'Usinagem CNC'),
-  ('Kelly Cristina Monteiro', 'MAT048', 'Montagem Industrial'),
-  ('Sérgio Ricardo Batista', 'MAT049', 'Controle de Qualidade'),
-  ('Natália Fernandes Rezende', 'MAT050', 'Estamparia')
+  ('Manutenção Principal', '0001', 'Manutenção Geral'),
+  ('Manutenção Suporte', '0002', 'Manutenção Geral'),
+  ('Carlos Eduardo Souza', '0003', 'Manutenção Geral'),
+  ('Mariana Lima Silva', '0004', 'Usinagem CNC'),
+  ('Rodrigo Alves Ferreira', '0005', 'Montagem Industrial'),
+  ('Fernanda Costa Barbosa', '0006', 'Controle de Qualidade'),
+  ('Lucas Mendes Ramos', '0007', 'Manutenção Geral'),
+  ('Juliana Aparecida Santos', '0008', 'Estamparia'),
+  ('Bruno Henrique Oliveira', '0009', 'Usinagem CNC'),
+  ('Camila Fernandes Rocha', '0010', 'Montagem Industrial'),
+  ('Diego Martins Pereira', '0011', 'Manutenção Geral'),
+  ('Patrícia Gonçalves Nunes', '0012', 'Controle de Qualidade'),
+  ('Thiago Rezende Almeida', '0013', 'Estamparia'),
+  ('Aline Cristina Moraes', '0014', 'Usinagem CNC'),
+  ('Gustavo Henrique Batista da Silva', '0015', 'Montagem Industrial'),
+  ('Vanessa Regina Cardoso', '0016', 'Manutenção Geral'),
+  ('Felipe Augusto Teixeira', '0017', 'Controle de Qualidade'),
+  ('Renata Aparecida de Souza Lima', '0018', 'Estamparia'),
+  ('Marcelo Vinícius Correia', '0019', 'Usinagem CNC'),
+  ('Priscila Andrade Monteiro', '0020', 'Montagem Industrial'),
+  ('Eduardo Henrique Nascimento Barros', '0021', 'Manutenção Geral'),
+  ('Simone Cristina Farias', '0022', 'Controle de Qualidade'),
+  ('Rafael Souza Lopes', '0023', 'Manutenção Geral'),
+  ('Beatriz Carvalho Dias', '0024', 'Usinagem CNC'),
+  ('André Luiz Ferreira Gomes', '0025', 'Montagem Industrial'),
+  ('Larissa Mendes Cunha', '0026', 'Controle de Qualidade'),
+  ('Fábio Ricardo Azevedo', '0027', 'Estamparia'),
+  ('Tatiane Aparecida Rocha', '0028', 'Manutenção Geral'),
+  ('Leonardo Vieira Castro', '0029', 'Usinagem CNC'),
+  ('Débora Cristina Pinto', '0030', 'Montagem Industrial'),
+  ('Marcos Antônio Barbosa Silva', '0031', 'Controle de Qualidade'),
+  ('Cíntia Regina Duarte', '0032', 'Estamparia'),
+  ('Vinícius Oliveira Ramos', '0033', 'Manutenção Geral'),
+  ('Amanda Cristina Melo', '0034', 'Usinagem CNC'),
+  ('José Carlos Nogueira Filho', '0035', 'Montagem Industrial'),
+  ('Paula Regina Machado', '0036', 'Controle de Qualidade'),
+  ('Rodrigo Silva Andrade', '0037', 'Estamparia'),
+  ('Cristiane Aparecida Souza', '0038', 'Manutenção Geral'),
+  ('Alexandre Freitas Lima', '0039', 'Usinagem CNC'),
+  ('Josiane Pereira Costa', '0040', 'Montagem Industrial'),
+  ('Ricardo Gomes Teixeira', '0041', 'Controle de Qualidade'),
+  ('Sandra Regina Alves', '0042', 'Estamparia'),
+  ('Wesley Rodrigues Martins', '0043', 'Manutenção Geral'),
+  ('Michele Cristina Barros', '0044', 'Usinagem CNC'),
+  ('Anderson Luiz Correia', '0045', 'Montagem Industrial'),
+  ('Viviane Aparecida Nunes', '0046', 'Controle de Qualidade'),
+  ('Gabriel Henrique Moraes', '0047', 'Estamparia'),
+  ('Elaine Cristina Ribeiro', '0048', 'Manutenção Geral'),
+  ('Daniel Augusto Farias', '0049', 'Usinagem CNC'),
+  ('Kelly Cristina Monteiro', '0050', 'Montagem Industrial'),
+  ('Sérgio Ricardo Batista', '0051', 'Controle de Qualidade'),
+  ('Natália Fernandes Rezende', '0052', 'Estamparia'),
+  ('Administrador do Sistema', '0053', 'Manutenção Geral')
 ) AS v(nome, matricula, setor_nome)
 JOIN setores s ON s.nome = v.setor_nome
 ON CONFLICT (matricula) DO NOTHING;
+
+-- 4. Contas de acesso da manutenção (Senha padrão para testes: '123456')
+-- Hashes bcrypt reais, gerados com bcryptjs (mesma lib usada pelo AuthService).
+-- Criadas depois dos colaboradores (passo 5): cada conta aponta para o colaborador
+-- de mesma matrícula, que é quem define nome e matrícula de login (usuarios não
+-- guarda nome nem matrícula próprios).
+INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
+SELECT c.id, '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'manutencao', true
+FROM colaboradores c
+WHERE c.matricula IN ('0001', '0002')
+ON CONFLICT (colaborador_id) DO NOTHING;
+
+-- 4.1 Conta de acesso do admin (matrícula 0053), único papel que pode listar
+-- e aprovar auto-cadastros pendentes (issue #149). Sem ela, ninguém consegue
+-- aprovar um cadastro sem UPDATE manual no banco.
+INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
+SELECT c.id, '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'admin', true
+FROM colaboradores c
+WHERE c.matricula = '0053'
+ON CONFLICT (colaborador_id) DO NOTHING;
 
 -- 6. Ferramentas (50, variadas entre as 5 categorias)
 -- codigo_identificacao (4 dígitos) é gerado automaticamente pela trigger
@@ -211,35 +228,37 @@ BEGIN
     INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao, observacoes_retirada)
     SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.previsao_devolucao, v.observacoes
     FROM (VALUES
-      ('Furadeira de Impacto Bosch GSB 13 RE', 'MAT001', 'Manutenção Preventiva', 'almoxarife@soufer.com.br', NOW() - INTERVAL '1 day', NOW() + INTERVAL '2 days', NULL),
-      ('Parafusadeira DeWalt 20V Max', 'MAT002', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '6 hours', NOW() + INTERVAL '1 day', NULL),
-      ('Esmerilhadeira Angular Makita 4.1/2 840W', 'MAT003', 'Corte e Furação', 'almoxarife@soufer.com.br', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'OS-4471 — corte de chapa para suporte'),
-      ('Máquina de Solda MIG/MAG Schulz Bivolt 200A', 'MAT009', 'Soldagem TIG/MIG', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '2 days', NOW() + INTERVAL '3 days', NULL),
-      ('Trena a Laser Bosch GLM 50 C', 'MAT004', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '4 hours', NOW() + INTERVAL '1 day', NULL),
-      ('Parafusadeira Pneumática de Impacto Ingersoll Rand 2135TiMAX', 'MAT007', 'Apoio de Linha', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '4 days', NOW() - INTERVAL '2 days', 'OS-4459 — linha 3 parada aguardando peça')
-    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada, previsao_devolucao, observacoes)
+      ('Furadeira de Impacto Bosch GSB 13 RE', '0003', 'Manutenção Preventiva', '0001', NOW() - INTERVAL '1 day', NOW() + INTERVAL '2 days', NULL),
+      ('Parafusadeira DeWalt 20V Max', '0004', 'Montagem de Estruturas', '0002', NOW() - INTERVAL '6 hours', NOW() + INTERVAL '1 day', NULL),
+      ('Esmerilhadeira Angular Makita 4.1/2 840W', '0005', 'Corte e Furação', '0001', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'OS-4471 — corte de chapa para suporte'),
+      ('Máquina de Solda MIG/MAG Schulz Bivolt 200A', '0011', 'Soldagem TIG/MIG', '0002', NOW() - INTERVAL '2 days', NOW() + INTERVAL '3 days', NULL),
+      ('Trena a Laser Bosch GLM 50 C', '0006', 'Calibração e Medição', '0001', NOW() - INTERVAL '4 hours', NOW() + INTERVAL '1 day', NULL),
+      ('Parafusadeira Pneumática de Impacto Ingersoll Rand 2135TiMAX', '0009', 'Apoio de Linha', '0002', NOW() - INTERVAL '4 days', NOW() - INTERVAL '2 days', 'OS-4459 — linha 3 parada aguardando peça')
+    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_matricula, data_retirada, previsao_devolucao, observacoes)
     JOIN ferramentas f ON f.nome = v.ferramenta_nome
     JOIN colaboradores c ON c.matricula = v.colaborador_matricula
     JOIN atividades a ON a.nome = v.atividade_nome
-    JOIN usuarios u ON u.email = v.usuario_email;
+    JOIN colaboradores cu ON cu.matricula = v.usuario_matricula
+    JOIN usuarios u ON u.colaborador_id = cu.id;
 
     -- 7.2 Empréstimos já devolvidos, condição OK (6, sem ocorrência)
     INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
     SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.data_retirada + INTERVAL '1 day'
     FROM (VALUES
-      ('Paquímetro Digital Mitutoyo 150mm', 'MAT005', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '5 days'),
-      ('Jogo de Chaves Combinadas 6 a 32mm', 'MAT008', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '6 days'),
-      ('Micrômetro Externo 0-25mm Mitutoyo', 'MAT010', 'Calibração e Medição', 'almoxarife@soufer.com.br', NOW() - INTERVAL '3 days'),
-      ('Chave de Impacto Pneumática 1/2 Polegada', 'MAT011', 'Manutenção Corretiva', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '7 days'),
-      ('Lixadeira Orbital Makita BO3711', 'MAT012', 'Corte e Furação', 'almoxarife@soufer.com.br', NOW() - INTERVAL '4 days'),
-      ('Serra Circular Bosch GKS 150', 'MAT013', 'Montagem de Estruturas', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '2 days')
-    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada)
+      ('Paquímetro Digital Mitutoyo 150mm', '0007', 'Calibração e Medição', '0001', NOW() - INTERVAL '5 days'),
+      ('Jogo de Chaves Combinadas 6 a 32mm', '0010', 'Montagem de Estruturas', '0002', NOW() - INTERVAL '6 days'),
+      ('Micrômetro Externo 0-25mm Mitutoyo', '0012', 'Calibração e Medição', '0001', NOW() - INTERVAL '3 days'),
+      ('Chave de Impacto Pneumática 1/2 Polegada', '0013', 'Manutenção Corretiva', '0002', NOW() - INTERVAL '7 days'),
+      ('Lixadeira Orbital Makita BO3711', '0014', 'Corte e Furação', '0001', NOW() - INTERVAL '4 days'),
+      ('Serra Circular Bosch GKS 150', '0015', 'Montagem de Estruturas', '0002', NOW() - INTERVAL '2 days')
+    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_matricula, data_retirada)
     JOIN ferramentas f ON f.nome = v.ferramenta_nome
     JOIN colaboradores c ON c.matricula = v.colaborador_matricula
     JOIN atividades a ON a.nome = v.atividade_nome
-    JOIN usuarios u ON u.email = v.usuario_email;
+    JOIN colaboradores cu ON cu.matricula = v.usuario_matricula
+    JOIN usuarios u ON u.colaborador_id = cu.id;
 
-    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'ok', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife@soufer.com.br')
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'ok', usuario_devolucao_id = (SELECT u2.id FROM usuarios u2 JOIN colaboradores cu2 ON cu2.id = u2.colaborador_id WHERE cu2.matricula = '0001')
     WHERE ferramenta_id IN (
       SELECT id FROM ferramentas WHERE nome IN (
         'Paquímetro Digital Mitutoyo 150mm', 'Jogo de Chaves Combinadas 6 a 32mm', 'Micrômetro Externo 0-25mm Mitutoyo',
@@ -252,34 +271,36 @@ BEGIN
     INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
     SELECT f.id, c.id, c.setor_id, a.id, u.id, v.data_retirada, v.data_retirada + INTERVAL '1 day'
     FROM (VALUES
-      ('Furadeira de Bancada Vonder FBV 550', 'MAT014', 'Usinagem Mecânica', 'almoxarife@soufer.com.br', NOW() - INTERVAL '10 days'),
-      ('Soprador Térmico Bosch GHG 20-63', 'MAT015', 'Instalação Elétrica', 'almoxarife2@soufer.com.br', NOW() - INTERVAL '8 days'),
-      ('Máscara de Solda Automática Esab Sentinel', 'MAT016', 'Soldagem TIG/MIG', 'almoxarife@soufer.com.br', NOW() - INTERVAL '12 days')
-    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_email, data_retirada)
+      ('Furadeira de Bancada Vonder FBV 550', '0016', 'Usinagem Mecânica', '0001', NOW() - INTERVAL '10 days'),
+      ('Soprador Térmico Bosch GHG 20-63', '0017', 'Instalação Elétrica', '0002', NOW() - INTERVAL '8 days'),
+      ('Máscara de Solda Automática Esab Sentinel', '0018', 'Soldagem TIG/MIG', '0001', NOW() - INTERVAL '12 days')
+    ) AS v(ferramenta_nome, colaborador_matricula, atividade_nome, usuario_matricula, data_retirada)
     JOIN ferramentas f ON f.nome = v.ferramenta_nome
     JOIN colaboradores c ON c.matricula = v.colaborador_matricula
     JOIN atividades a ON a.nome = v.atividade_nome
-    JOIN usuarios u ON u.email = v.usuario_email;
+    JOIN colaboradores cu ON cu.matricula = v.usuario_matricula
+    JOIN usuarios u ON u.colaborador_id = cu.id;
 
-    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Mandril travado após uso, necessita troca de rolamento'
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT u2.id FROM usuarios u2 JOIN colaboradores cu2 ON cu2.id = u2.colaborador_id WHERE cu2.matricula = '0002'), observacoes_devolucao = 'Mandril travado após uso, necessita troca de rolamento'
     WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Furadeira de Bancada Vonder FBV 550') AND data_devolucao IS NULL;
 
-    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife@soufer.com.br'), observacoes_devolucao = 'Resistência queimada, sem aquecimento'
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT u2.id FROM usuarios u2 JOIN colaboradores cu2 ON cu2.id = u2.colaborador_id WHERE cu2.matricula = '0001'), observacoes_devolucao = 'Resistência queimada, sem aquecimento'
     WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Soprador Térmico Bosch GHG 20-63') AND data_devolucao IS NULL;
 
-    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Sensor de escurecimento automático não funciona'
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'avaria', usuario_devolucao_id = (SELECT u2.id FROM usuarios u2 JOIN colaboradores cu2 ON cu2.id = u2.colaborador_id WHERE cu2.matricula = '0002'), observacoes_devolucao = 'Sensor de escurecimento automático não funciona'
     WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Máscara de Solda Automática Esab Sentinel') AND data_devolucao IS NULL;
 
     -- 7.4 Empréstimo devolvido com perda (1)
     INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, atividade_id, usuario_retirada_id, data_retirada, previsao_devolucao)
     SELECT f.id, c.id, c.setor_id, a.id, u.id, NOW() - INTERVAL '15 days', NOW() - INTERVAL '14 days'
-    FROM ferramentas f, colaboradores c, atividades a, usuarios u
+    FROM ferramentas f, colaboradores c, atividades a, colaboradores cu, usuarios u
     WHERE f.nome = 'Multímetro Digital Minipa ET-2042C'
-      AND c.matricula = 'MAT017'
+      AND c.matricula = '0019'
       AND a.nome = 'Instalação Elétrica'
-      AND u.email = 'almoxarife@soufer.com.br';
+      AND cu.matricula = '0001'
+      AND u.colaborador_id = cu.id;
 
-    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'perda', usuario_devolucao_id = (SELECT id FROM usuarios WHERE email = 'almoxarife2@soufer.com.br'), observacoes_devolucao = 'Equipamento não foi localizado após o turno, colaborador relatou extravio'
+    UPDATE emprestimos SET data_devolucao = data_retirada + INTERVAL '1 day', condicao_devolucao = 'perda', usuario_devolucao_id = (SELECT u2.id FROM usuarios u2 JOIN colaboradores cu2 ON cu2.id = u2.colaborador_id WHERE cu2.matricula = '0002'), observacoes_devolucao = 'Equipamento não foi localizado após o turno, colaborador relatou extravio'
     WHERE ferramenta_id = (SELECT id FROM ferramentas WHERE nome = 'Multímetro Digital Minipa ET-2042C') AND data_devolucao IS NULL;
   END IF;
 END $$;

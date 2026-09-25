@@ -20,7 +20,7 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 ## Orientações
 
 - [Orientação oficial do PI 2026-2](<docs/orientacoes/Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf>)
-- [Relatório da visita técnica ao almoxarifado/manutenção](docs/orientacoes/VisitaTecnica.pdf)
+- [Relatório da visita técnica à manutenção/manutenção](docs/orientacoes/VisitaTecnica.pdf)
 - [Equipe e responsabilidades](docs/orientacoes/equipe.md)
 - [Milestones, padrões e checklist](docs/orientacoes/projeto.md)
 

@@ -87,13 +87,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ query: listarAuxiliaresQuerySchema }),
     AtividadeController.listar
   )
   .post(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ body: criarAtividadeSchema }),
     AtividadeController.criar
   );
@@ -202,25 +202,25 @@ router
   .route('/:id')
   .get(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ params: auxiliarIdParamSchema }),
     AtividadeController.buscarPorId
   )
   .put(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ params: auxiliarIdParamSchema, body: atualizarAtividadeSchema }),
     AtividadeController.atualizar
   )
   .patch(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ params: auxiliarIdParamSchema, body: atualizarAtividadeSchema }),
     AtividadeController.atualizar
   )
   .delete(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ params: auxiliarIdParamSchema }),
     AtividadeController.excluir
   );

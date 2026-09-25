@@ -7,7 +7,7 @@ const swaggerOptions: swaggerJSDoc.Options = {
     info: {
       title: 'SOUFER Tools API (TypeScript)',
       version: '1.0.0',
-      description: 'API REST do sistema de controle de retiradas, devoluções e ocorrências de ferramentas do almoxarifado Soufer (PI 2026.2).',
+      description: 'API REST do sistema de controle de retiradas, devoluções e ocorrências de ferramentas da manutenção Soufer (PI 2026.2).',
       contact: {
         name: 'Equipe SOUFER Tools',
       },
@@ -55,7 +55,7 @@ const swaggerOptions: swaggerJSDoc.Options = {
                 details: {
                   type: 'array',
                   items: { type: 'object' },
-                  example: [{ field: 'email', message: 'E-mail inválido' }],
+                  example: [{ field: 'matricula', message: 'Matrícula deve ter exatamente 4 dígitos numéricos (0001 a 9999)' }],
                 },
               },
             },

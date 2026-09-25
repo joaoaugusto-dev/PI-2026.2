@@ -20,7 +20,7 @@ import {
 // exercitado. Auth e service são mockados: aqui só interessa a validação.
 vi.mock('../middlewares/auth.js', () => ({
   authenticate: (req: Request, _res: Response, next: () => void) => {
-    (req as any).usuario = { id: 1, nome: 'Almoxarife', papel: 'almoxarife' };
+    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'manutencao' };
     next();
   },
 }));
@@ -284,7 +284,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.body.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ field: 'nome', message: 'Nome não pode ser vazio' }),
-          expect.objectContaining({ field: 'matricula', message: 'Matrícula não pode ser vazia' }),
+          expect.objectContaining({ field: 'matricula', message: 'Matrícula deve ter exatamente 4 dígitos numéricos (0001 a 9999)' }),
           expect.objectContaining({ field: 'setorId', message: 'setorId deve ser um número positivo' }),
         ])
       );
@@ -293,7 +293,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
     it('aceita colaborador válido', async () => {
       const payload = {
         nome: 'Carlos Silva',
-        matricula: 'MAT-12345',
+        matricula: '0123',
         setorId: 2,
       };
 
@@ -301,7 +301,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
 
       expect(res.status).toBe(201);
       expect(res.body.data.nome).toBe('Carlos Silva');
-      expect(res.body.data.matricula).toBe('MAT-12345');
+      expect(res.body.data.matricula).toBe('0123');
     });
   });
 });

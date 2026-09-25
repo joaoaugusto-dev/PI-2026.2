@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
 
-export function authorize(...rolesPermitidos: Array<'almoxarife' | 'consulta'>) {
+export function authorize(...rolesPermitidos: Array<'manutencao' | 'admin' | 'consulta'>) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.usuario) {
       return next(new UnauthorizedError('Usuário não autenticado', 'UNAUTHORIZED'));

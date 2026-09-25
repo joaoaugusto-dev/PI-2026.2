@@ -23,11 +23,15 @@ ferramentas, sem nenhum empréstimo), para cobrir o que a issue pede:
    como "já ajustadas na DB-01". Não existe `docs/requisitos.md` versionado
    com a lista final da DB-01 para conferência cruzada; essa foi a única fonte
    disponível.
-3. **Usuários almoxarife (2)** — adicionado um segundo usuário
-   (`almoxarife2@soufer.com.br`). Os hashes de senha (senha de teste `123456`)
+3. **Usuários manutenção (2)** — adicionado um segundo usuário. *(Atualizado
+   na issue API-150: as contas agora entram por matrícula, `0001` e `0002`, e
+   apontam para colaboradores de mesma matrícula do setor "Manutenção Geral";
+   não têm mais e-mail.)* Os hashes de senha (senha de teste `123456`)
    foram gerados com `bcryptjs` de verdade (mesma lib do `AuthService`),
    substituindo o hash de exemplo que estava na versão anterior do seed.
-4. **Colaboradores (20)** — de 5 para 20, com nomes plausíveis (alguns
+4. **Colaboradores (20)** — de 5 para 20 *(hoje 22: os 2 da manutenção, `0001` e
+   `0002`, mais estes 20 com matrículas `0003` a `0022`, na regra de 4 dígitos da
+   API-150)*, com nomes plausíveis (alguns
    propositalmente longos, ex. "Gustavo Henrique Batista da Silva", "Eduardo
    Henrique Nascimento Barros") distribuídos entre os 5 setores.
 5. **Ferramentas (50)** — de 8 para 50, 10 por categoria, com nome, marca,

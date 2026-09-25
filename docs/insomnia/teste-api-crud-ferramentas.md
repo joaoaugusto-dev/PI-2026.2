@@ -40,8 +40,8 @@ Credenciais criadas pelo seed:
 
 | Perfil | Como entrar |
 |---|---|
-| Almoxarife | `almoxarife@soufer.com.br` / `123456` |
-| Consulta | matrícula `MAT001` |
+| Manutenção | matrícula `0001` / `123456` |
+| Consulta | matrícula `0003` |
 
 ## 3. Importar a coleção
 
@@ -59,7 +59,7 @@ After-response**) das requisições que produzem dados:
 
 | Variável | Quem grava | Quem usa |
 |---|---|---|
-| `token` | 01 Login do almoxarife | todas as rotas de ferramentas |
+| `token` | 01 Login da manutenção | todas as rotas de ferramentas |
 | `token_consulta` | 02 Login do perfil consulta | 19 (teste de 403) |
 | `grupo_id` | 03 Obter um grupoId válido | 04 Cadastrar |
 | `ferramenta_id` | 04 Cadastrar | 07, 09 a 12, 24, 37 a 39 |
@@ -108,7 +108,7 @@ e a pasta 7 dá baixa nela.
 ### Pasta 1 — Autenticação e preparação
 | # | Requisição | Esperado |
 |---|---|---|
-| 01 | Login do almoxarife | 200, grava `token` |
+| 01 | Login da manutenção | 200, grava `token` |
 | 02 | Login do perfil consulta | 200, grava `token_consulta` |
 | 03 | Obter um grupoId válido | 200, grava `grupo_id` |
 
@@ -223,7 +223,7 @@ inválidos.
 |---|---|
 | `connect ECONNREFUSED` | A API não está rodando; execute `npm run dev` na pasta `api` |
 | 401 `TOKEN_NOT_PROVIDED` | A variável `token` está vazia; rode a 01 (ou cole o token no ambiente) |
-| 401 `TOKEN_INVALID` em tudo | Token expirado (8h); rode a 01 de novo |
+| 401 `TOKEN_INVALID` em tudo | Token expirado (7 dias); rode a 01 de novo |
 | 400 "Expected number, received nan" | A variável `ferramenta_id` está vazia; rode a pasta 2 (req. 04) |
 | 400 `FOREIGN_KEY_VIOLATION` na 04 | Rode a 03 antes, ou refaça o seed |
 | 401 no login (01) | O seed não foi rodado (`npm run db:seed`) |

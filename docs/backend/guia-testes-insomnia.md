@@ -64,20 +64,20 @@ cada request na mão.
 ## 4. Autenticando (pegando o token)
 
 Quase todas as rotas de `/v1/ferramentas` exigem um token JWT de um usuário
-com perfil `almoxarife` no cabeçalho `Authorization: Bearer <token>`. A
+com perfil `manutencao` no cabeçalho `Authorization: Bearer <token>`. A
 collection não faz isso sozinha — você precisa logar uma vez e colar o token
 manualmente no ambiente.
 
 1. Na sidebar, abra a request **`POST /v1/auth/login`**.
 2. Clique em **Send**. O corpo já vem preenchido com um usuário de seed
-   (`almoxarife@soufer.com.br` / `123456` — se o seu seed usa outro e-mail/
-   senha, ajuste o corpo da request antes de enviar).
+   (matrícula `0001` / senha `123456` — a `0002` também existe. Se o seu
+   seed usa outra matrícula/senha, ajuste o corpo da request antes de enviar).
 3. A resposta deve ser `200`, parecida com:
    ```json
    {
      "data": {
        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-       "usuario": { "id": 3, "nome": "Almoxarife Principal", "papel": "almoxarife" }
+       "usuario": { "id": 3, "nome": "Manutenção Principal", "papel": "manutencao" }
      }
    }
    ```
@@ -86,9 +86,9 @@ manualmente no ambiente.
    `token`. Salve.
 
 A partir daqui, toda request que usa `Authorization: Bearer {{ _.token }}`
-já vai autenticar automaticamente como almoxarife.
+já vai autenticar automaticamente como manutenção.
 
-> **Token expira em 8h** (Regra 6 do `CLAUDE.md` — sessão de almoxarife). Se
+> **Token expira em 7 dias** (Regra 6 do `CLAUDE.md` — sessão de manutenção). Se
 > começar a receber `401 TOKEN_EXPIRED` depois de um tempo parado, repita
 > este passo para pegar um token novo.
 
@@ -191,8 +191,8 @@ cadastro até a baixa. Passo a passo com as requests da collection:
 | Sintoma | Causa provável | Como resolver |
 |---|---|---|
 | `401 TOKEN_NOT_PROVIDED` | Ambiente errado selecionado, ou `token` vazio | Confirme que "Base Environment" está selecionado e que você colou o token (Seção 4) |
-| `401 TOKEN_EXPIRED` | Token JWT passou de 8h (almoxarife) ou 15min (consulta) | Refaça o login e cole o token novo |
-| `403 ACCESS_DENIED` | Token é de perfil `consulta` numa rota exclusiva de `almoxarife` | Use `{{ _.token }}` (almoxarife), não `{{ _.tokenConsulta }}` |
+| `401 TOKEN_EXPIRED` | Token JWT passou de 7 dias (manutenção) ou 15min (consulta) | Refaça o login e cole o token novo |
+| `403 ACCESS_DENIED` | Token é de perfil `consulta` numa rota exclusiva de `manutencao` | Use `{{ _.token }}` (manutenção), não `{{ _.tokenConsulta }}` |
 | `ECONNREFUSED` / Insomnia não conecta | API não está rodando, ou porta errada em `baseUrl` | Confira `npm run dev` na pasta `api/` e o valor de `baseUrl` no ambiente |
 | `400 VALIDATION_ERROR` num corpo que parecia certo | Campo obrigatório faltando ou tipo errado (ex.: `grupoId` como texto) | Leia `error.details` na resposta — ele aponta o campo e a regra que falhou |
 

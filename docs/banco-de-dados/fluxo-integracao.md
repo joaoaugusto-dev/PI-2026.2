@@ -1,7 +1,7 @@
 # Fluxo de integração de dados — fontes externas
 
 Este documento registra de onde vêm os dados do SOUFER Tools que **não são
-digitados na hora** pelo almoxarife ou pelo colaborador: o inventário legado
+digitados na hora** pela manutenção ou pelo colaborador: o inventário legado
 da Soufer e a BrasilAPI de feriados.
 
 ---

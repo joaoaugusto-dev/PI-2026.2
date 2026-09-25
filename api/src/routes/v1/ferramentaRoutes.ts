@@ -17,7 +17,7 @@ const router = Router();
  * @openapi
  * /ferramentas:
  *   get:
- *     summary: Lista as ferramentas ativas do almoxarifado (paginado, filtro opcional por status)
+ *     summary: Lista as ferramentas ativas da manutenção (paginado, filtro opcional por status)
  *     tags:
  *       - Ferramentas
  *     security:
@@ -100,13 +100,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ query: listarFerramentasQuerySchema }),
     FerramentaController.listar
   )
   .post(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ body: criarFerramentaSchema }),
     FerramentaController.criar
   );
@@ -137,7 +137,7 @@ router
 router.get(
   '/por-codigo/:codigo',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaCodigoParamSchema }),
   FerramentaController.buscarPorCodigo
 );
@@ -166,7 +166,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.buscarPorId
 );
@@ -195,7 +195,7 @@ router.get(
 router.get(
   '/:id/historico',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.historico
 );
@@ -251,7 +251,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
   FerramentaController.atualizar
 );
@@ -282,7 +282,7 @@ router.patch(
 router.patch(
   '/:id/etiqueta-impressa',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.marcarEtiquetaImpressa
 );
@@ -315,7 +315,7 @@ router.patch(
 router.patch(
   '/:id/disponibilizar',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.disponibilizar
 );
@@ -348,7 +348,7 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.baixar
 );

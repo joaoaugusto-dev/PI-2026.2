@@ -1,7 +1,7 @@
-# Protótipo — Sistema de Almoxarifado
+# Protótipo — Sistema de Manutenção
 
 Documentação visual do protótipo de alta fidelidade desenhado no Figma para o
-controle de empréstimo e devolução de ferramentas do almoxarifado central.
+controle de empréstimo e devolução de ferramentas da manutenção central.
 
 Todas as capturas foram exportadas do protótipo navegável e refletem o estado
 aprovado do design. Quando uma tela mudar no Figma, substitua o arquivo
@@ -23,7 +23,7 @@ correspondente em `assets/` mantendo o mesmo nome — os links continuam válido
 ```
 Login
 └── Sistema (sidebar fixa)
-    ├── Dashboard ......... entrada padrão do almoxarife
+    ├── Dashboard ......... entrada padrão da manutenção
     │   ├── Registrar retirada     (atalho primário)
     │   └── Registrar devolução    (atalho secundário)
     ├── Registrar retirada
@@ -42,7 +42,7 @@ o toggle **Som de confirmação**, o link externo **Abrir consulta pública** e 
 
 ## Decisões de contexto
 
-O usuário do sistema é o almoxarife, em pé no balcão, muitas vezes de luva e com
+O usuário do sistema é a manutenção, em pé no balcão, muitas vezes de luva e com
 um leitor de código de barras na mão. Isso condiciona quase todas as escolhas de
 interface:
 
@@ -64,17 +64,17 @@ interface:
 
 ## 1 · Dashboard
 
-Tela de entrada do almoxarife. Responde a duas perguntas antes de qualquer
+Tela de entrada da manutenção. Responde a duas perguntas antes de qualquer
 clique: *como está o acervo agora* e *o que precisa de ação hoje*.
 
-![Dashboard do almoxarifado com KPIs, atalhos de retirada e devolução, empréstimos atrasados e distribuição por setor](assets/01-dashboard.png)
+![Dashboard da manutenção com KPIs, atalhos de retirada e devolução, empréstimos atrasados e distribuição por setor](assets/01-dashboard.png)
 
 ### Composição
 
 | Bloco | Conteúdo | Observação |
 |-------|----------|------------|
 | Cabeçalho | Data e hora por extenso, sino de notificações, identificação do operador | Mostra nome, função e turno — o registro é nominal |
-| Contexto | `Almoxarifado central · Fábrica 1` | Prepara o sistema para múltiplas unidades |
+| Contexto | `Manutenção central · Fábrica 1` | Prepara o sistema para múltiplas unidades |
 | KPIs | Cadastradas · Disponíveis · Em uso · Indisponíveis · Atrasadas · Ocorrências | Seis cartões, sempre na mesma ordem |
 | Atalhos | Registrar retirada (vermelho) e Registrar devolução (preto) | As duas ações que representam a maior parte do uso diário |
 | Faixa de metas | Dias sem extravio · % de devoluções no prazo · tempo médio de atendimento | Indicadores de qualidade da operação, não de estoque |
@@ -117,7 +117,7 @@ cima para baixo sem que o operador precise tirar a mão do leitor.
 | # | Passo | Entrada | Obrigatório |
 |---|-------|---------|-------------|
 | 1 | Ferramenta | Leitura da etiqueta, código de patrimônio ou nome | Sim |
-| 2 | Colaborador | Matrícula, crachá ou nome | Sim |
+| 2 | Colaborador | Matrícula ou nome | Sim |
 | 3 | Detalhes | Atividade/motivo, setor de destino e previsão de devolução | Atividade e setor são obrigatórios |
 
 ### Comportamento dos passos
@@ -392,13 +392,13 @@ estrutura de tabela e a mesma ação de inclusão.
 
 | Coluna | Conteúdo |
 |--------|----------|
-| Matrícula | Identificador de 4 dígitos, também lido do crachá |
+| Matrícula | Identificador de 4 dígitos numéricos (0001 a 9999) |
 | Nome | Nome completo, como aparece nos registros |
 | Setor | Vínculo com a aba Setores |
 | Cargo | Função exercida |
 | Ação | `Editar` |
 
-A matrícula é a chave usada na leitura do crachá durante a retirada, o que
+A matrícula é a chave usada para identificar o colaborador durante a retirada, o que
 torna essa aba pré-requisito do fluxo principal.
 
 ### Ações
@@ -570,4 +570,4 @@ animação longa é tempo perdido.
 | Industrial | Exclusivo do quiosque de consulta pública, que precisa se anunciar como outra coisa |
 
 A separação existe porque o quiosque fica na área de produção e é usado por
-qualquer colaborador. Ele não deve parecer o sistema do almoxarife.
+qualquer colaborador. Ele não deve parecer o sistema da manutenção.

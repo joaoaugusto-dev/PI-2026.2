@@ -87,13 +87,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ query: listarColaboradoresQuerySchema }),
     ColaboradorController.listar
   )
   .post(
     authenticate,
-    authorize('almoxarife'),
+    authorize('manutencao'),
     validate({ body: criarColaboradorSchema }),
     ColaboradorController.criar
   );
@@ -131,7 +131,7 @@ router
 router.get(
   '/identificar',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ query: identificarColaboradorQuerySchema }),
   ColaboradorController.identificar
 );
@@ -160,7 +160,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: colaboradorIdParamSchema }),
   ColaboradorController.buscarPorId
 );
@@ -208,7 +208,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: colaboradorIdParamSchema, body: editarColaboradorSchema }),
   ColaboradorController.atualizar
 );
@@ -239,7 +239,7 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  authorize('almoxarife'),
+  authorize('manutencao'),
   validate({ params: colaboradorIdParamSchema }),
   ColaboradorController.inativar
 );
