@@ -120,9 +120,11 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    código de barras (Code128). A visita técnica à Soufer levantou um código
    curto de 4 dígitos gravado a lápis elétrico como alternativa — decisão
    pendente de ata.
-8. **Apenas dois perfis:** `manutencao` (acesso completo, login normal) e
-   `consulta` (sessão de 15 minutos por matrícula/crachá, só leitura de
-   disponibilidade, sem senha).
+8. **Três perfis:** `manutencao` (acesso completo, login normal), `admin`
+   (mesmo acesso de `manutencao` mais a aprovação de auto-cadastros pendentes,
+   via `PATCH /v1/usuarios/:id/ativar` e `GET /v1/usuarios?ativo=false` —
+   decisão do time em 22/09/2026, issue API-149/#149) e `consulta` (sessão de
+   15 minutos por matrícula, só leitura de disponibilidade, sem senha).
 9. **Feriados vêm da BrasilAPI**, com cache em tabela própria e fallback de
    sábado/domingo se a API estiver fora.
 10. **Entrega fora do prazo ou impressa = nota zero.** Sem exceção institucional.
