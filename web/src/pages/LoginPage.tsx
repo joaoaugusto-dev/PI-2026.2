@@ -1,23 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useRef, useState } from 'react'
+import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
-import { CampoSenha } from '@/components/CampoSenha'
+import { CampoPin } from '@/components/CampoPin'
 import { TexturaFerramentas } from '@/components/TexturaFerramentas'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
+import { avisarErro } from '@/lib/avisar-erro'
 import { useAuth } from '@/lib/auth'
 
 // Regra do time (issue #150): só dígitos, de 0001 a 9999 — `z.string().length(4)`
 // aceitaria letras, por isso o regex em vez disso.
 const loginSchema = z.object({
-  matricula: z.string().regex(/^(?!0000)\d{4}$/, 'Informe a matrícula com 4 dígitos'),
-  senha: z.string().min(1, 'Informe a senha'),
+  matricula: z.string().regex(/^(?!0000)\d{4}$/, 'A matrícula tem 4 dígitos'),
+  senha: z.string().length(6, 'A senha tem 6 dígitos'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -26,37 +27,42 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [erro, setErro] = useState<string | null>(null)
+  const [erro, setErro] = useState(false)
   const [tentativaErro, setTentativaErro] = useState(0)
+  const senhaRef = useRef<HTMLInputElement>(null)
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) })
+  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { matricula: '', senha: '' } })
 
   async function onSubmit(dados: LoginForm) {
-    setErro(null)
+    setErro(false)
     try {
       await login(dados.matricula, dados.senha)
       const destino = (location.state as { from?: Location })?.from?.pathname ?? '/'
       navigate(destino, { replace: true })
     } catch (erroRequisicao: any) {
       const codigo = erroRequisicao?.response?.data?.error?.code
+      let mensagem = 'Matrícula ou senha inválidas.'
       if (!erroRequisicao?.response) {
-        // Requisição nem chegou a ter resposta (API fora do ar, CORS, rede
-        // caiu) — não é credencial errada, e mostrar essa mensagem confunde
-        // quem está testando localmente sem a API rodando.
-        setErro('Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.')
+        // Sem resposta (API fora, CORS, rede) — não é credencial errada.
+        mensagem = 'Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.'
       } else if (codigo === 'USER_INACTIVE') {
-        setErro('Usuário inativo. Contate o administrador.')
+        mensagem = 'Usuário inativo. Contate o administrador.'
       } else if (codigo === 'TOO_MANY_REQUESTS') {
-        setErro('Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.')
-      } else {
-        setErro('Matrícula ou senha inválidos.')
+        mensagem = 'Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.'
       }
+      setErro(true)
       setTentativaErro((tentativa) => tentativa + 1)
+      avisarErro(mensagem)
     }
+  }
+
+  function onErroValidacao(errosForm: FieldErrors<LoginForm>) {
+    const primeiraMensagem = Object.values(errosForm)[0]?.message
+    if (primeiraMensagem) avisarErro(primeiraMensagem)
   }
 
   return (
@@ -72,48 +78,62 @@ export function LoginPage() {
             <CardDescription>Acesso ao controle de ferramentas</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit, onErroValidacao)} noValidate>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="matricula">Matrícula</Label>
-                <CampoComErro erro={!!errors.matricula || !!erro} tentativa={tentativaErro}>
-                  <Input
-                    id="matricula"
-                    inputMode="numeric"
-                    maxLength={4}
-                    autoComplete="username"
-                    autoFocus
-                    aria-invalid={!!errors.matricula || !!erro}
-                    className="h-(--control-h)"
-                    {...register('matricula')}
+                <CampoComErro erro={!!errors.matricula || erro} tentativa={tentativaErro}>
+                  <Controller
+                    name="matricula"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        id="matricula"
+                        inputMode="numeric"
+                        maxLength={4}
+                        autoComplete="username"
+                        autoFocus
+                        aria-invalid={!!errors.matricula || erro}
+                        className="h-(--control-h) text-center text-titulo md:text-titulo"
+                        {...field}
+                        onChange={(e) => {
+                          const novo = e.target.value.replace(/\D/g, '').slice(0, 4)
+                          field.onChange(novo)
+                          if (novo.length === 4) senhaRef.current?.focus()
+                        }}
+                      />
+                    )}
                   />
                 </CampoComErro>
-                {errors.matricula && <p className="text-rotulo text-destructive">{errors.matricula.message}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="senha">Senha</Label>
-                <CampoComErro erro={!!errors.senha || !!erro} tentativa={tentativaErro}>
-                  <CampoSenha
-                    id="senha"
-                    autoComplete="current-password"
-                    aria-invalid={!!errors.senha || !!erro}
-                    {...register('senha')}
+                <CampoComErro erro={!!errors.senha || erro} tentativa={tentativaErro}>
+                  <Controller
+                    name="senha"
+                    control={control}
+                    render={({ field }) => (
+                      <CampoPin
+                        ref={senhaRef}
+                        id="senha"
+                        autoComplete="current-password"
+                        erro={!!errors.senha || erro}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                      />
+                    )}
                   />
                 </CampoComErro>
-                {errors.senha && <p className="text-rotulo text-destructive">{errors.senha.message}</p>}
               </div>
 
-              {erro && <p className="text-sm text-destructive">{erro}</p>}
               <Button type="submit" className="h-(--control-h)" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
-              <p className="text-center text-rotulo text-muted-foreground">
-                Ainda não tem acesso?{' '}
-                <Link to="/cadastro" className="font-medium text-foreground underline underline-offset-2">
-                  Solicitar cadastro
-                </Link>
-              </p>
+              <Button asChild type="button" variant="outline" className="h-(--control-h) text-corpo">
+                <Link to="/cadastro">Criar Cadastro</Link>
+              </Button>
             </form>
           </CardContent>
         </Card>
