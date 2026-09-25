@@ -5,19 +5,22 @@ import { api, setAuthToken, setHandler401 } from '@/lib/api'
 interface Usuario {
   id: number
   nome: string
-  email: string
+  matricula: string
   papel: string
 }
 
 interface AuthContextValue {
   usuario: Usuario | null
-  login: (email: string, senha: string) => Promise<void>
+  login: (matricula: string, senha: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const CHAVE_SESSAO = 'soufer:sessao'
+// v2: sessões antigas (pré-#150) guardavam um `usuario` com `email` em vez de
+// `matricula`. Trocar a chave descarta essas sessões e força novo login em
+// vez de restaurar um usuário desatualizado.
+const CHAVE_SESSAO = 'soufer:sessao:v2'
 
 interface SessaoPersistida {
   token: string
@@ -74,8 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setHandler401(null)
   }, [])
 
-  const login = async (email: string, senha: string) => {
-    const { data } = await api.post('/auth/login', { email, senha })
+  const login = async (matricula: string, senha: string) => {
+    const { data } = await api.post('/auth/login', { matricula, senha })
     const { token, usuario: usuarioLogado } = data.data
     setAuthToken(token)
     setUsuario(usuarioLogado)
@@ -99,6 +102,18 @@ export function RotaProtegida({ children }: { children: ReactNode }) {
 
   if (!usuario) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  return <>{children}</>
+}
+
+// Aprovação de cadastros (issue #149) é exclusiva do papel `admin` — a API já
+// barra com 403, isso só evita mostrar a tela pra quem não pode usá-la.
+export function RotaAdmin({ children }: { children: ReactNode }) {
+  const { usuario } = useAuth()
+
+  if (usuario?.papel !== 'admin') {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

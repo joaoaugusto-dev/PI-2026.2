@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/Sidebar'
 import { CabecalhoApp } from '@/components/layout/CabecalhoApp'
 import { RodapeSidebar } from '@/components/layout/RodapeSidebar'
+import { useAuth } from '@/lib/auth'
 
 const navPrincipal = [
   { to: '/', label: 'Dashboard' },
@@ -42,6 +43,7 @@ const navCadastros = [
 const titulosExtras: Record<string, string> = {
   '/status': 'Status da API',
   '/design-system': 'Design system',
+  '/aprovacoes': 'Aprovação de cadastros',
 }
 
 function tituloDaPagina(pathname: string) {
@@ -105,6 +107,7 @@ function useRelogio() {
 
 export function AppLayout() {
   const location = useLocation()
+  const { usuario } = useAuth()
   const cadastrosAtivo = navCadastros.some((item) => location.pathname.startsWith(item.to))
   const [cadastrosOpen, setCadastrosOpen] = useState(cadastrosAtivo)
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
@@ -180,6 +183,18 @@ export function AppLayout() {
                     </Collapsible.Content>
                   </SidebarMenuItem>
                 </Collapsible.Root>
+
+                {usuario?.papel === 'admin' && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === '/aprovacoes'}
+                      className="h-(--control-h) px-3 text-corpo"
+                    >
+                      <NavLink to="/aprovacoes">Aprovação de cadastros</NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
 
                 <SidebarMenuItem>
                   <SidebarMenuButton

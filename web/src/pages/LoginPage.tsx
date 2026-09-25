@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
 import { CampoSenha } from '@/components/CampoSenha'
@@ -13,8 +13,10 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { useAuth } from '@/lib/auth'
 
+// Regra do time (issue #150): só dígitos, de 0001 a 9999 — `z.string().length(4)`
+// aceitaria letras, por isso o regex em vez disso.
 const loginSchema = z.object({
-  email: z.email('Informe um e-mail válido'),
+  matricula: z.string().regex(/^(?!0000)\d{4}$/, 'Informe a matrícula com 4 dígitos'),
   senha: z.string().min(1, 'Informe a senha'),
 })
 
@@ -36,11 +38,16 @@ export function LoginPage() {
   async function onSubmit(dados: LoginForm) {
     setErro(null)
     try {
-      await login(dados.email, dados.senha)
+      await login(dados.matricula, dados.senha)
       const destino = (location.state as { from?: Location })?.from?.pathname ?? '/'
       navigate(destino, { replace: true })
-    } catch {
-      setErro('E-mail ou senha inválidos.')
+    } catch (erroRequisicao: any) {
+      const codigo = erroRequisicao?.response?.data?.error?.code
+      setErro(
+        codigo === 'USER_INACTIVE'
+          ? 'Usuário inativo. Contate o administrador.'
+          : 'Matrícula ou senha inválidos.',
+      )
       setTentativaErro((tentativa) => tentativa + 1)
     }
   }
@@ -60,19 +67,20 @@ export function LoginPage() {
           <CardContent>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email">E-mail</Label>
-                <CampoComErro erro={!!errors.email || !!erro} tentativa={tentativaErro}>
+                <Label htmlFor="matricula">Matrícula</Label>
+                <CampoComErro erro={!!errors.matricula || !!erro} tentativa={tentativaErro}>
                   <Input
-                    id="email"
-                    type="email"
+                    id="matricula"
+                    inputMode="numeric"
+                    maxLength={4}
                     autoComplete="username"
                     autoFocus
-                    aria-invalid={!!errors.email || !!erro}
+                    aria-invalid={!!errors.matricula || !!erro}
                     className="h-(--control-h)"
-                    {...register('email')}
+                    {...register('matricula')}
                   />
                 </CampoComErro>
-                {errors.email && <p className="text-rotulo text-destructive">{errors.email.message}</p>}
+                {errors.matricula && <p className="text-rotulo text-destructive">{errors.matricula.message}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -93,6 +101,12 @@ export function LoginPage() {
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
+              <p className="text-center text-rotulo text-muted-foreground">
+                Ainda não tem acesso?{' '}
+                <Link to="/cadastro" className="font-medium text-foreground underline underline-offset-2">
+                  Solicitar cadastro
+                </Link>
+              </p>
             </form>
           </CardContent>
         </Card>

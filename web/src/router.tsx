@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
-import { RotaProtegida } from '@/lib/auth'
+import { RotaAdmin, RotaProtegida } from '@/lib/auth'
+import { AprovacoesPage } from '@/pages/AprovacoesPage'
+import { CadastroPage } from '@/pages/CadastroPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
@@ -36,10 +38,19 @@ export const router = createBrowserRouter([
       { path: 'cadastros/categorias', element: placeholder('Categorias') },
       { path: 'cadastros/atividades', element: placeholder('Atividades') },
       { path: 'importar', element: placeholder('Importar CSV') },
+      {
+        path: 'aprovacoes',
+        element: (
+          <RotaAdmin>
+            <AprovacoesPage />
+          </RotaAdmin>
+        ),
+      },
       { path: 'design-system', element: <DesignSystemPage /> },
     ],
   },
   { path: '/login', element: <LoginPage /> },
+  { path: '/cadastro', element: <CadastroPage /> },
   { path: '/consulta', element: placeholder('Consulta') },
   { path: '*', element: placeholder('404') },
 ])
