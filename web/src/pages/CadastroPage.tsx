@@ -27,6 +27,16 @@ const cadastroSchema = z
     path: ['confirmarSenha'],
   })
 
+// Mensagens por `error.code` do POST /v1/auth/registro (issue #149).
+const MENSAGENS_ERRO: Record<string, string> = {
+  COLABORADOR_NOT_FOUND: 'Matrícula não encontrada ou colaborador inativo. Confira o número ou procure a manutenção.',
+  MATRICULA_JA_CADASTRADA: 'Esta matrícula já possui um cadastro de acesso. Tente entrar ou fale com um administrador.',
+  TOO_MANY_REQUESTS: 'Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.',
+}
+
+// Só esses códigos são sobre a matrícula em si (destacam o campo).
+const CODIGOS_MATRICULA = ['COLABORADOR_NOT_FOUND', 'MATRICULA_JA_CADASTRADA']
+
 type CadastroForm = z.infer<typeof cadastroSchema>
 
 export function CadastroPage() {
@@ -52,9 +62,15 @@ export function CadastroPage() {
       await api.post('/auth/registro', { nome: dados.nome, matricula: dados.matricula, senha: dados.senha })
       setEnviado(true)
     } catch (erroRequisicao: any) {
-      setErro(true)
+      const codigo = erroRequisicao?.response?.data?.error?.code
+      let mensagem = MENSAGENS_ERRO[codigo] ?? 'Não foi possível concluir o cadastro. Tente novamente.'
+      if (!erroRequisicao?.response) {
+        // Sem resposta (API fora, CORS, rede) — não é problema do cadastro em si.
+        mensagem = 'Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.'
+      }
+      setErro(CODIGOS_MATRICULA.includes(codigo))
       setTentativaErro((tentativa) => tentativa + 1)
-      avisarErro(erroRequisicao?.response?.data?.error?.message ?? 'Não foi possível concluir o cadastro.')
+      avisarErro(mensagem)
     }
   }
 
