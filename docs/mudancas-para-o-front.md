@@ -108,12 +108,10 @@ Testei o login no navegador (Chrome headless) contra a API local (`soufer_dev`, 
 
 > **Atenção:** o comentário do João na issue #150 fala em `z.string().length(4)`. Isso aceita letras (`ABCD`). A regra do time é **só dígitos, de `0001` a `9999`**, então use o regex acima (ou `.regex(/^\d{4}$/)`). O back rejeita letras e `0000` com 400 de qualquer forma.
 
-### Dois problemas que apareceram e o front precisa tratar
+### Dois problemas que apareceram e já foram corrigidos
 
-1. **Sessão antiga no navegador.** Quem estava logado antes tem no `localStorage` (`soufer:sessao`) um token de 7 dias com `papel: "almoxarife"` e `email`. O back agora responde **`401 TOKEN_OUTDATED`** ("Sessão de uma versão anterior. Faça login novamente.") para esses tokens. Mas o front **não percebe**: ao restaurar a sessão ele não chama a API (o Dashboard usa dados de exemplo), então continua "logado" com o usuário antigo até alguma chamada real dar 401 (aí o `setHandler401` desloga). Solução, escolher uma:
-   - trocar a chave para `soufer:sessao:v2` (descarta sessões antigas), **ou**
-   - ao restaurar, chamar `GET /v1/auth/me` e, se falhar, deslogar; se passar, usar o `usuario` retornado.
-2. **Nome no cabeçalho é fixo.** `CabecalhoApp.tsx` mostra "Marcos Andrade" escrito no código, não o `usuario` logado. Com o login real, o cabeçalho deveria usar `usuario.nome` (e `usuario.matricula`, se quiser exibir).
+1. **[x] Sessão antiga no navegador.** Resolvido trocando a chave para `soufer:sessao:v2` (descarta sessões antigas com `papel: "almoxarife"`/`email`, força novo login).
+2. **[x] Nome no cabeçalho era fixo.** `CabecalhoApp.tsx` mostrava "Marcos Andrade" escrito no código. Corrigido: lê `usuario` de `useAuth()` e mostra nome, iniciais e `<papel> · Matrícula <matricula>` reais. Foi assim que apareceu o bug relatado de "0001 e 0053 mostram a mesma pessoa" — a API sempre devolveu usuários diferentes, o cabeçalho que nunca tinha sido ligado à sessão.
 
 ### O que ainda falta para fechar a #150
 - Push da troca do front (item 1 acima) e refazer este teste com ela.
