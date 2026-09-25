@@ -63,18 +63,18 @@ não filhas do layout autenticado.
 - Dado remoto é buscado com TanStack Query (hooks `use<Entidade>` por
   domínio, a criar conforme cada tela ganha dado real) — nunca `useEffect` +
   `useState` manual para chamada de API.
-- **Todo componente usa PascalCase — no nome do arquivo (`CampoSenha.tsx`,
-  não `campo-senha.tsx`) e no `export function`/`export const` correspondente.**
+- **Todo componente usa PascalCase — no nome do arquivo (`CampoPin.tsx`,
+  não `campo-pin.tsx`) e no `export function`/`export const` correspondente.**
   Hooks são a exceção (seguem o padrão shadcn de arquivo kebab-case com
   prefixo `use-`, ex. `use-mobile.ts`), assim como os arquivos de config/lib
   (`api.ts`, `utils.ts`).
 - **Nada de bloco de JSX repetido ou reaproveitável direto numa página —
   extrai pra componente em `src/components/` (ou subpasta por domínio, ex.
   `fluxo/`, `dashboard/`) assim que o trecho tem chance de ser usado em outra
-  tela.** Ex.: `TexturaFerramentas`, `CampoSenha` e `CampoComErro` nasceram na
+  tela.** Ex.: `TexturaFerramentas`, `CampoPin` e `CampoComErro` nasceram na
   tela de login (FE-07) mas já foram extraídos porque o cadastro de
-  colaborador/usuário vai reaproveitar os três — textura de fundo, campo de
-  senha com olho animado e a animação de campo com erro.
+  colaborador/usuário vai reaproveitar os três — textura de fundo, PIN de
+  senha e a animação de campo com erro.
 
 ## Decisões já tomadas
 
