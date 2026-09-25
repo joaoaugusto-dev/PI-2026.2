@@ -24,7 +24,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, entrarComoDemo } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [erro, setErro] = useState(false)
@@ -133,6 +133,17 @@ export function LoginPage() {
               </Button>
               <Button asChild type="button" variant="outline" className="h-(--control-h) text-corpo">
                 <Link to="/cadastro">Criar Cadastro</Link>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-(--control-h) text-corpo"
+                onClick={() => {
+                  entrarComoDemo()
+                  navigate('/', { replace: true })
+                }}
+              >
+                Entrar sem a API (demonstração)
               </Button>
             </form>
           </CardContent>

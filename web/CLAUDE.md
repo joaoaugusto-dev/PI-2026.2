@@ -206,6 +206,14 @@ não filhas do layout autenticado.
   pra usar `register` direto porque o componente não é um `<input>` nativo).
   Contrato do back (`/v1/auth/login` e `/v1/auth/registro`) ainda usa e-mail
   — troca pendente na issue #150 (urgente).
+- **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
+  `AuthProvider` (`src/lib/auth.tsx`) coloca um usuário fixo em memória, sem
+  token e sem persistir em `localStorage`, e o botão "Entrar sem a API
+  (demonstração)" na `LoginPage` leva direto ao dashboard. Existe porque a P1
+  avalia a interface **sem exigir integração com a API REST** e as telas já
+  rodam com dado simulado — sem isso, quem clona o repositório só vê o login.
+  Remover quando o fluxo real estiver integrado (não é atalho de
+  desenvolvimento, é requisito da entrega parcial).
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,
