@@ -16,7 +16,20 @@ interface Usuario {
 interface AuthContextValue {
   usuario: Usuario | null
   login: (matricula: string, senha: string) => Promise<void>
+  entrarComoDemo: () => void
   logout: () => void
+}
+
+// Entrega P1 (02/10): a interface é avaliada sem a API REST no ar, então o
+// modo demonstração destrava as telas com os dados simulados de cada página.
+// ponytail: sessão demo não persiste (não tem JWT) — dar refresh volta pro
+// login; quando a API estiver integrada, esse atalho sai junto.
+const usuarioDemo: Usuario = {
+  id: 0,
+  nome: 'Visitante (demonstração)',
+  matricula: '0001',
+  papel: 'manutencao',
+  ativo: true,
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -93,7 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     definirSessao(token, usuarioLogado)
   }
 
-  const value = useMemo(() => ({ usuario, login, logout }), [usuario])
+  const entrarComoDemo = () => {
+    setAuthToken(null)
+    setUsuario(usuarioDemo)
+  }
+
+  const value = useMemo(() => ({ usuario, login, entrarComoDemo, logout }), [usuario])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
