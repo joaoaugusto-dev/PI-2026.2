@@ -34,14 +34,16 @@ separado no enum `papel_usuario`. Só um usuário com `papel = 'admin'` pode:
 - Documentação funcional do fluxo em `/docs/backend/arquitetura.md` (seção
   "Perfis" → "Admin" e "Auto-cadastro de manutenção (fluxo)").
 
+**Atualização:** o seed (`db/seed.sql`) agora cria um usuário `admin` de teste
+por padrão — colaborador `0053` ("Administrador do Sistema"), matrícula
+`0053`, senha `123456` — para que o fluxo de aprovação funcione localmente
+sem `UPDATE` manual no banco.
+
 **O que falta (fora do escopo desta issue, quando o time decidir):**
 
 - Não existe endpoint para promover um usuário existente a `admin` — hoje
   isso é feito com um `UPDATE` direto no banco. Se o time quiser uma rota
   para isso, precisa de uma nova issue.
-- Nenhum usuário `admin` é criado por padrão no seed (`db/seed.sql`) — quem
-  for rodar o fluxo localmente precisa inserir um manualmente até o time
-  decidir se isso entra no seed.
 - **Atualizar o `CLAUDE.md` raiz (Seção 3 — Regras de negócio
   inegociáveis)** com esta decisão como regra formal do projeto, incluindo o
   ajuste da Regra 8 ("Apenas dois perfis: `manutencao` e `consulta`") para

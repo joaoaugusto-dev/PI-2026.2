@@ -3,8 +3,8 @@
 --
 -- [DB-08] Popula soufer_dev com dado realista o bastante para o front
 -- trabalhar sem precisar cadastrar tudo na mao: 5 setores, 5 categorias
--- (grupos_ferramentas), 10 atividades, 2 usuarios manutenção, 52
--- colaboradores (incluindo os 2 da manutenção), 50 ferramentas variadas e uma massa de emprestimos
+-- (grupos_ferramentas), 10 atividades, 2 usuarios manutenção + 1 admin, 53
+-- colaboradores (incluindo os 2 da manutenção e o admin), 50 ferramentas variadas e uma massa de emprestimos
 -- (abertos, devolvidos sem ocorrencia e devolvidos com ocorrencia) para o
 -- dashboard nao nascer vazio.
 --
@@ -110,7 +110,8 @@ FROM (VALUES
   ('Daniel Augusto Farias', '0049', 'Usinagem CNC'),
   ('Kelly Cristina Monteiro', '0050', 'Montagem Industrial'),
   ('Sérgio Ricardo Batista', '0051', 'Controle de Qualidade'),
-  ('Natália Fernandes Rezende', '0052', 'Estamparia')
+  ('Natália Fernandes Rezende', '0052', 'Estamparia'),
+  ('Administrador do Sistema', '0053', 'Manutenção Geral')
 ) AS v(nome, matricula, setor_nome)
 JOIN setores s ON s.nome = v.setor_nome
 ON CONFLICT (matricula) DO NOTHING;
@@ -124,6 +125,15 @@ INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
 SELECT c.id, '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'manutencao', true
 FROM colaboradores c
 WHERE c.matricula IN ('0001', '0002')
+ON CONFLICT (colaborador_id) DO NOTHING;
+
+-- 4.1 Conta de acesso do admin (matrícula 0053), único papel que pode listar
+-- e aprovar auto-cadastros pendentes (issue #149). Sem ela, ninguém consegue
+-- aprovar um cadastro sem UPDATE manual no banco.
+INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
+SELECT c.id, '$2b$10$SRP0OA7e7oj5Wgb5fCP8aedf9TbxzGz3AtL9wocFq5Dgfb7FO774m', 'admin', true
+FROM colaboradores c
+WHERE c.matricula = '0053'
 ON CONFLICT (colaborador_id) DO NOTHING;
 
 -- 6. Ferramentas (50, variadas entre as 5 categorias)
