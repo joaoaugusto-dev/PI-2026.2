@@ -12,7 +12,7 @@ function App() {
       <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>
-      <Toaster />
+      <Toaster richColors />
     </QueryClientProvider>
   )
 }
