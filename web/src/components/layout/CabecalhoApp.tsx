@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { SidebarTrigger } from '@/components/ui/Sidebar'
+import { useAuth } from '@/lib/auth'
 
 type CabecalhoAppProps = {
   titulo: string
@@ -10,7 +11,22 @@ type CabecalhoAppProps = {
   horaFormatada: string
 }
 
+const ROTULO_PAPEL: Record<string, string> = {
+  manutencao: 'Manutenção',
+  admin: 'Admin',
+  consulta: 'Consulta',
+}
+
+function iniciaisDoNome(nome: string) {
+  const partes = nome.trim().split(/\s+/)
+  const primeira = partes[0]?.[0] ?? ''
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : ''
+  return (primeira + ultima).toUpperCase()
+}
+
 export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: CabecalhoAppProps) {
+  const { usuario } = useAuth()
+
   return (
     <header className="flex h-16 items-center gap-2 border-b px-4 justify-between">
       <div className="flex items-center gap-3">
@@ -37,11 +53,15 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
         </button>
         <div className="flex items-center gap-2 border-l pl-4">
           <Avatar className="size-8">
-            <AvatarFallback className="text-xs font-medium">MA</AvatarFallback>
+            <AvatarFallback className="text-xs font-medium">
+              {usuario ? iniciaisDoNome(usuario.nome) : '—'}
+            </AvatarFallback>
           </Avatar>
           <div className="hidden sm:flex flex-col leading-tight">
-            <span className="text-corpo font-medium">Marcos Andrade</span>
-            <span className="text-rotulo text-muted-foreground">Manutenção · Turno A</span>
+            <span className="text-corpo font-medium">{usuario?.nome ?? 'Não logado'}</span>
+            <span className="text-rotulo text-muted-foreground">
+              {usuario ? `${ROTULO_PAPEL[usuario.papel] ?? usuario.papel} · Matrícula ${usuario.matricula}` : ''}
+            </span>
           </div>
         </div>
       </div>
