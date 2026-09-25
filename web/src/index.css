@@ -200,6 +200,9 @@
     --animate-atraso: atraso 2s var(--ease-soufer) infinite;
     --animate-respiro: respiro var(--motion-ambiente) var(--ease-soufer) infinite;
     --animate-brilho: brilho 1.4s linear infinite;
+    --animate-check-entra: check-entra 550ms var(--ease-soufer) both;
+    --animate-tinta-entra: tinta-entra 1000ms var(--ease-soufer) both;
+    --animate-tinta-sai: tinta-sai 800ms var(--ease-soufer) both;
 
     /* Entrada de tela, card e linha de lista. */
     @keyframes entrada {
@@ -271,6 +274,48 @@
         }
         50% {
             opacity: 0.55;
+        }
+    }
+
+    /* Check de confirmação em tela cheia (cadastro enviado): entra com leve
+       overshoot pra parecer um "carimbo", depois some pra dar lugar ao
+       conteúdo (mensagem + botão) que entra com --animate-entrada. */
+    @keyframes check-entra {
+        from {
+            opacity: 0;
+            transform: scale3d(0.4, 0.4, 1);
+        }
+        60% {
+            opacity: 1;
+            transform: scale3d(1.08, 1.08, 1);
+        }
+        to {
+            opacity: 1;
+            transform: scale3d(1, 1, 1);
+        }
+    }
+
+    /* Tinta escura se espalhando por cima da tela até cobrir tudo (círculo
+       gigante, só escala — o compositor nunca recalcula layout de um
+       elemento do tamanho da viewport inteira). */
+    @keyframes tinta-entra {
+        from {
+            transform: translate3d(-50%, -50%, 0) scale3d(0, 0, 1);
+        }
+        to {
+            transform: translate3d(-50%, -50%, 0) scale3d(1, 1, 1);
+        }
+    }
+
+    /* Recolhe e dissolve, revelando o conteúdo por trás. */
+    @keyframes tinta-sai {
+        from {
+            opacity: 1;
+            transform: translate3d(-50%, -50%, 0) scale3d(1, 1, 1);
+        }
+        to {
+            opacity: 0;
+            transform: translate3d(-50%, -50%, 0) scale3d(1.4, 1.4, 1);
         }
     }
 }
@@ -382,6 +427,37 @@
         from,
         to {
             transform: none;
+        }
+    }
+
+    @keyframes check-entra {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes tinta-entra {
+        from {
+            opacity: 0;
+            transform: translate3d(-50%, -50%, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(-50%, -50%, 0);
+        }
+    }
+
+    @keyframes tinta-sai {
+        from {
+            opacity: 1;
+            transform: translate3d(-50%, -50%, 0);
+        }
+        to {
+            opacity: 0;
+            transform: translate3d(-50%, -50%, 0);
         }
     }
 

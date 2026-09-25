@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {
@@ -7,6 +8,9 @@ interface Usuario {
   nome: string
   matricula: string
   papel: string
+  /** Opcional pq o back ainda não manda esse campo (ver issue #150-b) — até
+   * lá, tratamos como sempre ativo pra não quebrar o fluxo atual. */
+  ativo?: boolean
 }
 
 interface AuthContextValue {
@@ -77,12 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setHandler401(null)
   }, [])
 
-  const login = async (matricula: string, senha: string) => {
-    const { data } = await api.post('/auth/login', { matricula, senha })
-    const { token, usuario: usuarioLogado } = data.data
+  const definirSessao = (token: string, usuarioLogado: Usuario) => {
     setAuthToken(token)
     setUsuario(usuarioLogado)
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ token, usuario: usuarioLogado }))
+  }
+
+  const login = async (matricula: string, senha: string) => {
+    const { data } = await api.post('/auth/login', { matricula, senha })
+    const { token, usuario: usuarioLogado } = data.data
+    definirSessao(token, usuarioLogado)
   }
 
   const value = useMemo(() => ({ usuario, login, logout }), [usuario])
@@ -97,11 +105,15 @@ export function useAuth() {
 }
 
 export function RotaProtegida({ children }: { children: ReactNode }) {
-  const { usuario } = useAuth()
+  const { usuario, logout } = useAuth()
   const location = useLocation()
 
   if (!usuario) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (usuario.ativo === false) {
+    return <TelaAguardandoAprovacao aoSair={logout} />
   }
 
   return <>{children}</>

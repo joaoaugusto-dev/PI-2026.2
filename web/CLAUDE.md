@@ -63,18 +63,18 @@ não filhas do layout autenticado.
 - Dado remoto é buscado com TanStack Query (hooks `use<Entidade>` por
   domínio, a criar conforme cada tela ganha dado real) — nunca `useEffect` +
   `useState` manual para chamada de API.
-- **Todo componente usa PascalCase — no nome do arquivo (`CampoSenha.tsx`,
-  não `campo-senha.tsx`) e no `export function`/`export const` correspondente.**
+- **Todo componente usa PascalCase — no nome do arquivo (`CampoPin.tsx`,
+  não `campo-pin.tsx`) e no `export function`/`export const` correspondente.**
   Hooks são a exceção (seguem o padrão shadcn de arquivo kebab-case com
   prefixo `use-`, ex. `use-mobile.ts`), assim como os arquivos de config/lib
   (`api.ts`, `utils.ts`).
 - **Nada de bloco de JSX repetido ou reaproveitável direto numa página —
   extrai pra componente em `src/components/` (ou subpasta por domínio, ex.
   `fluxo/`, `dashboard/`) assim que o trecho tem chance de ser usado em outra
-  tela.** Ex.: `TexturaFerramentas`, `CampoSenha` e `CampoComErro` nasceram na
+  tela.** Ex.: `TexturaFerramentas`, `CampoPin` e `CampoComErro` nasceram na
   tela de login (FE-07) mas já foram extraídos porque o cadastro de
-  colaborador/usuário vai reaproveitar os três — textura de fundo, campo de
-  senha com olho animado e a animação de campo com erro.
+  colaborador/usuário vai reaproveitar os três — textura de fundo, PIN de
+  senha e a animação de campo com erro.
 
 ## Decisões já tomadas
 
@@ -196,6 +196,16 @@ não filhas do layout autenticado.
   parecer válido no cliente mas ter sido invalidado no servidor (usuário
   desativado, segredo rotacionado). Consulta (quiosque) continua sem
   persistência nenhuma — sessão de 15 min é descartável por design.
+- **Login e cadastro de almoxarife usam matrícula (4 dígitos) + senha
+  numérica de 6 dígitos, nunca e-mail** — e-mail não existe no ambiente
+  fabril. A senha é digitada num PIN estilo lock screen de celular
+  (`src/components/CampoPin.tsx`, 6 caixas centralizadas): o último dígito
+  digitado fica visível por 1s antes de virar bolinha, os anteriores já
+  ficam mascarados — substitui o `CampoSenha` (input com olho) da FE-07
+  nas telas de auth. Integrado ao React Hook Form via `Controller` (não dá
+  pra usar `register` direto porque o componente não é um `<input>` nativo).
+  Contrato do back (`/v1/auth/login` e `/v1/auth/registro`) ainda usa e-mail
+  — troca pendente na issue #150 (urgente).
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,

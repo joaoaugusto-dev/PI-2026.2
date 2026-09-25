@@ -1,31 +1,31 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, Loader2 } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Loader2 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
-import { CampoSenha } from '@/components/CampoSenha'
+import { CampoPin } from '@/components/CampoPin'
+import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
 import { TexturaFerramentas } from '@/components/TexturaFerramentas'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { api } from '@/lib/api'
+import { avisarErro } from '@/lib/avisar-erro'
 
-// Mesma regra da matrícula do login (issue #150): só dígitos, de 0001 a 9999.
 const cadastroSchema = z
   .object({
-    matricula: z.string().regex(/^(?!0000)\d{4}$/, 'Informe a matrícula com 4 dígitos'),
-    senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-    confirmarSenha: z.string().min(1, 'Confirme a senha'),
+    nome: z.string().min(1, 'Informe seu nome'),
+    matricula: z.string().regex(/^(?!0000)\d{4}$/, 'A matrícula tem 4 dígitos'),
+    senha: z.string().length(6, 'A senha tem 6 dígitos'),
+    confirmarSenha: z.string().length(6, 'A senha tem 6 dígitos'),
   })
   .refine((dados) => dados.senha === dados.confirmarSenha, {
-    message: 'As senhas não coincidem',
+    message: 'As senhas não conferem',
     path: ['confirmarSenha'],
   })
-
-type CadastroForm = z.infer<typeof cadastroSchema>
 
 // Mensagens por `error.code` do POST /v1/auth/registro (issue #149).
 const MENSAGENS_ERRO: Record<string, string> = {
@@ -34,31 +34,53 @@ const MENSAGENS_ERRO: Record<string, string> = {
   TOO_MANY_REQUESTS: 'Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.',
 }
 
+// Só esses códigos são sobre a matrícula em si (destacam o campo).
+const CODIGOS_MATRICULA = ['COLABORADOR_NOT_FOUND', 'MATRICULA_JA_CADASTRADA']
+
+type CadastroForm = z.infer<typeof cadastroSchema>
+
 export function CadastroPage() {
-  const [erro, setErro] = useState<string | null>(null)
+  const [erro, setErro] = useState(false)
   const [tentativaErro, setTentativaErro] = useState(0)
   const [enviado, setEnviado] = useState(false)
+  const senhaRef = useRef<HTMLInputElement>(null)
+  const confirmarSenhaRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CadastroForm>({ resolver: zodResolver(cadastroSchema) })
+  } = useForm<CadastroForm>({
+    resolver: zodResolver(cadastroSchema),
+    defaultValues: { nome: '', matricula: '', senha: '', confirmarSenha: '' },
+  })
 
   async function onSubmit(dados: CadastroForm) {
-    setErro(null)
+    setErro(false)
     try {
-      await api.post('/auth/registro', { matricula: dados.matricula, senha: dados.senha })
+      await api.post('/auth/registro', { nome: dados.nome, matricula: dados.matricula, senha: dados.senha })
       setEnviado(true)
     } catch (erroRequisicao: any) {
+      const codigo = erroRequisicao?.response?.data?.error?.code
+      let mensagem = MENSAGENS_ERRO[codigo] ?? 'Não foi possível concluir o cadastro. Tente novamente.'
       if (!erroRequisicao?.response) {
-        setErro('Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.')
-      } else {
-        const codigo = erroRequisicao.response.data?.error?.code
-        setErro(MENSAGENS_ERRO[codigo] ?? 'Não foi possível concluir o cadastro. Tente novamente.')
+        // Sem resposta (API fora, CORS, rede) — não é problema do cadastro em si.
+        mensagem = 'Não foi possível conectar ao servidor. Verifique se a API está no ar e tente novamente.'
       }
+      setErro(CODIGOS_MATRICULA.includes(codigo))
       setTentativaErro((tentativa) => tentativa + 1)
+      avisarErro(mensagem)
     }
+  }
+
+  function onErroValidacao(errosForm: FieldErrors<CadastroForm>) {
+    const primeiraMensagem = Object.values(errosForm)[0]?.message
+    if (primeiraMensagem) avisarErro(primeiraMensagem)
+  }
+
+  if (enviado) {
+    return <TelaAguardandoAprovacao />
   }
 
   return (
@@ -70,89 +92,106 @@ export function CadastroPage() {
             <img src="/brand/soufer-negativo.png" alt="SOUFER Tools" className="h-12 w-auto" />
           </div>
 
-          {enviado ? (
-            <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-              <CheckCircle2 className="size-12 text-status-disponivel" />
-              <div className="space-y-1.5">
-                <CardTitle className="text-titulo">Cadastro enviado</CardTitle>
-                <CardDescription>
-                  Aguarde a aprovação de um administrador para poder entrar com sua matrícula e senha.
-                </CardDescription>
+          <CardHeader>
+            <CardTitle className="text-titulo">Criar conta</CardTitle>
+            <CardDescription>Cadastro de Funcionário</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit, onErroValidacao)} noValidate>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="nome">Nome completo</Label>
+                <CampoComErro erro={!!errors.nome} tentativa={tentativaErro}>
+                  <Input
+                    id="nome"
+                    autoComplete="name"
+                    autoFocus
+                    aria-invalid={!!errors.nome}
+                    className="h-(--control-h) text-secao md:text-secao"
+                    {...register('nome')}
+                  />
+                </CampoComErro>
               </div>
-              <Button asChild className="h-(--control-h) w-full">
-                <Link to="/login">Voltar para o login</Link>
-              </Button>
-            </CardContent>
-          ) : (
-            <>
-              <CardHeader>
-                <CardTitle className="text-titulo">Solicitar cadastro</CardTitle>
-                <CardDescription>
-                  Informe sua matrícula de colaborador e crie uma senha. O nome vem do seu cadastro.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="matricula">Matrícula</Label>
-                    <CampoComErro erro={!!errors.matricula} tentativa={tentativaErro}>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="matricula">Matrícula</Label>
+                <CampoComErro erro={!!errors.matricula || erro} tentativa={tentativaErro}>
+                  <Controller
+                    name="matricula"
+                    control={control}
+                    render={({ field }) => (
                       <Input
                         id="matricula"
                         inputMode="numeric"
                         maxLength={4}
                         autoComplete="username"
-                        autoFocus
-                        aria-invalid={!!errors.matricula}
-                        className="h-(--control-h)"
-                        {...register('matricula')}
+                        aria-invalid={!!errors.matricula || erro}
+                        className="h-(--control-h) text-center text-titulo md:text-titulo"
+                        {...field}
+                        onChange={(e) => {
+                          const novo = e.target.value.replace(/\D/g, '').slice(0, 4)
+                          field.onChange(novo)
+                          if (novo.length === 4) senhaRef.current?.focus()
+                        }}
                       />
-                    </CampoComErro>
-                    {errors.matricula && <p className="text-rotulo text-destructive">{errors.matricula.message}</p>}
-                  </div>
+                    )}
+                  />
+                </CampoComErro>
+              </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="senha">Senha</Label>
-                    <CampoComErro erro={!!errors.senha} tentativa={tentativaErro}>
-                      <CampoSenha
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="senha">Senha</Label>
+                <CampoComErro erro={!!errors.senha} tentativa={tentativaErro}>
+                  <Controller
+                    name="senha"
+                    control={control}
+                    render={({ field }) => (
+                      <CampoPin
+                        ref={senhaRef}
                         id="senha"
                         autoComplete="new-password"
-                        aria-invalid={!!errors.senha}
-                        {...register('senha')}
+                        erro={!!errors.senha}
+                        value={field.value}
+                        onChange={(valor) => {
+                          field.onChange(valor)
+                          if (valor.length === 6) confirmarSenhaRef.current?.focus()
+                        }}
+                        onBlur={field.onBlur}
                       />
-                    </CampoComErro>
-                    {errors.senha && <p className="text-rotulo text-destructive">{errors.senha.message}</p>}
-                  </div>
+                    )}
+                  />
+                </CampoComErro>
+              </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="confirmarSenha">Confirmar senha</Label>
-                    <CampoComErro erro={!!errors.confirmarSenha} tentativa={tentativaErro}>
-                      <CampoSenha
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirmarSenha">Confirmar senha</Label>
+                <CampoComErro erro={!!errors.confirmarSenha} tentativa={tentativaErro}>
+                  <Controller
+                    name="confirmarSenha"
+                    control={control}
+                    render={({ field }) => (
+                      <CampoPin
+                        ref={confirmarSenhaRef}
                         id="confirmarSenha"
                         autoComplete="new-password"
-                        aria-invalid={!!errors.confirmarSenha}
-                        {...register('confirmarSenha')}
+                        erro={!!errors.confirmarSenha}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
                       />
-                    </CampoComErro>
-                    {errors.confirmarSenha && (
-                      <p className="text-rotulo text-destructive">{errors.confirmarSenha.message}</p>
                     )}
-                  </div>
+                  />
+                </CampoComErro>
+              </div>
 
-                  {erro && <p className="text-sm text-destructive">{erro}</p>}
-                  <Button type="submit" className="h-(--control-h)" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-                    {isSubmitting ? 'Enviando...' : 'Solicitar cadastro'}
-                  </Button>
-                  <p className="text-center text-rotulo text-muted-foreground">
-                    Já tem acesso?{' '}
-                    <Link to="/login" className="font-medium text-foreground underline underline-offset-2">
-                      Entrar
-                    </Link>
-                  </p>
-                </form>
-              </CardContent>
-            </>
-          )}
+              <Button type="submit" className="h-(--control-h)" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                {isSubmitting ? 'Enviando...' : 'Criar conta'}
+              </Button>
+              <Button asChild type="button" variant="outline" className="h-(--control-h) text-corpo">
+                <Link to="/login">Já estou cadastrado — Entrar</Link>
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>
