@@ -86,6 +86,13 @@ até o time decidir se cria um fluxo de gestão de admins (ver
 
 O banco de dados adotado é o **PostgreSQL** (hospedado na nuvem via AWS RDS ou em infraestrutura dedicada). Todas as tabelas, tipos ENUM, triggers, constraints, views e índices parciais são mantidos nativamente via scripts SQL/migrations.
 
+As extensões `unaccent` e `pg_trgm` são usadas na identificação de colaborador
+(`GET /v1/colaboradores/identificar`, API-09): matrícula exata primeiro e,
+se não achar, nome tolerante a acento e erro de digitação via um índice GIN
+(`gin_trgm_ops`) sobre uma função `IMMUTABLE` que encapsula `unaccent()`
+(exigido pelo Postgres para indexar a expressão). Detalhes em
+`docs/banco-de-dados/dicionario-de-dados.md`.
+
 ## Infraestrutura prevista
 
 - API: AWS EC2 com Node 20, PM2 e Nginx.

@@ -44,9 +44,11 @@ api/
     │   └── express.d.ts             # Extensão de tipos do Express para req.usuario
     ├── controllers/                 # Camada de controle (recebe requisição, chama service e responde)
     │   ├── authController.ts        # Login, me e sessão de consulta
+    │   ├── colaboradorController.ts # CRUD e identificação de colaboradores (API-09)
     │   └── healthController.ts      # Healthcheck da API e diagnóstico do PostgreSQL
     ├── services/                    # Regras de negócio e acesso ao banco
-    │   └── authService.ts           # Lógica de autenticação e emissão de tokens
+    │   ├── authService.ts           # Lógica de autenticação e emissão de tokens
+    │   └── colaboradorService.ts    # CRUD e identificação (matrícula/nome com unaccent+pg_trgm)
     ├── middlewares/                 # Middlewares globais e de rota
     │   ├── auth.ts                  # Validação de JWT e injeção de req.usuario
     │   ├── authorize.ts             # RBAC (manutenção vs consulta)
@@ -57,10 +59,12 @@ api/
     │   └── v1/
     │       ├── index.ts             # Agregador de rotas com prefixo /v1
     │       ├── authRoutes.ts        # Rotas /v1/auth
+    │       ├── colaboradorRoutes.ts # Rotas /v1/colaboradores (identificar antes de /:id)
     │       ├── consultaRoutes.ts    # Rotas /v1/consulta
     │       └── healthRoutes.ts      # Rota /v1/health
     ├── validators/                  # Esquemas Zod de entrada
-    │   └── authValidator.ts
+    │   ├── authValidator.ts
+    │   └── colaboradorValidator.ts
     └── utils/
         ├── errors.ts                # Classes de erro customizadas (AppError, NotFound, etc.)
         ├── pagination.ts            # Helpers para cálculo de paginação
@@ -175,7 +179,7 @@ O sistema possui dois modos de acesso via JWT:
 
 1. **Manutenção (`papel: 'manutencao'`):**
    - Autenticado via `POST /v1/auth/login` com matrícula (4 dígitos) e senha.
-   - Token válido por **7 dias**.
+   - Token válido por **7 dias** por padrão (`JWT_EXPIRES_IN`); `ativo` é revalidado no banco a cada requisição, então um usuário desativado perde acesso já na próxima chamada, não só no próximo login.
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**
@@ -184,7 +188,7 @@ O sistema possui dois modos de acesso via JWT:
    - Acesso restrito somente a rotas de leitura de disponibilidade.
 
 > ⚠️ **Regra de Segurança Inegociável:**  
-> Campos de autoria (`usuario_retirada_id`, `usuario_devolucao_id`, `registrada_por`) **NUNCA** são aceitos no corpo da requisição enviada pelo front-end. O back-end obtém o ID e o papel do usuário diretamente de `req.usuario` (injetado pelo middleware `authenticate`).
+> Campos de autoria (`usuario_retirada_id`, `usuario_devolucao_id`, `registrada_por`, `criado_por`) **NUNCA** são aceitos no corpo da requisição enviada pelo front-end. O back-end obtém o ID e o papel do usuário diretamente de `req.usuario` (injetado pelo middleware `authenticate`). Em `POST /v1/colaboradores`, por exemplo, o schema Zod só aceita `nome`, `matricula` e `setorId` — qualquer `criadoPor` enviado no corpo é descartado antes de chegar ao service.
 
 ---
 

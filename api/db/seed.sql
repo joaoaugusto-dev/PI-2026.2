@@ -3,7 +3,7 @@
 --
 -- [DB-08] Popula soufer_dev com dado realista o bastante para o front
 -- trabalhar sem precisar cadastrar tudo na mao: 5 setores, 5 categorias
--- (grupos_ferramentas), 10 atividades, 2 usuarios manutenção, 22
+-- (grupos_ferramentas), 10 atividades, 2 usuarios manutenção, 52
 -- colaboradores (incluindo os 2 da manutenção), 50 ferramentas variadas e uma massa de emprestimos
 -- (abertos, devolvidos sem ocorrencia e devolvidos com ocorrencia) para o
 -- dashboard nao nascer vazio.
@@ -48,9 +48,11 @@ INSERT INTO atividades (nome, descricao, ativo) VALUES
 ('Apoio de Linha', 'Suporte operacional geral na linha de produção', true)
 ON CONFLICT (LOWER(nome)) DO NOTHING;
 
--- 5. Colaboradores (22): 2 da manutenção (0001/0002, donos das contas do passo 4) + 20 do chão de fábrica.
+-- 5. Colaboradores (52): 2 da manutenção (0001/0002, donos das contas do passo 4) + 50 do chão de fábrica.
 -- A matrícula é a identidade da pessoa e só existe aqui; usuarios aponta para cá (colaborador_id).
 -- Simplificado 02/09 (DB-02): sem código de identificação além da matrícula nem cargo, ver 0001_init.sql.
+-- Ampliado na API-09 (de 20 para 50 do chão de fábrica) para dar massa realista ao teste de
+-- desempenho do índice gin_trgm da busca por nome (item "se sobrar tempo").
 -- setor_id por subquery (nome), não por id literal: SERIAL não é
 -- transacional, então um id fixo quebra depois de qualquer seed que tenha
 -- falhado antes (a sequência avança mesmo com ROLLBACK).
@@ -78,7 +80,37 @@ FROM (VALUES
   ('Marcelo Vinícius Correia', '0019', 'Usinagem CNC'),
   ('Priscila Andrade Monteiro', '0020', 'Montagem Industrial'),
   ('Eduardo Henrique Nascimento Barros', '0021', 'Manutenção Geral'),
-  ('Simone Cristina Farias', '0022', 'Controle de Qualidade')
+  ('Simone Cristina Farias', '0022', 'Controle de Qualidade'),
+  ('Rafael Souza Lopes', '0023', 'Manutenção Geral'),
+  ('Beatriz Carvalho Dias', '0024', 'Usinagem CNC'),
+  ('André Luiz Ferreira Gomes', '0025', 'Montagem Industrial'),
+  ('Larissa Mendes Cunha', '0026', 'Controle de Qualidade'),
+  ('Fábio Ricardo Azevedo', '0027', 'Estamparia'),
+  ('Tatiane Aparecida Rocha', '0028', 'Manutenção Geral'),
+  ('Leonardo Vieira Castro', '0029', 'Usinagem CNC'),
+  ('Débora Cristina Pinto', '0030', 'Montagem Industrial'),
+  ('Marcos Antônio Barbosa Silva', '0031', 'Controle de Qualidade'),
+  ('Cíntia Regina Duarte', '0032', 'Estamparia'),
+  ('Vinícius Oliveira Ramos', '0033', 'Manutenção Geral'),
+  ('Amanda Cristina Melo', '0034', 'Usinagem CNC'),
+  ('José Carlos Nogueira Filho', '0035', 'Montagem Industrial'),
+  ('Paula Regina Machado', '0036', 'Controle de Qualidade'),
+  ('Rodrigo Silva Andrade', '0037', 'Estamparia'),
+  ('Cristiane Aparecida Souza', '0038', 'Manutenção Geral'),
+  ('Alexandre Freitas Lima', '0039', 'Usinagem CNC'),
+  ('Josiane Pereira Costa', '0040', 'Montagem Industrial'),
+  ('Ricardo Gomes Teixeira', '0041', 'Controle de Qualidade'),
+  ('Sandra Regina Alves', '0042', 'Estamparia'),
+  ('Wesley Rodrigues Martins', '0043', 'Manutenção Geral'),
+  ('Michele Cristina Barros', '0044', 'Usinagem CNC'),
+  ('Anderson Luiz Correia', '0045', 'Montagem Industrial'),
+  ('Viviane Aparecida Nunes', '0046', 'Controle de Qualidade'),
+  ('Gabriel Henrique Moraes', '0047', 'Estamparia'),
+  ('Elaine Cristina Ribeiro', '0048', 'Manutenção Geral'),
+  ('Daniel Augusto Farias', '0049', 'Usinagem CNC'),
+  ('Kelly Cristina Monteiro', '0050', 'Montagem Industrial'),
+  ('Sérgio Ricardo Batista', '0051', 'Controle de Qualidade'),
+  ('Natália Fernandes Rezende', '0052', 'Estamparia')
 ) AS v(nome, matricula, setor_nome)
 JOIN setores s ON s.nome = v.setor_nome
 ON CONFLICT (matricula) DO NOTHING;

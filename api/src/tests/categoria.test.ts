@@ -7,20 +7,25 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_CAT_';
 
-function gerarToken(papel = 'manutencao') {
+function gerarToken(usuarioId: number, papel = 'manutencao') {
   return jwt.sign(
-    { id: 1, nome: 'Test User', papel, matricula: '0001' },
+    { id: usuarioId, nome: 'Test User', papel, matricula: '0001' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
 }
 
 describe('CRUD Categorias / Grupos de Ferramentas (/v1/categorias)', () => {
-  const token = gerarToken('manutencao');
+  let token: string;
   let cat1Id: number;
   let cat2Id: number;
 
   beforeAll(async () => {
+    const usuario = await query<{ id: number }>(
+      "SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true LIMIT 1"
+    );
+    token = gerarToken(usuario.rows[0].id);
+
     const res1 = await query<{ id: number }>(
       `INSERT INTO grupos_ferramentas (nome, ativo) VALUES ($1, true) RETURNING id`,
       [`${PREFIXO}Elétricas`]

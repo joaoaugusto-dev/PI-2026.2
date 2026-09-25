@@ -27,6 +27,7 @@ Esses valores são determinados pelo back-end.
 |---|---|---|---|
 | GET | `/v1/health` | Público | Healthcheck |
 | POST | `/v1/auth/login` | Público | Login |
+| POST | `/v1/auth/registro` | Público | Auto-cadastro por matrícula (cria conta inativa, aguardando aprovação) |
 | GET | `/v1/auth/me` | Autenticado | Usuário atual |
 | POST | `/v1/consulta/sessao` | Público | Token limitado de consulta |
 | GET | `/v1/consulta/ferramentas` | Consulta | Busca somente leitura |
@@ -39,7 +40,8 @@ Esses valores são determinados pelo back-end.
 | PATCH | `/v1/ferramentas/:id/etiqueta-impressa` | Manutenção | Marca a etiqueta como impressa |
 | PATCH | `/v1/ferramentas/:id/disponibilizar` | Manutenção | Retorno de reparo |
 | DELETE | `/v1/ferramentas/:id` | Manutenção | Baixa lógica (ativo = false) |
-| GET/POST/PUT/DELETE | `/v1/colaboradores` | Manutenção | CRUD |
+| GET | `/v1/colaboradores/identificar` | Manutenção | Identifica por matrícula exata ou nome (unaccent + pg_trgm), 404 se não achar |
+| GET/POST/PATCH/DELETE | `/v1/colaboradores` | Manutenção | CRUD (edição parcial via `PATCH /v1/colaboradores/:id`; `DELETE` é inativação lógica) |
 | GET/POST/PUT/DELETE | `/v1/setores` | Manutenção | CRUD |
 | GET/POST/PUT/DELETE | `/v1/categorias` | Manutenção | CRUD |
 | GET/POST/PUT/DELETE | `/v1/atividades` | Manutenção | CRUD |
@@ -51,6 +53,8 @@ Esses valores são determinados pelo back-end.
 | GET | `/v1/dashboard/kpis` | Manutenção | KPIs |
 | POST | `/v1/importacoes/ferramentas` | Manutenção | Importação CSV |
 | GET | `/v1/relatorios/emprestimos.csv` | Manutenção | Exportação |
+| GET | `/v1/usuarios?ativo=false` | Admin | Lista cadastros pendentes de aprovação |
+| PATCH | `/v1/usuarios/:id/ativar` | Admin | Aprova um cadastro pendente |
 
 ## Resposta de sucesso
 

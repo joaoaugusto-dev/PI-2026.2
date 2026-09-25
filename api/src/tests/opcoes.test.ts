@@ -7,21 +7,26 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_OPC_';
 
-function gerarToken(papel = 'manutencao') {
+function gerarToken(usuarioId: number, papel = 'manutencao') {
   return jwt.sign(
-    { id: 1, nome: 'Test User', papel, matricula: '0001' },
+    { id: usuarioId, nome: 'Test User', papel, matricula: '0001' },
     env.jwt.secret,
     { expiresIn: '1h' }
   );
 }
 
 describe('GET /v1/opcoes (Opções combinadas)', () => {
-  const token = gerarToken('manutencao');
+  let token: string;
   let setorId: number;
   let catId: number;
   let ativId: number;
 
   beforeAll(async () => {
+    const usuario = await query<{ id: number }>(
+      "SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true LIMIT 1"
+    );
+    token = gerarToken(usuario.rows[0].id);
+
     const s = await query<{ id: number }>(
       `INSERT INTO setores (nome, ativo) VALUES ($1, true) RETURNING id`,
       [`${PREFIXO}SetorOpcao`]
