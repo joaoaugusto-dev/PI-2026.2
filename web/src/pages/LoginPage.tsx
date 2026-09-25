@@ -43,11 +43,13 @@ export function LoginPage() {
       navigate(destino, { replace: true })
     } catch (erroRequisicao: any) {
       const codigo = erroRequisicao?.response?.data?.error?.code
-      setErro(
-        codigo === 'USER_INACTIVE'
-          ? 'Usuário inativo. Contate o administrador.'
-          : 'Matrícula ou senha inválidos.',
-      )
+      if (codigo === 'USER_INACTIVE') {
+        setErro('Usuário inativo. Contate o administrador.')
+      } else if (codigo === 'TOO_MANY_REQUESTS') {
+        setErro('Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.')
+      } else {
+        setErro('Matrícula ou senha inválidos.')
+      }
       setTentativaErro((tentativa) => tentativa + 1)
     }
   }

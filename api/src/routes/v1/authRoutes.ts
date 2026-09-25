@@ -3,7 +3,7 @@ import { AuthController } from '../../controllers/authController.js';
 import { validate } from '../../middlewares/validate.js';
 import { loginSchema, registroSchema } from '../../validators/authValidator.js';
 import { authenticate } from '../../middlewares/auth.js';
-import { registroLimiter } from '../../middlewares/rateLimit.js';
+import { loginLimiter, registroLimiter } from '../../middlewares/rateLimit.js';
 
 const router = Router();
 
@@ -38,8 +38,15 @@ const router = Router();
  *         description: Erro de validação nos campos (matrícula fora do padrão de 4 dígitos)
  *       401:
  *         description: Matrícula ou senha inválidos, ou usuário inativo
+ *       429:
+ *         description: Limite de 10 tentativas por minuto por IP excedido
  */
-router.post('/login', validate({ body: loginSchema }), AuthController.login);
+// loginLimiter depois do validate() (ordem diferente do registroLimiter, que
+// vem antes): matrícula fora do formato de 4 dígitos é rejeitada de graça
+// pelo Zod, sem custar nada de banco/bcrypt, então não faz sentido gastar o
+// limite com isso — só tentativas de credencial (matrícula bem formada)
+// contam contra as 10/minuto, que é o cenário real de força bruta.
+router.post('/login', validate({ body: loginSchema }), loginLimiter, AuthController.login);
 
 /**
  * @openapi

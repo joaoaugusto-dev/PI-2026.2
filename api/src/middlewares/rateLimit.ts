@@ -37,3 +37,13 @@ export const registroLimiter = criarLimiter({
   max: 10,
   message: 'Muitas tentativas de cadastro. Aguarde um minuto e tente novamente.',
 });
+
+// Login por matrícula (issue #150): a matrícula tem só 9.999 valores
+// possíveis e não é secreta (mesmo raciocínio do consultaSessaoLimiter e do
+// registroLimiter) — sem limite, dá pra forçar a senha contra qualquer uma
+// das matrículas sem nenhum freio.
+export const loginLimiter = criarLimiter({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'Muitas tentativas de login. Aguarde um minuto e tente novamente.',
+});
