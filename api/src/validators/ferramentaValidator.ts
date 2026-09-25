@@ -33,7 +33,7 @@ export const criarFerramentaSchema = z.object({
   nome: z
     .string({ required_error: 'Nome é obrigatório', invalid_type_error: 'Nome deve ser um texto' })
     .trim()
-    .min(1, 'Nome não pode ser vazio')
+    .min(2, 'Nome deve ter no mínimo 2 caracteres')
     .max(150, 'Nome deve ter no máximo 150 caracteres'),
   descricao: z.string({ invalid_type_error: 'Descrição deve ser um texto' }).max(2000, 'Descrição deve ter no máximo 2000 caracteres').optional(),
   marca: z.string({ invalid_type_error: 'Marca deve ser um texto' }).max(100, 'Marca deve ter no máximo 100 caracteres').optional(),
