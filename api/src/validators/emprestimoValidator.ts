@@ -6,18 +6,28 @@ const idPositivo = (campo: string) =>
     .int(`${campo} deve ser um número inteiro`)
     .positive(`${campo} deve ser um número positivo`);
 
-// Data sem horário (YYYY-MM-DD) vale até o fim do expediente daquele dia em
-// Brasília; sem isso ela viraria meia-noite UTC (21h do dia anterior no
-// Brasil) e a vw_emprestimos_detalhe marcaria o empréstimo como atrasado
-// antes da hora.
+// O usuário pensa em horário de Brasília. Sem tratamento, `new Date()` leria
+// "2026-10-05T10:00" (o que um <input type="datetime-local"> envia) no fuso do
+// processo, e o servidor em UTC gravaria 07h de Brasília. Por isso texto sem
+// offset (sem Z nem ±HH:MM) é interpretado como Brasília (-03:00; o Brasil não
+// tem horário de verão desde 2019), inclusive a data sem horário, que vale até
+// 23:59:59 do dia: como meia-noite UTC seria 21h do dia anterior, a
+// vw_emprestimos_detalhe marcaria o empréstimo como atrasado antes da hora.
 const SOMENTE_DATA_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DATA_HORA_SEM_OFFSET_REGEX = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/;
+
+function interpretarComoBrasilia(valor: unknown): unknown {
+  if (typeof valor !== 'string') return valor;
+  const texto = valor.trim();
+  if (SOMENTE_DATA_REGEX.test(texto)) return new Date(`${texto}T23:59:59-03:00`);
+  const dataHora = DATA_HORA_SEM_OFFSET_REGEX.exec(texto);
+  if (dataHora) return new Date(`${dataHora[1]}T${dataHora[2]}-03:00`);
+  return new Date(texto);
+}
 
 const previsaoDevolucaoSchema = z
   .preprocess(
-    (valor) => {
-      if (typeof valor !== 'string') return valor;
-      return new Date(SOMENTE_DATA_REGEX.test(valor) ? `${valor}T23:59:59-03:00` : valor);
-    },
+    interpretarComoBrasilia,
     z.date({
       errorMap: (issue, ctx) => ({
         message:

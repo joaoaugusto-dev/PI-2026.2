@@ -3,7 +3,8 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
-import { query } from '../config/database.js';
+import { query, getClient } from '../config/database.js';
+import { criarEmprestimoSchema } from '../validators/emprestimoValidator.js';
 
 // Testes de rota (Vitest + Supertest) da API-11 (issue #47): registro de
 // retirada e sugestão de previsão de devolução. Cada caso usa a sua própria
@@ -233,6 +234,125 @@ describe('Rotas de Empréstimos (API-11)', () => {
         expect(kitInteiro.status).toBe(409);
         expect(kitInteiro.body.error.code).toBe('FERRAMENTA_INDISPONIVEL');
       });
+    });
+  });
+
+  describe('ferramenta e kit indisponíveis (Regra 2)', () => {
+    const tornarIndisponivel = (id: number) =>
+      query("UPDATE ferramentas SET status = 'indisponivel', motivo_indisponivel = 'avaria' WHERE id = $1", [id]);
+
+    // Cada caso usa o seu próprio kit: emprestar o kit inteiro de um kit
+    // compartilhado bloquearia as peças por outro motivo e mascararia o teste.
+    const criarKitIndisponivel = async (nome: string) => {
+      const kitId = await criarFerramenta(nome, true);
+      const itemId = (
+        await query<{ id: number }>("INSERT INTO itens_kit (ferramenta_id, nome) VALUES ($1, 'peça') RETURNING id", [kitId])
+      ).rows[0].id;
+      await tornarIndisponivel(kitId);
+      return { kitId, itemId };
+    };
+
+    const estado = async (id: number) =>
+      (await query<{ status: string; motivo_indisponivel: string | null }>(
+        'SELECT status, motivo_indisponivel FROM ferramentas WHERE id = $1',
+        [id]
+      )).rows[0];
+
+    it('recusa ferramenta simples indisponível (409)', async () => {
+      const ferramentaId = await criarFerramenta('SimplesIndisponivel');
+      await tornarIndisponivel(ferramentaId);
+
+      const res = await post(corpo(ferramentaId));
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('FERRAMENTA_INDISPONIVEL');
+    });
+
+    it('recusa o kit inteiro indisponível e mantém status e motivo', async () => {
+      const { kitId } = await criarKitIndisponivel('KitIndisponivelInteiro');
+
+      const res = await post(corpo(kitId));
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('FERRAMENTA_INDISPONIVEL');
+      expect(await estado(kitId)).toEqual({ status: 'indisponivel', motivo_indisponivel: 'avaria' });
+    });
+
+    it('recusa peça avulsa de kit indisponível e não cria empréstimo', async () => {
+      const { kitId, itemId } = await criarKitIndisponivel('KitIndisponivelPeca');
+
+      const res = await post(corpo(kitId, { itemKitId: itemId }));
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('FERRAMENTA_INDISPONIVEL');
+      const abertos = await query('SELECT 1 FROM emprestimos WHERE ferramenta_id = $1', [kitId]);
+      expect(abertos.rowCount).toBe(0);
+    });
+  });
+
+  describe('concorrência no kit', () => {
+    it('espera a ferramenta ser liberada por outra transação e então respeita a exclusividade', async () => {
+      const kitId = await criarFerramenta('KitConcorrencia', true);
+      const itemId = (
+        await query<{ id: number }>("INSERT INTO itens_kit (ferramenta_id, nome) VALUES ($1, 'peça') RETURNING id", [kitId])
+      ).rows[0].id;
+
+      // Outra transação segura a linha do kit. A retirada do kit inteiro precisa
+      // esperar por ela; sem o lock, responderia na hora e a peça avulsa,
+      // inserida em seguida, conviveria com o kit inteiro emprestado.
+      const outra = await getClient();
+      try {
+        await outra.query('BEGIN');
+        await outra.query('SELECT id FROM ferramentas WHERE id = $1 FOR UPDATE', [kitId]);
+
+        let respondeu = false;
+        const kitInteiro = post(corpo(kitId)).then((res) => {
+          respondeu = true;
+          return res;
+        });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        expect(respondeu).toBe(false);
+
+        await outra.query(
+          `INSERT INTO emprestimos (ferramenta_id, item_kit_id, colaborador_id, setor_destino_id, previsao_devolucao, usuario_retirada_id)
+           VALUES ($1, $2, $3, $4, NOW() + INTERVAL '2 days', $5)`,
+          [kitId, itemId, colaboradorId, setorId, usuarioId]
+        );
+        await outra.query('COMMIT');
+
+        const res = await kitInteiro;
+        expect(res.status).toBe(409);
+        expect(res.body.error.code).toBe('FERRAMENTA_INDISPONIVEL');
+      } finally {
+        await outra.query('ROLLBACK').catch(() => undefined);
+        outra.release();
+      }
+    });
+  });
+
+  describe('previsaoDevolucao sem offset (horário de Brasília)', () => {
+    const parse = (valor: string) => criarEmprestimoSchema.shape.previsaoDevolucao.parse(valor).toISOString();
+
+    it('interpreta data e hora sem offset como Brasília, qualquer que seja o fuso do servidor', () => {
+      const fusoOriginal = process.env.TZ;
+      try {
+        for (const fuso of ['UTC', 'America/Sao_Paulo', 'Asia/Tokyo']) {
+          process.env.TZ = fuso;
+          expect(parse('2099-10-05T10:00')).toBe('2099-10-05T13:00:00.000Z');
+          expect(parse('2099-10-05T10:00:30')).toBe('2099-10-05T13:00:30.000Z');
+          expect(parse('2099-10-05 10:00')).toBe('2099-10-05T13:00:00.000Z');
+        }
+      } finally {
+        if (fusoOriginal === undefined) delete process.env.TZ;
+        else process.env.TZ = fusoOriginal;
+      }
+    });
+
+    it('respeita offset explícito e mantém a data sem horário como fim do dia em Brasília', () => {
+      expect(parse('2099-10-05T10:00:00Z')).toBe('2099-10-05T10:00:00.000Z');
+      expect(parse('2099-10-05T10:00:00-03:00')).toBe('2099-10-05T13:00:00.000Z');
+      expect(parse('2099-10-05T10:00:00+02:00')).toBe('2099-10-05T08:00:00.000Z');
+      expect(parse('2099-10-05')).toBe('2099-10-06T02:59:59.000Z');
     });
   });
 

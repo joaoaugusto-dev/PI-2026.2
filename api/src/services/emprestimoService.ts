@@ -1,4 +1,4 @@
-import { query } from '../config/database.js';
+import { getClient, query } from '../config/database.js';
 import { AppError, ConflictError, NotFoundError } from '../utils/errors.js';
 import { CriarEmprestimoInput } from '../validators/emprestimoValidator.js';
 import { adicionarDiasUteis } from './feriadoService.js';
@@ -70,8 +70,16 @@ function traduzirErroDeRetirada(error: any): never {
 
 /**
  * POST /v1/emprestimos — registra a retirada. usuarioId vem sempre do JWT
- * (Regra 6), nunca do corpo. Quem barra ferramenta indisponível é o trigger
- * fn_valida_retirada; aqui só se traduz o erro dele para 409 no envelope.
+ * (Regra 6), nunca do corpo. Quem barra ferramenta indisponível continua
+ * sendo o banco (trigger fn_valida_retirada, fn_valida_kit_exclusividade e o
+ * índice uq_emprestimo_aberto); aqui só se traduz o erro para 409.
+ *
+ * O INSERT roda numa transação que trava a linha da ferramenta (FOR UPDATE):
+ * a exclusividade entre "kit inteiro" e "peça avulsa" é decidida por um COUNT
+ * dentro da trigger, que sob READ COMMITTED não enxerga uma retirada ainda não
+ * confirmada, e o índice único não cobre essa combinação (chaves diferentes).
+ * Com a trava, retiradas simultâneas da mesma ferramenta acontecem uma de
+ * cada vez.
  */
 export async function criar(input: CriarEmprestimoInput, usuarioId: number): Promise<Emprestimo> {
   await garantirAtivo('ferramentas', input.ferramentaId, 'Ferramenta não encontrada', 'FERRAMENTA_NOT_FOUND');
@@ -84,9 +92,37 @@ export async function criar(input: CriarEmprestimoInput, usuarioId: number): Pro
     await validarItemKit(input.ferramentaId, input.itemKitId);
   }
 
-  let id: number;
+  const id = await inserirComTrava(input, usuarioId);
+
+  const result = await query<Emprestimo>('SELECT * FROM vw_emprestimos_detalhe WHERE id = $1', [id]);
+  return result.rows[0];
+}
+
+async function inserirComTrava(input: CriarEmprestimoInput, usuarioId: number): Promise<number> {
+  const client = await getClient();
   try {
-    const inserido = await query<{ id: number }>(
+    await client.query('BEGIN');
+
+    const ferramenta = await client.query<{ status: string }>(
+      'SELECT status FROM ferramentas WHERE id = $1 AND ativo = true FOR UPDATE',
+      [input.ferramentaId]
+    );
+    if (!ferramenta.rows[0]) {
+      throw new NotFoundError('Ferramenta não encontrada', 'FERRAMENTA_NOT_FOUND');
+    }
+
+    // Regra 2: indisponível não sai. O trigger fn_valida_retirada só confere o
+    // status de ferramenta simples (o kit é controlado peça a peça), então a
+    // checagem vale para o kit e para a peça avulsa aqui. O status do kit só
+    // é 'em_uso' quando o kit inteiro está emprestado; peça avulsa não o muda.
+    if (ferramenta.rows[0].status !== 'disponivel') {
+      throw new ConflictError(
+        `Ferramenta ${input.ferramentaId} não está disponível para empréstimo (status atual: ${ferramenta.rows[0].status})`,
+        'FERRAMENTA_INDISPONIVEL'
+      );
+    }
+
+    const inserido = await client.query<{ id: number }>(
       `INSERT INTO emprestimos (
          ferramenta_id, item_kit_id, colaborador_id, setor_destino_id, atividade_id,
          atividade_observacao, ordem_servico, observacoes_retirada,
@@ -107,13 +143,15 @@ export async function criar(input: CriarEmprestimoInput, usuarioId: number): Pro
         usuarioId,
       ]
     );
-    id = inserido.rows[0].id;
-  } catch (error) {
-    return traduzirErroDeRetirada(error);
-  }
 
-  const result = await query<Emprestimo>('SELECT * FROM vw_emprestimos_detalhe WHERE id = $1', [id]);
-  return result.rows[0];
+    await client.query('COMMIT');
+    return inserido.rows[0].id;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return traduzirErroDeRetirada(error);
+  } finally {
+    client.release();
+  }
 }
 
 /**
