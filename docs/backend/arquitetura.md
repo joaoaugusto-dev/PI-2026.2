@@ -82,6 +82,18 @@ até o time decidir se cria um fluxo de gestão de admins (ver
    ativo.
 4. Depois da aprovação, o login volta a funcionar normalmente.
 
+## Retirada de ferramenta (fluxo)
+
+Issue API-11. O front identifica o colaborador (`GET /v1/colaboradores/identificar`), obtém uma data sugerida (`GET /v1/emprestimos/previsao-sugerida?dias=N`, onde N é o número de dias úteis que quem retira quer ficar com a ferramenta) e registra a retirada em `POST /v1/emprestimos`. Contrato completo em `docs/backend/api.md`.
+
+Responsabilidades:
+
+1. **API:** valida o corpo (Zod), garante que ferramenta, colaborador, setor, atividade e item de kit existem e estão ativos (404 específico por recurso) e grava `usuario_retirada_id` a partir do JWT (Regra 6; o campo no corpo é descartado).
+2. **Banco:** decide se a ferramenta pode sair. `fn_valida_retirada` e `fn_valida_kit_exclusividade` (triggers) e o índice único parcial `uq_emprestimo_aberto` garantem a Regra 1 mesmo com requisições simultâneas. A API traduz esses erros para `409 FERRAMENTA_INDISPONIVEL` no envelope padrão.
+3. **Banco:** `fn_sync_status_ferramenta` move a ferramenta para `em_uso` no mesmo INSERT (Regra 2).
+
+A atividade é opcional (Regra 4). Data de devolução sem horário vale até 23:59:59 de Brasília, para o empréstimo não aparecer como atrasado antes do fim do dia na `vw_emprestimos_detalhe`. A sugestão de previsão usa `adicionarDiasUteis` (feriados da BrasilAPI com cache em tabela e fallback de fim de semana, Regra 9).
+
 ## Banco
 
 O banco de dados adotado é o **PostgreSQL** (hospedado na nuvem via AWS RDS ou em infraestrutura dedicada). Todas as tabelas, tipos ENUM, triggers, constraints, views e índices parciais são mantidos nativamente via scripts SQL/migrations.
