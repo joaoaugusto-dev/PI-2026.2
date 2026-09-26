@@ -1,0 +1,1066 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-26T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v13.1.0",
+  "resources": [
+    {
+      "_id": "wrk_soufer_tools_emprestimos",
+      "_type": "workspace",
+      "parentId": null,
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "SOUFER Tools — Empréstimos (Retirada)",
+      "description": "# Testes da API SOUFER Tools — Empréstimos (Retirada)\nColeção de testes manuais e automáticos de `POST /v1/emprestimos` e `GET /v1/emprestimos/previsao-sugerida` (issue #47, API-11: registrar retirada).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação e preparação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url` e as variáveis gravadas por scripts (`token`, `token_consulta`, `usuario_nome`, `colaborador_id`, `setor_id`, `atividade_id`, `grupo_id`, `ferramenta_a_id`, `ferramenta_b_id`, `ferramenta_c_id`, `previsao_sugerida`). Não é preciso preenchê-las à mão.\n\nUse somente em ambiente de desenvolvimento (`soufer_dev`), com o seed (`npm run db:seed`) já executado. A coleção cria 3 ferramentas de teste (`ZZINSOMNIA ...`) a cada execução e retira todas; **a API de devolução ainda não existe (API-12)**, então esses empréstimos ficam abertos. O passo a passo do tutorial traz o SQL de limpeza."
+    },
+    {
+      "_id": "env_base_emprestimos",
+      "_type": "environment",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000/v1",
+        "token": "",
+        "token_consulta": "",
+        "usuario_nome": "",
+        "colaborador_id": "",
+        "setor_id": "",
+        "atividade_id": "",
+        "grupo_id": "",
+        "ferramenta_a_id": "",
+        "ferramenta_b_id": "",
+        "ferramenta_c_id": "",
+        "previsao_sugerida": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1790200000000
+    },
+    {
+      "_id": "fld_1",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "1 · Autenticação e preparação",
+      "description": "Requisições que precisam rodar primeiro. Obtêm os tokens, o colaborador, o setor, a atividade e o grupo usados pelas demais, e cadastram 3 ferramentas de teste. Tudo é gravado em variáveis de ambiente. As únicas alterações no banco são as 3 ferramentas `ZZINSOMNIA`.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "fld_2",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "2 · Sugestão de previsão (GET /previsao-sugerida)",
+      "description": "Calcula \"hoje + N dias úteis\" (pula sábado, domingo e feriado nacional). Quem escolhe N é quem retira a ferramenta. O resultado vira a `previsao_sugerida` usada na retirada. Não altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "fld_3",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "3 · Retirada — fluxo de sucesso",
+      "description": "Retiradas válidas: normal (com atividade, ordem de serviço e observações) e sem atividade (opcional, Regra 4). Confere que a ferramenta passa para `em_uso` (trigger do banco).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000
+    },
+    {
+      "_id": "fld_4",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "4 · Regras de negócio e conflitos (409)",
+      "description": "Ferramenta já emprestada (bloqueio do banco, devolvido como 409 `FERRAMENTA_INDISPONIVEL`) e a prova de que `usuario_retirada_id` vem sempre do JWT, mesmo quando o corpo tenta forjar o campo (Regra 6).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000
+    },
+    {
+      "_id": "fld_5",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "5 · Autenticação e autorização (401 e 403)",
+      "description": "Provam que as duas rotas são protegidas e exclusivas do perfil manutenção: sem token e com o token do perfil consulta. Não alteram o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000
+    },
+    {
+      "_id": "fld_6",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "6 · Validação de entrada (400)",
+      "description": "Enviam dados inválidos de propósito para provar que a API rejeita com HTTP 400 e o envelope de erro padrão (`VALIDATION_ERROR`). Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6000
+    },
+    {
+      "_id": "fld_7",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "7 · Recurso inexistente (404)",
+      "description": "Usam um id que não existe (999999999) para provar que a API responde 404 com um código específico por recurso, em vez de um 400 genérico de chave estrangeira. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7000
+    },
+    {
+      "_id": "req_01",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "01 · Login da manutenção — 200",
+      "description": "## O que faz\nAutentica a manutenção por matrícula e devolve um token JWT válido por 7 dias (padrão atual; configurável por `JWT_EXPIRES_IN`).\n\n## Por que existe\nAs duas rotas de empréstimos exigem perfil `manutencao`. Sem este login nenhuma outra requisição funciona. É a primeira a ser executada. Também guarda o nome do usuário logado, usado depois para provar que o responsável pela retirada vem do JWT.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula e senha da manutenção criada pelo seed (`0001` / `123456`).\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token`, `usuario_nome` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.token` e `data.usuario` (perfil `manutencao`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é manutencao\n\n## Observações\nSe as demais requisições passarem a retornar 401, rode esta de novo. Requer que o seed (`npm run db:seed`) tenha sido executado.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0001\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resposta traz um token', () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test('Perfil é manutencao', () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('manutencao');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token', String(corpo.data.token));\n  insomnia.environment.set('usuario_nome', String(corpo.data.usuario.nome));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_02",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "02 · Sessão do perfil consulta — 200",
+      "description": "## O que faz\nAbre uma sessão de consulta (somente leitura) para um colaborador, identificado pela matrícula, sem senha.\n\n## Por que existe\nPrecisamos de um token de perfil diferente da manutenção para provar que a API bloqueia esse perfil nas rotas de empréstimos (testes de HTTP 403, pasta 5).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/consulta/sessao`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula `0003`, de um colaborador criado pelo seed.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token_consulta` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.token` (validade de 15 minutos) e os dados do colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Perfil é consulta\n\n## Observações\nA sessão de consulta expira em 15 minutos. Se os testes 403 falharem por token expirado, rode esta requisição de novo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"0003\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Perfil é consulta', () => {\n  insomnia.expect(corpo.data.colaborador.papel).to.eql('consulta');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_consulta', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_03",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "03 · Identificar o colaborador de teste (matrícula 0003) — 200",
+      "description": "## O que faz\nResolve o colaborador da matrícula `0003` (do seed) e guarda o `id` dele.\n\n## Por que existe\nA retirada precisa de um `colaboradorId` válido. Usa o mesmo endpoint que o front usa no fluxo de retirada (Regra 5).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar?termo=0003`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** `colaborador_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com o colaborador (`id`, `nome`, `matricula`, `setor_id`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Colaborador tem id\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=0003",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Colaborador tem id', () => {\n  insomnia.expect(corpo.data.id).to.be.a('number');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('colaborador_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_04",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "04 · Obter setor, atividade e grupo válidos (GET /opcoes) — 200",
+      "description": "## O que faz\nLista as opções de formulário e guarda o primeiro setor, a primeira atividade e a primeira categoria (grupo de ferramentas).\n\n## Por que existe\nA retirada precisa de `setorDestinoId` e (opcionalmente) `atividadeId`; o cadastro das ferramentas de teste precisa de `grupoId`. O setor escolhido é só o destino da retirada.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/opcoes`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** `setor_id`, `atividade_id`, `grupo_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.setores`, `data.atividades` e `data.categorias`, todos com pelo menos um item (do seed).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Há setor, atividade e categoria\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Há setor, atividade e categoria', () => {\n  insomnia.expect(corpo.data.setores).to.not.be.empty;\n  insomnia.expect(corpo.data.atividades).to.not.be.empty;\n  insomnia.expect(corpo.data.categorias).to.not.be.empty;\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('setor_id', String(corpo.data.setores[0].id));\n  insomnia.environment.set('atividade_id', String(corpo.data.atividades[0].id));\n  insomnia.environment.set('grupo_id', String(corpo.data.categorias[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_05",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "05 · Cadastrar ferramenta de teste A — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste A, que nasce `disponivel`.\n\n## Por que existe\nCada cenário de retirada precisa de uma ferramenta disponível e o teste não pode depender das ferramentas do seed (que ficariam `em_uso`). Esta é usada em: Retirada normal (requisição 11), depois usada como \"já emprestada\" (requisição 14).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e o `timestamp` do Insomnia (para não colidir entre execuções) e `grupoId` da requisição 04.\n- **Variáveis lidas:** `base_url`, `token`, `grupo_id`, `timestamp`\n- **Variáveis gravadas:** `ferramenta_a_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com a ferramenta (`status = disponivel`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Nasce disponível\n\n## Observações\nFerramentas `ZZINSOMNIA` ficam no banco; ver a limpeza no tutorial.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Retirada A {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_a_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_06",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "06 · Cadastrar ferramenta de teste B — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste B, que nasce `disponivel`.\n\n## Por que existe\nCada cenário de retirada precisa de uma ferramenta disponível e o teste não pode depender das ferramentas do seed (que ficariam `em_uso`). Esta é usada em: Retirada sem atividade (requisição 13).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e o `timestamp` do Insomnia (para não colidir entre execuções) e `grupoId` da requisição 04.\n- **Variáveis lidas:** `base_url`, `token`, `grupo_id`, `timestamp`\n- **Variáveis gravadas:** `ferramenta_b_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com a ferramenta (`status = disponivel`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Nasce disponível\n\n## Observações\nFerramentas `ZZINSOMNIA` ficam no banco; ver a limpeza no tutorial.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Retirada B {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 6000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_b_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_07",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "07 · Cadastrar ferramenta de teste C — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste C, que nasce `disponivel`.\n\n## Por que existe\nCada cenário de retirada precisa de uma ferramenta disponível e o teste não pode depender das ferramentas do seed (que ficariam `em_uso`). Esta é usada em: Retirada com `usuarioRetiradaId` forjado no corpo (requisição 15).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e o `timestamp` do Insomnia (para não colidir entre execuções) e `grupoId` da requisição 04.\n- **Variáveis lidas:** `base_url`, `token`, `grupo_id`, `timestamp`\n- **Variáveis gravadas:** `ferramenta_c_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com a ferramenta (`status = disponivel`).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Nasce disponível\n\n## Observações\nFerramentas `ZZINSOMNIA` ficam no banco; ver a limpeza no tutorial.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Retirada C {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 7000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_c_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_08",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "08 · Sugerir previsão com 2 dias úteis — 200",
+      "description": "## O que faz\nPede a data de devolução para quem vai ficar 2 dias úteis com a ferramenta e guarda o resultado.\n\n## Por que existe\nQuem retira escolhe quantos dias fica com a ferramenta; o sistema pula fim de semana e feriado. Ex.: retirada na sexta por 2 dias devolve na terça. O front usa esta data como valor inicial editável. Aqui ela alimenta as retiradas seguintes.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/emprestimos/previsao-sugerida?dias=2`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Parâmetros:** `dias=2`.\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** `previsao_sugerida` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com `data.previsaoDevolucao` (YYYY-MM-DD, dia útil) e `data.diasUteis = 2`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Data no formato YYYY-MM-DD\n- Cai em dia útil (não é sábado nem domingo)\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/emprestimos/previsao-sugerida?dias=2",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 8000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Data no formato YYYY-MM-DD', () => {\n  insomnia.expect(corpo.data.previsaoDevolucao).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);\n});\n\ninsomnia.test('Cai em dia útil (não é sábado nem domingo)', () => {\n  const dia = new Date(corpo.data.previsaoDevolucao + 'T12:00:00Z').getUTCDay();\n  insomnia.expect([0, 6]).to.not.include(dia);\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('previsao_sugerida', String(corpo.data.previsaoDevolucao));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_09",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "09 · Sugerir previsão sem informar dias — 400",
+      "description": "## O que faz\nChama a sugestão sem o parâmetro `dias`.\n\n## Por que existe\nNão existe prazo padrão: quem retira decide. A API precisa recusar a chamada em vez de inventar um número.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/emprestimos/previsao-sugerida`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Parâmetros:** nenhum (sem `dias`).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `dias`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n- O detalhe aponta o campo dias\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/emprestimos/previsao-sugerida",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test('O detalhe aponta o campo dias', () => {\n  insomnia.expect(corpo.error.details[0].field).to.eql('dias');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_10",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "10 · Sugerir previsão com dias fora do limite (31) — 400",
+      "description": "## O que faz\nChama a sugestão com `dias=31`, acima do máximo de 30.\n\n## Por que existe\nO limite de 1 a 30 dias úteis evita cálculo absurdo e pedido de ferramenta por prazo irreal.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/emprestimos/previsao-sugerida?dias=31`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Parâmetros:** `dias=31`.\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/emprestimos/previsao-sugerida?dias=31",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 10000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_11",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "11 · Registrar retirada normal — 201",
+      "description": "## O que faz\nRegistra a retirada da ferramenta A pelo colaborador de teste, com atividade, ordem de serviço e observações.\n\n## Por que existe\nÉ o endpoint central do sistema (issue #47). Prova o caminho feliz: o empréstimo é criado, volta com nomes resolvidos (ferramenta, colaborador, setor, atividade) e o responsável pelo registro é o usuário do token.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `ferramentaId` (ferramenta A), `colaboradorId`, `setorDestinoId`, `previsaoDevolucao` (a data sugerida na requisição 08, só data, sem horário) e os opcionais `atividadeId`, `atividadeObservacao`, `ordemServico` e `observacoesRetirada`.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_a_id`, `colaborador_id`, `setor_id`, `atividade_id`, `previsao_sugerida`, `usuario_nome`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 201 com o empréstimo (`situacao = em_aberto`). A `previsao_devolucao` vale até 23:59:59 de Brasília do dia informado, e `usuario_retirada_nome` é o nome do usuário logado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Empréstimo em aberto, com a ferramenta e o colaborador informados\n- Responsável pelo registro é o usuário logado (JWT)\n- Data sem horário vale até 23:59:59 de Brasília\n\n## Observações\nEste empréstimo fica aberto: ainda não existe a API de devolução (API-12).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_a_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\",\n  \"atividadeId\": \"{{ _.atividade_id }}\",\n  \"atividadeObservacao\": \"Troca de rolamento da bancada 3\",\n  \"ordemServico\": \"OS-INSOMNIA-1\",\n  \"observacoesRetirada\": \"Retirada de teste via Insomnia\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 11000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto, com a ferramenta e o colaborador informados', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n  insomnia.expect(String(corpo.data.ferramenta_id)).to.eql(insomnia.environment.get('ferramenta_a_id'));\n  insomnia.expect(String(corpo.data.colaborador_id)).to.eql(insomnia.environment.get('colaborador_id'));\n});\n\ninsomnia.test('Responsável pelo registro é o usuário logado (JWT)', () => {\n  insomnia.expect(corpo.data.usuario_retirada_nome).to.eql(insomnia.environment.get('usuario_nome'));\n});\n\ninsomnia.test('Data sem horário vale até 23:59:59 de Brasília', () => {\n  const hora = new Date(corpo.data.previsao_devolucao).toISOString().slice(11, 19);\n  insomnia.expect(hora).to.eql('02:59:59');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_12",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "12 · Conferir que a ferramenta passou para em uso — 200",
+      "description": "## O que faz\nBusca a ferramenta A depois da retirada.\n\n## Por que existe\nConfirma o efeito colateral da retirada: o trigger `fn_sync_status_ferramenta` do banco move a ferramenta de `disponivel` para `em_uso` (Regra 2).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ ferramenta_a_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Parâmetros:** id da ferramenta A na URL.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com `status = em_uso`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Status da ferramenta é em_uso\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_a_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 12000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status da ferramenta é em_uso', () => {\n  insomnia.expect(corpo.data.status).to.eql('em_uso');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "13 · Registrar retirada sem atividade — 201",
+      "description": "## O que faz\nRegistra a retirada da ferramenta B sem informar atividade.\n\n## Por que existe\nA atividade é opcional (Regra 4 do CLAUDE.md, confirmada na visita técnica DB-01). O texto original da issue pedia 400 sem atividade; a regra do projeto prevalece.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** só os campos obrigatórios (ferramenta B, colaborador, setor de destino e previsão). Sem `atividadeId`.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 201, com `atividade_id` e `atividade_nome` nulos.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Empréstimo criado sem atividade\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 13000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo criado sem atividade', () => {\n  insomnia.expect(corpo.data.atividade_id).to.eql(null);\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "14 · Retirar ferramenta já emprestada — 409",
+      "description": "## O que faz\nTenta retirar de novo a ferramenta A.\n\n## Por que existe\nRegra 1: um empréstimo aberto por ferramenta. Quem barra é o banco (trigger `fn_valida_retirada` e índice único `uq_emprestimo_aberto`); a API só traduz o erro para o envelope padrão.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** mesma ferramenta A da requisição 11, que já está `em_uso`.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_a_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 com `error.code = FERRAMENTA_INDISPONIVEL` e a mensagem do banco explicando o status atual.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 409\n- Envelope de erro com code FERRAMENTA_INDISPONIVEL\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_a_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 14000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\ninsomnia.test('Envelope de erro com code FERRAMENTA_INDISPONIVEL', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_INDISPONIVEL');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "15 · usuario_retirada_id vem do JWT mesmo com o corpo tentando forjar — 201",
+      "description": "## O que faz\nTenta forjar o responsável pela retirada enviando o campo no corpo.\n\n## Por que existe\nRegra 6: `usuario_retirada_id` nunca é aceito do corpo. O schema descarta o campo e a API usa o usuário do JWT. Se o campo fosse aceito, a chave estrangeira falharia (999999 não existe).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** retirada normal da ferramenta C, mas com `usuarioRetiradaId` e `usuario_retirada_id` = 999999 no corpo (usuário que nem existe).\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_c_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`, `usuario_nome`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 201, com `usuario_retirada_nome` igual ao nome do usuário logado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Responsável é o usuário do token, não o forjado\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_c_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\",\n  \"usuarioRetiradaId\": 999999,\n  \"usuario_retirada_id\": 999999\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 15000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Responsável é o usuário do token, não o forjado', () => {\n  insomnia.expect(corpo.data.usuario_retirada_nome).to.eql(insomnia.environment.get('usuario_nome'));\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "16 · Registrar retirada sem token — 401",
+      "description": "## O que faz\nChama a retirada sem enviar token.\n\n## Por que existe\nProva que a rota exige autenticação.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** corpo válido, sem `Authorization`.\n- **Variáveis lidas:** `base_url`, `ferramenta_a_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Envelope de erro com code TOKEN_NOT_PROVIDED\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_a_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 16000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\ninsomnia.test('Envelope de erro com code TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "17 · Registrar retirada com perfil consulta — 403",
+      "description": "## O que faz\nChama a retirada com o token do quiosque.\n\n## Por que existe\nO perfil consulta só lê disponibilidade (Regra 8); não pode registrar retirada.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token_consulta` (sessão de consulta, requisição 02).\n- **Corpo (JSON):** corpo válido, com o token do perfil consulta.\n- **Variáveis lidas:** `base_url`, `token_consulta`, `ferramenta_a_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 `ACCESS_DENIED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 403\n- Envelope de erro com code ACCESS_DENIED\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_a_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_consulta }}"
+      },
+      "metaSortKey": 17000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\ninsomnia.test('Envelope de erro com code ACCESS_DENIED', () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_18",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "18 · Sugerir previsão sem token — 401",
+      "description": "## O que faz\nChama a sugestão sem enviar token.\n\n## Por que existe\nProva que a rota de sugestão também exige autenticação.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/emprestimos/previsao-sugerida?dias=2`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Parâmetros:** `dias=2`, sem `Authorization`.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Envelope de erro com code TOKEN_NOT_PROVIDED\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/emprestimos/previsao-sugerida?dias=2",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 18000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\ninsomnia.test('Envelope de erro com code TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_19",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "19 · Sugerir previsão com perfil consulta — 403",
+      "description": "## O que faz\nChama a sugestão com o token do quiosque.\n\n## Por que existe\nA sugestão faz parte do fluxo de retirada, exclusivo da manutenção.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/emprestimos/previsao-sugerida?dias=2`\n- **Autenticação:** Bearer Token = variável de ambiente `token_consulta` (sessão de consulta, requisição 02).\n- **Parâmetros:** `dias=2`, com o token do perfil consulta.\n- **Variáveis lidas:** `base_url`, `token_consulta`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 `ACCESS_DENIED`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 403\n- Envelope de erro com code ACCESS_DENIED\n",
+      "method": "GET",
+      "url": "{{ _.base_url }}/emprestimos/previsao-sugerida?dias=2",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_consulta }}"
+      },
+      "metaSortKey": 19000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\ninsomnia.test('Envelope de erro com code ACCESS_DENIED', () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_20",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "20 · Retirada sem previsaoDevolucao — 400",
+      "description": "## O que faz\nEnvia a retirada sem `previsaoDevolucao`.\n\n## Por que existe\nA coluna `previsao_devolucao` é obrigatória no banco. É o caso de 400 que substitui o \"sem atividade\" do texto original da issue (a atividade é opcional).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** corpo sem `previsaoDevolucao`.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `previsaoDevolucao`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n- O detalhe aponta o campo previsaoDevolucao\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 20000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test('O detalhe aponta o campo previsaoDevolucao', () => {\n  insomnia.expect(corpo.error.details.map((d) => d.field)).to.include('previsaoDevolucao');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_21",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "21 · Retirada com previsão no passado — 400",
+      "description": "## O que faz\nEnvia `previsaoDevolucao` = 2020-01-01.\n\n## Por que existe\nUma devolução prevista para o passado nasceria atrasada; a API recusa.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `previsaoDevolucao` no passado.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `previsaoDevolucao`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n- O detalhe aponta o campo previsaoDevolucao\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"2020-01-01\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 21000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test('O detalhe aponta o campo previsaoDevolucao', () => {\n  insomnia.expect(corpo.error.details.map((d) => d.field)).to.include('previsaoDevolucao');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_22",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "22 · Retirada com previsão que não é data — 400",
+      "description": "## O que faz\nEnvia `previsaoDevolucao` = \"amanha\".\n\n## Por que existe\nAceita data e hora (ISO 8601) ou só a data (YYYY-MM-DD); qualquer outra coisa é 400.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `previsaoDevolucao` com texto que não é data.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `previsaoDevolucao`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n- O detalhe aponta o campo previsaoDevolucao\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"amanha\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 22000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test('O detalhe aponta o campo previsaoDevolucao', () => {\n  insomnia.expect(corpo.error.details.map((d) => d.field)).to.include('previsaoDevolucao');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_23",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "23 · Retirada sem ferramentaId — 400",
+      "description": "## O que faz\nEnvia a retirada sem `ferramentaId`.\n\n## Por que existe\nCampo obrigatório: sem ferramenta não há o que retirar.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** corpo sem `ferramentaId`.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `ferramentaId`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n- O detalhe aponta o campo ferramentaId\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 23000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test('O detalhe aponta o campo ferramentaId', () => {\n  insomnia.expect(corpo.error.details.map((d) => d.field)).to.include('ferramentaId');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_24",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "24 · Retirada com ferramentaId que não é número — 400",
+      "description": "## O que faz\nEnvia `ferramentaId` = \"abc\".\n\n## Por que existe\nOs ids precisam ser inteiros positivos.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `ferramentaId` com texto.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `ferramentaId`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n- O detalhe aponta o campo ferramentaId\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"abc\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 24000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test('O detalhe aponta o campo ferramentaId', () => {\n  insomnia.expect(corpo.error.details.map((d) => d.field)).to.include('ferramentaId');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_25",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "25 · Retirada com ferramenta inexistente — 404",
+      "description": "## O que faz\nTenta retirar uma ferramenta que não existe.\n\n## Por que existe\nA API confere antes do INSERT e responde 404 específico, em vez do 400 genérico de chave estrangeira. Ferramenta baixada (inativa) também dá 404.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `ferramentaId` = 999999999.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 com `error.code = FERRAMENTA_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Envelope de erro com code FERRAMENTA_NOT_FOUND\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": 999999999,\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 25000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\ninsomnia.test('Envelope de erro com code FERRAMENTA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_26",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "26 · Retirada com colaborador inexistente — 404",
+      "description": "## O que faz\nTenta retirar em nome de um colaborador que não existe.\n\n## Por que existe\nColaborador inexistente ou inativo não pode retirar ferramenta.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `colaboradorId` = 999999999.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 com `error.code = COLABORADOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Envelope de erro com code COLABORADOR_NOT_FOUND\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": 999999999,\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 26000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\ninsomnia.test('Envelope de erro com code COLABORADOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('COLABORADOR_NOT_FOUND');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_27",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "27 · Retirada com setor de destino inexistente — 404",
+      "description": "## O que faz\nTenta retirar para um setor que não existe.\n\n## Por que existe\nSetor inexistente ou inativo é recusado antes do INSERT.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `setorDestinoId` = 999999999.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 com `error.code = SETOR_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Envelope de erro com code SETOR_NOT_FOUND\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": 999999999,\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 27000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\ninsomnia.test('Envelope de erro com code SETOR_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('SETOR_NOT_FOUND');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_28",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "28 · Retirada com atividade inexistente — 404",
+      "description": "## O que faz\nTenta retirar informando uma atividade que não existe.\n\n## Por que existe\nA atividade é opcional, mas quando informada precisa existir e estar ativa.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `atividadeId` = 999999999.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 com `error.code = ATIVIDADE_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Envelope de erro com code ATIVIDADE_NOT_FOUND\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\",\n  \"atividadeId\": 999999999\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 28000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\ninsomnia.test('Envelope de erro com code ATIVIDADE_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('ATIVIDADE_NOT_FOUND');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_29",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "29 · Retirada com item de kit inexistente — 404",
+      "description": "## O que faz\nTenta retirar informando um item de kit que não existe.\n\n## Por que existe\nO `itemKitId` (peça avulsa de kit) também é conferido antes do INSERT. Os cenários de kit completos (peça de outro kit, repetir peça, kit inteiro com peça aberta) estão nos testes automáticos do Vitest.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Corpo (JSON):** `itemKitId` = 999999999.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`, `previsao_sugerida`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 com `error.code = ITEM_KIT_NOT_FOUND`.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Envelope de erro com code ITEM_KIT_NOT_FOUND\n",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\",\n  \"itemKitId\": 999999999\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 29000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\ninsomnia.test('Envelope de erro com code ITEM_KIT_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('ITEM_KIT_NOT_FOUND');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    }
+  ]
+}
