@@ -88,11 +88,11 @@ Issue API-11. O front identifica o colaborador (`GET /v1/colaboradores/identific
 
 Responsabilidades:
 
-1. **API:** valida o corpo (Zod), garante que ferramenta, colaborador, setor, atividade e item de kit existem e estão ativos (404 específico por recurso) e grava `usuario_retirada_id` a partir do JWT (Regra 6; o campo no corpo é descartado).
-2. **Banco:** decide se a ferramenta pode sair. `fn_valida_retirada` e `fn_valida_kit_exclusividade` (triggers) e o índice único parcial `uq_emprestimo_aberto` garantem a Regra 1 mesmo com requisições simultâneas. A API traduz esses erros para `409 FERRAMENTA_INDISPONIVEL` no envelope padrão.
+1. **API:** valida o corpo (Zod), garante que ferramenta, colaborador, setor, atividade e item de kit existem e estão ativos (404 específico por recurso) e grava `usuario_retirada_id` a partir do JWT (Regra 6; o campo no corpo é descartado). O INSERT roda numa transação que trava a linha da ferramenta (`SELECT ... FOR UPDATE`) e confere `status = 'disponivel'`: o trigger `fn_valida_retirada` pula a checagem de status para kits (a disponibilidade deles é peça a peça), então sem essa conferência um kit `indisponivel` (avaria ou perda) voltaria a sair e perderia o motivo (Regra 2).
+2. **Banco:** decide se a ferramenta pode sair. `fn_valida_retirada` e `fn_valida_kit_exclusividade` (triggers) e o índice único parcial `uq_emprestimo_aberto` garantem a Regra 1. O índice cobre a mesma peça (ou a ferramenta simples) emprestada duas vezes; a exclusividade entre "kit inteiro" e "peça avulsa" depende só do `COUNT` do trigger, que sob `READ COMMITTED` não enxerga uma retirada ainda não confirmada, e por isso a API serializa as retiradas da mesma ferramenta com a trava acima. A API traduz esses erros para `409 FERRAMENTA_INDISPONIVEL` no envelope padrão.
 3. **Banco:** `fn_sync_status_ferramenta` move a ferramenta para `em_uso` no mesmo INSERT (Regra 2).
 
-A atividade é opcional (Regra 4). Data de devolução sem horário vale até 23:59:59 de Brasília, para o empréstimo não aparecer como atrasado antes do fim do dia na `vw_emprestimos_detalhe`. A sugestão de previsão usa `adicionarDiasUteis` (feriados da BrasilAPI com cache em tabela e fallback de fim de semana, Regra 9).
+A atividade é opcional (Regra 4). Data de devolução sem horário vale até 23:59:59 de Brasília, para o empréstimo não aparecer como atrasado antes do fim do dia na `vw_emprestimos_detalhe`; data e hora sem offset (como o `datetime-local` do navegador) também são lidas como Brasília, e não no fuso do servidor, que na AWS é UTC. A sugestão de previsão usa `adicionarDiasUteis` (feriados da BrasilAPI com cache em tabela e fallback de fim de semana, Regra 9).
 
 ## Banco
 

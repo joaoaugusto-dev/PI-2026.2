@@ -68,7 +68,7 @@ Corpo (JSON, camelCase):
 | `ferramentaId` | Sim | Inteiro positivo; a ferramenta precisa existir e estar ativa. |
 | `colaboradorId` | Sim | Inteiro positivo; colaborador ativo. |
 | `setorDestinoId` | Sim | Inteiro positivo; setor ativo. |
-| `previsaoDevolucao` | Sim | Data e hora (ISO 8601) ou só a data (`YYYY-MM-DD`, vale até 23:59:59 de Brasília). Não pode estar no passado. |
+| `previsaoDevolucao` | Sim | Data e hora (ISO 8601) ou só a data (`YYYY-MM-DD`, vale até 23:59:59). Texto sem offset (sem `Z` nem `±HH:MM`), como o de um `datetime-local` (`2026-10-05T10:00`), é interpretado como horário de Brasília. Não pode estar no passado. |
 | `atividadeId` | Não | Atividade é opcional (Regra 4); se informada, precisa existir e estar ativa. |
 | `atividadeObservacao` | Não | Texto livre complementar da atividade (até 500 caracteres). |
 | `ordemServico` | Não | Até 50 caracteres. |
@@ -88,9 +88,9 @@ Erros:
 | 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
 | 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao` (por exemplo, `consulta`). |
 | 404 | `FERRAMENTA_NOT_FOUND`, `COLABORADOR_NOT_FOUND`, `SETOR_NOT_FOUND`, `ATIVIDADE_NOT_FOUND`, `ITEM_KIT_NOT_FOUND` | Recurso inexistente ou inativo. |
-| 409 | `FERRAMENTA_INDISPONIVEL` | O banco recusou: ferramenta fora de `disponivel`, já com empréstimo em aberto, kit inteiro com peça emprestada (ou o inverso). A mensagem é a da trigger. |
+| 409 | `FERRAMENTA_INDISPONIVEL` | Ferramenta ou kit fora de `disponivel` (`em_uso` ou `indisponivel`, inclusive para peça avulsa de kit indisponível — Regra 2), já com empréstimo em aberto, kit inteiro com peça emprestada (ou o inverso). A mensagem informa o motivo. |
 
-O bloqueio de disponibilidade fica no banco (trigger `fn_valida_retirada`, `fn_valida_kit_exclusividade` e índice único parcial `uq_emprestimo_aberto`); a API só traduz o erro para o envelope padrão.
+O bloqueio de disponibilidade fica no banco (trigger `fn_valida_retirada`, `fn_valida_kit_exclusividade` e índice único parcial `uq_emprestimo_aberto`); a API traduz o erro para o envelope padrão. Como o trigger não confere o status de kit, a API confere `status = 'disponivel'` para kit e peça avulsa, e trava a linha da ferramenta durante a retirada (ver `arquitetura.md`).
 
 ## Sugestão de previsão (`GET /v1/emprestimos/previsao-sugerida?dias=N`)
 

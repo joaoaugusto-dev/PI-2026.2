@@ -36,6 +36,7 @@ time definiu:
 - **`previsaoDevolucao` obrigatória e não pode estar no passado.** Data sem
   horário (`YYYY-MM-DD`) vale até 23:59:59 de Brasília.
 - **Extras:** `observacoesRetirada` opcional e a rota de sugestão de previsão.
+- **Ferramenta ou kit indisponível não sai, nem kit inteiro nem peça avulsa** (Regra 2), decidido após a revisão do PR (ver "Correções da revisão do PR").
 
 ## O que foi feito
 
@@ -54,18 +55,31 @@ time definiu:
   Brasília (depois das 21h o UTC já é o dia seguinte). Quem retira escolhe N:
   `dias` é obrigatório (1 a 30), sem prazo padrão.
 
+## Correções da revisão do PR
+
+A revisão do PR #159 apontou três problemas, todos reproduzidos no banco de desenvolvimento antes de corrigir:
+
+1. **Kit `indisponivel` podia ser retirado.** O trigger `fn_valida_retirada` só confere o status de ferramenta simples (o kit é controlado peça a peça), então o kit inteiro saía com 201, virava `em_uso` e perdia o `motivo_indisponivel`, e a peça avulsa também saía. Agora a API confere `status = 'disponivel'` para kit e peça avulsa e responde 409 `FERRAMENTA_INDISPONIVEL`. Decisão do time: bloquear kit inteiro e peça avulsa.
+2. **Corrida entre kit inteiro e peça avulsa.** O índice `uq_emprestimo_aberto` tem chaves diferentes para as duas retiradas e o `COUNT` do trigger não enxerga uma linha ainda não confirmada; provado com duas transações abertas ao mesmo tempo. O INSERT agora roda numa transação com `SELECT ... FOR UPDATE` na linha da ferramenta, serializando as retiradas da mesma ferramenta. Correção só na API: não há migration nova nem mudança nas triggers de DB-06.
+3. **Fuso em data e hora sem offset.** `2026-10-05T10:00` era lido no fuso do processo; com o servidor em UTC, virava 07h de Brasília. Texto sem `Z` nem `±HH:MM` agora é lido como Brasília (-03:00).
+
+Ficou de fora, por decisão: rodar as validações prévias em paralelo (`Promise.all`). O ganho de latência é desprezível e a ordem sequencial mantém determinístico qual 404 é devolvido quando mais de um recurso não existe.
+
 ## Testes
 
-- Vitest + Supertest (`api/src/tests/emprestimoRoutes.test.ts`, 17 testes, banco
+- Vitest + Supertest (`api/src/tests/emprestimoRoutes.test.ts`, 23 testes, banco
   real, prefixo `ZZTESTE_API11_`): retirada normal (201, ferramenta `em_uso`,
   responsável do JWT), ferramenta já emprestada (409), sem atividade (201),
-  `usuarioRetiradaId` forjado ignorado, data sem horário, previsão ausente,
-  passada ou inválida (400), 404 por recurso, 401/403, kits e sugestão (sexta +
-  2 dias = terça e o caso depois das 21h, com `Date` simulado).
+  `usuarioRetiradaId` forjado ignorado, data sem horário, data e hora sem
+  offset lidas como Brasília em fusos diferentes do servidor, previsão ausente,
+  passada ou inválida (400), 404 por recurso, 401/403, kits, ferramenta e kit
+  indisponíveis (409), retirada que espera a trava da ferramenta (concorrência)
+  e sugestão (sexta + 2 dias = terça e o caso depois das 21h, com `Date`
+  simulado).
 - Coleção do Insomnia (`docs/insomnia/soufer-tools-emprestimos.json`, tutorial em
   `docs/insomnia/teste-api-emprestimos.md`): 29 requisições, 68 testes
   automáticos, todos passando contra a API local.
-- Suíte completa da API: 215 testes, 18 arquivos, todos passando.
+- Suíte completa da API: 221 testes, 18 arquivos, todos passando.
 
 ## Documentação atualizada
 
