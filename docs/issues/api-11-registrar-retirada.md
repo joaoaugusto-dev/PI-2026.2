@@ -6,6 +6,7 @@ Depende de: API-07, API-09, API-10 e DB-06 (todas concluídas)
 Milestone: Sprint 3
 Data da execução: 26/09/2026
 Branch: `feat/api-11-registrar-retirada` (base: `development`)
+PR: [#159](https://github.com/joaoaugusto-dev/PI-2026.2/pull/159)
 
 ## Objetivo
 
