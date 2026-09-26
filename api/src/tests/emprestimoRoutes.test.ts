@@ -16,7 +16,7 @@ function gerarToken(payload: Record<string, unknown>) {
 }
 
 async function criarFerramenta(nome: string, ehKit = false): Promise<number> {
-  const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas LIMIT 1')).rows[0].id;
+  const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
   const result = await query<{ id: number }>(
     'INSERT INTO ferramentas (nome, grupo_id, eh_kit) VALUES ($1, $2, $3) RETURNING id',
     [`${PREFIXO}${nome}`, grupoId, ehKit]
@@ -49,11 +49,11 @@ describe('Rotas de Empréstimos (API-11)', () => {
   });
 
   beforeAll(async () => {
-    usuarioId = (await query<{ id: number }>("SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true LIMIT 1"))
+    usuarioId = (await query<{ id: number }>("SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true ORDER BY id LIMIT 1"))
       .rows[0].id;
-    setorId = (await query<{ id: number }>('SELECT id FROM setores WHERE ativo = true LIMIT 1')).rows[0].id;
-    colaboradorId = (await query<{ id: number }>('SELECT id FROM colaboradores WHERE ativo = true LIMIT 1')).rows[0].id;
-    atividadeId = (await query<{ id: number }>('SELECT id FROM atividades WHERE ativo = true LIMIT 1')).rows[0].id;
+    setorId = (await query<{ id: number }>('SELECT id FROM setores WHERE ativo = true ORDER BY id LIMIT 1')).rows[0].id;
+    colaboradorId = (await query<{ id: number }>('SELECT id FROM colaboradores WHERE ativo = true ORDER BY id LIMIT 1')).rows[0].id;
+    atividadeId = (await query<{ id: number }>('SELECT id FROM atividades WHERE ativo = true ORDER BY id LIMIT 1')).rows[0].id;
 
     manutencaoToken = gerarToken({ id: usuarioId, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' });
     // authenticate só decodifica o JWT — mesmo padrão do authorize.test.ts.
