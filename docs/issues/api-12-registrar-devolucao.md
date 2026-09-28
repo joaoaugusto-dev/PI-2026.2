@@ -2,11 +2,13 @@
 
 Issue: [#48 — API-12 — Registrar devolução](https://github.com/joaoaugusto-dev/PI-2026.2/issues/48)
 Responsável: Henrique de Oliveira Molinari (@henrique-molinari)
-Depende de: API-11 (em revisão no momento em que comecei esta issue)
+Depende de: API-11 (concluída — PR #159 mergeado em `development` durante a
+execução desta issue)
 Milestone: Sprint 3
 Data da execução: 28/09/2026
-Branch: `feat/api-12-registrar-devolucao` (base: `feat/api-11-registrar-retirada`)
-PR: a abrir
+Branch: `feat/api-12-registrar-devolucao` (criada a partir da
+`feat/api-11-registrar-retirada`, quando a API-11 ainda estava em revisão)
+PR: a abrir contra `development`
 
 ## Objetivo
 
@@ -105,10 +107,10 @@ nada que já estava pronto.
 
 ## Pendências e observações
 
-- O PR da API-11 ainda não foi aprovado no momento em que abri esta branch;
-  o PR desta issue vai nascer contra a `feat/api-11-registrar-retirada` e
-  precisa ser reapontado para a `develop` (ou mesclado depois dela) quando a
-  API-11 for aprovada.
+- Comecei a branch a partir da `feat/api-11-registrar-retirada` porque o PR
+  da API-11 ainda não tinha sido aprovado. Ele foi mergeado em `development`
+  antes de eu terminar esta issue, então o PR da API-12 abre direto contra
+  `development` — o diff mostra só as mudanças desta issue.
 - `GET /v1/ocorrencias` (API-13) ainda não existe — os testes de ocorrência
   desta issue passam pela ferramenta (tabela direto no Vitest, histórico no
   Insomnia), não por uma rota própria de ocorrências.
