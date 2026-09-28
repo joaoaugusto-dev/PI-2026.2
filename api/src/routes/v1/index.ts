@@ -10,6 +10,7 @@ import categoriaRoutes from './categoriaRoutes.js';
 import atividadeRoutes from './atividadeRoutes.js';
 import opcoesRoutes from './opcoesRoutes.js';
 import usuarioRoutes from './usuarioRoutes.js';
+import emprestimoRoutes from './emprestimoRoutes.js';
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use('/categorias', categoriaRoutes);
 router.use('/atividades', atividadeRoutes);
 router.use('/opcoes', opcoesRoutes);
 router.use('/usuarios', usuarioRoutes);
+router.use('/emprestimos', emprestimoRoutes);
 
 export default router;
