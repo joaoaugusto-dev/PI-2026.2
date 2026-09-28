@@ -68,3 +68,25 @@ export const previsaoSugeridaQuerySchema = z.object({
 });
 
 export type PrevisaoSugeridaQuery = z.infer<typeof previsaoSugeridaQuerySchema>;
+
+export const emprestimoIdParamSchema = z.object({
+  id: idPositivo('id'),
+});
+
+// PATCH /v1/emprestimos/:id/devolucao — usuario_devolucao_id não entra aqui de
+// propósito (Regra 6): o responsável vem do JWT e campos desconhecidos são
+// descartados. A condição é obrigatória porque é ela que dispara os triggers de
+// status da ferramenta e de abertura de ocorrência.
+export const devolverEmprestimoSchema = z.object({
+  condicaoDevolucao: z.enum(['ok', 'avaria', 'perda'], {
+    errorMap: (_issue, ctx) => ({
+      message:
+        ctx.data === undefined
+          ? 'condicaoDevolucao é obrigatória'
+          : 'condicaoDevolucao deve ser ok, avaria ou perda',
+    }),
+  }),
+  observacaoDevolucao: z.string().trim().min(1, 'observacaoDevolucao não pode ser vazio').max(500).optional(),
+});
+
+export type DevolverEmprestimoInput = z.infer<typeof devolverEmprestimoSchema>;
