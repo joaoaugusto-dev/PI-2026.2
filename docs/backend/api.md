@@ -92,6 +92,35 @@ Erros:
 
 O bloqueio de disponibilidade fica no banco (trigger `fn_valida_retirada`, `fn_valida_kit_exclusividade` e índice único parcial `uq_emprestimo_aberto`); a API traduz o erro para o envelope padrão. Como o trigger não confere o status de kit, a API confere `status = 'disponivel'` para kit e peça avulsa, e trava a linha da ferramenta durante a retirada (ver `arquitetura.md`).
 
+## Devolução de ferramenta (`PATCH /v1/emprestimos/:id/devolucao`)
+
+Fecha o ciclo do empréstimo (issue API-12). Só o perfil `manutencao` acessa.
+
+Corpo (JSON, camelCase):
+
+| Campo | Obrigatório | Regra |
+|---|---|---|
+| `condicaoDevolucao` | Sim | `ok`, `avaria` ou `perda`. |
+| `observacaoDevolucao` | Não | Até 500 caracteres. |
+
+`usuario_devolucao_id` **não é aceito** no corpo (Regra 6): o campo é descartado e o responsável é o usuário do JWT.
+
+Sucesso: `200` com o empréstimo já com os nomes resolvidos (mesmo formato de `vw_emprestimos_detalhe`) e um campo extra `resumo`, uma frase pronta para a confirmação no front (ex.: "Chave de fenda foi para indisponível por avaria."). A trigger `fn_sync_status_ferramenta` muda o status da ferramenta (`disponivel` na condição `ok`; `indisponivel`, com o motivo gravado, em `avaria` ou `perda`); em `avaria` ou `perda` a trigger `fn_abre_ocorrencia` também abre uma ocorrência, herdando o `colaborador_id` do empréstimo (Regra 3). Peça avulsa de kit devolvida com avaria ou perda abre a ocorrência normalmente, mas não muda o status do kit — o restante dele continua disponível (decisão em `docs/decisoes-pendentes.md`).
+
+Erros:
+
+| Status | `error.code` | Quando |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | `condicaoDevolucao` ausente ou fora de `ok`/`avaria`/`perda` (`details` lista o campo). |
+| 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
+| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao`. |
+| 404 | `EMPRESTIMO_NOT_FOUND` | Id de empréstimo inexistente. |
+| 409 | `EMPRESTIMO_JA_DEVOLVIDO` | O empréstimo já tem `data_devolucao` preenchida. |
+
+O `UPDATE` roda numa transação com `SELECT ... FOR UPDATE` na linha do empréstimo: duas devoluções simultâneas do mesmo empréstimo são serializadas, e a segunda encontra `data_devolucao` já preenchida e recebe 409, em vez de as duas passarem e a trigger abrir a ocorrência duas vezes.
+
+A rota `GET /v1/ocorrencias` ainda não existe (issue API-13); até lá, a ocorrência aberta na devolução é conferida por `GET /v1/ferramentas/:id/historico`.
+
 ## Sugestão de previsão (`GET /v1/emprestimos/previsao-sugerida?dias=N`)
 
 Calcula "hoje + N dias úteis", pulando sábados, domingos e feriados nacionais. Quem escolhe N é quem retira a ferramenta: não existe prazo padrão. Ex.: retirada na sexta por 2 dias devolve na terça. O front usa o resultado como valor inicial editável de `previsaoDevolucao`.
