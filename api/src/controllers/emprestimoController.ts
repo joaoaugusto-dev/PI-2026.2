@@ -16,6 +16,19 @@ export class EmprestimoController {
   }
 
   /**
+   * PATCH /v1/emprestimos/:id/devolucao
+   */
+  static async devolver(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      const emprestimo = await emprestimoService.devolver(id, req.body, req.usuario!.id);
+      return sendSuccess(res, emprestimo, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
    * GET /v1/emprestimos/previsao-sugerida
    */
   static async previsaoSugerida(req: Request, res: Response, next: NextFunction): Promise<any> {

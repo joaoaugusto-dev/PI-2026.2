@@ -3,7 +3,12 @@ import { EmprestimoController } from '../../controllers/emprestimoController.js'
 import { validate } from '../../middlewares/validate.js';
 import { authenticate } from '../../middlewares/auth.js';
 import { authorize } from '../../middlewares/authorize.js';
-import { criarEmprestimoSchema, previsaoSugeridaQuerySchema } from '../../validators/emprestimoValidator.js';
+import {
+  criarEmprestimoSchema,
+  devolverEmprestimoSchema,
+  emprestimoIdParamSchema,
+  previsaoSugeridaQuerySchema,
+} from '../../validators/emprestimoValidator.js';
 
 const router = Router();
 
@@ -113,6 +118,64 @@ router.get(
   authorize('manutencao'),
   validate({ query: previsaoSugeridaQuerySchema }),
   EmprestimoController.previsaoSugerida
+);
+
+/**
+ * @openapi
+ * /emprestimos/{id}/devolucao:
+ *   patch:
+ *     summary: Registra a devolução de um empréstimo
+ *     description: >
+ *       Fecha o empréstimo. O responsável (usuario_devolucao_id) vem sempre do
+ *       JWT — se o corpo trouxer esse campo, ele é ignorado (Regra 6). Quem
+ *       muda o status da ferramenta e abre a ocorrência em caso de avaria ou
+ *       perda são os triggers fn_sync_status_ferramenta e fn_abre_ocorrencia,
+ *       disparados por este UPDATE (Regra 3).
+ *     tags:
+ *       - Empréstimos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID do empréstimo
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - condicaoDevolucao
+ *             properties:
+ *               condicaoDevolucao:
+ *                 type: string
+ *                 enum: [ok, avaria, perda]
+ *               observacaoDevolucao:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Devolução registrada (empréstimo com nomes resolvidos)
+ *       400:
+ *         description: Erro de validação nos campos
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ *       404:
+ *         description: Empréstimo não encontrado (EMPRESTIMO_NOT_FOUND)
+ *       409:
+ *         description: Empréstimo já devolvido (EMPRESTIMO_JA_DEVOLVIDO)
+ */
+router.patch(
+  '/:id/devolucao',
+  authenticate,
+  authorize('manutencao'),
+  validate({ params: emprestimoIdParamSchema, body: devolverEmprestimoSchema }),
+  EmprestimoController.devolver
 );
 
 export default router;
