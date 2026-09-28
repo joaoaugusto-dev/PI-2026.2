@@ -8,7 +8,7 @@ Milestone: Sprint 3
 Data da execução: 28/09/2026
 Branch: `feat/api-12-registrar-devolucao` (criada a partir da
 `feat/api-11-registrar-retirada`, quando a API-11 ainda estava em revisão)
-PR: a abrir contra `development`
+PR: [#160](https://github.com/joaoaugusto-dev/PI-2026.2/pull/160)
 
 ## Objetivo
 
