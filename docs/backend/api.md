@@ -48,7 +48,7 @@ Esses valores são determinados pelo back-end.
 | GET | `/v1/emprestimos` | Manutenção | Consulta de empréstimos |
 | POST | `/v1/emprestimos` | Manutenção | Retirada (ver [Retirada de ferramenta](#retirada-de-ferramenta-post-v1emprestimos)) |
 | GET | `/v1/emprestimos/previsao-sugerida` | Manutenção | Sugestão de previsão de devolução em dias úteis |
-| PATCH | `/v1/emprestimos/:id/devolucao` | Manutenção | Devolução |
+| PATCH | `/v1/emprestimos/:id/devolucao` | Manutenção | Devolução (ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)) |
 | GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências |
 | GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
 | GET | `/v1/dashboard/kpis` | Manutenção | KPIs |
