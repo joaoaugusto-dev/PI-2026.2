@@ -8,6 +8,7 @@ export interface Emprestimo {
   data_retirada: string;
   previsao_devolucao: string;
   data_devolucao: string | null;
+  condicao_devolucao: 'ok' | 'avaria' | 'perda' | null;
   situacao: 'em_aberto' | 'atrasado' | 'devolvido';
   ferramenta_id: number;
   ferramenta_nome: string;
@@ -154,6 +155,26 @@ async function inserirComTrava(input: CriarEmprestimoInput, usuarioId: number): 
   }
 }
 
+export interface EmprestimoDevolvido extends Emprestimo {
+  resumo: string;
+}
+
+// Mensagem pronta pra confirmação no front (item "se sobrar tempo" da API-12):
+// evita repetir ali a lógica de "o que a condição de devolução significou".
+// Peça avulsa de kit não muda o status do kit (decisão em
+// docs/decisoes-pendentes.md), então o resumo fala da peça, não do container.
+function montarResumo(emprestimo: Emprestimo): string {
+  const nome = emprestimo.item_kit_nome ?? emprestimo.ferramenta_nome;
+  switch (emprestimo.condicao_devolucao) {
+    case 'avaria':
+      return `${nome} foi para indisponível por avaria.`;
+    case 'perda':
+      return `${nome} foi para indisponível por perda.`;
+    default:
+      return `${nome} foi devolvida e está disponível.`;
+  }
+}
+
 /**
  * PATCH /v1/emprestimos/:id/devolucao — fecha o empréstimo. usuarioId vem
  * sempre do JWT (Regra 6). A mudança de status da ferramenta e a abertura da
@@ -165,7 +186,7 @@ async function inserirComTrava(input: CriarEmprestimoInput, usuarioId: number): 
  * encontra data_devolucao preenchida e recebe 409, em vez de os dois UPDATEs
  * passarem e o trigger abrir a ocorrência duas vezes.
  */
-export async function devolver(id: number, input: DevolverEmprestimoInput, usuarioId: number): Promise<Emprestimo> {
+export async function devolver(id: number, input: DevolverEmprestimoInput, usuarioId: number): Promise<EmprestimoDevolvido> {
   const client = await getClient();
   try {
     await client.query('BEGIN');
@@ -200,7 +221,8 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
   }
 
   const result = await query<Emprestimo>('SELECT * FROM vw_emprestimos_detalhe WHERE id = $1', [id]);
-  return result.rows[0];
+  const emprestimo = result.rows[0];
+  return { ...emprestimo, resumo: montarResumo(emprestimo) };
 }
 
 /**

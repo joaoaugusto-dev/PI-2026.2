@@ -158,7 +158,10 @@ router.get(
  *                 type: string
  *     responses:
  *       200:
- *         description: Devolução registrada (empréstimo com nomes resolvidos)
+ *         description: >
+ *           Devolução registrada (empréstimo com nomes resolvidos e um campo
+ *           `resumo` já pronto para confirmação no front, ex. "Ferramenta X
+ *           foi para indisponível por avaria.")
  *       400:
  *         description: Erro de validação nos campos
  *       401:

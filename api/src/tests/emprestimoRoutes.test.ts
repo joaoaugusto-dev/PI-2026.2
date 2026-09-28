@@ -269,6 +269,7 @@ describe('Rotas de Empréstimos (API-11)', () => {
       expect(res.status).toBe(200);
       expect(res.body.data).toMatchObject({ id: emprestimoId, situacao: 'devolvido' });
       expect(res.body.data.data_devolucao).not.toBeNull();
+      expect(res.body.data.resumo).toBe(`${res.body.data.ferramenta_nome} foi devolvida e está disponível.`);
       expect(await statusFerramenta(ferramentaId)).toEqual({ status: 'disponivel', motivo_indisponivel: null });
     });
 
@@ -278,6 +279,7 @@ describe('Rotas de Empréstimos (API-11)', () => {
       const res = await patch(emprestimoId, { condicaoDevolucao: 'avaria', observacaoDevolucao: 'cabo rompido' });
 
       expect(res.status).toBe(200);
+      expect(res.body.data.resumo).toBe(`${res.body.data.ferramenta_nome} foi para indisponível por avaria.`);
       expect(await statusFerramenta(ferramentaId)).toEqual({ status: 'indisponivel', motivo_indisponivel: 'avaria' });
 
       const ocorrencia = await query<{ colaborador_id: number; tipo: string; registrada_por: number }>(
@@ -293,6 +295,7 @@ describe('Rotas de Empréstimos (API-11)', () => {
       const res = await patch(emprestimoId, { condicaoDevolucao: 'perda' });
 
       expect(res.status).toBe(200);
+      expect(res.body.data.resumo).toBe(`${res.body.data.ferramenta_nome} foi para indisponível por perda.`);
       expect(await statusFerramenta(ferramentaId)).toEqual({ status: 'indisponivel', motivo_indisponivel: 'perda' });
 
       const ocorrencia = await query('SELECT 1 FROM ocorrencias WHERE emprestimo_id = $1 AND tipo = $2', [emprestimoId, 'PERDA']);
@@ -362,7 +365,9 @@ describe('Rotas de Empréstimos (API-11)', () => {
 
       expect(res.status).toBe(200);
       // O status do kit não muda na peça avulsa: o restante do kit continua
-      // disponível (decisão registrada em docs/decisoes-pendentes.md).
+      // disponível (decisão registrada em docs/decisoes-pendentes.md). O
+      // resumo fala da peça, não do kit inteiro.
+      expect(res.body.data.resumo).toBe(`${res.body.data.item_kit_nome} foi para indisponível por avaria.`);
       expect((await statusFerramenta(kitId)).status).toBe('disponivel');
 
       const ocorrencia = await query('SELECT 1 FROM ocorrencias WHERE emprestimo_id = $1 AND item_kit_id = $2', [
