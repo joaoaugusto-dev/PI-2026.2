@@ -51,3 +51,31 @@ sem `UPDATE` manual no banco.
   desta issue a pedido do time — quem for atualizar o `CLAUDE.md` deve copiar
   o essencial deste documento para lá e então este arquivo pode ser removido
   ou reduzido a um changelog.
+
+## Devolução de peça avulsa de kit não deixa o kit indisponível (issue API-12)
+
+**Contexto:** a retirada (API-11) já aceita `itemKitId`, retirando só uma peça
+avulsa de um kit sem mexer no status do kit inteiro (`fn_sync_status_ferramenta`
+só sincroniza o status do container quando o registro é do kit inteiro,
+`item_kit_id IS NULL`, porque o restante do kit continua disponível enquanto
+uma peça está fora). A issue API-12 (devolução) não falava explicitamente
+desse cenário, então coube decidir o que acontece quando essa peça volta com
+avaria ou perda.
+
+**Decisão (28/09/2026, aprovada por Henrique):** permitir a devolução da peça
+avulsa e deixar os triggers existentes agirem como estão, sem criar uma
+migration nova para esta issue:
+
+- A ocorrência é aberta normalmente para a peça (`fn_abre_ocorrencia` não
+  distingue kit inteiro de peça avulsa), herdando o colaborador do empréstimo.
+- O status do kit **não muda** quando quem volta é só a peça: o container
+  continua com o status que tinha antes (normalmente `disponivel`, com o
+  restante das peças livre), mesmo que a peça devolvida tenha vindo com avaria
+  ou perda.
+
+**Limitação conhecida:** o schema atual não modela "peça indisponível"
+isoladamente — só a ferramenta (kit ou peça simples) tem uma coluna de status.
+Uma peça avariada não aparece como indisponível em lugar nenhum da API hoje;
+só a ocorrência registra o que aconteceu com ela. Se o time decidir que isso
+precisa aparecer (por exemplo, uma peça "fora de uso" dentro do kit), é uma
+mudança de schema e entra como uma issue nova, não uma correção desta.
