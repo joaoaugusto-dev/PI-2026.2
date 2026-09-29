@@ -41,18 +41,23 @@ const COLUNAS_OCORRENCIA = `
   o.colaborador_id, c.nome AS colaborador_nome, c.matricula AS colaborador_matricula,
   o.tipo, o.descricao, o.status, o.custo_estimado, o.custo_real,
   o.data_resolucao, o.observacoes_resolucao,
-  o.registrada_por, ur.nome AS registrada_por_nome,
-  o.resolvida_por, us.nome AS resolvida_por_nome,
+  o.registrada_por, cur.nome AS registrada_por_nome,
+  o.resolvida_por, cus.nome AS resolvida_por_nome,
   o.created_at, o.updated_at
 `;
 
+// usuarios não tem mais nome/email (migration 0004): a conta liga a um
+// colaborador por colaborador_id, e é de lá que vem o nome — mesmo padrão
+// usado em vw_emprestimos_detalhe para usuario_retirada_nome/usuario_devolucao_nome.
 const JOINS_OCORRENCIA = `
   FROM ocorrencias o
   JOIN ferramentas f ON f.id = o.ferramenta_id
   LEFT JOIN itens_kit ik ON ik.id = o.item_kit_id
   LEFT JOIN colaboradores c ON c.id = o.colaborador_id
   JOIN usuarios ur ON ur.id = o.registrada_por
+  JOIN colaboradores cur ON cur.id = ur.colaborador_id
   LEFT JOIN usuarios us ON us.id = o.resolvida_por
+  LEFT JOIN colaboradores cus ON cus.id = us.colaborador_id
 `;
 
 // Ordem para a regra "sem retrocesso" do PATCH: uma vez que a ocorrência avança

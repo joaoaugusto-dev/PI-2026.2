@@ -104,7 +104,7 @@ router.get(
  *       200:
  *         description: Ocorrência atualizada, com nomes de ferramenta e colaborador resolvidos
  *       400:
- *         description: Erro de validação nos campos (ex.: nenhum campo informado)
+ *         description: Erro de validação nos campos (por exemplo, nenhum campo informado)
  *       401:
  *         description: Token inválido ou não fornecido
  *       403:
