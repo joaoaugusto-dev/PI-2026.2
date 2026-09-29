@@ -1,0 +1,1141 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-29T14:09:37.250Z",
+  "__export_source": "insomnia.desktop.app:v13.1.0",
+  "resources": [
+    {
+      "_id": "wrk_soufer_tools_ocorrencias",
+      "_type": "workspace",
+      "parentId": null,
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "SOUFER Tools — Ocorrências (Tratativa de Avaria/Perda)",
+      "description": "# Testes da API SOUFER Tools — Ocorrências (issue #49, API-13)\nColeção de testes manuais e automáticos de `GET /v1/ocorrencias` e `PATCH /v1/ocorrencias/:id`: acompanhamento e fechamento das tratativas de avaria/perda.\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação e preparação — abre 2 ocorrências reais via devolução com avaria) e depois as pastas na ordem, pelo Collection Runner ou uma a uma.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\nA rota não cria ocorrência (quem abre é o trigger `fn_abre_ocorrencia`, disparado pela devolução com avaria ou perda — Regra 3). Por isso a pasta 1 usa `POST /v1/emprestimos` e `PATCH /v1/emprestimos/:id/devolucao` (API-11/API-12) só para gerar duas ocorrências reais (A e B) para os testes seguintes.\n\n**Variáveis de ambiente** (Base Environment): `base_url` e as variáveis gravadas por scripts (`token`, `token_consulta`, `usuario_nome`, `colaborador_id`, `grupo_id`, `ferramenta_a_id`, `ferramenta_b_id`, `emprestimo_a_id`, `emprestimo_b_id`, `ocorrencia_a_id`, `ocorrencia_b_id`, `data_resolucao_a`). Não é preciso preenchê-las à mão.\n\nUse somente em ambiente de desenvolvimento (`soufer_dev`), com o seed (`npm run db:seed`) já executado. A coleção cria 2 ferramentas de teste (`ZZINSOMNIA ...`) a cada execução, com os 2 empréstimos já devolvidos (não ficam abertos). O passo a passo do tutorial traz o SQL de limpeza para o que sobrar."
+    },
+    {
+      "_id": "env_base_ocorrencias",
+      "_type": "environment",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000/v1",
+        "token": "",
+        "token_consulta": "",
+        "usuario_nome": "",
+        "colaborador_id": "",
+        "setor_id": "",
+        "grupo_id": "",
+        "ferramenta_a_id": "",
+        "ferramenta_b_id": "",
+        "emprestimo_a_id": "",
+        "emprestimo_b_id": "",
+        "ocorrencia_a_id": "",
+        "ocorrencia_b_id": "",
+        "data_resolucao_a": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1790400000000
+    },
+    {
+      "_id": "fld_1",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "1 · Autenticação e preparação",
+      "description": "Requisições que precisam rodar primeiro. Obtêm os tokens e o colaborador, cadastram 2 ferramentas de teste, registram e devolvem (com avaria) um empréstimo de cada uma — abrindo as ocorrências A e B usadas pelo resto da coleção — e localizam o id de cada ocorrência pelo histórico da ferramenta. Tudo é gravado em variáveis de ambiente.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "fld_2",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "2 · Listagem — sucesso (GET, 200)",
+      "description": "Confere que a listagem sem filtro traz as ocorrências recém-abertas, com os nomes resolvidos, e que cada filtro (status, colaboradorId, tipo) isola o resultado certo. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "fld_3",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "3 · Listagem — validação e permissões (400, 401, 403)",
+      "description": "Provam que a rota rejeita status/tipo fora do enum e que é protegida e exclusiva do perfil manutenção. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000
+    },
+    {
+      "_id": "fld_4",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "4 · Atualização — ciclo de sucesso (PATCH, 200)",
+      "description": "Faz o ciclo mínimo citado na issue (aberta → em_reparo → resolvida) na ocorrência A, gravando custoEstimado e observacoesResolucao, e confere que resolvida_por/data_resolucao vêm do JWT e não são sobrescritos ao reenviar o mesmo status.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000
+    },
+    {
+      "_id": "fld_5",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "5 · Atualização — ciclo estendido e retrocesso (PATCH, 200 e 409)",
+      "description": "Na ocorrência B, percorre os 2 estados que ficam fora do ciclo de 3 citado na issue (em_reparo → cobrada → baixada) e prova que tentar retroceder devolve 409 OCORRENCIA_TRANSICAO_INVALIDA.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000
+    },
+    {
+      "_id": "fld_6",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "6 · Atualização — validação e inexistente (PATCH, 400 e 404)",
+      "description": "Corpo vazio, custoEstimado vazio (não pode virar 0 silenciosamente) e id de ocorrência inexistente.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6000
+    },
+    {
+      "_id": "fld_7",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_ocorrencias",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "7 · Atualização — permissões (PATCH, 401 e 403)",
+      "description": "Provam que o PATCH também é protegido e exclusivo do perfil manutenção. Não alteram o banco (a permissão é checada antes da regra de negócio).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7000
+    },
+    {
+      "_id": "req_01",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "01 · Login da manutenção — 200",
+      "description": "## O que faz\nAutentica a manutenção por matrícula e devolve um token JWT.\n\n## Por que existe\nAs duas rotas de ocorrências exigem perfil `manutencao`, e a preparação também usa `POST /v1/ferramentas`, `POST /v1/emprestimos` e `PATCH /v1/emprestimos/:id/devolucao` para abrir as ocorrências de teste. É a primeira requisição a rodar.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula e senha da manutenção criada pelo seed (`0001` / `123456`).\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token`, `usuario_nome`\n\n## Resultado esperado\nHTTP 200 com `data.token` e `data.usuario` (perfil `manutencao`).\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é manutencao\n\n## Observações\nSe as demais requisições passarem a retornar 401, rode esta de novo. Requer que o seed (`npm run db:seed`) tenha sido executado.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0001\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resposta traz um token', () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test('Perfil é manutencao', () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('manutencao');\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token', String(corpo.data.token));\n  insomnia.environment.set('usuario_nome', String(corpo.data.usuario.nome));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_02",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "02 · Sessão do perfil consulta — 200",
+      "description": "## O que faz\nAbre uma sessão de consulta (somente leitura) para um colaborador, pela matrícula, sem senha.\n\n## Por que existe\nPrecisamos de um token de perfil diferente da manutenção para provar que a API bloqueia esse perfil nas rotas de ocorrências (testes de HTTP 403, pastas 3 e 7).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/consulta/sessao`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula `0003`, de um colaborador criado pelo seed.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token_consulta`\n\n## Resultado esperado\nHTTP 200 com `data.token` (validade de 15 minutos) e os dados do colaborador.\n\n## Testes automáticos\n- Status HTTP 200\n- Perfil é consulta\n\n## Observações\nA sessão de consulta expira em 15 minutos. Se os testes 403 falharem por token expirado, rode esta requisição de novo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"0003\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Perfil é consulta', () => {\n  insomnia.expect(corpo.data.colaborador.papel).to.eql('consulta');\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_consulta', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_03",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "03 · Identificar o colaborador de teste (matrícula 0003) — 200",
+      "description": "## O que faz\nResolve o colaborador da matrícula `0003` (do seed) e guarda o `id` dele.\n\n## Por que existe\nA retirada (usada só para abrir as ocorrências de teste) precisa de um `colaboradorId` válido, e o filtro `colaboradorId` da listagem (pasta 2) também usa esse valor.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar?termo=0003`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** `colaborador_id`\n\n## Resultado esperado\nHTTP 200 com o colaborador (`id`, `nome`, `matricula`, `setor_id`).\n\n## Testes automáticos\n- Status HTTP 200\n- Colaborador tem id",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/identificar?termo=0003",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Colaborador tem id', () => {\n  insomnia.expect(corpo.data.id).to.be.a('number');\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('colaborador_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_04",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "04 · Obter um grupo de ferramentas e um setor válidos (GET /opcoes) — 200",
+      "description": "## O que faz\nLista as opções de formulário e guarda a primeira categoria (grupo de ferramentas) e o primeiro setor.\n\n## Por que existe\nO cadastro das ferramentas de teste precisa de `grupoId`, e a retirada precisa de `setorDestinoId`. `GET /v1/opcoes` só lista setores ativos — melhor do que usar o `setor_id` do colaborador, que pode estar inativo.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/opcoes`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** `grupo_id`, `setor_id`\n\n## Resultado esperado\nHTTP 200 com `data.categorias` e `data.setores` com pelo menos um item cada (do seed).\n\n## Testes automáticos\n- Status HTTP 200\n- Há categoria e setor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Há categoria e setor', () => {\n  insomnia.expect(corpo.data.categorias).to.not.be.empty;\n  insomnia.expect(corpo.data.setores).to.not.be.empty;\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('grupo_id', String(corpo.data.categorias[0].id));\n  insomnia.environment.set('setor_id', String(corpo.data.setores[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_05",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "05 · Cadastrar ferramenta de teste A — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste A, que nasce `disponivel`.\n\n## Por que existe\nVai ser retirada e devolvida com avaria (requisições 07 e 09) para abrir a ocorrência A, usada no ciclo de sucesso (pasta 4).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `{{ _.timestamp }}` (para não colidir entre execuções) e `grupoId` da requisição 04.\n- **Variáveis lidas:** `base_url`, `token`, `grupo_id`, `timestamp`\n- **Variáveis gravadas:** `ferramenta_a_id`\n\n## Resultado esperado\nHTTP 201 com a ferramenta (`status = disponivel`).\n\n## Testes automáticos\n- Status HTTP 201\n- Nasce disponível\n\n## Observações\nFerramentas `ZZINSOMNIA` ficam no banco; ver a limpeza no tutorial.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Ocorrencia A {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_a_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_06",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "06 · Cadastrar ferramenta de teste B — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste B, que nasce `disponivel`.\n\n## Por que existe\nVai ser retirada e devolvida com avaria (requisições 08 e 10) para abrir a ocorrência B, usada no ciclo estendido e no teste de retrocesso (pasta 5).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `{{ _.timestamp }}` e `grupoId` da requisição 04.\n- **Variáveis lidas:** `base_url`, `token`, `grupo_id`, `timestamp`\n- **Variáveis gravadas:** `ferramenta_b_id`\n\n## Resultado esperado\nHTTP 201 com a ferramenta (`status = disponivel`).\n\n## Testes automáticos\n- Status HTTP 201\n- Nasce disponível\n\n## Observações\nFerramentas `ZZINSOMNIA` ficam no banco; ver a limpeza no tutorial.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Ocorrencia B {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 6000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_b_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_07",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "07 · Retirar a ferramenta A — 201",
+      "description": "## O que faz\nRegistra a retirada da ferramenta A pelo colaborador de teste (API-11).\n\n## Por que existe\nDevolver com avaria (requisição 09) exige um empréstimo em aberto.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `ferramentaId` (ferramenta A), `colaboradorId`, `setorDestinoId` (setor ativo obtido em `GET /opcoes`) e `previsaoDevolucao` fixa no futuro.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_a_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** `emprestimo_a_id`\n\n## Resultado esperado\nHTTP 201 com o empréstimo (`situacao = em_aberto`).\n\n## Testes automáticos\n- Status HTTP 201\n- Empréstimo em aberto",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_a_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"2099-01-10\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 7000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_a_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_08",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "08 · Retirar a ferramenta B — 201",
+      "description": "## O que faz\nRegistra a retirada da ferramenta B pelo colaborador de teste (API-11).\n\n## Por que existe\nDevolver com avaria (requisição 10) exige um empréstimo em aberto.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `ferramentaId` (ferramenta B), `colaboradorId`, `setorDestinoId` e `previsaoDevolucao` fixa no futuro.\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`, `colaborador_id`, `setor_id`\n- **Variáveis gravadas:** `emprestimo_b_id`\n\n## Resultado esperado\nHTTP 201 com o empréstimo (`situacao = em_aberto`).\n\n## Testes automáticos\n- Status HTTP 201\n- Empréstimo em aberto",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_b_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"2099-01-10\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 8000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_b_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_09",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "09 · Devolver a ferramenta A com avaria (abre a ocorrência A) — 200",
+      "description": "## O que faz\nDevolve o empréstimo A com `condicaoDevolucao: \"avaria\"` (API-12).\n\n## Por que existe\nÉ quem realmente abre a ocorrência: o trigger `fn_abre_ocorrencia`, disparado por este `PATCH`, insere a ocorrência A herdando o `colaborador_id` do empréstimo (Regra 3). As rotas de ocorrências não criam nada.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ emprestimo_a_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `condicaoDevolucao: \"avaria\"` e uma observação.\n- **Variáveis lidas:** `base_url`, `token`, `emprestimo_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, ferramenta A vai para `indisponivel` por avaria.\n\n## Testes automáticos\n- Status HTTP 200\n- Resumo indica indisponível por avaria",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_a_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"avaria\",\n  \"observacaoDevolucao\": \"Cabo rompido — teste Insomnia (ocorrência A)\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resumo indica indisponível por avaria', () => {\n  insomnia.expect(corpo.data.resumo).to.include('avaria');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_10",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "10 · Devolver a ferramenta B com avaria (abre a ocorrência B) — 200",
+      "description": "## O que faz\nDevolve o empréstimo B com `condicaoDevolucao: \"avaria\"` (API-12).\n\n## Por que existe\nAbre a ocorrência B, usada no ciclo estendido (cobrada/baixada) e no teste de retrocesso (pasta 5).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ emprestimo_b_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `condicaoDevolucao: \"avaria\"` e uma observação.\n- **Variáveis lidas:** `base_url`, `token`, `emprestimo_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, ferramenta B vai para `indisponivel` por avaria.\n\n## Testes automáticos\n- Status HTTP 200\n- Resumo indica indisponível por avaria",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_b_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"avaria\",\n  \"observacaoDevolucao\": \"Suporte trincado — teste Insomnia (ocorrência B)\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 10000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resumo indica indisponível por avaria', () => {\n  insomnia.expect(corpo.data.resumo).to.include('avaria');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_11",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "11 · Localizar a ocorrência A pelo histórico da ferramenta A — 200",
+      "description": "## O que faz\nBusca o histórico da ferramenta A e guarda o id da ocorrência recém-aberta.\n\n## Por que existe\n`GET /v1/ocorrencias` não filtra por ferramenta, só por status/colaboradorId/tipo — então o jeito confiável de achar o id de uma ocorrência específica recém-criada é `GET /v1/ferramentas/:id/historico` (já existente, API-07), que traz só as ocorrências daquela ferramenta.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ ferramenta_a_id }}/historico`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_a_id`\n- **Variáveis gravadas:** `ocorrencia_a_id`\n\n## Resultado esperado\nHTTP 200 com `data.ocorrencias` tendo exatamente 1 item, `status = aberta`.\n\n## Testes automáticos\n- Status HTTP 200\n- Existe 1 ocorrência aberta",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_a_id }}/historico",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 11000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Existe 1 ocorrência aberta', () => {\n  insomnia.expect(corpo.data.ocorrencias).to.have.lengthOf(1);\n  insomnia.expect(corpo.data.ocorrencias[0].status).to.eql('aberta');\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('ocorrencia_a_id', String(corpo.data.ocorrencias[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_12",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "12 · Localizar a ocorrência B pelo histórico da ferramenta B — 200",
+      "description": "## O que faz\nBusca o histórico da ferramenta B e guarda o id da ocorrência recém-aberta.\n\n## Por que existe\nMesmo motivo da requisição 11, para a ocorrência B.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ ferramenta_b_id }}/historico`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`, `ferramenta_b_id`\n- **Variáveis gravadas:** `ocorrencia_b_id`\n\n## Resultado esperado\nHTTP 200 com `data.ocorrencias` tendo exatamente 1 item, `status = aberta`.\n\n## Testes automáticos\n- Status HTTP 200\n- Existe 1 ocorrência aberta",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_b_id }}/historico",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 12000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Existe 1 ocorrência aberta', () => {\n  insomnia.expect(corpo.data.ocorrencias).to.have.lengthOf(1);\n  insomnia.expect(corpo.data.ocorrencias[0].status).to.eql('aberta');\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('ocorrencia_b_id', String(corpo.data.ocorrencias[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "13 · Listar sem filtro — 200",
+      "description": "## O que faz\nLista as ocorrências sem nenhum filtro.\n\n## Por que existe\nProva que a listagem funciona no caso mais simples e que a ocorrência A aparece com os nomes resolvidos (ferramenta, colaborador, quem registrou).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com `meta` de paginação e a ocorrência A na lista (ordenada por mais recente primeiro).\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta tem meta de paginação\n- Ocorrência A está na lista, com ferramenta_nome preenchido",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 13000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resposta tem meta de paginação', () => {\n  insomnia.expect(corpo.meta).to.have.property('total');\n});\n\ninsomnia.test('Ocorrência A está na lista, com ferramenta_nome preenchido', () => {\n  const item = corpo.data.find((o) => String(o.id) === insomnia.environment.get('ocorrencia_a_id'));\n  insomnia.expect(item).to.exist;\n  insomnia.expect(item.ferramenta_nome).to.be.a('string').and.not.empty;\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "14 · Filtrar por status=aberta — 200",
+      "description": "## O que faz\nLista só as ocorrências com `status=aberta`.\n\n## Por que existe\nAs ocorrências A e B ainda não foram tratadas nesta pasta (o PATCH só roda nas pastas 4 e 5), então as duas devem aparecer.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias?status=aberta`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`, `ocorrencia_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com A e B na lista, todas com `status = aberta`.\n\n## Testes automáticos\n- Status HTTP 200\n- A e B estão na lista\n- Toda a página tem status aberta",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias?status=aberta",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 14000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('A e B estão na lista', () => {\n  const ids = corpo.data.map((o) => String(o.id));\n  insomnia.expect(ids).to.include(insomnia.environment.get('ocorrencia_a_id'));\n  insomnia.expect(ids).to.include(insomnia.environment.get('ocorrencia_b_id'));\n});\n\ninsomnia.test('Toda a página tem status aberta', () => {\n  corpo.data.forEach((o) => insomnia.expect(o.status).to.eql('aberta'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "15 · Filtrar por colaboradorId — 200",
+      "description": "## O que faz\nLista só as ocorrências do colaborador de teste.\n\n## Por que existe\nA e B herdaram o `colaborador_id` do empréstimo na abertura (Regra 3), então as duas devem aparecer.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias?colaboradorId={{ _.colaborador_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`, `colaborador_id`, `ocorrencia_a_id`, `ocorrencia_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com A e B na lista.\n\n## Testes automáticos\n- Status HTTP 200\n- A e B estão na lista",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias?colaboradorId={{ _.colaborador_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 15000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('A e B estão na lista', () => {\n  const ids = corpo.data.map((o) => String(o.id));\n  insomnia.expect(ids).to.include(insomnia.environment.get('ocorrencia_a_id'));\n  insomnia.expect(ids).to.include(insomnia.environment.get('ocorrencia_b_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "16 · Filtrar por tipo (minúsculo, normaliza para AVARIA) — 200",
+      "description": "## O que faz\nLista com `tipo=avaria` (minúsculo).\n\n## Por que existe\nO trigger grava o tipo em maiúsculo (`AVARIA`); o filtro precisa normalizar o valor recebido para não obrigar quem está testando a digitar maiúsculo.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias?tipo=avaria`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ocorrência A na lista, `tipo = AVARIA`.\n\n## Testes automáticos\n- Status HTTP 200\n- Ocorrência A está na lista\n- Toda a página tem tipo AVARIA",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias?tipo=avaria",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 16000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Ocorrência A está na lista', () => {\n  const ids = corpo.data.map((o) => String(o.id));\n  insomnia.expect(ids).to.include(insomnia.environment.get('ocorrencia_a_id'));\n});\n\ninsomnia.test('Toda a página tem tipo AVARIA', () => {\n  corpo.data.forEach((o) => insomnia.expect(o.tipo).to.eql('AVARIA'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "17 · Listar com status inválido — 400",
+      "description": "## O que faz\nChama a listagem com `status=cancelada`, fora do enum.\n\n## Por que existe\n`status_ocorrencia` só tem 5 valores (`aberta`, `em_reparo`, `cobrada`, `resolvida`, `baixada`); qualquer outro precisa ser rejeitado antes de chegar ao banco.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias?status=cancelada`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias?status=cancelada",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 17000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_18",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "18 · Listar com tipo inválido — 400",
+      "description": "## O que faz\nChama a listagem com `tipo=ROUBO`, fora dos 2 tipos aceitos.\n\n## Por que existe\nHoje só existem ocorrências `AVARIA` e `PERDA` (é o que o trigger `fn_abre_ocorrencia` grava); outro valor precisa ser rejeitado.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias?tipo=ROUBO`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias?tipo=ROUBO",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 18000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_19",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "19 · Listar sem token — 401",
+      "description": "## O que faz\nChama a listagem sem enviar token.\n\n## Por que existe\nProva que a rota exige autenticação.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\n- Status HTTP 401\n- Envelope de erro com code TOKEN_NOT_PROVIDED",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 19000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test('Envelope de erro com code TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_20",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "20 · Listar com perfil consulta — 403",
+      "description": "## O que faz\nChama a listagem com o token do quiosque.\n\n## Por que existe\nO perfil consulta só lê disponibilidade de ferramenta (Regra 8); não acompanha ocorrências.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias`\n- **Autenticação:** Bearer Token = `token_consulta` (requisição 02).\n- **Variáveis lidas:** `base_url`, `token_consulta`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Envelope de erro com code ACCESS_DENIED",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_consulta }}"
+      },
+      "metaSortKey": 20000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test('Envelope de erro com code ACCESS_DENIED', () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_21",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "21 · Mover a ocorrência A para em_reparo — 200",
+      "description": "## O que faz\nAtualiza o status da ocorrência A para `em_reparo`.\n\n## Por que existe\nPrimeiro passo do ciclo mínimo citado no \"pronto quando\" da issue (`aberta → em_reparo → resolvida`).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"status\": \"em_reparo\" }`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, `status = em_reparo`, `resolvida_por` ainda nulo.\n\n## Testes automáticos\n- Status HTTP 200\n- Status é em_reparo\n- resolvida_por ainda é nulo",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 21000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status é em_reparo', () => {\n  insomnia.expect(corpo.data.status).to.eql('em_reparo');\n});\n\ninsomnia.test('resolvida_por ainda é nulo', () => {\n  insomnia.expect(corpo.data.resolvida_por).to.eql(null);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_22",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "22 · Mover a ocorrência A para resolvida, com custo e observações — 200",
+      "description": "## O que faz\nAtualiza o status da ocorrência A para `resolvida`, junto com `custoEstimado` e `observacoesResolucao`.\n\n## Por que existe\nFecha o ciclo mínimo da issue. Prova que `resolvida_por` e `data_resolucao` são preenchidos a partir do usuário logado (Regra 6) — não vêm no corpo.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `status: \"resolvida\"`, `custoEstimado: 150.5`, `observacoesResolucao`.\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`, `usuario_nome`\n- **Variáveis gravadas:** `data_resolucao_a`\n\n## Resultado esperado\nHTTP 200, `status = resolvida`, `custo_estimado = \"150.50\"`, `resolvida_por_nome` = nome do usuário logado, `data_resolucao` preenchida.\n\n## Testes automáticos\n- Status HTTP 200\n- Status é resolvida com custo e observações\n- resolvida_por_nome é o usuário logado\n- data_resolucao está preenchida",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"resolvida\",\n  \"custoEstimado\": 150.5,\n  \"observacoesResolucao\": \"Cabo trocado — teste Insomnia\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 22000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status é resolvida com custo e observações', () => {\n  insomnia.expect(corpo.data.status).to.eql('resolvida');\n  insomnia.expect(corpo.data.custo_estimado).to.eql('150.50');\n  insomnia.expect(corpo.data.observacoes_resolucao).to.eql('Cabo trocado — teste Insomnia');\n});\n\ninsomnia.test('resolvida_por_nome é o usuário logado', () => {\n  insomnia.expect(corpo.data.resolvida_por_nome).to.eql(insomnia.environment.get('usuario_nome'));\n});\n\ninsomnia.test('data_resolucao está preenchida', () => {\n  insomnia.expect(corpo.data.data_resolucao).to.not.eql(null);\n});\n\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('data_resolucao_a', String(corpo.data.data_resolucao));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_23",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "23 · Reenviar status resolvida — não sobrescreve resolvida_por/data_resolucao — 200",
+      "description": "## O que faz\nEnvia de novo `status: \"resolvida\"` na ocorrência A, que já está resolvida, junto com um novo `custoEstimado`.\n\n## Por que existe\nSem essa checagem, reenviar `resolvida` trocaria `resolvida_por` e `data_resolucao` mesmo quando a intenção é só ajustar outro campo (ex.: o custo real depois de fechado o orçamento).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `status: \"resolvida\"`, `custoEstimado: 200`.\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`, `data_resolucao_a`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, `custo_estimado` atualizado para `\"200.00\"`, mas `data_resolucao` **igual** à da requisição anterior (22).\n\n## Testes automáticos\n- Status HTTP 200\n- custo_estimado foi atualizado\n- data_resolucao não mudou",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"resolvida\",\n  \"custoEstimado\": 200\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 23000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('custo_estimado foi atualizado', () => {\n  insomnia.expect(corpo.data.custo_estimado).to.eql('200.00');\n});\n\ninsomnia.test('data_resolucao não mudou', () => {\n  insomnia.expect(corpo.data.data_resolucao).to.eql(insomnia.environment.get('data_resolucao_a'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_24",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "24 · Mover a ocorrência B para em_reparo — 200",
+      "description": "## O que faz\nAtualiza o status da ocorrência B para `em_reparo`.\n\n## Por que existe\nPrimeiro passo antes de testar os estados que ficam fora do ciclo de 3 citado na issue.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_b_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"status\": \"em_reparo\" }`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, `status = em_reparo`.\n\n## Testes automáticos\n- Status HTTP 200\n- Status é em_reparo",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_b_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 24000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status é em_reparo', () => {\n  insomnia.expect(corpo.data.status).to.eql('em_reparo');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_25",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "25 · Mover a ocorrência B para cobrada — 200",
+      "description": "## O que faz\nAtualiza o status da ocorrência B para `cobrada`.\n\n## Por que existe\n`cobrada` é um dos 2 estados do enum `status_ocorrencia` que ficam fora do ciclo mínimo citado na issue (decisão do time: fica entre `em_reparo` e `resolvida`, cobra o custo do colaborador antes de fechar).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_b_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"status\": \"cobrada\" }`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, `status = cobrada`.\n\n## Testes automáticos\n- Status HTTP 200\n- Status é cobrada",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_b_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"cobrada\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 25000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status é cobrada', () => {\n  insomnia.expect(corpo.data.status).to.eql('cobrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_26",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "26 · Mover a ocorrência B para baixada — 200",
+      "description": "## O que faz\nAtualiza o status da ocorrência B para `baixada`.\n\n## Por que existe\n`baixada` é o estado final do enum (ferramenta baixada em definitivo), podendo vir depois de `resolvida` ou, como aqui, direto de `cobrada`.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_b_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"status\": \"baixada\" }`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200, `status = baixada`.\n\n## Testes automáticos\n- Status HTTP 200\n- Status é baixada",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_b_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"baixada\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 26000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status é baixada', () => {\n  insomnia.expect(corpo.data.status).to.eql('baixada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_27",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "27 · Tentar retroceder a ocorrência B para em_reparo — 409",
+      "description": "## O que faz\nTenta voltar o status da ocorrência B (já `baixada`) para `em_reparo`.\n\n## Por que existe\nA regra de \"sem retrocesso\" (`aberta < em_reparo < cobrada < resolvida < baixada`) precisa recusar qualquer tentativa de voltar para um status de rank menor.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_b_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"status\": \"em_reparo\" }`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_b_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 `OCORRENCIA_TRANSICAO_INVALIDA`.\n\n## Testes automáticos\n- Status HTTP 409\n- Envelope de erro com code OCORRENCIA_TRANSICAO_INVALIDA",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_b_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 27000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test('Envelope de erro com code OCORRENCIA_TRANSICAO_INVALIDA', () => {\n  insomnia.expect(corpo.error.code).to.eql('OCORRENCIA_TRANSICAO_INVALIDA');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_28",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "28 · Atualizar com corpo vazio — 400",
+      "description": "## O que faz\nChama o PATCH sem nenhum campo no corpo.\n\n## Por que existe\nAtualizar nada não faz sentido; o schema exige pelo menos um campo (`status`, `custoEstimado` ou `observacoesResolucao`).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{}`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`.\n\n## Testes automáticos\n- Status HTTP 400\n- Envelope de erro com code VALIDATION_ERROR\n\n## Observações\nUsa a ocorrência A (já `resolvida`); como a validação falha antes do UPDATE, o estado dela não muda.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 28000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Envelope de erro com code VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_29",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "29 · Atualizar com custoEstimado vazio — 400",
+      "description": "## O que faz\nEnvia `custoEstimado: \"\"`.\n\n## Por que existe\n`Number('')` vale `0` em JavaScript; sem tratamento, um custo vazio viraria silenciosamente `0` em vez de dar erro.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"custoEstimado\": \"\" }`\n- **Variáveis lidas:** `base_url`, `token`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, com `details` apontando o campo `custoEstimado`.\n\n## Testes automáticos\n- Status HTTP 400\n- O detalhe aponta o campo custoEstimado",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"custoEstimado\": \"\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 29000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('O detalhe aponta o campo custoEstimado', () => {\n  insomnia.expect(corpo.error.details[0].field).to.eql('custoEstimado');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_30",
+      "_type": "request",
+      "parentId": "fld_6",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "30 · Atualizar ocorrência inexistente — 404",
+      "description": "## O que faz\nChama o PATCH com um id que não existe (`999999999`).\n\n## Por que existe\nProva que a API responde 404 com um código específico do recurso, em vez de um 400 genérico.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/999999999`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `{ \"status\": \"em_reparo\" }`\n- **Variáveis lidas:** `base_url`, `token`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 `OCORRENCIA_NOT_FOUND`.\n\n## Testes automáticos\n- Status HTTP 404\n- Envelope de erro com code OCORRENCIA_NOT_FOUND",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/999999999",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 30000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Envelope de erro com code OCORRENCIA_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('OCORRENCIA_NOT_FOUND');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_31",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "31 · Atualizar sem token — 401",
+      "description": "## O que faz\nChama o PATCH sem enviar token.\n\n## Por que existe\nProva que a rota exige autenticação.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** `{ \"status\": \"em_reparo\" }`\n- **Variáveis lidas:** `base_url`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\n- Status HTTP 401\n- Envelope de erro com code TOKEN_NOT_PROVIDED\n\n## Observações\nA permissão é checada antes da regra de negócio, então não importa que a ocorrência A já esteja `resolvida` — o estado dela não muda.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 31000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test('Envelope de erro com code TOKEN_NOT_PROVIDED', () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_32",
+      "_type": "request",
+      "parentId": "fld_7",
+      "modified": 1790400000000,
+      "created": 1790400000000,
+      "name": "32 · Atualizar com perfil consulta — 403",
+      "description": "## O que faz\nChama o PATCH com o token do quiosque.\n\n## Por que existe\nO perfil consulta é somente leitura (Regra 8); não pode fechar tratativa.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ ocorrencia_a_id }}`\n- **Autenticação:** Bearer Token = `token_consulta` (requisição 02).\n- **Corpo (JSON):** `{ \"status\": \"em_reparo\" }`\n- **Variáveis lidas:** `base_url`, `token_consulta`, `ocorrencia_a_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Envelope de erro com code ACCESS_DENIED",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_a_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_consulta }}"
+      },
+      "metaSortKey": 32000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test('Envelope de erro com code ACCESS_DENIED', () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    }
+  ]
+}
