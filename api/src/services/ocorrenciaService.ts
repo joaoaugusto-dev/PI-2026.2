@@ -184,29 +184,30 @@ export async function atualizar(
       [id, dados.status ?? null, dados.custoEstimado ?? null, dados.observacoesResolucao ?? null, resolvendoAgora, usuarioId]
     );
 
+    const result = await client.query<Ocorrencia>(
+      `SELECT ${COLUNAS_OCORRENCIA} ${JOINS_OCORRENCIA} WHERE o.id = $1`,
+      [id]
+    );
+    const ocorrencia = result.rows[0];
+
+    let sugestaoDisponibilizarFerramentaId: number | null = null;
+    if (resolvendoAgora) {
+      const ferramenta = await client.query<{ status: string }>(
+        'SELECT status FROM ferramentas WHERE id = $1',
+        [ocorrencia.ferramenta_id]
+      );
+      if (ferramenta.rows[0]?.status === 'indisponivel') {
+        sugestaoDisponibilizarFerramentaId = ocorrencia.ferramenta_id;
+      }
+    }
+
     await client.query('COMMIT');
+
+    return { ...ocorrencia, sugestao_disponibilizar_ferramenta_id: sugestaoDisponibilizarFerramentaId };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw error;
   } finally {
     client.release();
   }
-
-  const result = await query<Ocorrencia>(
-    `SELECT ${COLUNAS_OCORRENCIA} ${JOINS_OCORRENCIA} WHERE o.id = $1`,
-    [id]
-  );
-  const ocorrencia = result.rows[0];
-
-  let sugestaoDisponibilizarFerramentaId: number | null = null;
-  if (resolvendoAgora) {
-    const ferramenta = await query<{ status: string }>('SELECT status FROM ferramentas WHERE id = $1', [
-      ocorrencia.ferramenta_id,
-    ]);
-    if (ferramenta.rows[0]?.status === 'indisponivel') {
-      sugestaoDisponibilizarFerramentaId = ocorrencia.ferramenta_id;
-    }
-  }
-
-  return { ...ocorrencia, sugestao_disponibilizar_ferramenta_id: sugestaoDisponibilizarFerramentaId };
 }
