@@ -33,7 +33,7 @@ Antes de abrir um Pull Request, leia o [guia de contribuição](CONTRIBUTING.md)
 - **Computação em Nuvem — Rodrigo Marudi**
   - _(entregas ainda não versionadas nesta pasta)_
 - **Desenvolvimento de Interfaces de Usuário para Web — Marcelo Ciacco**
-  - _(entregas ainda não versionadas nesta pasta)_
+  - [Entrega P1 (02/10)](docs/entregas-pi/desenvolvimento-interfaces-marcelo-ciacco/soufer-tools-frontend-p1-02-10-2026.pdf)
 
 ## Frontend
 
