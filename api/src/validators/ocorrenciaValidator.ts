@@ -59,13 +59,19 @@ export const atualizarOcorrenciaSchema = z
         if (texto === '') return valor;
         const numero = Number(texto);
         return Number.isNaN(numero) ? valor : numero;
-      }, z.number({ invalid_type_error: 'custoEstimado deve ser um número' }).nonnegative('custoEstimado não pode ser negativo'))
+      }, z
+        .number({ invalid_type_error: 'custoEstimado deve ser um número' })
+        .nonnegative('custoEstimado não pode ser negativo')
+        .finite('custoEstimado deve ser um número finito')
+        // NUMERIC(10,2) da coluna custo_estimado: acima disso o banco estoura
+        // em erro 500 em vez de devolver 400 de validação.
+        .max(99999999.99, 'custoEstimado não pode ser maior que 99999999.99'))
       .optional(),
     observacoesResolucao: z
       .string()
       .trim()
       .min(1, 'observacoesResolucao não pode ser vazio')
-      .max(500)
+      .max(500, 'observacoesResolucao não pode ter mais que 500 caracteres')
       .optional(),
   })
   .refine((dados) => Object.keys(dados).length > 0, {

@@ -278,6 +278,26 @@ describe('Rotas de Ocorrências (API-13)', () => {
       expect(res.body.error.details[0]).toMatchObject({ field: 'custoEstimado' });
     });
 
+    it('retorna 400 com custoEstimado acima do limite da coluna NUMERIC(10,2)', async () => {
+      const { id } = await criarOcorrencia('CustoAcimaDoLimite');
+
+      const res = await patch(id, { custoEstimado: 100000000 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({ field: 'custoEstimado' });
+    });
+
+    it('retorna 400 com custoEstimado infinito', async () => {
+      const { id } = await criarOcorrencia('CustoInfinito');
+
+      // JSON não tem Infinity — manda como string para passar pelo preprocess
+      // (Number('Infinity') é Infinity, não NaN) e cair no .finite() do schema.
+      const res = await patch(id, { custoEstimado: 'Infinity' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({ field: 'custoEstimado' });
+    });
+
     it('retorna 404 OCORRENCIA_NOT_FOUND para ocorrência inexistente', async () => {
       const res = await patch(99999999, { status: 'em_reparo' });
 
