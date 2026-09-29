@@ -10,7 +10,7 @@ Branch: `feat/api-13-endpoints-ocorrencias` (criada inicialmente a partir da
 `feat/api-12-registrar-devolucao`, quando a API-12 ainda estava em revisão;
 recriada a partir da `development` depois que a API-12 foi mergeada, mantendo
 os mesmos commits, um por etapa)
-PR: (a abrir depois desta issue)
+PR: [#161](https://github.com/joaoaugusto-dev/PI-2026.2/pull/161)
 
 ## Objetivo
 
