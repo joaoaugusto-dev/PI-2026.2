@@ -24,14 +24,22 @@ automático de ocorrências (avaria/perda) e consulta pública de
 disponibilidade — alinhado ao ODS 9 (Indústria, Inovação e Infraestrutura),
 com ODS 12 (Consumo e Produção Responsáveis) como secundário.
 
+<div align="center">
+
+<img src="docs/assets/quadro-manual-soufer.png" alt="Quadro branco de controle manual de ferramentas na Soufer" width="480" />
+
+<sub>O controle real na manutenção da Soufer antes do SOUFER Tools: quadro branco preenchido à mão.</sub>
+
+</div>
+
 ## Equipe
 
-| Nome | RA | Papel |
-|------|-----|-------|
-| Guilherme Portilho da Rosa Santi | 25000151 | Back-end + Infra |
-| Henrique de Oliveira Molinari | 25001176 | Back-end |
-| João Augusto de Freitas | 25000019 | Front-end (líder/facilitador) |
-| Kauan Leander Leandrini | 25000795 | Front básico + Apresentação |
+| | Nome | RA | Papel |
+|---|------|-----|-------|
+| <img src="https://github.com/TGuiDev.png" width="48" height="48" alt="TGuiDev" /> | Guilherme Portilho da Rosa Santi ([@TGuiDev](https://github.com/TGuiDev)) | 25000151 | Back-end + Infra |
+| <img src="https://github.com/henrique-molinari.png" width="48" height="48" alt="henrique-molinari" /> | Henrique de Oliveira Molinari ([@henrique-molinari](https://github.com/henrique-molinari)) | 25001176 | Back-end |
+| <img src="https://github.com/joaoaugusto-dev.png" width="48" height="48" alt="joaoaugusto-dev" /> | João Augusto de Freitas ([@joaoaugusto-dev](https://github.com/joaoaugusto-dev)) | 25000019 | Front-end (líder/facilitador) |
+| <img src="https://github.com/kauanleandriniunifeob.png" width="48" height="48" alt="kauanleandriniunifeob" /> | Kauan Leander Leandrini ([@kauanleandriniunifeob](https://github.com/kauanleandriniunifeob)) | 25000795 | Front básico + Apresentação |
 
 ## Stack
 
