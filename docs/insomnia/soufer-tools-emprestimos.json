@@ -10,8 +10,8 @@
       "parentId": null,
       "modified": 1790200000000,
       "created": 1790200000000,
-      "name": "SOUFER Tools — Empréstimos (Retirada)",
-      "description": "# Testes da API SOUFER Tools — Empréstimos (Retirada)\nColeção de testes manuais e automáticos de `POST /v1/emprestimos` e `GET /v1/emprestimos/previsao-sugerida` (issue #47, API-11: registrar retirada).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação e preparação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url` e as variáveis gravadas por scripts (`token`, `token_consulta`, `usuario_nome`, `colaborador_id`, `setor_id`, `atividade_id`, `grupo_id`, `ferramenta_a_id`, `ferramenta_b_id`, `ferramenta_c_id`, `previsao_sugerida`). Não é preciso preenchê-las à mão.\n\nUse somente em ambiente de desenvolvimento (`soufer_dev`), com o seed (`npm run db:seed`) já executado. A coleção cria 3 ferramentas de teste (`ZZINSOMNIA ...`) a cada execução e retira todas; **a API de devolução ainda não existe (API-12)**, então esses empréstimos ficam abertos. O passo a passo do tutorial traz o SQL de limpeza."
+      "name": "SOUFER Tools — Empréstimos (Retirada e Devolução)",
+      "description": "# Testes da API SOUFER Tools — Empréstimos (Retirada e Devolução)\nColeção de testes manuais e automáticos de `POST /v1/emprestimos`, `GET /v1/emprestimos/previsao-sugerida` (issue #47, API-11: registrar retirada) e `PATCH /v1/emprestimos/:id/devolucao` (issue #48, API-12: registrar devolução).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação e preparação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url` e as variáveis gravadas por scripts (`token`, `token_consulta`, `usuario_nome`, `colaborador_id`, `setor_id`, `atividade_id`, `grupo_id`, `ferramenta_a_id` a `ferramenta_h_id`, `previsao_sugerida`, `emprestimo_ok_id`, `emprestimo_avaria_id`, `emprestimo_perda_id`, `emprestimo_duplicado_id`, `emprestimo_h_id`). Não é preciso preenchê-las à mão.\n\nUse somente em ambiente de desenvolvimento (`soufer_dev`), com o seed (`npm run db:seed`) já executado. A coleção cria 8 ferramentas de teste (`ZZINSOMNIA ...`) a cada execução. Os empréstimos das ferramentas A, B e C (retirada, pastas 1 a 7) e de H (devolução, pastas 8, 11 e 12 — as tentativas de 401/403/400 não consomem o empréstimo) ficam abertos de propósito; a devolução (pastas 9 e 10) fecha os empréstimos de D, E, F e G. O passo a passo do tutorial traz o SQL de limpeza para o que sobrar."
     },
     {
       "_id": "env_base_emprestimos",
@@ -32,7 +32,17 @@
         "ferramenta_a_id": "",
         "ferramenta_b_id": "",
         "ferramenta_c_id": "",
-        "previsao_sugerida": ""
+        "previsao_sugerida": "",
+        "ferramenta_d_id": "",
+        "ferramenta_e_id": "",
+        "ferramenta_f_id": "",
+        "ferramenta_g_id": "",
+        "ferramenta_h_id": "",
+        "emprestimo_ok_id": "",
+        "emprestimo_avaria_id": "",
+        "emprestimo_perda_id": "",
+        "emprestimo_duplicado_id": "",
+        "emprestimo_h_id": ""
       },
       "dataPropertyOrder": null,
       "color": null,
@@ -1055,6 +1065,883 @@
       "metaSortKey": 29000,
       "isPrivate": false,
       "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\ninsomnia.test('Envelope de erro com code ITEM_KIT_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('ITEM_KIT_NOT_FOUND');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_8",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "8 · Devolução — preparação",
+      "description": "Cadastra 5 ferramentas de teste (`ZZINSOMNIA Devolucao ...`), cada uma dedicada a um cenário de devolução, para não reaproveitar as ferramentas A/B/C da retirada (que já ficam `em_uso` depois da pasta 3). D é da devolução ok, E da avaria, F da perda, G do 409 (devolução duplicada) e H do 401/403/400.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 8000
+    },
+    {
+      "_id": "req_30",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "30 · Cadastrar ferramenta de teste D (devolução ok) — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste D, que nasce `disponivel`.\n\n## Por que existe\nO cenário de devolução `ok` (requisição 39) precisa de um empréstimo em aberto próprio, para não interferir com as retiradas da pasta 3.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token` (requisição 01).\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `grupoId` (requisição 04).\n- **Variáveis gravadas:** `ferramenta_d_id`\n\n## Resultado esperado\nHTTP 201, `status = disponivel`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Devolucao D {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 30000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_d_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_31",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "31 · Registrar retirada da ferramenta D — 201",
+      "description": "## O que faz\nRetira a ferramenta D, abrindo o empréstimo que a requisição 39 vai devolver com `condicaoDevolucao: ok`.\n\n## Por que existe\n`PATCH /v1/emprestimos/:id/devolucao` (API-12) exige um empréstimo em aberto — não existe devolução sem retirada antes.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `ferramentaId` (D), `colaboradorId`, `setorDestinoId`, `previsaoDevolucao` (requisições 03, 04 e 08).\n- **Variáveis gravadas:** `emprestimo_ok_id`\n\n## Resultado esperado\nHTTP 201, `situacao = em_aberto`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_d_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 31000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_ok_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_32",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "32 · Cadastrar ferramenta de teste E (devolução com avaria) — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste E, que nasce `disponivel`.\n\n## Por que existe\nO cenário de devolução com `avaria` (requisição 40) precisa do seu próprio empréstimo em aberto.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `grupoId`.\n- **Variáveis gravadas:** `ferramenta_e_id`\n\n## Resultado esperado\nHTTP 201, `status = disponivel`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Devolucao E {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 32000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_e_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_33",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "33 · Registrar retirada da ferramenta E — 201",
+      "description": "## O que faz\nRetira a ferramenta E, abrindo o empréstimo que a requisição 40 vai devolver com `condicaoDevolucao: avaria`.\n\n## Por que existe\nMesmo motivo da requisição 31, para o cenário de avaria.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `ferramentaId` (E), `colaboradorId`, `setorDestinoId`, `previsaoDevolucao`.\n- **Variáveis gravadas:** `emprestimo_avaria_id`\n\n## Resultado esperado\nHTTP 201, `situacao = em_aberto`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_e_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 33000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_avaria_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_34",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "34 · Cadastrar ferramenta de teste F (devolução com perda) — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste F, que nasce `disponivel`.\n\n## Por que existe\nO cenário de devolução com `perda` (requisição 42) precisa do seu próprio empréstimo em aberto.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `grupoId`.\n- **Variáveis gravadas:** `ferramenta_f_id`\n\n## Resultado esperado\nHTTP 201, `status = disponivel`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Devolucao F {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 34000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_f_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_35",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "35 · Registrar retirada da ferramenta F — 201",
+      "description": "## O que faz\nRetira a ferramenta F, abrindo o empréstimo que a requisição 42 vai devolver com `condicaoDevolucao: perda`.\n\n## Por que existe\nMesmo motivo da requisição 31, para o cenário de perda.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `ferramentaId` (F), `colaboradorId`, `setorDestinoId`, `previsaoDevolucao`.\n- **Variáveis gravadas:** `emprestimo_perda_id`\n\n## Resultado esperado\nHTTP 201, `situacao = em_aberto`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_f_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 35000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_perda_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_36",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "36 · Cadastrar ferramenta de teste G (409 devolução duplicada) — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste G, que nasce `disponivel`.\n\n## Por que existe\nO cenário de devolução duplicada (409, pasta 10) precisa de um empréstimo próprio, já que vai ser devolvido uma vez com sucesso e depois recusado.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `grupoId`.\n- **Variáveis gravadas:** `ferramenta_g_id`\n\n## Resultado esperado\nHTTP 201, `status = disponivel`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Devolucao G {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 36000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_g_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_37",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "37 · Registrar retirada da ferramenta G — 201",
+      "description": "## O que faz\nRetira a ferramenta G, abrindo o empréstimo usado na pasta 10 (409 devolução duplicada).\n\n## Por que existe\nMesmo motivo da requisição 31, para o cenário de devolução em duplicidade.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `ferramentaId` (G), `colaboradorId`, `setorDestinoId`, `previsaoDevolucao`.\n- **Variáveis gravadas:** `emprestimo_duplicado_id`\n\n## Resultado esperado\nHTTP 201, `situacao = em_aberto`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_g_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 37000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_duplicado_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_38",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "38 · Cadastrar ferramenta de teste H (401/403/400 da devolução) — 201",
+      "description": "## O que faz\nCadastra a ferramenta de teste H, que nasce `disponivel`.\n\n## Por que existe\nOs cenários de 401, 403 e 400 (pastas 11 e 12) tentam devolver sem sucesso, então reaproveitam o mesmo empréstimo em aberto — nenhuma dessas tentativas consome o empréstimo.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `nome` com prefixo `ZZINSOMNIA` e `grupoId`.\n- **Variáveis gravadas:** `ferramenta_h_id`\n\n## Resultado esperado\nHTTP 201, `status = disponivel`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ZZINSOMNIA Devolucao H {{ _.timestamp }}\",\n  \"grupoId\": \"{{ _.grupo_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 38000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Nasce disponível', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('ferramenta_h_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_39",
+      "_type": "request",
+      "parentId": "fld_8",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "39 · Registrar retirada da ferramenta H — 201",
+      "description": "## O que faz\nRetira a ferramenta H, abrindo o empréstimo reaproveitado pelas pastas 11 e 12.\n\n## Por que existe\nMesmo motivo da requisição 31, para os cenários que não chegam a devolver de verdade (401, 403 e 400).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `ferramentaId` (H), `colaboradorId`, `setorDestinoId`, `previsaoDevolucao`.\n- **Variáveis gravadas:** `emprestimo_h_id`\n\n## Resultado esperado\nHTTP 201, `situacao = em_aberto`.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": \"{{ _.ferramenta_h_id }}\",\n  \"colaboradorId\": \"{{ _.colaborador_id }}\",\n  \"setorDestinoId\": \"{{ _.setor_id }}\",\n  \"previsaoDevolucao\": \"{{ _.previsao_sugerida }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 39000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('Empréstimo em aberto', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('em_aberto');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (201).\nif (insomnia.response.code === 201) {\n  insomnia.environment.set('emprestimo_h_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_9",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "9 · Devolução — fluxo de sucesso (200)",
+      "description": "Os três casos de condição de devolução (issue API-12, #48): `ok` devolve a ferramenta a `disponivel`; `avaria` e `perda` deixam a ferramenta `indisponivel` com o motivo gravado e abrem uma ocorrência automaticamente (trigger `fn_abre_ocorrencia`), conferida pelo histórico da ferramenta.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 9000
+    },
+    {
+      "_id": "req_40",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "40 · Devolver com condicaoDevolucao ok — 200",
+      "description": "## O que faz\nDevolve o empréstimo da ferramenta D com `condicaoDevolucao: ok`.\n\n## Por que existe\nÉ o caminho feliz da devolução (issue API-12, #48, \"Pronto quando\" item 1): a ferramenta volta a `disponivel`.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_ok_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"ok\"` e `observacaoDevolucao` (opcional).\n\n## Resultado esperado\nHTTP 200. `situacao = devolvido`, `data_devolucao` preenchida e `resumo` pronto para exibição (\"...foi devolvida e está disponível.\").\n\n## Testes automáticos\n- Status HTTP 200\n- Empréstimo devolvido\n- Resumo pronto (item \"se sobrar tempo\" da issue)",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_ok_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\",\n  \"observacaoDevolucao\": \"Ferramenta devolvida em bom estado\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 40000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Empréstimo devolvido, com data_devolucao preenchida', () => {\n  insomnia.expect(corpo.data.situacao).to.eql('devolvido');\n  insomnia.expect(corpo.data.data_devolucao).to.not.be.null;\n});\n\ninsomnia.test('Resumo pronto para o front (extra da API-12)', () => {\n  insomnia.expect(corpo.data.resumo).to.include('foi devolvida e está disponível');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_41",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "41 · Conferir que a ferramenta D voltou a disponivel — 200",
+      "description": "## O que faz\nBusca a ferramenta D depois da devolução ok (requisição 40).\n\n## Por que existe\nA mudança de status é responsabilidade do trigger `fn_sync_status_ferramenta`, não da API; esta requisição prova que ele rodou.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ _.ferramenta_d_id }}`\n- **Autenticação:** Bearer Token = `token`.\n\n## Resultado esperado\nHTTP 200, `status = disponivel`, `motivo_indisponivel = null`.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_d_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 41000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status volta a disponivel, sem motivo de indisponibilidade', () => {\n  insomnia.expect(corpo.data.status).to.eql('disponivel');\n  insomnia.expect(corpo.data.motivo_indisponivel).to.be.null;\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_42",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "42 · Devolver com condicaoDevolucao avaria — 200",
+      "description": "## O que faz\nDevolve o empréstimo da ferramenta E com `condicaoDevolucao: avaria`.\n\n## Por que existe\nRegra 3 do `CLAUDE.md`: avaria na devolução move a ferramenta para `indisponivel` e abre uma ocorrência automaticamente, herdando o colaborador do empréstimo (issue API-12, \"Pronto quando\" item 2).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_avaria_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"avaria\"` e `observacaoDevolucao`.\n\n## Resultado esperado\nHTTP 200 com `resumo` mencionando a indisponibilidade por avaria. A confirmação do status da ferramenta e da ocorrência ficam nas requisições 43 e 44.\n\n## Testes automáticos\n- Status HTTP 200\n- Resumo pronto para o front",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_avaria_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"avaria\",\n  \"observacaoDevolucao\": \"Cabo de alimentação rompido\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 42000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resumo aponta indisponibilidade por avaria (extra da API-12)', () => {\n  insomnia.expect(corpo.data.resumo).to.include('indisponível por avaria');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_43",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "43 · Conferir que a ferramenta E ficou indisponivel por avaria — 200",
+      "description": "## O que faz\nBusca a ferramenta E depois da devolução com avaria (requisição 42).\n\n## Por que existe\nRegra 2: indisponível é seção separada de \"em uso\". Prova que o trigger `fn_sync_status_ferramenta` gravou o motivo.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ _.ferramenta_e_id }}`\n- **Autenticação:** Bearer Token = `token`.\n\n## Resultado esperado\nHTTP 200, `status = indisponivel`, `motivo_indisponivel = avaria`.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_e_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 43000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Status indisponivel com o motivo avaria', () => {\n  insomnia.expect(corpo.data.status).to.eql('indisponivel');\n  insomnia.expect(corpo.data.motivo_indisponivel).to.eql('avaria');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_44",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "44 · Conferir a ocorrência de avaria no histórico da ferramenta E — 200",
+      "description": "## O que faz\nBusca o histórico da ferramenta E e confere a ocorrência aberta pela devolução com avaria (requisição 42).\n\n## Por que existe\n\"Pronto quando\" da issue API-12: \"a ocorrência criada tem o colaborador certo\" — a trigger `fn_abre_ocorrencia` herda `colaborador_id` do empréstimo, não do usuário logado.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ _.ferramenta_e_id }}/historico`\n- **Autenticação:** Bearer Token = `token`.\n\n## Resultado esperado\nHTTP 200 com uma ocorrência `tipo = AVARIA` cujo `colaborador_id` é o mesmo colaborador da retirada (requisição 03).\n\n## Observações\nA rota `GET /v1/ocorrencias` (issue API-13, #49) ainda não existe; por isso a ocorrência é conferida pelo histórico da ferramenta.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_e_id }}/historico",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 44000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Ocorrência de avaria aberta com o colaborador certo', () => {\n  const ocorrencia = corpo.data.ocorrencias.find((o) => o.tipo === 'AVARIA');\n  insomnia.expect(ocorrencia).to.exist;\n  insomnia.expect(String(ocorrencia.colaborador_id)).to.eql(insomnia.environment.get('colaborador_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_45",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "45 · Devolver com condicaoDevolucao perda — 200",
+      "description": "## O que faz\nDevolve o empréstimo da ferramenta F com `condicaoDevolucao: perda`, sem informar `observacaoDevolucao` (campo opcional).\n\n## Por que existe\nTerceiro caso do \"Pronto quando\" da issue API-12: perda também deixa a ferramenta `indisponivel` e abre ocorrência.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_perda_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"perda\"`.\n\n## Resultado esperado\nHTTP 200 com `resumo` mencionando a indisponibilidade por perda.\n\n## Testes automáticos\n- Status HTTP 200\n- Resumo pronto para o front",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_perda_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"perda\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 45000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resumo aponta indisponibilidade por perda (extra da API-12)', () => {\n  insomnia.expect(corpo.data.resumo).to.include('indisponível por perda');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_46",
+      "_type": "request",
+      "parentId": "fld_9",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "46 · Conferir ferramenta F indisponivel e ocorrência de perda — 200",
+      "description": "## O que faz\nBusca o histórico da ferramenta F e confere a ocorrência de perda aberta pela requisição 45.\n\n## Por que existe\nMesmo motivo da requisição 44, para o caso de perda.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ _.ferramenta_f_id }}/historico`\n- **Autenticação:** Bearer Token = `token`.\n\n## Resultado esperado\nHTTP 200 com uma ocorrência `tipo = PERDA` cujo `colaborador_id` é o da retirada.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_f_id }}/historico",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 46000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Ocorrência de perda aberta com o colaborador certo', () => {\n  const ocorrencia = corpo.data.ocorrencias.find((o) => o.tipo === 'PERDA');\n  insomnia.expect(ocorrencia).to.exist;\n  insomnia.expect(String(ocorrencia.colaborador_id)).to.eql(insomnia.environment.get('colaborador_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_10",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "10 · Devolução — regras de negócio e conflitos (409)",
+      "description": "Devolve o empréstimo da ferramenta G uma vez com sucesso e tenta devolver o mesmo empréstimo de novo, provando o \"Pronto quando\" item 3 da issue API-12: \"tentativa de devolver duas vezes o mesmo empréstimo deve falhar\".",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 10000
+    },
+    {
+      "_id": "req_47",
+      "_type": "request",
+      "parentId": "fld_10",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "47 · Devolver o empréstimo da ferramenta G — 200",
+      "description": "## O que faz\nDevolve o empréstimo da ferramenta G normalmente, pela primeira vez.\n\n## Por que existe\nPrecondição da requisição 48: só dá pra provar a devolução em duplicidade depois de uma devolução válida.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_duplicado_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"ok\"`.\n\n## Resultado esperado\nHTTP 200.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_duplicado_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 47000,
+      "isPrivate": false,
+      "afterResponseScript": "insomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_48",
+      "_type": "request",
+      "parentId": "fld_10",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "48 · Devolver o mesmo empréstimo de novo — 409",
+      "description": "## O que faz\nTenta devolver de novo o mesmo empréstimo já fechado pela requisição 47.\n\n## Por que existe\n\"Pronto quando\" item 3 da issue API-12: devolução em duplicidade deve falhar. A trava (`SELECT ... FOR UPDATE`) e a checagem de `data_devolucao` no service impedem a segunda devolução e uma segunda ocorrência.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_duplicado_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"ok\"`.\n\n## Resultado esperado\nHTTP 409 `EMPRESTIMO_JA_DEVOLVIDO`.\n\n## Testes automáticos\n- Status HTTP 409\n- Código de erro `EMPRESTIMO_JA_DEVOLVIDO`",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_duplicado_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 48000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test('Código de erro EMPRESTIMO_JA_DEVOLVIDO', () => {\n  insomnia.expect(corpo.error.code).to.eql('EMPRESTIMO_JA_DEVOLVIDO');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_11",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "11 · Devolução — autenticação e autorização (401 e 403)",
+      "description": "Provam que a devolução é protegida e exclusiva do perfil manutenção: sem token e com o token do perfil consulta. Nenhuma altera o banco (o empréstimo da ferramenta H continua em aberto).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 11000
+    },
+    {
+      "_id": "req_49",
+      "_type": "request",
+      "parentId": "fld_11",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "49 · Devolver sem token — 401",
+      "description": "## O que faz\nTenta devolver o empréstimo da ferramenta H sem enviar o cabeçalho `Authorization`.\n\n## Por que existe\nRegra 6 e middleware `authenticate`: a rota exige token.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_h_id }}/devolucao`\n- **Autenticação:** Nenhuma, de propósito.\n- **Corpo (JSON):** `condicaoDevolucao: \"ok\"`.\n\n## Resultado esperado\nHTTP 401. O empréstimo continua em aberto (usado de novo na requisição 50).",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_h_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 49000,
+      "isPrivate": false,
+      "afterResponseScript": "insomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_50",
+      "_type": "request",
+      "parentId": "fld_11",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "50 · Devolver com perfil consulta — 403",
+      "description": "## O que faz\nTenta devolver o empréstimo da ferramenta H com o token do perfil `consulta` (requisição 02).\n\n## Por que existe\nRegra 8: `consulta` só tem leitura de disponibilidade, sem acesso a `manutencao`.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_h_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token_consulta`.\n- **Corpo (JSON):** `condicaoDevolucao: \"ok\"`.\n\n## Resultado esperado\nHTTP 403. O empréstimo continua em aberto (usado de novo na pasta 12).",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_h_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_consulta }}"
+      },
+      "metaSortKey": 50000,
+      "isPrivate": false,
+      "afterResponseScript": "insomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_12",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "12 · Devolução — validação de entrada (400)",
+      "description": "Reaproveitam o empréstimo em aberto da ferramenta H (as tentativas 401/403 não o consomem) para provar que `condicaoDevolucao` é obrigatória e só aceita `ok`, `avaria` ou `perda`. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 12000
+    },
+    {
+      "_id": "req_51",
+      "_type": "request",
+      "parentId": "fld_12",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "51 · Devolver sem condicaoDevolucao — 400",
+      "description": "## O que faz\nTenta devolver a ferramenta H sem informar `condicaoDevolucao`.\n\n## Por que existe\n`condicaoDevolucao` é o que dispara os triggers de status e de ocorrência; sem ela a devolução não tem sentido.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_h_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** só `observacaoDevolucao`.\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`, apontando o campo `condicaoDevolucao`. O empréstimo continua em aberto.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_h_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"observacaoDevolucao\": \"Sem condição informada de propósito\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 51000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Erro de validação aponta condicaoDevolucao', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n  insomnia.expect(corpo.error.details[0].field).to.eql('condicaoDevolucao');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_52",
+      "_type": "request",
+      "parentId": "fld_12",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "52 · Devolver com condicaoDevolucao inválida — 400",
+      "description": "## O que faz\nTenta devolver a ferramenta H com `condicaoDevolucao: \"quebrada\"`, um valor fora do enum.\n\n## Por que existe\nO enum `condicao_devolucao` do banco só aceita `ok`, `avaria` ou `perda`; o Zod barra antes de chegar lá.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_h_id }}/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"quebrada\"`.\n\n## Resultado esperado\nHTTP 400 `VALIDATION_ERROR`. O empréstimo continua em aberto (usado de novo na pasta 13).",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_h_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"quebrada\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 52000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test('Código de erro VALIDATION_ERROR', () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_13",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_emprestimos",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "13 · Devolução — recurso inexistente (404)",
+      "description": "Usa um id de empréstimo que não existe (999999999) para provar que a API responde 404 com um código específico, em vez de um 400 genérico. Não altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 13000
+    },
+    {
+      "_id": "req_53",
+      "_type": "request",
+      "parentId": "fld_13",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "53 · Devolver empréstimo inexistente — 404",
+      "description": "## O que faz\nTenta devolver o empréstimo de id `999999999`, que não existe.\n\n## Por que existe\nProva que a ausência do empréstimo responde 404 com um código específico (`EMPRESTIMO_NOT_FOUND`), e não um 500 ou um 400 genérico.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/999999999/devolucao`\n- **Autenticação:** Bearer Token = `token`.\n- **Corpo (JSON):** `condicaoDevolucao: \"ok\"`.\n\n## Resultado esperado\nHTTP 404 `EMPRESTIMO_NOT_FOUND`.\n\n## Testes automáticos\n- Status HTTP 404\n- Código de erro `EMPRESTIMO_NOT_FOUND`",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/999999999/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 53000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('Código de erro EMPRESTIMO_NOT_FOUND', () => {\n  insomnia.expect(corpo.error.code).to.eql('EMPRESTIMO_NOT_FOUND');\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,

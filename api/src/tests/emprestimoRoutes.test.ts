@@ -65,6 +65,9 @@ describe('Rotas de Empréstimos (API-11)', () => {
 
   afterAll(async () => {
     const ferramentas = `SELECT id FROM ferramentas WHERE nome LIKE $1`;
+    // ocorrencias.ferramenta_id é ON DELETE RESTRICT: precisa sair antes das
+    // ferramentas, ou o DELETE final falha para os casos de avaria/perda.
+    await query(`DELETE FROM ocorrencias WHERE ferramenta_id IN (${ferramentas})`, [`${PREFIXO}%`]);
     await query(`DELETE FROM emprestimos WHERE ferramenta_id IN (${ferramentas})`, [`${PREFIXO}%`]);
     await query(`DELETE FROM itens_kit WHERE ferramenta_id IN (${ferramentas})`, [`${PREFIXO}%`]);
     await query('DELETE FROM ferramentas WHERE nome LIKE $1', [`${PREFIXO}%`]);
@@ -234,6 +237,144 @@ describe('Rotas de Empréstimos (API-11)', () => {
         expect(kitInteiro.status).toBe(409);
         expect(kitInteiro.body.error.code).toBe('FERRAMENTA_INDISPONIVEL');
       });
+    });
+  });
+
+  describe('PATCH /v1/emprestimos/:id/devolucao (API-12)', () => {
+    const patch = (id: number, body: Record<string, unknown>, token: string | null = manutencaoToken) => {
+      const req = request(app).patch(`/v1/emprestimos/${id}/devolucao`);
+      if (token) req.set('Authorization', `Bearer ${token}`);
+      return req.send(body);
+    };
+
+    // Registra a retirada e devolve o id do empréstimo aberto, para o teste
+    // só se preocupar com a devolução em si.
+    const retirar = async (nome: string, extra: Record<string, unknown> = {}) => {
+      const ferramentaId = await criarFerramenta(nome);
+      const res = await post(corpo(ferramentaId, extra));
+      return { emprestimoId: res.body.data.id as number, ferramentaId };
+    };
+
+    const statusFerramenta = async (id: number) =>
+      (await query<{ status: string; motivo_indisponivel: string | null }>(
+        'SELECT status, motivo_indisponivel FROM ferramentas WHERE id = $1',
+        [id]
+      )).rows[0];
+
+    it('devolução ok (200) volta a ferramenta a disponivel', async () => {
+      const { emprestimoId, ferramentaId } = await retirar('DevolucaoOk');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'ok' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toMatchObject({ id: emprestimoId, situacao: 'devolvido' });
+      expect(res.body.data.data_devolucao).not.toBeNull();
+      expect(res.body.data.resumo).toBe(`${res.body.data.ferramenta_nome} foi devolvida e está disponível.`);
+      expect(await statusFerramenta(ferramentaId)).toEqual({ status: 'disponivel', motivo_indisponivel: null });
+    });
+
+    it('devolução com avaria (200) deixa a ferramenta indisponivel e abre ocorrência com o colaborador certo', async () => {
+      const { emprestimoId, ferramentaId } = await retirar('DevolucaoAvaria');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'avaria', observacaoDevolucao: 'cabo rompido' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.resumo).toBe(`${res.body.data.ferramenta_nome} foi para indisponível por avaria.`);
+      expect(await statusFerramenta(ferramentaId)).toEqual({ status: 'indisponivel', motivo_indisponivel: 'avaria' });
+
+      const ocorrencia = await query<{ colaborador_id: number; tipo: string; registrada_por: number }>(
+        'SELECT colaborador_id, tipo, registrada_por FROM ocorrencias WHERE emprestimo_id = $1',
+        [emprestimoId]
+      );
+      expect(ocorrencia.rows[0]).toMatchObject({ colaborador_id: colaboradorId, tipo: 'AVARIA', registrada_por: usuarioId });
+    });
+
+    it('devolução com perda (200) deixa a ferramenta indisponivel e abre ocorrência', async () => {
+      const { emprestimoId, ferramentaId } = await retirar('DevolucaoPerda');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'perda' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.resumo).toBe(`${res.body.data.ferramenta_nome} foi para indisponível por perda.`);
+      expect(await statusFerramenta(ferramentaId)).toEqual({ status: 'indisponivel', motivo_indisponivel: 'perda' });
+
+      const ocorrencia = await query('SELECT 1 FROM ocorrencias WHERE emprestimo_id = $1 AND tipo = $2', [emprestimoId, 'PERDA']);
+      expect(ocorrencia.rowCount).toBe(1);
+    });
+
+    it('recusa devolver o mesmo empréstimo duas vezes (409 EMPRESTIMO_JA_DEVOLVIDO)', async () => {
+      const { emprestimoId } = await retirar('DevolucaoDuplicada');
+      expect((await patch(emprestimoId, { condicaoDevolucao: 'ok' })).status).toBe(200);
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'ok' });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('EMPRESTIMO_JA_DEVOLVIDO');
+    });
+
+    it('retorna 404 EMPRESTIMO_NOT_FOUND para empréstimo inexistente', async () => {
+      const res = await patch(99999999, { condicaoDevolucao: 'ok' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('EMPRESTIMO_NOT_FOUND');
+    });
+
+    it('retorna 400 com condicaoDevolucao ausente ou inválida', async () => {
+      const { emprestimoId } = await retirar('CondicaoInvalida');
+
+      const ausente = await patch(emprestimoId, {});
+      const invalida = await patch(emprestimoId, { condicaoDevolucao: 'quebrada' });
+
+      expect(ausente.status).toBe(400);
+      expect(ausente.body.error.details[0]).toMatchObject({ field: 'condicaoDevolucao' });
+      expect(invalida.status).toBe(400);
+    });
+
+    it('retorna 401 sem token e 403 com papel consulta', async () => {
+      const { emprestimoId } = await retirar('SemPermissaoDevolucao');
+
+      const semToken = await patch(emprestimoId, { condicaoDevolucao: 'ok' }, null);
+      const consulta = await patch(emprestimoId, { condicaoDevolucao: 'ok' }, consultaToken);
+
+      expect(semToken.status).toBe(401);
+      expect(consulta.status).toBe(403);
+    });
+
+    it('ignora usuarioDevolucaoId enviado no corpo (Regra 6)', async () => {
+      const { emprestimoId } = await retirar('CorpoSpoofDevolucao');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'ok', usuarioDevolucaoId: 999999, usuario_devolucao_id: 999999 });
+
+      expect(res.status).toBe(200);
+      const emprestimo = await query<{ usuario_devolucao_id: number }>(
+        'SELECT usuario_devolucao_id FROM emprestimos WHERE id = $1',
+        [emprestimoId]
+      );
+      expect(emprestimo.rows[0].usuario_devolucao_id).toBe(usuarioId);
+    });
+
+    it('devolve peça avulsa de kit sem mudar o status do kit e abre ocorrência na avaria', async () => {
+      const kitId = await criarFerramenta('KitDevolucao', true);
+      const itemId = (
+        await query<{ id: number }>("INSERT INTO itens_kit (ferramenta_id, nome) VALUES ($1, 'peça') RETURNING id", [kitId])
+      ).rows[0].id;
+      const retirada = await post(corpo(kitId, { itemKitId: itemId }));
+      const emprestimoId = retirada.body.data.id as number;
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'avaria' });
+
+      expect(res.status).toBe(200);
+      // O status do kit não muda na peça avulsa: o restante do kit continua
+      // disponível (decisão registrada em docs/decisoes-pendentes.md). O
+      // resumo fala da peça, não do kit inteiro.
+      expect(res.body.data.resumo).toBe(`${res.body.data.item_kit_nome} foi para indisponível por avaria.`);
+      expect((await statusFerramenta(kitId)).status).toBe('disponivel');
+
+      const ocorrencia = await query('SELECT 1 FROM ocorrencias WHERE emprestimo_id = $1 AND item_kit_id = $2', [
+        emprestimoId,
+        itemId,
+      ]);
+      expect(ocorrencia.rowCount).toBe(1);
     });
   });
 

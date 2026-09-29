@@ -1,6 +1,6 @@
 import { getClient, query } from '../config/database.js';
 import { AppError, ConflictError, NotFoundError } from '../utils/errors.js';
-import { CriarEmprestimoInput } from '../validators/emprestimoValidator.js';
+import { CriarEmprestimoInput, DevolverEmprestimoInput } from '../validators/emprestimoValidator.js';
 import { adicionarDiasUteis } from './feriadoService.js';
 
 export interface Emprestimo {
@@ -8,6 +8,7 @@ export interface Emprestimo {
   data_retirada: string;
   previsao_devolucao: string;
   data_devolucao: string | null;
+  condicao_devolucao: 'ok' | 'avaria' | 'perda' | null;
   situacao: 'em_aberto' | 'atrasado' | 'devolvido';
   ferramenta_id: number;
   ferramenta_nome: string;
@@ -152,6 +153,76 @@ async function inserirComTrava(input: CriarEmprestimoInput, usuarioId: number): 
   } finally {
     client.release();
   }
+}
+
+export interface EmprestimoDevolvido extends Emprestimo {
+  resumo: string;
+}
+
+// Mensagem pronta pra confirmação no front (item "se sobrar tempo" da API-12):
+// evita repetir ali a lógica de "o que a condição de devolução significou".
+// Peça avulsa de kit não muda o status do kit (decisão em
+// docs/decisoes-pendentes.md), então o resumo fala da peça, não do container.
+function montarResumo(emprestimo: Emprestimo): string {
+  const nome = emprestimo.item_kit_nome ?? emprestimo.ferramenta_nome;
+  switch (emprestimo.condicao_devolucao) {
+    case 'avaria':
+      return `${nome} foi para indisponível por avaria.`;
+    case 'perda':
+      return `${nome} foi para indisponível por perda.`;
+    default:
+      return `${nome} foi devolvida e está disponível.`;
+  }
+}
+
+/**
+ * PATCH /v1/emprestimos/:id/devolucao — fecha o empréstimo. usuarioId vem
+ * sempre do JWT (Regra 6). A mudança de status da ferramenta e a abertura da
+ * ocorrência em caso de avaria ou perda são dos triggers fn_sync_status_ferramenta
+ * e fn_abre_ocorrencia, disparados por este UPDATE; a API não repete essa lógica.
+ *
+ * A linha do empréstimo fica travada (FOR UPDATE) até o COMMIT: duas devoluções
+ * simultâneas do mesmo empréstimo acontecem uma de cada vez, e a segunda
+ * encontra data_devolucao preenchida e recebe 409, em vez de os dois UPDATEs
+ * passarem e o trigger abrir a ocorrência duas vezes.
+ */
+export async function devolver(id: number, input: DevolverEmprestimoInput, usuarioId: number): Promise<EmprestimoDevolvido> {
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+
+    const atual = await client.query<{ data_devolucao: string | null }>(
+      'SELECT data_devolucao FROM emprestimos WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (!atual.rows[0]) {
+      throw new NotFoundError('Empréstimo não encontrado', 'EMPRESTIMO_NOT_FOUND');
+    }
+    if (atual.rows[0].data_devolucao !== null) {
+      throw new ConflictError('Este empréstimo já foi devolvido', 'EMPRESTIMO_JA_DEVOLVIDO');
+    }
+
+    await client.query(
+      `UPDATE emprestimos
+       SET data_devolucao = NOW(),
+           condicao_devolucao = $2,
+           observacoes_devolucao = $3,
+           usuario_devolucao_id = $4
+       WHERE id = $1`,
+      [id, input.condicaoDevolucao, input.observacaoDevolucao ?? null, usuarioId]
+    );
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  const result = await query<Emprestimo>('SELECT * FROM vw_emprestimos_detalhe WHERE id = $1', [id]);
+  const emprestimo = result.rows[0];
+  return { ...emprestimo, resumo: montarResumo(emprestimo) };
 }
 
 /**
