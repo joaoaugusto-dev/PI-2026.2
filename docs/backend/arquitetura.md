@@ -82,6 +82,29 @@ até o time decidir se cria um fluxo de gestão de admins (ver
    ativo.
 4. Depois da aprovação, o login volta a funcionar normalmente.
 
+## Retirada de ferramenta (fluxo)
+
+Issue API-11. O front identifica o colaborador (`GET /v1/colaboradores/identificar`), obtém uma data sugerida (`GET /v1/emprestimos/previsao-sugerida?dias=N`, onde N é o número de dias úteis que quem retira quer ficar com a ferramenta) e registra a retirada em `POST /v1/emprestimos`. Contrato completo em `docs/backend/api.md`.
+
+Responsabilidades:
+
+1. **API:** valida o corpo (Zod), garante que ferramenta, colaborador, setor, atividade e item de kit existem e estão ativos (404 específico por recurso) e grava `usuario_retirada_id` a partir do JWT (Regra 6; o campo no corpo é descartado). O INSERT roda numa transação que trava a linha da ferramenta (`SELECT ... FOR UPDATE`) e confere `status = 'disponivel'`: o trigger `fn_valida_retirada` pula a checagem de status para kits (a disponibilidade deles é peça a peça), então sem essa conferência um kit `indisponivel` (avaria ou perda) voltaria a sair e perderia o motivo (Regra 2).
+2. **Banco:** decide se a ferramenta pode sair. `fn_valida_retirada` e `fn_valida_kit_exclusividade` (triggers) e o índice único parcial `uq_emprestimo_aberto` garantem a Regra 1. O índice cobre a mesma peça (ou a ferramenta simples) emprestada duas vezes; a exclusividade entre "kit inteiro" e "peça avulsa" depende só do `COUNT` do trigger, que sob `READ COMMITTED` não enxerga uma retirada ainda não confirmada, e por isso a API serializa as retiradas da mesma ferramenta com a trava acima. A API traduz esses erros para `409 FERRAMENTA_INDISPONIVEL` no envelope padrão.
+3. **Banco:** `fn_sync_status_ferramenta` move a ferramenta para `em_uso` no mesmo INSERT (Regra 2).
+
+A atividade é opcional (Regra 4). Data de devolução sem horário vale até 23:59:59 de Brasília, para o empréstimo não aparecer como atrasado antes do fim do dia na `vw_emprestimos_detalhe`; data e hora sem offset (como o `datetime-local` do navegador) também são lidas como Brasília, e não no fuso do servidor, que na AWS é UTC. A sugestão de previsão usa `adicionarDiasUteis` (feriados da BrasilAPI com cache em tabela e fallback de fim de semana, Regra 9).
+
+## Devolução de ferramenta (fluxo)
+
+Issue API-12. Fecha o empréstimo aberto pela retirada. Contrato completo em `docs/backend/api.md`.
+
+Responsabilidades:
+
+1. **API:** valida o corpo (Zod: `condicaoDevolucao` obrigatória, `observacaoDevolucao` opcional) e grava `usuario_devolucao_id` a partir do JWT (Regra 6; o campo no corpo é descartado). O `UPDATE` roda numa transação que trava a linha do empréstimo (`SELECT ... FOR UPDATE`) e confere `data_devolucao IS NULL` antes de gravar, para que duas devoluções simultâneas do mesmo empréstimo sejam serializadas: a segunda encontra a data já preenchida e recebe `409 EMPRESTIMO_JA_DEVOLVIDO`, em vez de as duas passarem e a trigger de ocorrência disparar duas vezes.
+2. **Banco:** decide o resto. `fn_sync_status_ferramenta` muda o status da ferramenta (`disponivel` na condição `ok`; `indisponivel`, com o motivo gravado, em `avaria` ou `perda` — Regra 2 e Regra 3), e `fn_abre_ocorrencia` abre a ocorrência em `avaria` ou `perda`, herdando `colaborador_id` do empréstimo, não do usuário logado. A API não repete essa lógica, só traduz o erro de duplicidade.
+3. **Peça avulsa de kit:** o status do kit só é sincronizado quando o registro é do kit inteiro (`item_kit_id IS NULL`); a devolução de uma peça avulsa não muda o status do container, porque o restante do kit continua disponível. A ocorrência é aberta normalmente para a peça (decisão registrada em `docs/decisoes-pendentes.md`, já que o schema atual não modela "peça indisponível" isoladamente).
+4. **Extra:** a resposta inclui um campo `resumo` (ex.: "Chave de fenda foi para indisponível por avaria."), montado a partir da condição de devolução, para o front não repetir essa lógica na hora de confirmar a devolução para quem está usando o sistema.
+
 ## Banco
 
 O banco de dados adotado é o **PostgreSQL** (hospedado na nuvem via AWS RDS ou em infraestrutura dedicada). Todas as tabelas, tipos ENUM, triggers, constraints, views e índices parciais são mantidos nativamente via scripts SQL/migrations.
