@@ -76,14 +76,15 @@ entrada para `resolvida` grava esses campos.
 - Regra de "sem retrocesso" do status implementada na API (não no banco),
   comparando o rank do status atual com o de destino; tentativa de retroceder
   devolve `409 OCORRENCIA_TRANSICAO_INVALIDA`.
-- **Extra ("se sobrar tempo") não implementado:** a sugestão de chamar
-  automaticamente `PATCH /v1/ferramentas/:id/disponibilizar` ao marcar uma
-  ocorrência como `resolvida` não foi implementada nesta issue — ficou só
-  documentada no contrato (`docs/backend/api.md`) como próximo passo possível
-  para quem pegar isso depois. A rota `PATCH /disponibilizar` já existe
-  (API-07); faltaria o service de ocorrências incluir um campo no response
-  (ex. `sugestaoDisponibilizarFerramentaId`) sem chamar a rota por conta
-  própria, para não forçar a ação.
+- **Extra ("se sobrar tempo") implementado:** ao marcar `resolvida` (só na
+  transição de entrada, não em reenvios), o service confere o status atual da
+  ferramenta e, se ainda estiver `indisponivel`, devolve
+  `sugestao_disponibilizar_ferramenta_id` no response — o front decide se
+  chama `PATCH /v1/ferramentas/:id/disponibilizar` em seguida; a API não
+  chama essa rota por conta própria. Coberto por 2 testes novos em
+  `ocorrenciaRoutes.test.ts` (sugestão aparece quando a ferramenta segue
+  indisponível; não aparece em reenvio de `resolvida` nem em atualização de
+  outro campo).
 
 ## Bugs encontrados e corrigidos durante a execução
 
@@ -129,15 +130,17 @@ interrompida.
 
 ## Testes
 
-- Vitest + Supertest (`api/src/tests/ocorrenciaRoutes.test.ts`, 17 casos,
+- Vitest + Supertest (`api/src/tests/ocorrenciaRoutes.test.ts`, 19 casos,
   banco real, prefixo `ZZTESTE_API13_`): listagem sem filtro e com cada
   filtro (`status`, `colaboradorId`, `tipo`, incluindo normalização de
   maiúsculo/minúsculo), o ciclo `aberta → em_reparo → resolvida`, a
   transição extra `cobrada → baixada`, retrocesso bloqueado (409), reenvio de
   `resolvida` sem sobrescrever `resolvida_por` (bug 1 acima), atualização
   parcial de campos, corpo vazio (400), `custoEstimado` vazio (400, bug 2
-  acima), id inexistente (404), 401/403 e a prova de que `resolvidaPor`
-  enviado no corpo é ignorado (Regra 6).
+  acima), id inexistente (404), 401/403, a prova de que `resolvidaPor`
+  enviado no corpo é ignorado (Regra 6), e os 2 casos da sugestão de
+  disponibilizar (extra "se sobrar tempo" — aparece quando a ferramenta segue
+  indisponível, não aparece em reenvio nem em atualização de outro campo).
 - Testes manuais com a API local rodando de verdade (`curl`): os mesmos
   cenários de sucesso e erro das duas rotas, incluindo o ciclo completo de
   status e a verificação de que o Swagger spec parseia as duas rotas
@@ -151,11 +154,11 @@ interrompida.
   ocorrências não filtra por ferramenta). Simulei a sequência inteira com um
   script descartável contra a API local antes de considerar pronta: as 32
   requisições e 72 testes passaram.
-- Suíte completa da API: 247 testes, 19 arquivos, todos passando
+- Suíte completa da API: 249 testes, 19 arquivos, todos passando
   (sequencial; em paralelo há uma flakiness de infraestrutura pré-existente e
-  não relacionada — ver `docs/decisoes-pendentes.md` ou o commit `b05144b`
-  para o caso específico do `opcoes.test.ts`, já corrigido). `tsc --noEmit`
-  sem erros. Não sobrou `console.log` no código.
+  não relacionada — o caso específico do `opcoes.test.ts` já foi corrigido
+  durante esta issue, ver "Bugs encontrados" acima). `tsc --noEmit` sem
+  erros. Não sobrou `console.log` no código.
 
 ## Documentação atualizada
 
@@ -171,13 +174,13 @@ interrompida.
 
 ## Pendências e observações
 
-- A sugestão (não forçada) de `PATCH /disponibilizar` ao resolver uma
-  ocorrência ("se sobrar tempo" da issue) não foi implementada — documentada
-  como próximo passo possível em `docs/backend/api.md`.
-- A branch carrega 2 commits de documentação sem relação direta com a API-13
-  (`c86d33b`, sobre o fluxo de aprovação de usuário/admin, e a limpeza da
-  flakiness em `opcoes.test.ts`, `b05144b`): o primeiro porque a branch foi
-  criada em cima de trabalho de documentação pendente de commit de uma sessão
-  anterior (a pedido explícito, para não perder o trabalho), e o segundo
-  porque a falha foi encontrada rodando a suíte completa durante esta issue e
-  fazia sentido corrigi-la ali mesmo.
+- A branch carrega 1 commit de documentação sem relação direta com a API-13
+  (sobre o fluxo de aprovação de usuário/admin): a branch foi criada em cima
+  de trabalho de documentação pendente de commit de uma sessão anterior, a
+  pedido explícito, para não perder o trabalho.
+- A limpeza da flakiness pré-existente em `opcoes.test.ts` também está nesta
+  branch, num commit à parte: a falha foi encontrada rodando a suíte completa
+  durante esta issue e fazia sentido corrigi-la ali mesmo, mesmo sem relação
+  direta com ocorrências.
+- Nada ficou pendente do pedido original da issue: as duas rotas, o ciclo
+  mínimo e o extra "se sobrar tempo" foram implementados e testados.

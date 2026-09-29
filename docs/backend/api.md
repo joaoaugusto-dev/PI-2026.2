@@ -171,7 +171,7 @@ Corpo (JSON, camelCase; todos opcionais, mas pelo menos um precisa vir):
 
 A ordem para a regra de "sem retrocesso" é `aberta < em_reparo < cobrada < resolvida < baixada`: `cobrada` fica entre `em_reparo` e `resolvida` (cobra o custo do colaborador antes de fechar) e `baixada` é o estado final, podendo vir depois de `resolvida`. O ciclo mínimo citado na issue (`aberta → em_reparo → resolvida`) é só um caminho possível; pular direto de `em_reparo` para `resolvida`, ou passar por `cobrada`/`baixada`, também é aceito, desde que sempre para a frente.
 
-Sucesso: `200` com a ocorrência atualizada, mesmo formato do `GET`.
+Sucesso: `200` com a ocorrência atualizada, mesmo formato do `GET`, mais o campo `sugestao_disponibilizar_ferramenta_id` (extra "se sobrar tempo" da issue, ver abaixo).
 
 Erros:
 
@@ -185,7 +185,7 @@ Erros:
 
 O `UPDATE` roda numa transação com `SELECT ... FOR UPDATE` na linha da ocorrência, mesmo padrão da devolução: dois `PATCH` simultâneos na mesma ocorrência são serializados.
 
-**Se sobrar tempo** (não implementado): ao marcar `resolvida`, sugerir no response (sem forçar) que o front chame `PATCH /v1/ferramentas/:id/disponibilizar`.
+**Extra implementado ("se sobrar tempo"):** ao marcar `resolvida` (só na transição de entrada, não em reenvios), se a ferramenta ainda estiver `indisponivel`, o response traz `sugestao_disponibilizar_ferramenta_id` com o id dela — uma sugestão para o front chamar `PATCH /v1/ferramentas/:id/disponibilizar` em seguida, sem essa chamada acontecer automaticamente. Se a ferramenta já estiver `disponivel` (por exemplo, outra ocorrência dela já foi resolvida por essa rota, que também disponibiliza a ferramenta), o campo vem `null`.
 
 ## Resposta de sucesso
 
