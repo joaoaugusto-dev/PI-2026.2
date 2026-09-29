@@ -182,6 +182,35 @@ describe('Rotas de Ocorrências (API-13)', () => {
         resolvida_por: usuarioId,
       });
       expect(paraResolvida.body.data.data_resolucao).not.toBeNull();
+      // A ferramenta de teste nunca sai de 'disponivel' neste helper (só o
+      // fluxo real de devolução com avaria/perda a deixa indisponível), então
+      // a sugestão não deve aparecer aqui — ver o teste dedicado abaixo.
+      expect(paraResolvida.body.data.sugestao_disponibilizar_ferramenta_id).toBeNull();
+    });
+
+    it('sugere disponibilizar a ferramenta ao resolver, se ela ainda estiver indisponível (extra "se sobrar tempo")', async () => {
+      const { id, ferramentaId } = await criarOcorrencia('SugestaoDisponibilizar', { status: 'em_reparo' });
+      await query("UPDATE ferramentas SET status = 'indisponivel', motivo_indisponivel = 'avaria' WHERE id = $1", [
+        ferramentaId,
+      ]);
+
+      const res = await patch(id, { status: 'resolvida' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.sugestao_disponibilizar_ferramenta_id).toBe(ferramentaId);
+    });
+
+    it('não sugere disponibilizar quando o PATCH não resolve agora (reenvio ou outro campo)', async () => {
+      const { id, ferramentaId } = await criarOcorrencia('SemSugestaoReenvio', { status: 'resolvida' });
+      await query("UPDATE ferramentas SET status = 'indisponivel', motivo_indisponivel = 'avaria' WHERE id = $1", [
+        ferramentaId,
+      ]);
+
+      const reenvio = await patch(id, { status: 'resolvida' });
+      const soCusto = await patch(id, { custoEstimado: 10 });
+
+      expect(reenvio.body.data.sugestao_disponibilizar_ferramenta_id).toBeNull();
+      expect(soCusto.body.data.sugestao_disponibilizar_ferramenta_id).toBeNull();
     });
 
     it('aceita transição para cobrada e depois baixada (estados fora do ciclo de 3 citado na issue)', async () => {
