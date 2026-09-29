@@ -151,7 +151,11 @@ export async function atualizar(
       );
     }
 
-    const resolvendoAgora = dados.status === 'resolvida';
+    // Só grava resolvida_por/data_resolucao na transição de entrada (status
+    // atual ainda não era 'resolvida'). Reenviar status: 'resolvida' numa
+    // ocorrência já resolvida (ex.: PATCH só para ajustar custoEstimado) não
+    // sobrescreve quem/quando resolveu originalmente.
+    const resolvendoAgora = dados.status === 'resolvida' && statusAtual !== 'resolvida';
 
     await client.query(
       `UPDATE ocorrencias
