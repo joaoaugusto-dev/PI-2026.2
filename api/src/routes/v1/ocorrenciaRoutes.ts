@@ -73,8 +73,13 @@ router.get(
  *     description: >
  *       resolvida_por e data_resolucao nunca vêm do corpo (Regra 6) — são
  *       preenchidos a partir do usuário logado quando o status muda para
- *       'resolvida'. Não é possível retroceder o status (ex.: de 'resolvida'
- *       para 'em_reparo'); a tentativa devolve 409 OCORRENCIA_TRANSICAO_INVALIDA.
+ *       'resolvida'. Não é possível retroceder o status (por exemplo, de
+ *       'resolvida' para 'em_reparo'); a tentativa devolve 409
+ *       OCORRENCIA_TRANSICAO_INVALIDA. Ao resolver, se a ferramenta ainda
+ *       estiver indisponível, a resposta traz
+ *       sugestao_disponibilizar_ferramenta_id com o id dela — uma sugestão
+ *       para o front chamar PATCH /v1/ferramentas/:id/disponibilizar, sem
+ *       forçar essa chamada.
  *     tags:
  *       - Ocorrências
  *     security:
@@ -102,7 +107,9 @@ router.get(
  *                 type: string
  *     responses:
  *       200:
- *         description: Ocorrência atualizada, com nomes de ferramenta e colaborador resolvidos
+ *         description: >
+ *           Ocorrência atualizada, com nomes de ferramenta e colaborador
+ *           resolvidos e sugestao_disponibilizar_ferramenta_id (ver acima)
  *       400:
  *         description: Erro de validação nos campos (por exemplo, nenhum campo informado)
  *       401:

@@ -131,12 +131,22 @@ export async function listar({
  * A linha fica travada (FOR UPDATE) até o COMMIT para que dois PATCHs
  * simultâneos na mesma ocorrência não apliquem transições conflitantes.
  */
+export interface OcorrenciaAtualizada extends Ocorrencia {
+  // "Se sobrar tempo" da issue API-13: ao resolver, sugere (sem forçar) que o
+  // front chame PATCH /v1/ferramentas/:id/disponibilizar. Só vem preenchido
+  // quando esta chamada foi a que resolveu a ocorrência agora e a ferramenta
+  // ainda está indisponível (pode já ter sido disponibilizada por outra via,
+  // ex. outra ocorrência da mesma ferramenta resolvida antes).
+  sugestao_disponibilizar_ferramenta_id: number | null;
+}
+
 export async function atualizar(
   id: number,
   dados: AtualizarOcorrenciaInput,
   usuarioId: number
-): Promise<Ocorrencia> {
+): Promise<OcorrenciaAtualizada> {
   const client = await getClient();
+  let resolvendoAgora = false;
   try {
     await client.query('BEGIN');
 
@@ -160,7 +170,7 @@ export async function atualizar(
     // atual ainda não era 'resolvida'). Reenviar status: 'resolvida' numa
     // ocorrência já resolvida (ex.: PATCH só para ajustar custoEstimado) não
     // sobrescreve quem/quando resolveu originalmente.
-    const resolvendoAgora = dados.status === 'resolvida' && statusAtual !== 'resolvida';
+    resolvendoAgora = dados.status === 'resolvida' && statusAtual !== 'resolvida';
 
     await client.query(
       `UPDATE ocorrencias
@@ -186,5 +196,17 @@ export async function atualizar(
     `SELECT ${COLUNAS_OCORRENCIA} ${JOINS_OCORRENCIA} WHERE o.id = $1`,
     [id]
   );
-  return result.rows[0];
+  const ocorrencia = result.rows[0];
+
+  let sugestaoDisponibilizarFerramentaId: number | null = null;
+  if (resolvendoAgora) {
+    const ferramenta = await query<{ status: string }>('SELECT status FROM ferramentas WHERE id = $1', [
+      ocorrencia.ferramenta_id,
+    ]);
+    if (ferramenta.rows[0]?.status === 'indisponivel') {
+      sugestaoDisponibilizarFerramentaId = ocorrencia.ferramenta_id;
+    }
+  }
+
+  return { ...ocorrencia, sugestao_disponibilizar_ferramenta_id: sugestaoDisponibilizarFerramentaId };
 }
