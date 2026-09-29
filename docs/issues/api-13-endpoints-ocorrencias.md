@@ -120,13 +120,28 @@ de fechar a issue:
    `coluna ur.nome não existe`. Corrigido seguindo o mesmo padrão já usado em
    `vw_emprestimos_detalhe` (`usuarios → colaboradores`).
 
-Também corrigi, à parte da issue, uma flakiness pré-existente e não
-relacionada encontrada ao rodar a suíte completa: `opcoes.test.ts` falhava
-sozinho porque uma execução anterior interrompida tinha deixado registros
-`ZZTESTE_OPC_...` órfãos no banco (violando o índice único de nome). Limpei o
-resíduo e blindei o `beforeAll` do teste para apagar qualquer resíduo do
-prefixo antes de inserir, evitando que o problema volte numa próxima execução
-interrompida.
+Também corrigi, à parte da issue, duas flakinesses pré-existentes e não
+relacionadas, encontradas rodando a suíte completa:
+
+- `opcoes.test.ts` falhava sozinho porque uma execução anterior interrompida
+  tinha deixado registros `ZZTESTE_OPC_...` órfãos no banco (violando o
+  índice único de nome). Limpei o resíduo e blindei o `beforeAll` do teste
+  para apagar qualquer resíduo do prefixo antes de inserir, evitando que o
+  problema volte numa próxima execução interrompida.
+- `fn_gera_codigo_identificacao` (trigger `BEFORE INSERT` em `ferramentas`)
+  tinha uma condição de corrida real: escolhe o próximo código de 4 dígitos
+  livre com `SELECT MIN(c) ... WHERE NOT EXISTS (...)`, sem lock. Sob
+  `READ COMMITTED`, dois cadastros de ferramenta concorrentes (comuns quando
+  vários arquivos de teste rodam em paralelo, o padrão do Vitest) não se
+  enxergam, calculam o mesmo código e um dos dois perde para o índice único
+  `uq_ferramenta_codigo_ativo`. Confirmei com um teste de estresse (15
+  `INSERT`s concorrentes direto no banco, fora de qualquer teste): 3 de 15
+  falharam. Corrigido numa migration nova (`0005`) que serializa só a
+  geração do código com `pg_advisory_xact_lock`; o mesmo teste de estresse
+  com 30 `INSERT`s concorrentes depois da correção: 0 falhas, 30 códigos
+  únicos. Rodei a suíte completa em paralelo (`npm test`, sem
+  `--no-file-parallelism`) 5 vezes seguidas depois da correção: 249/249 em
+  todas.
 
 ## Testes
 
@@ -154,11 +169,12 @@ interrompida.
   ocorrências não filtra por ferramenta). Simulei a sequência inteira com um
   script descartável contra a API local antes de considerar pronta: as 32
   requisições e 72 testes passaram.
-- Suíte completa da API: 249 testes, 19 arquivos, todos passando
-  (sequencial; em paralelo há uma flakiness de infraestrutura pré-existente e
-  não relacionada — o caso específico do `opcoes.test.ts` já foi corrigido
-  durante esta issue, ver "Bugs encontrados" acima). `tsc --noEmit` sem
-  erros. Não sobrou `console.log` no código.
+- Suíte completa da API: 249 testes, 19 arquivos, todos passando — tanto em
+  paralelo (`npm test`, 5 execuções seguidas) quanto sequencial. As duas
+  flakinesses de infraestrutura pré-existentes e não relacionadas
+  (`opcoes.test.ts` e a corrida em `fn_gera_codigo_identificacao`, ver acima)
+  já foram corrigidas durante esta issue. `tsc --noEmit` sem erros. Não
+  sobrou `console.log` no código.
 
 ## Documentação atualizada
 
@@ -171,6 +187,9 @@ interrompida.
   acima).
 - `docs/insomnia/soufer-tools-ocorrencias.json` e
   `docs/insomnia/teste-api-ocorrencias.md`: coleção e tutorial novos.
+- `docs/banco-de-dados/banco.md`: nota na tabela de triggers sobre o
+  `pg_advisory_xact_lock` de `fn_gera_codigo_identificacao` (migration
+  `0005`).
 
 ## Pendências e observações
 
@@ -178,9 +197,13 @@ interrompida.
   (sobre o fluxo de aprovação de usuário/admin): a branch foi criada em cima
   de trabalho de documentação pendente de commit de uma sessão anterior, a
   pedido explícito, para não perder o trabalho.
-- A limpeza da flakiness pré-existente em `opcoes.test.ts` também está nesta
-  branch, num commit à parte: a falha foi encontrada rodando a suíte completa
-  durante esta issue e fazia sentido corrigi-la ali mesmo, mesmo sem relação
-  direta com ocorrências.
+- As correções de `opcoes.test.ts` e da corrida em
+  `fn_gera_codigo_identificacao` também estão nesta branch, cada uma num
+  commit à parte: as duas falhas foram encontradas rodando a suíte completa
+  durante esta issue e fazia sentido corrigi-las ali mesmo, mesmo sem
+  relação direta com ocorrências. A segunda é uma migration nova
+  (`0005_corrige_concorrencia_codigo_identificacao.sql`) que qualquer
+  ambiente (incluindo produção) precisa rodar (`npm run db:migrate`) para
+  ter a correção.
 - Nada ficou pendente do pedido original da issue: as duas rotas, o ciclo
   mínimo e o extra "se sobrar tempo" foram implementados e testados.
