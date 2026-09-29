@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as ocorrenciaService from '../services/ocorrenciaService.js';
 import { sendSuccess } from '../utils/response.js';
 import { getPaginationParams, buildPaginationMeta } from '../utils/pagination.js';
+import { ListarOcorrenciasQuery } from '../validators/ocorrenciaValidator.js';
 
 export class OcorrenciaController {
   /**
@@ -10,9 +11,7 @@ export class OcorrenciaController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const { page, limit, offset } = getPaginationParams(req.query);
-      const status = req.query.status as string | undefined;
-      const colaboradorId = req.query.colaboradorId ? Number(req.query.colaboradorId) : undefined;
-      const tipo = req.query.tipo as string | undefined;
+      const { status, colaboradorId, tipo } = req.query as unknown as ListarOcorrenciasQuery;
 
       const { rows, total } = await ocorrenciaService.listar({ offset, limit, status, colaboradorId, tipo });
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
