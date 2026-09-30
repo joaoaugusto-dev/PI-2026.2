@@ -15,12 +15,12 @@ import { formatarPatrimonio, statusParaBadge, useFerramenta, useMarcarEtiquetaIm
 import { useHistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
+import { dataBR, rotuloCondicao } from '@/lib/formatar'
 import { useAuth } from '@/lib/auth'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 
-const dataBR = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—')
 const moeda = (v: string | null) =>
   v ? Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'
 
@@ -49,6 +49,8 @@ function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode
 
 export function FerramentaDetalhePage() {
   const id = Number(useParams().id)
+  // /ferramentas/abc: não consulta a API com NaN, mostra o 404
+  const idValido = Number.isInteger(id) && id > 0
   const { data: ferramenta, isLoading, isError, error } = useFerramenta(id)
   const { data: historico, isLoading: carregandoHistorico } = useHistoricoFerramenta(id)
   const { data: categorias } = useCategorias()
@@ -57,6 +59,8 @@ export function FerramentaDetalhePage() {
   // operar a etiqueta é do balcão (manutenção); o admin só consulta
   const { usuario } = useAuth()
   const podeMarcarEtiqueta = usuario?.papel === 'manutencao'
+
+  if (!idValido) return <NaoEncontradaPage />
 
   if (isError && (error as { response?: { status?: number } }).response?.status === 404) return <NaoEncontradaPage />
 
@@ -208,7 +212,9 @@ export function FerramentaDetalhePage() {
                     <TableCell>{dataBR(e.data_devolucao)}</TableCell>
                     <TableCell className={cn('font-medium', SITUACAO[e.situacao].cor)}>
                       {SITUACAO[e.situacao].rotulo}
-                      {e.condicao_devolucao && e.condicao_devolucao !== 'ok' && ` · ${e.condicao_devolucao}`}
+                      {e.condicao_devolucao &&
+                        e.condicao_devolucao !== 'ok' &&
+                        ` · ${rotuloCondicao(e.condicao_devolucao)}`}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -227,7 +233,7 @@ export function FerramentaDetalhePage() {
             {ocorrencias.map((o) => (
               <div key={o.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <p className="text-corpo font-medium uppercase">{o.tipo}</p>
+                  <p className="text-corpo font-medium">{rotuloCondicao(o.tipo)}</p>
                   <p className="text-corpo text-muted-foreground">{o.descricao}</p>
                 </div>
                 <div className="flex flex-col items-end gap-0.5 text-right">

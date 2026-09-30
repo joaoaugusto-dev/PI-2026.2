@@ -19,6 +19,7 @@ import {
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
 import { baixarCsv } from '@/lib/csv'
+import { dataBR, rotuloCondicao } from '@/lib/formatar'
 import { cn } from '@/lib/utils'
 
 const LIMITE = 20
@@ -33,8 +34,6 @@ const COR: Record<SituacaoEmprestimo, string> = {
   atrasado: 'text-status-atraso',
   devolvido: 'text-status-disponivel',
 }
-
-const dataBR = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—')
 
 // 100 por página (limite da API) × 100 páginas = 10 mil linhas por exportação
 const MAX_PAGINAS_EXPORTACAO = 100
@@ -214,7 +213,9 @@ export function EmprestimosPage() {
                     <TableCell>{dataBR(e.data_devolucao)}</TableCell>
                     <TableCell className={cn('font-medium', COR[e.situacao])}>
                       {ROTULO[e.situacao]}
-                      {e.condicao_devolucao && e.condicao_devolucao !== 'ok' && ` · ${e.condicao_devolucao}`}
+                      {e.condicao_devolucao &&
+                        e.condicao_devolucao !== 'ok' &&
+                        ` · ${rotuloCondicao(e.condicao_devolucao)}`}
                     </TableCell>
                   </TableRow>
                 ))}
