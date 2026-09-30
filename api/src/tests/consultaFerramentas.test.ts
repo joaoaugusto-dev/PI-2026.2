@@ -19,8 +19,18 @@ describe('GET /v1/consulta/ferramentas (API-16)', () => {
   let consultaToken: string;
 
   beforeAll(async () => {
-    const usuarioId = (await query<{ id: number }>("SELECT id FROM usuarios WHERE papel = 'manutencao' LIMIT 1"))
-      .rows[0].id;
+    // authenticate consulta o banco pra papel manutenção (checa se a conta
+    // segue ativa a cada requisição) — precisa de um usuário real e ativo
+    // pro 403 abaixo ser mesmo "papel errado" e não "usuário inativo".
+    const resultado = await query<{ id: number }>(
+      "SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true LIMIT 1"
+    );
+    if (resultado.rows.length === 0) {
+      throw new Error(
+        'Nenhum usuário manutenção ativo no banco de teste — rode o seed (npm run db:seed) antes de rodar os testes.'
+      );
+    }
+    const usuarioId = resultado.rows[0].id;
 
     manutencaoToken = gerarToken({ id: usuarioId, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' });
     // authenticate só decodifica o JWT pra papel consulta (sem query no banco) —
