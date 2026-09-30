@@ -1,8 +1,33 @@
 import { Request, Response, NextFunction } from 'express';
 import * as emprestimoService from '../services/emprestimoService.js';
 import { sendSuccess } from '../utils/response.js';
+import { buildPaginationMeta, getPaginationParams } from '../utils/pagination.js';
 
 export class EmprestimoController {
+  /**
+   * GET /v1/emprestimos
+   */
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { page, limit, offset } = getPaginationParams(req.query);
+      const { q, situacao, setorId } = req.query as unknown as {
+        q?: string;
+        situacao?: 'em_aberto' | 'atrasado' | 'devolvido';
+        setorId?: number;
+      };
+      const { rows, total } = await emprestimoService.listar({
+        offset,
+        limit,
+        q,
+        situacao,
+        setorId: setorId ? Number(setorId) : undefined,
+      });
+      return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /**
    * POST /v1/emprestimos
    */

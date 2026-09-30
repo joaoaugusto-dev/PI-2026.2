@@ -237,3 +237,58 @@ export async function sugerirPrevisao(dias: number): Promise<{ previsaoDevolucao
   const data = await adicionarDiasUteis(hoje, dias);
   return { previsaoDevolucao: data.toISOString().slice(0, 10), diasUteis: dias };
 }
+
+export interface ListarEmprestimosParams {
+  offset: number;
+  limit: number;
+  q?: string;
+  situacao?: Emprestimo['situacao'];
+  setorId?: number;
+}
+
+/**
+ * GET /v1/emprestimos — histórico paginado (mais recentes primeiro), lido da
+ * vw_emprestimos_detalhe para já vir com os nomes resolvidos e a `situacao`.
+ */
+export async function listar({
+  offset,
+  limit,
+  q,
+  situacao,
+  setorId,
+}: ListarEmprestimosParams): Promise<{ rows: Emprestimo[]; total: number }> {
+  const condicoes: string[] = [];
+  const params: any[] = [];
+
+  if (q) {
+    params.push(`%${q.replace(/[\\%_]/g, '\\$&')}%`);
+    const i = params.length;
+    condicoes.push(
+      `(ferramenta_nome ILIKE $${i} OR colaborador_nome ILIKE $${i} OR colaborador_matricula ILIKE $${i} OR codigo_identificacao::text ILIKE $${i})`
+    );
+  }
+  if (situacao) {
+    params.push(situacao);
+    condicoes.push(`situacao = $${params.length}`);
+  }
+  if (setorId) {
+    params.push(setorId);
+    condicoes.push(`setor_id = $${params.length}`);
+  }
+
+  const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
+  const totalResult = await query<{ total: string }>(
+    `SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe ${where}`,
+    params
+  );
+
+  params.push(limit, offset);
+  const rowsResult = await query<Emprestimo>(
+    `SELECT * FROM vw_emprestimos_detalhe ${where}
+     ORDER BY data_retirada DESC, id DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+
+  return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}
