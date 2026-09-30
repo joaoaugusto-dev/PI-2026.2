@@ -45,6 +45,8 @@ export function FormularioCadastro({
           {c.opcoes ? (
             <select
               id={c.name}
+              aria-invalid={!!errors[c.name]}
+              aria-describedby={errors[c.name] ? `${c.name}-erro` : undefined}
               {...register(c.name)}
               className="h-9 rounded-md border border-input bg-background px-3 text-corpo"
             >
@@ -61,10 +63,15 @@ export function FormularioCadastro({
               inputMode={c.inputMode}
               placeholder={c.placeholder}
               aria-invalid={!!errors[c.name]}
+              aria-describedby={errors[c.name] ? `${c.name}-erro` : undefined}
               {...register(c.name)}
             />
           )}
-          {errors[c.name] && <p className="text-rotulo text-destructive">{errors[c.name]?.message as string}</p>}
+          {errors[c.name] && (
+            <p id={`${c.name}-erro`} role="alert" className="text-rotulo text-destructive">
+              {errors[c.name]?.message as string}
+            </p>
+          )}
         </div>
       ))}
       <div className="flex justify-end gap-2">

@@ -9,6 +9,11 @@ export interface ListaCadastro<T> {
 /** Recursos de cadastro (`/setores`, `/categorias`, `/colaboradores`, `/ferramentas`) têm o mesmo contrato de CRUD. */
 export type Recurso = 'setores' | 'categorias' | 'colaboradores' | 'ferramentas'
 
+/**
+ * A chave começa pelo recurso de propósito: `invalidateQueries({ queryKey: [recurso] })` também
+ * invalida as listas e o detalhe de `useFerramentas`/`useFerramenta` (mesmo prefixo
+ * `'ferramentas'`), que é o que se quer depois de criar, editar ou inativar.
+ */
 export function useListaCadastro<T>(recurso: Recurso, params: Record<string, unknown>) {
   return useQuery({
     queryKey: [recurso, 'lista', params],

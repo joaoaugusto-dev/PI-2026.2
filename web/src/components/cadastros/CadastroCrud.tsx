@@ -207,6 +207,7 @@ export function CadastroCrud<T extends { id: number }>({
           </DialogHeader>
           {editando && (
             <FormularioCadastro
+              key={editando === 'novo' ? 'novo' : editando.id}
               campos={campos}
               schema={schema}
               valoresIniciais={editando === 'novo' ? valoresVazios : deItem(editando)}
