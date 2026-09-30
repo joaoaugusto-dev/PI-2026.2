@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { Navigate, useLocation } from 'react-router-dom'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
-import { setModoDemo } from '@/lib/demo/adapter'
+import { DEMO_PERMITIDO, setModoDemo } from '@/lib/demo/adapter'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {
@@ -112,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const entrarComoDemo = () => {
+    if (!DEMO_PERMITIDO) return
     setAuthToken(null)
     setModoDemo(true)
     setUsuario(usuarioDemo)

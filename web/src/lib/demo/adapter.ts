@@ -7,6 +7,12 @@ import * as dados from './fixtures'
  * chamada é respondida aqui, em memória — nada sai do navegador. Nenhuma tela
  * precisa saber que está em demo.
  */
+/**
+ * O modo demo só existe em desenvolvimento ou em build com `VITE_DEMO=true`
+ * (ex.: entrega P1). Em produção o botão some e `entrarComoDemo` não faz nada.
+ */
+export const DEMO_PERMITIDO = import.meta.env.DEV || import.meta.env.VITE_DEMO === 'true'
+
 let demoAtivo = false
 
 export function setModoDemo(ativo: boolean) {
@@ -22,6 +28,13 @@ function pagina<T>(lista: T[], params: Record<string, unknown>) {
     data: lista.slice((page - 1) * limit, page * limit),
     meta: { page, limit, total: lista.length, totalPages: Math.max(1, Math.ceil(lista.length / limit)) },
   }
+}
+
+/** Remove pelo id; lança se não existir (vira 404) — `splice(-1, 1)` apagaria o último item. */
+function remover<T extends { id: number }>(lista: T[], id: number) {
+  const i = lista.findIndex((item) => item.id === id)
+  if (i === -1) throw new Error('não encontrado')
+  lista.splice(i, 1)
 }
 
 const snake = (k: string) => k.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
@@ -47,10 +60,7 @@ function crud<T extends { id: number }>(
       return { data: item }
     },
     [`DELETE ${recurso}/:id`]: (_, [id]) => {
-      lista.splice(
-        lista.findIndex((i) => i.id === Number(id)),
-        1,
-      )
+      remover(lista, Number(id))
       return { data: { id: Number(id) } }
     },
   }
@@ -96,10 +106,7 @@ const rotas: Record<string, Rota> = {
   }),
   'GET usuarios': (p) => pagina(dados.usuariosPendentes, p),
   'PATCH usuarios/:id/ativar': (_, [id]) => {
-    dados.usuariosPendentes.splice(
-      dados.usuariosPendentes.findIndex((u) => u.id === Number(id)),
-      1,
-    )
+    remover(dados.usuariosPendentes, Number(id))
     return { data: { id: Number(id), ativo: true } }
   },
   'GET setores': (p) => pagina(filtrarNome(dados.setores, p.q), p),

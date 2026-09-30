@@ -35,4 +35,11 @@ describe('modo demonstração', () => {
     await api.delete(`/setores/${novo.data.id}`)
     expect((await api.get('/setores', { params: { q: 'demo y' } })).data.data).toHaveLength(0)
   })
+
+  it('DELETE de id inexistente dá 404 e não apaga o último item', async () => {
+    setModoDemo(true)
+    const antes = (await api.get('/setores')).data.meta.total
+    await expect(api.delete('/setores/999999')).rejects.toMatchObject({ response: { status: 404 } })
+    expect((await api.get('/setores')).data.meta.total).toBe(antes)
+  })
 })
