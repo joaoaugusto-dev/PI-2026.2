@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { Navigate, useLocation } from 'react-router-dom'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
-import { DEMO_PERMITIDO, setModoDemo } from '@/lib/demo/adapter'
+import { DEMO_PERMITIDO, setModoDemo } from '@/lib/demo/flag'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {

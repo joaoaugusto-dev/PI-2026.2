@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { api } from '@/lib/api'
-import { setModoDemo } from '@/lib/demo/adapter'
+import { setModoDemo } from '@/lib/demo/flag'
 
 describe('modo demonstração', () => {
   afterEach(() => setModoDemo(false))

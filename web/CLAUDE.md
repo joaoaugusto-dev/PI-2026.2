@@ -233,7 +233,9 @@ não filhas do layout autenticado.
   funcionam em memória e somem ao recarregar. O usuário demo é `admin` para
   exibir cadastros e aprovação. Logout e login real desligam a flag. Só
   existe em `npm run dev` ou em build com `VITE_DEMO=true` (`DEMO_PERMITIDO`):
-  em produção o botão some e `entrarComoDemo` não faz nada. Existe
+  em produção o botão some, `entrarComoDemo` não faz nada e o adapter com as
+  fixtures nem entra no bundle (`import()` em `lib/api.ts` atrás da condição
+  escrita por extenso; a flag vive em `lib/demo/flag.ts`). Existe
   porque a P1 avalia a interface **sem exigir integração com a API REST**;
   remover `src/lib/demo` junto com o botão do login quando o fluxo real
   estiver integrado.
@@ -246,7 +248,11 @@ não filhas do layout autenticado.
   recurso). O nome é `CadastroCrud` de propósito: `pages/CadastroPage.tsx` é o
   auto-cadastro de almoxarife (`/cadastro`). A importação de CSV aceita até 500
   linhas por arquivo (uma requisição por linha), valida as colunas esperadas e
-  pode ser cancelada — fechar o diálogo interrompe o envio.
+  pode ser cancelada — fechar o diálogo interrompe o envio. Recurso sem chave
+  única no banco (ferramentas) declara `chave` + `conferirDuplicadas` no
+  `ConfigCsv`: a conferência roda ao escolher o arquivo (com cache) e ignora,
+  por padrão, linhas já cadastradas ou repetidas no próprio arquivo. Datas de
+  tela passam por `lib/formatar.ts` (`dataBR`, `hojeBrasilia`): fuso de Brasília.
 - **Telas de 404 e de erro inesperado** usam `TelaDeFeedback` (textura de
   ferramentas + card discreto) e `IlustracaoErro` (engrenagem girando,
   `.engrenagem` — única peça em loop, some em reduced motion).

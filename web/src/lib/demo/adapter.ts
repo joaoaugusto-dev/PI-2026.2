@@ -1,24 +1,7 @@
-import { AxiosError, CanceledError, type AxiosAdapter, type InternalAxiosRequestConfig } from 'axios'
+import { AxiosError, CanceledError, type InternalAxiosRequestConfig } from 'axios'
 import * as dados from './fixtures'
 
-/**
- * Modo demonstração (entrega P1, sem API no ar): sem token, sem sessão, sem
- * rede. Com a flag ligada, o `api.ts` troca o adapter HTTP por este e toda
- * chamada é respondida aqui, em memória — nada sai do navegador. Nenhuma tela
- * precisa saber que está em demo.
- */
-/**
- * O modo demo só existe em desenvolvimento ou em build com `VITE_DEMO=true`
- * (ex.: entrega P1). Em produção o botão some e `entrarComoDemo` não faz nada.
- */
-export const DEMO_PERMITIDO = import.meta.env.DEV || import.meta.env.VITE_DEMO === 'true'
-
-let demoAtivo = false
-
-export function setModoDemo(ativo: boolean) {
-  demoAtivo = ativo
-}
-
+/** Respostas do modo demonstração (ver `flag.ts`): roteia a chamada para as fixtures em memória. */
 type Rota = (params: Record<string, unknown>, url: string[], body: Record<string, unknown>) => unknown
 
 function pagina<T>(lista: T[], params: Record<string, unknown>) {
@@ -131,12 +114,6 @@ const rotas: Record<string, Rota> = {
     if (!f) throw new NaoEncontradoDemo()
     return { data: f }
   },
-  'PATCH ferramentas/:id/etiqueta-impressa': (_, [id]) => {
-    const f = dados.ferramentas.find((x) => x.id === Number(id))
-    if (!f) throw new NaoEncontradoDemo()
-    f.etiqueta_impressa_em = new Date().toISOString()
-    return { data: f }
-  },
   'GET ferramentas/:id/historico': (_, [id]) => ({ data: dados.historicoDe(Number(id)) }),
   'GET colaboradores/:id': (_, [id]) => ({ data: dados.colaboradores.find((c) => c.id === Number(id)) }),
   'GET emprestimos': (p) => {
@@ -189,8 +166,4 @@ export function demoAdapter(config: InternalAxiosRequestConfig) {
     if (!(e instanceof NaoEncontradoDemo)) return Promise.reject(e)
     return Promise.reject(new AxiosError('Registro não encontrado', 'ERR_BAD_REQUEST', config, {}, resposta(404, {})))
   }
-}
-
-export function comDemo(real: AxiosAdapter): AxiosAdapter {
-  return (config) => (demoAtivo ? demoAdapter(config) : real(config))
 }
