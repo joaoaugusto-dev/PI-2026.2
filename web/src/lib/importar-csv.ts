@@ -4,6 +4,20 @@ export interface ResultadoLinha {
   /** Número da linha no arquivo (cabeçalho é a 1). */
   linha: number
   erro?: string
+  /**
+   * `rede`: a requisição não chegou à API (vale reenviar). `rejeitada`: a API
+   * ou a validação local recusou a linha (precisa corrigir o CSV).
+   */
+  falha?: 'rede' | 'rejeitada'
+}
+
+function descreverFalha(e: unknown): Required<Pick<ResultadoLinha, 'erro' | 'falha'>> {
+  if (axios.isAxiosError(e)) {
+    if (!e.response) return { falha: 'rede', erro: 'Falha de rede: a linha não chegou à API. Reenvie.' }
+    const msg = (e.response.data as { error?: { message?: string } } | undefined)?.error?.message
+    return { falha: 'rejeitada', erro: msg ?? `Recusada pela API (${e.response.status}).` }
+  }
+  return { falha: 'rejeitada', erro: e instanceof Error ? e.message : 'Erro ao enviar' }
 }
 
 /**
@@ -26,8 +40,7 @@ export async function importarLinhas(
       resultados.push({ linha: i + 2 })
     } catch (e) {
       if (axios.isCancel(e) || signal.aborted) break
-      const erro = e as { response?: { data?: { error?: { message?: string } } }; message?: string }
-      resultados.push({ linha: i + 2, erro: erro.response?.data?.error?.message ?? erro.message ?? 'Erro ao enviar' })
+      resultados.push({ linha: i + 2, ...descreverFalha(e) })
     }
   }
   return { resultados, interrompida: signal.aborted }

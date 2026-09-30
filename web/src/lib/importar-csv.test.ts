@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios'
 import { describe, expect, it } from 'vitest'
 import { importarLinhas } from '@/lib/importar-csv'
 
@@ -13,7 +14,7 @@ describe('importarLinhas', () => {
       new AbortController().signal,
     )
     expect(r).toEqual({
-      resultados: [{ linha: 2 }, { linha: 3, erro: 'duplicado' }, { linha: 4 }],
+      resultados: [{ linha: 2 }, { linha: 3, erro: 'duplicado', falha: 'rejeitada' }, { linha: 4 }],
       interrompida: false,
     })
   })
@@ -53,5 +54,28 @@ describe('importarLinhas', () => {
     let chamadas = 0
     await importarLinhas(linhas, async () => void chamadas++, c.signal)
     expect(chamadas).toBe(0)
+  })
+
+  it('separa falha de rede (reenviar) de recusa da API (corrigir o CSV)', async () => {
+    const rede = new AxiosError('Network Error', 'ERR_NETWORK')
+    const recusa = new AxiosError('x', 'ERR_BAD_REQUEST', undefined, undefined, {
+      status: 409,
+      statusText: '',
+      headers: {},
+      config: {} as never,
+      data: { error: { message: 'Registro duplicado' } },
+    })
+    const erros = [rede, recusa]
+    const r = await importarLinhas(
+      [{ n: 'a' }, { n: 'b' }],
+      async () => {
+        throw erros.shift()
+      },
+      new AbortController().signal,
+    )
+    expect(r.resultados).toEqual([
+      { linha: 2, falha: 'rede', erro: 'Falha de rede: a linha não chegou à API. Reenvie.' },
+      { linha: 3, falha: 'rejeitada', erro: 'Registro duplicado' },
+    ])
   })
 })

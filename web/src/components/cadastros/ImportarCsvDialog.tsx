@@ -14,6 +14,8 @@ export interface ConfigCsv {
   exemplo: string[]
   /** Opcional: indica linha que já existe no sistema (o recurso não tem chave única que a API use para recusar). */
   duplicada?: (linha: Record<string, string>) => boolean
+  /** Opcional: ressalva exibida quando a conferência de duplicadas é parcial (ex.: catálogo maior que o limite lido). */
+  avisoDuplicidade?: string
   /** Converte uma linha do CSV no corpo do POST; pode lançar `Error` com o motivo da rejeição. */
   paraPayload: (linha: Record<string, string>) => Record<string, unknown>
 }
@@ -113,7 +115,8 @@ export function ImportarCsvDialog({
   }
 
   const duplicadas = config.duplicada ? linhas.filter(config.duplicada).length : 0
-  const rejeitadas = resultado?.filter((r) => r.erro) ?? []
+  const rejeitadas = resultado?.filter((r) => r.falha === 'rejeitada') ?? []
+  const falhasDeRede = resultado?.filter((r) => r.falha === 'rede') ?? []
 
   return (
     <Dialog open={aberto} onOpenChange={(a) => !a && fechar()}>
@@ -181,7 +184,8 @@ export function ImportarCsvDialog({
             <span>
               {duplicadas} {duplicadas === 1 ? 'linha parece' : 'linhas parecem'} já cadastrada
               {duplicadas === 1 ? '' : 's'}. Ignorar evita duplicar ao reenviar o mesmo arquivo; desmarque só se forem
-              unidades diferentes.
+              unidades diferentes. A conferência considera só registros ativos.
+              {config.avisoDuplicidade && <strong className="block">{config.avisoDuplicidade}</strong>}
             </span>
           </label>
         )}
@@ -196,12 +200,26 @@ export function ImportarCsvDialog({
               </p>
             )}
             <p className="text-corpo">
-              <span className="font-medium text-status-disponivel">{resultado.length - rejeitadas.length} aceitas</span>
+              <span className="font-medium text-status-disponivel">
+                {resultado.length - rejeitadas.length - falhasDeRede.length} aceitas
+              </span>
               {' · '}
               <span className={cn('font-medium', rejeitadas.length && 'text-destructive')}>
                 {rejeitadas.length} rejeitadas
               </span>
+              {falhasDeRede.length > 0 && (
+                <>
+                  {' · '}
+                  <span className="font-medium text-status-atraso">{falhasDeRede.length} falhas de rede</span>
+                </>
+              )}
             </p>
+            {falhasDeRede.length > 0 && (
+              <p className="text-corpo text-status-atraso">
+                Falha de rede não é erro do CSV: as linhas {falhasDeRede.map((r) => r.linha).join(', ')} não chegaram à
+                API. Reenvie o arquivo (as aceitas serão recusadas como duplicadas, se o recurso tiver chave única).
+              </p>
+            )}
             {rejeitadas.length > 0 && (
               <ul className="max-h-48 overflow-y-auto rounded-md border border-destructive/40 bg-destructive/5 p-3 text-corpo">
                 {rejeitadas.map((r) => (
