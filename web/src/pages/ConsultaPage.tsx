@@ -134,6 +134,10 @@ export function ConsultaPage() {
     encerrarSessao()
     avisarErro('Sessão de consulta expirada. Informe a matrícula novamente.')
   }
+  const encerrarSessaoPorExpiracaoRef = useRef(encerrarSessaoPorExpiracao)
+  useEffect(() => {
+    encerrarSessaoPorExpiracaoRef.current = encerrarSessaoPorExpiracao
+  })
 
   // Sem token persistido (Regra 8): sair da tela também derruba o token
   // global, pra ele não vazar pra outra rota aberta na mesma aba.
@@ -163,7 +167,7 @@ export function ConsultaPage() {
     if (primeiraMensagem) avisarErro(primeiraMensagem)
   }
 
-  const { data, isLoading, isError, isPlaceholderData } = useConsultaFerramentas(
+  const { data, isLoading, isError, isPlaceholderData, error, refetch } = useConsultaFerramentas(
     {
       page,
       limit: LIMITE_POR_PAGINA,
@@ -172,14 +176,16 @@ export function ConsultaPage() {
     },
     !!sessao,
   )
+  const erroDeAutenticacao = (error as any)?.response?.status === 401
 
-  // Token do quiosque caiu no meio da sessão (revogado/expirado no servidor
-  // antes do próprio contador local perceber) — o interceptor 401 do axios
-  // já limpou o token global, aqui só sincroniza o estado da tela.
+  // Só um 401 de verdade significa "token do quiosque caiu no meio da
+  // sessão" (revogado/expirado no servidor antes do contador local
+  // perceber). Qualquer outro erro (rede, 500, etc.) é passageiro — antes
+  // este efeito derrubava a sessão pra QUALQUER isError, o que jogava o
+  // operador de volta pra tela de matrícula numa simples oscilação de rede.
   useEffect(() => {
-    if (isError && sessao) encerrarSessaoPorExpiracao()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError])
+    if (erroDeAutenticacao && sessao) encerrarSessaoPorExpiracaoRef.current()
+  }, [erroDeAutenticacao, sessao])
 
   // Troca de página sobe a tela de volta ao topo (kiosk sem scroll "invisível" pro operador).
   useEffect(() => {
@@ -318,12 +324,17 @@ export function ConsultaPage() {
             </Card>
           ))}
 
-        {!isLoading && isError && (
-          <EmptyState
-            icone={TriangleAlert}
-            titulo="Não foi possível carregar as ferramentas"
-            descricao="Verifique sua conexão ou tente novamente em instantes."
-          />
+        {!isLoading && isError && !erroDeAutenticacao && (
+          <div className="flex flex-col items-center gap-3">
+            <EmptyState
+              icone={TriangleAlert}
+              titulo="Não foi possível carregar as ferramentas"
+              descricao="Verifique sua conexão e tente novamente."
+            />
+            <Button type="button" variant="outline" onClick={() => refetch()}>
+              Tentar novamente
+            </Button>
+          </div>
         )}
 
         {!isLoading && !isError && ferramentas.length === 0 && (
