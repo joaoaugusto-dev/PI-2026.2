@@ -231,7 +231,9 @@ não filhas do layout autenticado.
   nada chega na API. As fixtures são marcadas como "Demo" no nome/código para
   nunca serem confundidas com dado real; POST/PATCH/DELETE dos cadastros
   funcionam em memória e somem ao recarregar. O usuário demo é `admin` para
-  exibir cadastros e aprovação. Logout e login real desligam a flag. Existe
+  exibir cadastros e aprovação. Logout e login real desligam a flag. Só
+  existe em `npm run dev` ou em build com `VITE_DEMO=true` (`DEMO_PERMITIDO`):
+  em produção o botão some e `entrarComoDemo` não faz nada. Existe
   porque a P1 avalia a interface **sem exigir integração com a API REST**;
   remover `src/lib/demo` junto com o botão do login quando o fluxo real
   estiver integrado.
