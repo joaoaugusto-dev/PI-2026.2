@@ -29,6 +29,13 @@ export const ferramentaCodigoParamSchema = z.object({
     .max(9999, 'Código deve estar entre 1 e 9999'),
 });
 
+// Decisão de escopo (API-14): a tabela ferramentas (0001_init.sql) não tem
+// coluna do tipo criado_por/atualizado_por vinda do usuário logado — só
+// emprestimos.registrada_por segue a Regra 6 do CLAUDE.md. Por isso não há
+// campo desse tipo para stripar aqui; os campos que essa rota realmente
+// protege contra o corpo da requisição são os controlados pelo servidor
+// (status, codigo_identificacao, ativo — ver comentário abaixo, em
+// atualizarFerramentaSchema), cobertos pelos testes de ferramentaValidation.test.ts.
 export const criarFerramentaSchema = z.object({
   nome: z
     .string({ required_error: 'Nome é obrigatório', invalid_type_error: 'Nome deve ser um texto' })
