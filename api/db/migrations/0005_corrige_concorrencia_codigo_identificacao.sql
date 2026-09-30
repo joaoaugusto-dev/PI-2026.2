@@ -24,7 +24,7 @@ DECLARE
     v_codigo SMALLINT;
 BEGIN
     IF NEW.codigo_identificacao IS NULL THEN
-        -- ponytail: hashtext(...)::bigint gera uma única chave int4 a partir do
+        -- NOTA: hashtext(...)::bigint gera uma única chave int4 a partir do
         -- nome da função — simples e suficiente enquanto for o único advisory
         -- lock do sistema. Se outro advisory lock for adicionado no futuro,
         -- trocar para a forma de duas chaves, pg_advisory_xact_lock(int, int),
