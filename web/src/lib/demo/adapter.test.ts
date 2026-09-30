@@ -42,4 +42,17 @@ describe('modo demonstração', () => {
     await expect(api.delete('/setores/999999')).rejects.toMatchObject({ response: { status: 404 } })
     expect((await api.get('/setores')).data.meta.total).toBe(antes)
   })
+
+  it('respeita o cancelamento', async () => {
+    setModoDemo(true)
+    const c = new AbortController()
+    c.abort()
+    await expect(api.get('/setores', { signal: c.signal })).rejects.toMatchObject({ code: 'ERR_CANCELED' })
+  })
+
+  it('não esconde erro que não é "não encontrado" (corpo malformado)', async () => {
+    setModoDemo(true)
+    const malformado = { headers: { 'Content-Type': 'text/plain' }, transformRequest: [(d: unknown) => d] }
+    await expect(api.post('/setores', '{quebrado', malformado)).rejects.toThrow(SyntaxError)
+  })
 })

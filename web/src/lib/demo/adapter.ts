@@ -1,4 +1,4 @@
-import { AxiosError, type AxiosAdapter, type InternalAxiosRequestConfig } from 'axios'
+import { AxiosError, CanceledError, type AxiosAdapter, type InternalAxiosRequestConfig } from 'axios'
 import * as dados from './fixtures'
 
 /**
@@ -30,10 +30,13 @@ function pagina<T>(lista: T[], params: Record<string, unknown>) {
   }
 }
 
+/** Só este erro vira 404 na demo; qualquer outro (JSON malformado, bug de fixture) aparece como é. */
+class NaoEncontradoDemo extends Error {}
+
 /** Remove pelo id; lança se não existir (vira 404) — `splice(-1, 1)` apagaria o último item. */
 function remover<T extends { id: number }>(lista: T[], id: number) {
   const i = lista.findIndex((item) => item.id === id)
-  if (i === -1) throw new Error('não encontrado')
+  if (i === -1) throw new NaoEncontradoDemo()
   lista.splice(i, 1)
 }
 
@@ -55,7 +58,7 @@ function crud<T extends { id: number }>(
     },
     [`PATCH ${recurso}/:id`]: (_, [id], corpo) => {
       const item = lista.find((i) => i.id === Number(id))
-      if (!item) throw new Error('não encontrado')
+      if (!item) throw new NaoEncontradoDemo()
       Object.assign(item, paraSnake(corpo))
       return { data: item }
     },
@@ -125,12 +128,12 @@ const rotas: Record<string, Rota> = {
   },
   'GET ferramentas/:id': (_, [id]) => {
     const f = dados.ferramentas.find((x) => x.id === Number(id))
-    if (!f) throw new Error('não encontrada')
+    if (!f) throw new NaoEncontradoDemo()
     return { data: f }
   },
   'PATCH ferramentas/:id/etiqueta-impressa': (_, [id]) => {
     const f = dados.ferramentas.find((x) => x.id === Number(id))
-    if (!f) throw new Error('não encontrada')
+    if (!f) throw new NaoEncontradoDemo()
     f.etiqueta_impressa_em = new Date().toISOString()
     return { data: f }
   },
@@ -164,6 +167,7 @@ function casar(metodo: string, caminho: string) {
 }
 
 export function demoAdapter(config: InternalAxiosRequestConfig) {
+  if (config.signal?.aborted) return Promise.reject(new CanceledError(undefined, config))
   const caminho = (config.url ?? '').replace(/^\/|\/$/g, '')
   const achada = casar((config.method ?? 'get').toUpperCase(), caminho)
   const resposta = (status: number, data: unknown) => ({
@@ -181,7 +185,8 @@ export function demoAdapter(config: InternalAxiosRequestConfig) {
   try {
     const corpo = typeof config.data === 'string' ? JSON.parse(config.data) : (config.data ?? {})
     return Promise.resolve(resposta(200, achada.rota(config.params ?? {}, achada.capturas, corpo)))
-  } catch {
+  } catch (e) {
+    if (!(e instanceof NaoEncontradoDemo)) return Promise.reject(e)
     return Promise.reject(new AxiosError('Registro não encontrado', 'ERR_BAD_REQUEST', config, {}, resposta(404, {})))
   }
 }
