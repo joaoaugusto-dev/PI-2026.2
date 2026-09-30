@@ -49,7 +49,12 @@ export function CalendarioPage() {
 
   const offset = new Date(ano, mes, 1).getDay()
   const diasNoMes = new Date(ano, mes + 1, 0).getDate()
-  const celulas = [...Array<null>(offset).fill(null), ...Array.from({ length: diasNoMes }, (_, i) => i + 1)]
+  const celulas: (number | null)[] = [
+    ...Array<null>(offset).fill(null),
+    ...Array.from({ length: diasNoMes }, (_, i) => i + 1),
+  ]
+  while (celulas.length % 7 !== 0) celulas.push(null)
+  const semanas = Array.from({ length: celulas.length / 7 }, (_, s) => celulas.slice(s * 7, s * 7 + 7))
   const tituloMes = new Date(ano, mes, 1).toLocaleDateString('pt-BR', {
     month: 'long',
     year: 'numeric',
@@ -100,41 +105,61 @@ export function CalendarioPage() {
       </div>
 
       {isError && <p className="text-corpo text-destructive">Não foi possível carregar os dados.</p>}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2">
-        {DIAS_SEMANA.map((d) => (
-          <span key={d} className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
-            {d}
-          </span>
-        ))}
-        {celulas.map((dia, i) => {
-          if (dia === null) return <div key={`v${i}`} />
-          const data = iso(ano, mes, dia)
-          const itens = porDia.get(data)
-          const situacao: Situacao = data < hoje ? 'vencido' : data === hoje ? 'hoje' : 'futuro'
-          const estilo = ESTILO[situacao]
-          return (
-            <button
-              key={data}
-              type="button"
-              disabled={!itens}
-              onClick={() => setDiaAberto(data)}
-              className={cn(
-                'flex min-h-16 flex-col items-start gap-0.5 rounded-md border bg-card p-1.5 text-left sm:min-h-20 sm:p-2',
-                itens && 'cursor-pointer hover:bg-muted',
-                data === hoje && 'border-status-atraso',
-              )}
-            >
-              <span className="text-rotulo text-muted-foreground">{dia}</span>
-              {itens && (
-                <>
-                  <span className={cn('text-titulo font-semibold tabular-nums', estilo.numero)}>{itens.length}</span>
-                  <span className={cn('hidden text-rotulo sm:block', estilo.numero)}>{estilo.rotulo}</span>
-                </>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      {/* tabela de verdade: leitor de tela anuncia o dia da semana de cada célula */}
+      <table className="w-full table-fixed border-separate border-spacing-1 sm:border-spacing-2">
+        <caption className="sr-only">Devoluções previstas em {tituloMes}</caption>
+        <thead>
+          <tr>
+            {DIAS_SEMANA.map((d) => (
+              <th
+                key={d}
+                scope="col"
+                className="text-left text-rotulo font-medium tracking-wide text-muted-foreground uppercase"
+              >
+                {d}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {semanas.map((semana, s) => (
+            <tr key={s}>
+              {semana.map((dia, i) => {
+                if (dia === null) return <td key={`v${i}`} />
+                const diaIso = iso(ano, mes, dia)
+                const itens = porDia.get(diaIso)
+                const situacao: Situacao = diaIso < hoje ? 'vencido' : diaIso === hoje ? 'hoje' : 'futuro'
+                const estilo = ESTILO[situacao]
+                return (
+                  <td key={diaIso} className="p-0 align-top">
+                    <button
+                      type="button"
+                      disabled={!itens}
+                      aria-label={itens ? `Dia ${dia}: ${itens.length} devoluções, ${estilo.rotulo}` : `Dia ${dia}`}
+                      onClick={() => setDiaAberto(diaIso)}
+                      className={cn(
+                        'flex min-h-16 w-full flex-col items-start gap-0.5 rounded-md border bg-card p-1.5 text-left sm:min-h-20 sm:p-2',
+                        itens && 'cursor-pointer hover:bg-muted',
+                        diaIso === hoje && 'border-status-atraso',
+                      )}
+                    >
+                      <span className="text-rotulo text-muted-foreground">{dia}</span>
+                      {itens && (
+                        <>
+                          <span className={cn('text-titulo font-semibold tabular-nums', estilo.numero)}>
+                            {itens.length}
+                          </span>
+                          <span className={cn('hidden text-rotulo sm:block', estilo.numero)}>{estilo.rotulo}</span>
+                        </>
+                      )}
+                    </button>
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <Dialog open={diaAberto !== null} onOpenChange={(aberto) => !aberto && setDiaAberto(null)}>
         <DialogContent>
