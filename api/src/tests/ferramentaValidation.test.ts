@@ -95,6 +95,22 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.status).toBe(200);
       expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
     });
+
+    it('aceita null na edição para limpar marca, modelo, descrição, localização, setor e subgrupo', async () => {
+      const limpar = { marca: null, modelo: null, descricao: null, localizacao: null, setorId: null, subgrupoId: null };
+      const res = await request(app).patch('/v1/ferramentas/10').send(limpar);
+
+      expect(res.status).toBe(200);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, limpar);
+    });
+
+    it('não aceita null em nome nem grupoId (continuam obrigatórios)', async () => {
+      const semNome = await request(app).patch('/v1/ferramentas/10').send({ nome: null });
+      const semGrupo = await request(app).patch('/v1/ferramentas/10').send({ grupoId: null });
+
+      expect(semNome.status).toBe(400);
+      expect(semGrupo.status).toBe(400);
+    });
   });
 
   describe('Caso 1: Campo obrigatório faltando (Missing Required Field)', () => {
