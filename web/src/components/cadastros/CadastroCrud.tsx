@@ -6,7 +6,7 @@ import type { ZodType } from 'zod'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
@@ -62,6 +62,7 @@ export function CadastroCrud<T extends { id: number }>({
   const [page, setPage] = useState(1)
   const [editando, setEditando] = useState<T | 'novo' | null>(null)
   const [importando, setImportando] = useState(false)
+  const [inativando, setInativando] = useState<T | null>(null)
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -95,10 +96,16 @@ export function CadastroCrud<T extends { id: number }>({
     )
   }
 
-  function aoInativar(item: T) {
-    if (!window.confirm(`Inativar este ${singular.toLowerCase()}? O histórico é mantido.`)) return
-    inativar.mutate(item.id, {
-      onSuccess: () => toast.success(`${singular} inativado.`),
+  function confirmarInativacao() {
+    if (!inativando) return
+    const ultimoDaPagina = linhas.length === 1 && page > 1
+    inativar.mutate(inativando.id, {
+      onSuccess: () => {
+        toast.success(`${singular} inativado.`)
+        setInativando(null)
+        // inativou o único item de uma página que não é a primeira: senão sobra page > totalPages
+        if (ultimoDaPagina) setPage(page - 1)
+      },
       onError: (e) => avisarErro(erroDaApi(e) ?? 'Não foi possível inativar.'),
     })
   }
@@ -128,7 +135,11 @@ export function CadastroCrud<T extends { id: number }>({
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : linhas.length === 0 ? (
-            <EmptyState icone={Inbox} titulo="Nenhum registro encontrado" descricao="Ajuste a busca ou cadastre um novo." />
+            <EmptyState
+              icone={Inbox}
+              titulo="Nenhum registro encontrado"
+              descricao="Ajuste a busca ou cadastre um novo."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -149,7 +160,7 @@ export function CadastroCrud<T extends { id: number }>({
                       <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
                         Editar
                       </Button>
-                      <Button size="sm" variant="ghost" disabled={inativar.isPending} onClick={() => aoInativar(item)}>
+                      <Button size="sm" variant="ghost" onClick={() => setInativando(item)}>
                         Inativar
                       </Button>
                     </TableCell>
@@ -204,6 +215,33 @@ export function CadastroCrud<T extends { id: number }>({
               onCancelar={() => setEditando(null)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={inativando !== null} onOpenChange={(a) => !a && setInativando(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Inativar {singular.toLowerCase()}?</DialogTitle>
+            <DialogDescription>O registro sai das listas, mas o histórico é mantido.</DialogDescription>
+          </DialogHeader>
+          {inativando && (
+            <dl className="flex flex-col gap-1 rounded-md bg-muted px-3 py-2 text-corpo">
+              {colunas.map((c) => (
+                <div key={c.cabecalho} className="flex gap-2">
+                  <dt className="text-muted-foreground">{c.cabecalho}:</dt>
+                  <dd>{c.render(inativando)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setInativando(null)}>
+              Cancelar
+            </Button>
+            <Button disabled={inativar.isPending} onClick={confirmarInativacao}>
+              Inativar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
