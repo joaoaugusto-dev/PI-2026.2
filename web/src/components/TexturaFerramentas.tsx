@@ -80,8 +80,12 @@ export function TexturaFerramentas() {
 
   useEffect(() => {
     function aoMoverMouse(e: MouseEvent) {
-      holofoteRef.current?.style.setProperty('--holofote-x', `${e.clientX}px`)
-      holofoteRef.current?.style.setProperty('--holofote-y', `${e.clientY}px`)
+      const el = holofoteRef.current
+      if (!el) return
+      // relativo ao próprio elemento: dentro do AppLayout ele não começa em (0,0) da janela
+      const { left, top } = el.getBoundingClientRect()
+      el.style.setProperty('--holofote-x', `${e.clientX - left}px`)
+      el.style.setProperty('--holofote-y', `${e.clientY - top}px`)
     }
     window.addEventListener('mousemove', aoMoverMouse)
     return () => window.removeEventListener('mousemove', aoMoverMouse)
