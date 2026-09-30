@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Search, TriangleAlert, Wrench } from '
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { ChipFiltro } from '@/components/ferramentas/ChipFiltro'
+import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -169,8 +170,13 @@ export function FerramentasPage() {
                   <TableCell className="px-1.5 font-mono text-sm sm:px-2 sm:text-corpo">
                     {formatarPatrimonio(ferramenta.codigo_identificacao)}
                   </TableCell>
-                  <TableCell className="max-w-[92px] truncate px-1.5 text-sm font-medium sm:max-w-none sm:px-2 sm:text-corpo">
-                    {ferramenta.nome}
+                  <TableCell className="px-1.5 sm:px-2">
+                    <div className="flex items-center gap-2.5">
+                      <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} className="size-10 shrink-0" />
+                      <span className="max-w-[72px] truncate text-sm font-medium sm:max-w-none sm:text-corpo">
+                        {ferramenta.nome}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="hidden text-corpo text-muted-foreground sm:table-cell">
                     {nomeCategoria(ferramenta.grupo_id)}

@@ -20,24 +20,25 @@ import {
 } from '@/components/ui/Sidebar'
 import { CabecalhoApp } from '@/components/layout/CabecalhoApp'
 import { RodapeSidebar } from '@/components/layout/RodapeSidebar'
+import { useFerramentas } from '@/hooks/useFerramentas'
 import { useAuth } from '@/lib/auth'
 
-const navPrincipal = [
+const navPrincipal: { to: string; label: string; contagem?: 'total' | 'indisponiveis' }[] = [
   { to: '/', label: 'Dashboard' },
   { to: '/retiradas/nova', label: 'Registrar retirada' },
   { to: '/devolucoes', label: 'Registrar devolução' },
-  { to: '/ferramentas', label: 'Ferramentas', badge: 486 },
-  { to: '/indisponiveis', label: 'Indisponíveis', badge: 16 },
+  { to: '/ferramentas', label: 'Ferramentas', contagem: 'total' },
+  { to: '/indisponiveis', label: 'Indisponíveis', contagem: 'indisponiveis' },
   { to: '/calendario', label: 'Calendário' },
   { to: '/emprestimos', label: 'Histórico' },
 ]
 
+// `titulo` desambigua aba e cabeçalho: "Ferramentas" existe no menu principal e em Cadastros
 const navCadastros = [
-  { to: '/colaboradores', label: 'Colaboradores' },
-  { to: '/cadastros/setores', label: 'Setores' },
-  { to: '/cadastros/categorias', label: 'Categorias' },
-  { to: '/cadastros/atividades', label: 'Atividades' },
-  { to: '/importar', label: 'Importar CSV' },
+  { to: '/cadastros/colaboradores', label: 'Colaboradores', titulo: 'Cadastro de colaboradores' },
+  { to: '/cadastros/ferramentas', label: 'Ferramentas', titulo: 'Cadastro de ferramentas' },
+  { to: '/cadastros/categorias', label: 'Categorias', titulo: 'Cadastro de categorias' },
+  { to: '/cadastros/setores', label: 'Setores', titulo: 'Cadastro de setores' },
 ]
 
 const titulosExtras: Record<string, string> = {
@@ -49,7 +50,7 @@ const titulosExtras: Record<string, string> = {
 function tituloDaPagina(pathname: string) {
   const todasRotas = [...navPrincipal, ...navCadastros]
   const rota = todasRotas.find((item) => (item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)))
-  return rota?.label ?? titulosExtras[pathname] ?? 'Dashboard'
+  return (rota && 'titulo' in rota ? rota.titulo : rota?.label) ?? titulosExtras[pathname] ?? 'Dashboard'
 }
 
 function useTituloDaAba(pathname: string) {
@@ -88,7 +89,12 @@ function useIndicadorSidebar(dep: unknown) {
 
     atualizar()
     const id = requestAnimationFrame(atualizar)
-    return () => cancelAnimationFrame(id)
+    // o submenu entra com translateY (lista-stagger): mede de novo quando a animação termina
+    const fim = setTimeout(atualizar, 350)
+    return () => {
+      cancelAnimationFrame(id)
+      clearTimeout(fim)
+    }
   }, [dep])
 
   return { containerRef, posicao }
@@ -108,10 +114,15 @@ function useRelogio() {
 export function AppLayout() {
   const location = useLocation()
   const { usuario } = useAuth()
+  // contagens reais nos badges do menu (limit 1: só interessa o meta.total)
+  const contagens = {
+    total: useFerramentas({ limit: 1 }).data?.meta.total,
+    indisponiveis: useFerramentas({ status: 'indisponivel', limit: 1 }).data?.meta.total,
+  }
   const cadastrosAtivo = navCadastros.some((item) => location.pathname.startsWith(item.to))
   const [cadastrosOpen, setCadastrosOpen] = useState(cadastrosAtivo)
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
-    `${location.pathname}-${cadastrosOpen}`
+    `${location.pathname}-${cadastrosOpen}`,
   )
   useTituloDaAba(location.pathname)
   const agora = useRelogio()
@@ -149,40 +160,42 @@ export function AppLayout() {
                           {item.label}
                         </NavLink>
                       </SidebarMenuButton>
-                      {item.badge !== undefined && (
+                      {item.contagem && contagens[item.contagem] !== undefined && (
                         <SidebarMenuBadge className="text-sidebar-foreground/50">
-                          {item.badge}
+                          {contagens[item.contagem]}
                         </SidebarMenuBadge>
                       )}
                     </SidebarMenuItem>
                   )
                 })}
 
-                <Collapsible.Root defaultOpen={cadastrosAtivo} onOpenChange={setCadastrosOpen}>
-                  <SidebarMenuItem>
-                    <Collapsible.Trigger asChild>
-                      <SidebarMenuButton className="group/cadastros h-(--control-h) justify-between px-3 text-corpo">
-                        Cadastros
-                        <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]/cadastros:rotate-180" />
-                      </SidebarMenuButton>
-                    </Collapsible.Trigger>
-                    <Collapsible.Content>
-                      <SidebarMenuSub className="mx-3.5 gap-0">
-                        {navCadastros.map((item) => (
-                          <SidebarMenuSubItem key={item.to}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={location.pathname.startsWith(item.to)}
-                              className="h-(--control-h) px-3 text-corpo"
-                            >
-                              <NavLink to={item.to}>{item.label}</NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </Collapsible.Content>
-                  </SidebarMenuItem>
-                </Collapsible.Root>
+                {usuario?.papel === 'admin' && (
+                  <Collapsible.Root defaultOpen={cadastrosAtivo} onOpenChange={setCadastrosOpen}>
+                    <SidebarMenuItem>
+                      <Collapsible.Trigger asChild>
+                        <SidebarMenuButton className="group/cadastros h-(--control-h) justify-between px-3 text-corpo">
+                          Cadastros
+                          <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]/cadastros:rotate-180" />
+                        </SidebarMenuButton>
+                      </Collapsible.Trigger>
+                      <Collapsible.Content className="data-[state=closed]:animate-saida">
+                        <SidebarMenuSub className="lista-stagger mx-3.5 gap-0">
+                          {navCadastros.map((item) => (
+                            <SidebarMenuSubItem key={item.to}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={location.pathname.startsWith(item.to)}
+                                className="h-(--control-h) px-3 text-corpo"
+                              >
+                                <NavLink to={item.to}>{item.label}</NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </Collapsible.Content>
+                    </SidebarMenuItem>
+                  </Collapsible.Root>
+                )}
 
                 {usuario?.papel === 'admin' && (
                   <SidebarMenuItem>

@@ -95,6 +95,7 @@
     --motion-stagger: 20ms;
     --motion-reduced: 80ms;
     --motion-ambiente: 3.2s;
+    --motion-engrenagem: 18s;
 
     --background: oklch(1 0 0);
     --foreground: #1D1D1B;
@@ -195,9 +196,11 @@
     --default-transition-timing-function: var(--ease-soufer);
 
     --animate-entrada: entrada var(--motion-screen) var(--ease-soufer) both;
+    --animate-saida: saida var(--motion-state) var(--ease-soufer) both;
     --animate-reconhecido: reconhecido 420ms var(--ease-soufer);
     --animate-erro: erro 260ms var(--ease-soufer);
     --animate-atraso: atraso 2s var(--ease-soufer) infinite;
+    --animate-girar: girar var(--motion-engrenagem) linear infinite;
     --animate-respiro: respiro var(--motion-ambiente) var(--ease-soufer) infinite;
     --animate-brilho: brilho 1.4s linear infinite;
     --animate-check-entra: check-entra 550ms var(--ease-soufer) both;
@@ -213,6 +216,18 @@
         to {
             opacity: 1;
             transform: none;
+        }
+    }
+
+    /* Saída de submenu/painel: o Radix segura o desmonte até o fim da animação. */
+    @keyframes saida {
+        from {
+            opacity: 1;
+            transform: none;
+        }
+        to {
+            opacity: 0;
+            transform: translate3d(0, -6px, 0);
         }
     }
 
@@ -240,6 +255,14 @@
         }
         65% {
             transform: translate3d(3px, 0, 0);
+        }
+    }
+
+    /* Engrenagem da tela 404: rotação lenta e linear — só `transform`. Loop de
+       elemento singular (uma peça por tela), nunca repetido em lista. */
+    @keyframes girar {
+        to {
+            transform: rotate(360deg);
         }
     }
 
@@ -325,6 +348,13 @@
        Só em elemento singular — cabeçalho de detalhe, KPI, chip de filtro.
        NUNCA dentro de linha de tabela: 400 linhas respirando são 400 camadas
        compostas por quadro. */
+    /* Engrenagem da tela 404 (loop de peça singular, ver keyframe `girar`). */
+    .engrenagem {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: var(--animate-girar);
+    }
+
     .status-vivo {
         position: relative;
     }
@@ -416,6 +446,15 @@
         }
     }
 
+    @keyframes saida {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
     @keyframes reconhecido {
         from,
         to {
@@ -466,6 +505,10 @@
     .status-vivo::after,
     .brilho::after {
         display: none;
+    }
+
+    .engrenagem {
+        animation: none;
     }
 }
 

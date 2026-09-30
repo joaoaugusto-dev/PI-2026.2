@@ -18,6 +18,7 @@ export interface Ferramenta {
   status: StatusFerramenta
   motivo_indisponivel: string | null
   etiqueta_impressa_em: string | null
+  foto_url: string | null
   ativo: boolean
   created_at: string
 }
@@ -79,4 +80,65 @@ export function useCriarFerramenta() {
       queryClient.invalidateQueries({ queryKey: ['ferramentas'] })
     },
   })
+}
+
+export function useFerramenta(id: number) {
+  return useQuery({
+    queryKey: ['ferramentas', id],
+    enabled: Number.isInteger(id) && id > 0,
+    queryFn: async () => {
+      const { data } = await api.get<{ data: Ferramenta }>(`/ferramentas/${id}`)
+      return data.data
+    },
+    // ferramenta inexistente (404) é resposta definitiva: mostra o 404 na hora, sem esperar os retries
+    retry: (tentativas, erro) =>
+      (erro as { response?: { status?: number } }).response?.status !== 404 && tentativas < 3,
+  })
+}
+
+/** `PATCH /ferramentas/:id/etiqueta-impressa`: grava data/hora da impressão da etiqueta de código de barras. */
+export function useMarcarEtiquetaImpressa() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await api.patch<{ data: Ferramenta }>(`/ferramentas/${id}/etiqueta-impressa`)
+      return data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ferramentas'] })
+    },
+  })
+}
+
+/** Chave para reconhecer a mesma ferramenta: nome, marca e modelo sem caixa nem espaços sobrando. */
+export function chaveFerramenta(nome: string, marca?: string | null, modelo?: string | null) {
+  return [nome, marca, modelo].map((t) => (t ?? '').trim().toLowerCase()).join('|')
+}
+
+const PAGINAS_MAX = 50
+
+/**
+ * Ferramentas ativas (páginas de 100, até 5 mil) para conferir duplicidade antes de importar CSV.
+ * Só roda quando o usuário escolhe um arquivo (`queryClient.fetchQuery`), não ao abrir a tela.
+ * `truncado` avisa quando o catálogo é maior que o limite lido, para a conferência não parecer completa.
+ * `GET /ferramentas` só devolve ativas, então uma ferramenta baixada não conta como duplicada.
+ * Cache de 5 min; a importação invalida `['ferramentas']`.
+ */
+export const todasFerramentasQuery = {
+  queryKey: ['ferramentas', 'todas'] as const,
+  staleTime: 5 * 60_000,
+  queryFn: async () => {
+    const itens: Ferramenta[] = []
+    let truncado = false
+    for (let page = 1, total = 1; page <= total; page++) {
+      if (page > PAGINAS_MAX) {
+        truncado = true
+        break
+      }
+      const { data } = await api.get<ListaFerramentasResponse>('/ferramentas', { params: { page, limit: 100 } })
+      itens.push(...data.data)
+      total = data.meta.totalPages
+    }
+    return { itens, truncado }
+  },
 }

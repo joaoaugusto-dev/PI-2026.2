@@ -224,13 +224,42 @@ não filhas do layout autenticado.
   Contrato do back (`/v1/auth/login` e `/v1/auth/registro`) ainda usa e-mail
   — troca pendente na issue #150 (urgente).
 - **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
-  `AuthProvider` (`src/lib/auth.tsx`) coloca um usuário fixo em memória, sem
-  token e sem persistir em `localStorage`, e o botão "Entrar sem a API
-  (demonstração)" na `LoginPage` leva direto ao dashboard. Existe porque a P1
-  avalia a interface **sem exigir integração com a API REST** e as telas já
-  rodam com dado simulado — sem isso, quem clona o repositório só vê o login.
-  Remover quando o fluxo real estiver integrado (não é atalho de
-  desenvolvimento, é requisito da entrega parcial).
+  `AuthProvider` (`src/lib/auth.tsx`) não cria token nem sessão: liga a flag
+  `setModoDemo(true)` de `src/lib/demo/adapter.ts`, e o adapter do Axios em
+  `src/lib/api.ts` passa a responder toda chamada com fixtures locais
+  (`src/lib/demo/fixtures.ts`), em memória, sem rede e sem credencial —
+  nada chega na API. As fixtures são marcadas como "Demo" no nome/código para
+  nunca serem confundidas com dado real; POST/PATCH/DELETE dos cadastros
+  funcionam em memória e somem ao recarregar. O usuário demo é `admin` para
+  exibir cadastros e aprovação. Logout e login real desligam a flag. Só
+  existe em `npm run dev` ou em build com `VITE_DEMO=true` (`DEMO_PERMITIDO`):
+  em produção o botão some, `entrarComoDemo` não faz nada e o adapter com as
+  fixtures nem entra no bundle (`import()` em `lib/api.ts` atrás da condição
+  escrita por extenso; a flag vive em `lib/demo/flag.ts`). Existe
+  porque a P1 avalia a interface **sem exigir integração com a API REST**;
+  remover `src/lib/demo` junto com o botão do login quando o fluxo real
+  estiver integrado.
+- **Cadastros auxiliares são só do `admin`** (Colaboradores, Ferramentas,
+  Categorias, Setores): o grupo some do menu e as rotas usam `RotaAdmin`, que
+  responde com a tela de 404 (não redireciona — quem não é admin não deve
+  saber que a rota existe). As quatro telas são configurações de
+  `src/components/cadastros/CadastroCrud.tsx` (busca, paginação, novo, editar,
+  inativar com confirmação em Dialog, importar CSV por linha via POST do
+  recurso). O nome é `CadastroCrud` de propósito: `pages/CadastroPage.tsx` é o
+  auto-cadastro de almoxarife (`/cadastro`). A importação de CSV aceita até 500
+  linhas por arquivo (uma requisição por linha), valida as colunas esperadas e
+  pode ser cancelada — fechar o diálogo interrompe o envio. Recurso sem chave
+  única no banco (ferramentas) declara `chave` + `conferirDuplicadas` no
+  `ConfigCsv`: a conferência roda ao escolher o arquivo (com cache) e ignora,
+  por padrão, linhas já cadastradas ou repetidas no próprio arquivo. Datas de
+  tela passam por `lib/formatar.ts` (`dataBR`, `hojeBrasilia`): fuso de Brasília.
+- **Telas de 404 e de erro inesperado** usam `TelaDeFeedback` (textura de
+  ferramentas + card discreto) e `IlustracaoErro` (engrenagem girando,
+  `.engrenagem` — única peça em loop, some em reduced motion).
+  `ErroInesperadoPage` é o `errorElement` do router. O 404 (`path: '*'`) é
+  filho do `AppLayout`: quem está logado mantém a sidebar, tanto numa URL
+  inexistente quanto numa rota de admin (`RotaAdmin`); quem não está logado cai
+  no login antes de ver o 404.
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,

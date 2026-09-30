@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
 import type { Colaborador, Ocorrencia, StatusOcorrencia } from '@/hooks/useOcorrencias'
 import { avisarErro } from '@/lib/avisar-erro'
+import { dataBR } from '@/lib/formatar'
 import { cn } from '@/lib/utils'
 
 const ETAPAS: { valor: StatusOcorrencia; label: string }[] = [
@@ -14,10 +15,6 @@ const ETAPAS: { valor: StatusOcorrencia; label: string }[] = [
   { valor: 'cobrada', label: 'Cobrada' },
   { valor: 'resolvida', label: 'Resolvida' },
 ]
-
-function formatarData(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR')
-}
 
 function formatarMoeda(valor: string | null) {
   if (!valor) return '—'
@@ -53,6 +50,7 @@ export function OcorrenciaCard({
         <div className="flex items-start gap-5">
           <IconeFerramenta
             nome={ferramenta.nome}
+            fotoUrl={ferramenta.foto_url}
             className="size-14 shrink-0 bg-status-indisponivel/10 text-status-indisponivel"
           />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -80,7 +78,7 @@ export function OcorrenciaCard({
             [
               ['Responsável', carregandoDetalhe ? null : (colaborador?.nome ?? '—')],
               ['Matrícula', carregandoDetalhe ? null : (colaborador?.matricula ?? '—')],
-              ['Data', carregandoDetalhe ? null : ocorrencia ? formatarData(ocorrencia.created_at) : '—'],
+              ['Data', carregandoDetalhe ? null : ocorrencia ? dataBR(ocorrencia.created_at) : '—'],
               ['Custo estimado', carregandoDetalhe ? null : formatarMoeda(ocorrencia?.custo_estimado ?? null)],
             ] as const
           ).map(([label, valor]) => (

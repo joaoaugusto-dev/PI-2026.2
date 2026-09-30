@@ -5,6 +5,7 @@ import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
+import { DEMO_PERMITIDO } from '@/lib/demo/flag'
 import { CampoPin } from '@/components/CampoPin'
 import { TexturaFerramentas } from '@/components/TexturaFerramentas'
 import { Button } from '@/components/ui/Button'
@@ -134,17 +135,19 @@ export function LoginPage() {
               <Button asChild type="button" variant="outline" className="h-(--control-h) text-corpo">
                 <Link to="/cadastro">Criar Cadastro</Link>
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-(--control-h) text-corpo"
-                onClick={() => {
-                  entrarComoDemo()
-                  navigate('/', { replace: true })
-                }}
-              >
-                Entrar sem a API (demonstração)
-              </Button>
+              {DEMO_PERMITIDO && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-(--control-h) text-corpo"
+                  onClick={() => {
+                    entrarComoDemo()
+                    navigate('/', { replace: true })
+                  }}
+                >
+                  Entrar sem a API (demonstração)
+                </Button>
+              )}
             </form>
           </CardContent>
         </Card>
