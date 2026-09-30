@@ -49,7 +49,7 @@ Esses valores são determinados pelo back-end.
 | POST | `/v1/emprestimos` | Manutenção | Retirada (ver [Retirada de ferramenta](#retirada-de-ferramenta-post-v1emprestimos)) |
 | GET | `/v1/emprestimos/previsao-sugerida` | Manutenção | Sugestão de previsão de devolução em dias úteis |
 | PATCH | `/v1/emprestimos/:id/devolucao` | Manutenção | Devolução (ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)) |
-| GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências |
+| GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências (ver [Ocorrências](#ocorrências-get-e-patch-v1ocorrencias)) |
 | GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
 | GET | `/v1/dashboard/kpis` | Manutenção | KPIs |
 | POST | `/v1/importacoes/ferramentas` | Manutenção | Importação CSV |
@@ -119,7 +119,7 @@ Erros:
 
 O `UPDATE` roda numa transação com `SELECT ... FOR UPDATE` na linha do empréstimo: duas devoluções simultâneas do mesmo empréstimo são serializadas, e a segunda encontra `data_devolucao` já preenchida e recebe 409, em vez de as duas passarem e a trigger abrir a ocorrência duas vezes.
 
-A rota `GET /v1/ocorrencias` ainda não existe (issue API-13); até lá, a ocorrência aberta na devolução é conferida por `GET /v1/ferramentas/:id/historico`.
+A ocorrência aberta na devolução pode ser acompanhada por `GET /v1/ferramentas/:id/historico` ou por `GET /v1/ocorrencias` (issue API-13, ver abaixo).
 
 ## Sugestão de previsão (`GET /v1/emprestimos/previsao-sugerida?dias=N`)
 
@@ -129,6 +129,65 @@ Calcula "hoje + N dias úteis", pulando sábados, domingos e feriados nacionais.
 - "Hoje" é a data em Brasília.
 - Resposta `200`: `{ "data": { "previsaoDevolucao": "2026-10-06", "diasUteis": 2 } }`.
 - Perfil `manutencao` (`401` sem token, `403` para `consulta`).
+
+## Ocorrências (`GET` e `PATCH /v1/ocorrencias`)
+
+Acompanhamento e fechamento das tratativas de avaria/perda (issue API-13). A ocorrência em si não é criada por aqui — quem abre é o trigger `fn_abre_ocorrencia`, disparado pela devolução com avaria ou perda (Regra 3, ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)). Só o perfil `manutencao` acessa as duas rotas.
+
+### `GET /v1/ocorrencias`
+
+Query string:
+
+| Parâmetro | Obrigatório | Regra |
+|---|---|---|
+| `status` | Não | Um de `aberta`, `em_reparo`, `cobrada`, `resolvida`, `baixada`. |
+| `colaboradorId` | Não | Inteiro positivo. |
+| `tipo` | Não | `AVARIA` ou `PERDA` (aceita minúsculo; é normalizado para maiúsculo antes do filtro). |
+| `page`, `limit` | Não | Paginação padrão (`limit` até 100). |
+
+Sem filtro nenhum, traz o histórico completo (inclusive já resolvidas ou baixadas) — o objetivo é acompanhar e fechar as tratativas, não só listar as pendentes.
+
+Sucesso: `200` com a lista paginada, cada item já com `ferramenta_nome`, `colaborador_nome`/`colaborador_matricula`, `registrada_por_nome` e `resolvida_por_nome` resolvidos (join com `ferramentas`, `colaboradores` e `usuarios` → `colaboradores`, já que `usuarios` não guarda nome — ver `docs/backend/arquitetura.md`).
+
+Erros:
+
+| Status | `error.code` | Quando |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | `status` ou `tipo` fora dos valores aceitos. |
+| 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
+| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao`. |
+
+### `PATCH /v1/ocorrencias/:id`
+
+Corpo (JSON, camelCase; todos opcionais, mas pelo menos um precisa vir):
+
+| Campo | Regra |
+|---|---|
+| `status` | Um de `aberta`, `em_reparo`, `cobrada`, `resolvida`, `baixada`. Não é possível retroceder (ver abaixo). |
+| `custoEstimado` | Número não negativo. Vazio (`""`) dá erro em vez de virar `0`. |
+| `observacoesResolucao` | Até 500 caracteres. |
+
+**Limitação conhecida:** não é possível limpar `custoEstimado` ou `observacoesResolucao` já gravados. O `UPDATE` usa `COALESCE($n, coluna)`, então enviar `null` (ou omitir o campo) preserva o valor atual em vez de zerá-lo — o validator também rejeita `null` explícito. Um custo ou observação gravados errados só podem ser corrigidos com outro valor, nunca removidos.
+
+`resolvida_por` e `data_resolucao` **não são aceitos** no corpo (Regra 6): são preenchidos a partir do usuário do JWT só na transição de entrada para `resolvida` (reenviar `status: "resolvida"` numa ocorrência já resolvida não sobrescreve quem/quando resolveu).
+
+A ordem para a regra de "sem retrocesso" é `aberta < em_reparo < cobrada < resolvida < baixada`: `cobrada` fica entre `em_reparo` e `resolvida` (cobra o custo do colaborador antes de fechar) e `baixada` é o estado final, podendo vir depois de `resolvida`. O ciclo mínimo citado na issue (`aberta → em_reparo → resolvida`) é só um caminho possível; pular direto de `em_reparo` para `resolvida`, ou passar por `cobrada`/`baixada`, também é aceito, desde que sempre para a frente.
+
+Sucesso: `200` com a ocorrência atualizada, mesmo formato do `GET`, mais o campo `sugestao_disponibilizar_ferramenta_id` (extra "se sobrar tempo" da issue, ver abaixo).
+
+Erros:
+
+| Status | `error.code` | Quando |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Corpo vazio, `status`/`custoEstimado`/`observacoesResolucao` inválidos. |
+| 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
+| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao`. |
+| 404 | `OCORRENCIA_NOT_FOUND` | Id de ocorrência inexistente. |
+| 409 | `OCORRENCIA_TRANSICAO_INVALIDA` | Tentativa de retroceder o status. |
+
+O `UPDATE` roda numa transação com `SELECT ... FOR UPDATE` na linha da ocorrência, mesmo padrão da devolução: dois `PATCH` simultâneos na mesma ocorrência são serializados.
+
+**Extra implementado ("se sobrar tempo"):** ao marcar `resolvida` (só na transição de entrada, não em reenvios), se a ferramenta ainda estiver `indisponivel`, o response traz `sugestao_disponibilizar_ferramenta_id` com o id dela — uma sugestão para o front chamar `PATCH /v1/ferramentas/:id/disponibilizar` em seguida, sem essa chamada acontecer automaticamente. Se a ferramenta já estiver `disponivel` (por exemplo, outra ocorrência dela já foi resolvida por essa rota, que também disponibiliza a ferramenta), o campo vem `null`.
 
 ## Resposta de sucesso
 

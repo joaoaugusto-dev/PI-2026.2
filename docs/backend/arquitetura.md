@@ -105,6 +105,17 @@ Responsabilidades:
 3. **Peça avulsa de kit:** o status do kit só é sincronizado quando o registro é do kit inteiro (`item_kit_id IS NULL`); a devolução de uma peça avulsa não muda o status do container, porque o restante do kit continua disponível. A ocorrência é aberta normalmente para a peça (decisão registrada em `docs/decisoes-pendentes.md`, já que o schema atual não modela "peça indisponível" isoladamente).
 4. **Extra:** a resposta inclui um campo `resumo` (ex.: "Chave de fenda foi para indisponível por avaria."), montado a partir da condição de devolução, para o front não repetir essa lógica na hora de confirmar a devolução para quem está usando o sistema.
 
+## Ocorrências (fluxo)
+
+Issue API-13. Acompanha e fecha as tratativas de avaria/perda abertas pela devolução (`fn_abre_ocorrencia`, ver [Devolução de ferramenta](#devolução-de-ferramenta-fluxo)). Contrato completo em `docs/backend/api.md`.
+
+Responsabilidades:
+
+1. **API:** `GET /v1/ocorrencias` filtra por `status`, `colaborador_id` e `tipo`, com paginação; `PATCH /v1/ocorrencias/:id` atualiza `status`, `custo_estimado` e `observacoes_resolucao`. Nenhuma das duas cria ocorrência — quem abre é o trigger da devolução.
+2. **API:** a regra de "sem retrocesso" do status (`aberta < em_reparo < cobrada < resolvida < baixada`) é validada aqui, não no banco, comparando o rank do status atual com o de destino dentro de uma transação com `SELECT ... FOR UPDATE` na linha da ocorrência (mesmo padrão da devolução). `resolvida_por` e `data_resolucao` vêm do JWT (Regra 6) e só são gravados na transição de entrada para `resolvida` — reenviar o mesmo status não os sobrescreve.
+3. **Nomes resolvidos:** desde a migration `0004_papel_admin_e_auto_cadastro.sql`, `usuarios` não guarda `nome`/`email` — a conta liga a um colaborador por `usuarios.colaborador_id`, e é de lá que vem o nome. `registrada_por_nome` e `resolvida_por_nome` seguem esse join (`usuarios → colaboradores`), o mesmo padrão já usado em `vw_emprestimos_detalhe` para `usuario_retirada_nome`/`usuario_devolucao_nome`.
+4. **Extra ("se sobrar tempo"):** ao resolver uma ocorrência (na transição de entrada, não em reenvios), a API confere o status atual da ferramenta e, se ainda estiver `indisponivel`, devolve `sugestao_disponibilizar_ferramenta_id` no response — uma sugestão para o front chamar `PATCH /v1/ferramentas/:id/disponibilizar` a seguir, sem chamar essa rota por conta própria (a issue pede sugerir, não forçar).
+
 ## Banco
 
 O banco de dados adotado é o **PostgreSQL** (hospedado na nuvem via AWS RDS ou em infraestrutura dedicada). Todas as tabelas, tipos ENUM, triggers, constraints, views e índices parciais são mantidos nativamente via scripts SQL/migrations.

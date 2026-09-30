@@ -27,6 +27,14 @@ describe('GET /v1/opcoes (Opções combinadas)', () => {
     );
     token = gerarToken(usuario.rows[0].id);
 
+    // Limpa resíduo de uma execução anterior interrompida antes do afterAll
+    // (ex.: processo morto no meio do teste), para o INSERT abaixo não
+    // esbarrar no índice único de nome e o teste não ficar travado até
+    // alguém limpar a mão.
+    await query('DELETE FROM setores WHERE nome LIKE $1', [`${PREFIXO}%`]);
+    await query('DELETE FROM grupos_ferramentas WHERE nome LIKE $1', [`${PREFIXO}%`]);
+    await query('DELETE FROM atividades WHERE nome LIKE $1', [`${PREFIXO}%`]);
+
     const s = await query<{ id: number }>(
       `INSERT INTO setores (nome, ativo) VALUES ($1, true) RETURNING id`,
       [`${PREFIXO}SetorOpcao`]

@@ -11,6 +11,7 @@ import atividadeRoutes from './atividadeRoutes.js';
 import opcoesRoutes from './opcoesRoutes.js';
 import usuarioRoutes from './usuarioRoutes.js';
 import emprestimoRoutes from './emprestimoRoutes.js';
+import ocorrenciaRoutes from './ocorrenciaRoutes.js';
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use('/atividades', atividadeRoutes);
 router.use('/opcoes', opcoesRoutes);
 router.use('/usuarios', usuarioRoutes);
 router.use('/emprestimos', emprestimoRoutes);
+router.use('/ocorrencias', ocorrenciaRoutes);
 
 export default router;
