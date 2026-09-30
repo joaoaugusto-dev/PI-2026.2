@@ -145,9 +145,41 @@ export function ConsultaPage() {
     encerrarSessaoPorExpiracaoRef.current = encerrarSessaoPorExpiracao
   })
 
+  function encerrarSessaoPorInatividade() {
+    encerrarSessao()
+    avisarErro('Sessão encerrada por inatividade. Informe a matrícula novamente.')
+  }
+  const encerrarSessaoPorInatividadeRef = useRef(encerrarSessaoPorInatividade)
+  useEffect(() => {
+    encerrarSessaoPorInatividadeRef.current = encerrarSessaoPorInatividade
+  })
+
   // Sem token persistido (Regra 8): sair da tela também derruba o token
   // global, pra ele não vazar pra outra rota aberta na mesma aba.
   useEffect(() => () => setAuthToken(null), [])
+
+  // O token do quiosque tem janela fixa de 15 min (ver ContadorSessao) — isso
+  // por si só não é "15 min de inatividade" como a issue pede. Esse timer
+  // encerra a sessão mais cedo se o operador simplesmente parar de usar o
+  // quiosque, sem precisar mexer no backend (reinicia a cada clique/toque ou
+  // tecla — cobre também o leitor de código de barras, que digita e manda
+  // Enter). Não é o mesmo que renovar o token além dos 15 min fixos.
+  useEffect(() => {
+    if (!sessao) return
+    const LIMITE_INATIVIDADE_MS = 15 * 60 * 1000
+    let timeoutId: ReturnType<typeof setTimeout>
+    const reiniciarContagem = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(encerrarSessaoPorInatividadeRef.current, LIMITE_INATIVIDADE_MS)
+    }
+    const eventos = ['pointerdown', 'keydown'] as const
+    eventos.forEach((evento) => window.addEventListener(evento, reiniciarContagem))
+    reiniciarContagem()
+    return () => {
+      clearTimeout(timeoutId)
+      eventos.forEach((evento) => window.removeEventListener(evento, reiniciarContagem))
+    }
+  }, [sessao])
 
   async function onSubmit(dados: MatriculaForm) {
     try {
