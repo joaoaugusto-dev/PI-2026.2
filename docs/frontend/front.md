@@ -37,8 +37,7 @@
 | `/colaboradores` | Kauan | CRUD |
 | `/cadastros/setores` | Kauan | CRUD |
 | `/cadastros/categorias` | Kauan | CRUD |
-| `/cadastros/atividades` | Kauan | CRUD |
-| `/importar` | Guilherme | Importação CSV |
+| `/cadastros/ferramentas` | Kauan | CRUD |
 
 ## Design system
 

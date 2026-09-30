@@ -31,7 +31,7 @@ Login
     ├── Ferramentas ....... busca, filtros e cadastro
     ├── Indisponíveis ..... fila de ocorrências
     ├── Calendário ........ vencimentos do mês
-    ├── Cadastros ......... colaboradores · setores · categorias · atividades
+    ├── Cadastros ......... colaboradores · ferramentas · categorias · setores
     └── Design system ..... referência interna
 
 Consulta pública (quiosque) — fora da sidebar, aberta em nova aba
