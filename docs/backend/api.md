@@ -167,6 +167,8 @@ Corpo (JSON, camelCase; todos opcionais, mas pelo menos um precisa vir):
 | `custoEstimado` | Número não negativo. Vazio (`""`) dá erro em vez de virar `0`. |
 | `observacoesResolucao` | Até 500 caracteres. |
 
+**Limitação conhecida:** não é possível limpar `custoEstimado` ou `observacoesResolucao` já gravados. O `UPDATE` usa `COALESCE($n, coluna)`, então enviar `null` (ou omitir o campo) preserva o valor atual em vez de zerá-lo — o validator também rejeita `null` explícito. Um custo ou observação gravados errados só podem ser corrigidos com outro valor, nunca removidos.
+
 `resolvida_por` e `data_resolucao` **não são aceitos** no corpo (Regra 6): são preenchidos a partir do usuário do JWT só na transição de entrada para `resolvida` (reenviar `status: "resolvida"` numa ocorrência já resolvida não sobrescreve quem/quando resolveu).
 
 A ordem para a regra de "sem retrocesso" é `aberta < em_reparo < cobrada < resolvida < baixada`: `cobrada` fica entre `em_reparo` e `resolvida` (cobra o custo do colaborador antes de fechar) e `baixada` é o estado final, podendo vir depois de `resolvida`. O ciclo mínimo citado na issue (`aberta → em_reparo → resolvida`) é só um caminho possível; pular direto de `em_reparo` para `resolvida`, ou passar por `cobrada`/`baixada`, também é aceito, desde que sempre para a frente.
