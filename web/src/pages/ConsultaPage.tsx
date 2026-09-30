@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2, LogOut, PackageSearch, Search, TriangleAlert } from 'lucide-react'
 import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
 import { EmptyState } from '@/components/EmptyState'
@@ -121,6 +122,8 @@ export function ConsultaPage() {
     formState: { errors },
   } = useForm<MatriculaForm>({ resolver: zodResolver(matriculaSchema), defaultValues: { matricula: '' } })
 
+  const queryClient = useQueryClient()
+
   function encerrarSessao() {
     setAuthToken(null)
     setSessao(null)
@@ -128,6 +131,9 @@ export function ConsultaPage() {
     setStatus('disponivel')
     setPage(1)
     reset()
+    // A queryKey não depende da sessão — sem isso, o próximo operador podia
+    // ver por um instante o resultado (ou o erro) da consulta anterior.
+    queryClient.removeQueries({ queryKey: ['consulta'] })
   }
 
   function encerrarSessaoPorExpiracao() {
