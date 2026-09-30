@@ -85,6 +85,7 @@ export function useCriarFerramenta() {
 export function useFerramenta(id: number) {
   return useQuery({
     queryKey: ['ferramentas', id],
+    enabled: Number.isInteger(id) && id > 0,
     queryFn: async () => {
       const { data } = await api.get<{ data: Ferramenta }>(`/ferramentas/${id}`)
       return data.data

@@ -45,6 +45,7 @@ export interface Colaborador {
 function historicoQueryOptions(ferramentaId: number) {
   return {
     queryKey: ['ferramentas', ferramentaId, 'historico'] as const,
+    enabled: Number.isInteger(ferramentaId) && ferramentaId > 0,
     queryFn: async () => {
       const { data } = await api.get<{ data: HistoricoFerramenta }>(`/ferramentas/${ferramentaId}/historico`)
       return data.data
