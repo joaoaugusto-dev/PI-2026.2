@@ -196,6 +196,20 @@ não filhas do layout autenticado.
   parecer válido no cliente mas ter sido invalidado no servidor (usuário
   desativado, segredo rotacionado). Consulta (quiosque) continua sem
   persistência nenhuma — sessão de 15 min é descartável por design.
+  **Telas com sessão própria (fora do `AuthProvider`) não usam `setAuthToken`
+  global** — `src/lib/api.ts` (`authToken`) é a mesma variável de módulo que
+  o almoxarife usa, e outra tela setando esse token nela sobrescreve/derruba
+  a sessão dele se estiverem ativos na mesma aba. Em vez disso, cada chamada
+  dessa tela manda o próprio token via `headers: { Authorization }` (que
+  vence o token global — `anexarTokenSeNecessario` só usa o global quando a
+  chamada não define o próprio) e marca `skipAuthHandler401: true` (pra um
+  401 dela não disparar o `handler401`/logout do almoxarife) e, se a rota for
+  pública, `skipAuthToken: true` (pra nem carregar o token global à toa). O
+  quiosque de consulta (`ConsultaPage`/`useConsulta.ts`) é o primeiro exemplo
+  — a próxima tela nesse molde (ex. outro modo quiosque) deve seguir o mesmo
+  padrão. Coberto por teste em `src/lib/api.test.ts` (primeiro teste do
+  `/web` — `npm test`, Vitest puro, sem jsdom/testing-library porque testa só
+  a lógica dos interceptors, não componente).
 - **Login e cadastro de almoxarife usam matrícula (4 dígitos) + senha
   numérica de 6 dígitos, nunca e-mail** — e-mail não existe no ambiente
   fabril. A senha é digitada num PIN estilo lock screen de celular
