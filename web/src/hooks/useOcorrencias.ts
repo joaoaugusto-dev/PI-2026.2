@@ -1,5 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import type { Emprestimo } from '@/hooks/useEmprestimos'
 import type { Ferramenta } from '@/hooks/useFerramentas'
 
 export type StatusOcorrencia = 'aberta' | 'em_reparo' | 'cobrada' | 'resolvida' | 'baixada'
@@ -22,8 +23,8 @@ export interface Ocorrencia {
   updated_at: string
 }
 
-interface HistoricoFerramenta {
-  emprestimos: unknown[]
+export interface HistoricoFerramenta {
+  emprestimos: Emprestimo[]
   ocorrencias: Ocorrencia[]
 }
 
@@ -82,7 +83,10 @@ export function useColaboradores(ids: number[]) {
  * fallback defensivo.
  */
 export function ocorrenciaAtiva(ocorrencias: Ocorrencia[]) {
-  return ocorrencias.find((o) => o.status === 'aberta' || o.status === 'em_reparo' || o.status === 'cobrada') ?? ocorrencias[0]
+  return (
+    ocorrencias.find((o) => o.status === 'aberta' || o.status === 'em_reparo' || o.status === 'cobrada') ??
+    ocorrencias[0]
+  )
 }
 
 /**
