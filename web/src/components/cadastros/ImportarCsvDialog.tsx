@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -6,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { api } from '@/lib/api'
 import { avisarErro } from '@/lib/avisar-erro'
 import { baixarCsv, lerCsv } from '@/lib/csv'
+import { importarLinhas, type ResultadoLinha } from '@/lib/importar-csv'
 import { cn } from '@/lib/utils'
 
 export interface ConfigCsv {
@@ -18,11 +18,6 @@ export interface ConfigCsv {
 
 /** Teto por importação: o envio é uma requisição por linha. */
 const MAX_LINHAS = 500
-
-interface Resultado {
-  linha: number
-  erro?: string
-}
 
 /**
  * Importação de CSV pelo próprio cadastro (FE-20): prévia das primeiras
@@ -45,7 +40,7 @@ export function ImportarCsvDialog({
   onImportado: () => void
 }) {
   const [linhas, setLinhas] = useState<Record<string, string>[]>([])
-  const [resultado, setResultado] = useState<Resultado[] | null>(null)
+  const [resultado, setResultado] = useState<ResultadoLinha[] | null>(null)
   const [interrompida, setInterrompida] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const envio = useRef<AbortController | null>(null)
@@ -55,8 +50,12 @@ export function ImportarCsvDialog({
   }
 
   function fechar() {
-    // fechar no meio da importação a interrompe; o que já foi enviado continua valendo
+    // fechar no meio da importação a interrompe; o que já foi enviado continua valendo.
+    // `envio.current = null` marca esta importação como abandonada: quando o laço terminar,
+    // `enviar` vê que não é mais a atual e não publica relatório nenhum.
     cancelarEnvio()
+    envio.current = null
+    setEnviando(false)
     setLinhas([])
     setResultado(null)
     setInterrompida(false)
@@ -91,27 +90,20 @@ export function ImportarCsvDialog({
     const controle = new AbortController()
     envio.current = controle
     setEnviando(true)
-    const r: Resultado[] = []
-    for (const [i, linha] of linhas.entries()) {
-      if (controle.signal.aborted) break
-      try {
-        await api.post(`/${recurso}`, config.paraPayload(linha), { signal: controle.signal })
-        r.push({ linha: i + 2 })
-      } catch (e) {
-        if (axios.isCancel(e)) break
-        const erro = e as { response?: { data?: { error?: { message?: string } } }; message?: string }
-        r.push({ linha: i + 2, erro: erro.response?.data?.error?.message ?? erro.message ?? 'Erro ao enviar' })
-      }
-    }
+    const { resultados, interrompida: parou } = await importarLinhas(
+      linhas,
+      (linha, signal) => api.post(`/${recurso}`, config.paraPayload(linha), { signal }),
+      controle.signal,
+    )
     // o que foi criado antes de parar precisa aparecer na lista, mesmo com o diálogo já fechado
-    if (r.some((x) => !x.erro)) onImportado()
-    if (envio.current === controle) envio.current = null
+    if (resultados.some((r) => !r.erro)) onImportado()
+    // só publica o relatório se esta ainda é a importação atual: fechar (ou começar outra)
+    // a deixou para trás, e mostrar o relatório dela na reabertura confundiria
+    if (envio.current !== controle) return
+    envio.current = null
     setEnviando(false)
-    // fechou o diálogo: não mostra relatório de uma importação que o usuário já deixou para trás
-    if (aberto) {
-      setInterrompida(controle.signal.aborted)
-      setResultado(r)
-    }
+    setInterrompida(parou)
+    setResultado(resultados)
   }
 
   const rejeitadas = resultado?.filter((r) => r.erro) ?? []
