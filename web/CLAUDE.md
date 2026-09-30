@@ -223,6 +223,17 @@ não filhas do layout autenticado.
   `localStorage` sozinho não notifica outros componentes já montados na
   mesma aba. O arquivo de áudio fica em `src/assets/sfx/` (importado via
   Vite, resolve para URL).
+- **Notificações (toast, FE-01)**: **toda** notificação — erro ou sucesso —
+  entra por cima da tela, nunca por baixo — regra do design system, sem
+  exceção de tela. `<Toaster position="top-right" />` (`src/App.tsx`) é o
+  padrão global, então `toast.success()` já nasce no canto superior direito
+  sem precisar de configuração por chamada. Notificação de erro usa
+  `avisarErro()` (`src/lib/avisar-erro.ts`), nunca `toast.error()` direto:
+  reforça `top-right`, 5s de duração, fundo sólido em `--brand-red` (não o
+  `--destructive` padrão, que é um vinho escuro que não se destacava no fundo
+  do toast) — essa cor é o que distingue erro de sucesso agora, não mais a
+  posição. Demonstração ao vivo na seção "Notificações" da página de estilos
+  (`DesignSystemPage.tsx`).
 - **Calendário próprio do sistema** (`src/components/SeletorDataCalendario.tsx`)
   em vez do shadcn/`react-day-picker`: grade de mês construída com `Date`
   nativo, sem dependência nova, com atalhos "Hoje"/"Amanhã" ao lado da grade.
