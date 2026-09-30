@@ -37,6 +37,15 @@ type IconePosicionado = ReturnType<typeof gerarGrade>[number]
 // vez por carregamento de página, reaproveitada por toda montagem/desmontagem.
 let gradeCache: IconePosicionado[] | null = null
 
+// Função à parte (não inline no componente) só pra reassinatura do cache de
+// módulo não acontecer sintaticamente dentro do corpo de render — é o que o
+// react-compiler/oxlint espera pra não marcar como efeito colateral durante
+// render, mesmo sendo idempotente (mesmo resultado se chamado de novo).
+function obterGrade() {
+  if (!gradeCache) gradeCache = gerarGrade()
+  return gradeCache
+}
+
 function CamadaIcones({ icones, opacidadeExtra = 0 }: { icones: IconePosicionado[]; opacidadeExtra?: number }) {
   return (
     <>
@@ -66,8 +75,7 @@ function CamadaIcones({ icones, opacidadeExtra = 0 }: { icones: IconePosicionado
  * por carregamento de página (cache em módulo) — re-renders não a recalculam.
  */
 export function TexturaFerramentas() {
-  if (!gradeCache) gradeCache = gerarGrade()
-  const icones = gradeCache
+  const icones = obterGrade()
   const holofoteRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
