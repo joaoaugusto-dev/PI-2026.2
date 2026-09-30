@@ -15,6 +15,7 @@ import { formatarPatrimonio, statusParaBadge, useFerramenta, useMarcarEtiquetaIm
 import { useHistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
+import { useAuth } from '@/lib/auth'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
@@ -53,6 +54,9 @@ export function FerramentaDetalhePage() {
   const { data: categorias } = useCategorias()
   const { data: setores } = useSetores()
   const marcarImpressa = useMarcarEtiquetaImpressa()
+  // operar a etiqueta é do balcão (manutenção); o admin só consulta
+  const { usuario } = useAuth()
+  const podeMarcarEtiqueta = usuario?.papel === 'manutencao'
 
   if (isError && (error as { response?: { status?: number } }).response?.status === 404) return <NaoEncontradaPage />
 
@@ -159,9 +163,11 @@ export function FerramentaDetalhePage() {
                 ? `Impressa em ${dataBR(ferramenta.etiqueta_impressa_em)}`
                 : 'Ainda não impressa'}
             </p>
-            <Button variant="outline" disabled={marcarImpressa.isPending} onClick={aoMarcarImpressa}>
-              <Printer /> Marcar como impressa
-            </Button>
+            {podeMarcarEtiqueta && (
+              <Button variant="outline" disabled={marcarImpressa.isPending} onClick={aoMarcarImpressa}>
+                <Printer /> Marcar como impressa
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
