@@ -20,7 +20,6 @@ import { useConsultaFerramentas, useIniciarSessaoConsulta, type SessaoConsulta }
 import { formatarPatrimonio, statusParaBadge, type StatusFerramenta } from '@/hooks/useFerramentas'
 import { expiracaoDoToken } from '@/lib/auth'
 import { avisarErro } from '@/lib/avisar-erro'
-import { setAuthToken } from '@/lib/api'
 
 const LIMITE_POR_PAGINA = 20
 
@@ -102,9 +101,12 @@ function ContadorSessao({ token, aoExpirar }: { token: string; aoExpirar: () => 
 
 /**
  * Quiosque de consulta pública (FE-17, Regra 8): só a matrícula abre uma
- * sessão de 15 min, sem senha e sem persistência — some do localStorage e do
- * token global ao sair, expirar ou trocar de aba. Fora do AppLayout: sem
- * sidebar, tela fixa de piso de fábrica.
+ * sessão de 15 min, sem senha e sem persistência — o token vive só neste
+ * componente (nunca no localStorage nem no `authToken` global de
+ * `@/lib/api`), então uma sessão de almoxarife ativa na mesma aba não é
+ * sobrescrita nem derrubada por um 401 que é só do quiosque (ver
+ * `useConsultaFerramentas`). Fora do AppLayout: sem sidebar, tela fixa de
+ * piso de fábrica.
  */
 export function ConsultaPage() {
   const [sessao, setSessao] = useState<SessaoConsulta | null>(null)
@@ -125,7 +127,6 @@ export function ConsultaPage() {
   const queryClient = useQueryClient()
 
   function encerrarSessao() {
-    setAuthToken(null)
     setSessao(null)
     setBusca('')
     setStatus('disponivel')
@@ -154,10 +155,6 @@ export function ConsultaPage() {
     encerrarSessaoPorInatividadeRef.current = encerrarSessaoPorInatividade
   })
 
-  // Sem token persistido (Regra 8): sair da tela também derruba o token
-  // global, pra ele não vazar pra outra rota aberta na mesma aba.
-  useEffect(() => () => setAuthToken(null), [])
-
   // O token do quiosque tem janela fixa de 15 min (ver ContadorSessao) — isso
   // por si só não é "15 min de inatividade" como a issue pede. Esse timer
   // encerra a sessão mais cedo se o operador simplesmente parar de usar o
@@ -170,7 +167,7 @@ export function ConsultaPage() {
     let timeoutId: ReturnType<typeof setTimeout>
     const reiniciarContagem = () => {
       clearTimeout(timeoutId)
-      timeoutId = setTimeout(encerrarSessaoPorInatividadeRef.current, LIMITE_INATIVIDADE_MS)
+      timeoutId = setTimeout(() => encerrarSessaoPorInatividadeRef.current(), LIMITE_INATIVIDADE_MS)
     }
     const eventos = ['pointerdown', 'keydown'] as const
     eventos.forEach((evento) => window.addEventListener(evento, reiniciarContagem))
@@ -184,7 +181,6 @@ export function ConsultaPage() {
   async function onSubmit(dados: MatriculaForm) {
     try {
       const resultado = await iniciarSessao.mutateAsync(dados.matricula)
-      setAuthToken(resultado.token)
       setSessao(resultado)
     } catch (erro: any) {
       const codigo = erro?.response?.data?.error?.code
@@ -212,7 +208,7 @@ export function ConsultaPage() {
       q: buscaDebounced || undefined,
       status: status === 'todas' ? undefined : status,
     },
-    !!sessao,
+    sessao?.token ?? null,
   )
   const erroDeAutenticacao = (error as any)?.response?.status === 401
 

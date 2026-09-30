@@ -29,15 +29,25 @@ export function useIniciarSessaoConsulta() {
   })
 }
 
-/** Mesma listagem de `/ferramentas`, exclusiva do papel `consulta` (token do quiosque precisa já estar setado via `setAuthToken`). */
-export function useConsultaFerramentas(filtros: FiltrosFerramentas, habilitado: boolean) {
+/**
+ * Mesma listagem de `/ferramentas`, exclusiva do papel `consulta`. Recebe o
+ * token da sessão do quiosque por parâmetro e o manda só nesta chamada
+ * (`skipAuthHandler401`), em vez de setar o token global de `@/lib/api` —
+ * assim uma sessão de almoxarife ativa na mesma aba não é sobrescrita nem
+ * derrubada por um 401 que é só do quiosque.
+ */
+export function useConsultaFerramentas(filtros: FiltrosFerramentas, token: string | null) {
   return useQuery({
     queryKey: ['consulta', 'ferramentas', filtros],
     queryFn: async () => {
-      const { data } = await api.get<ListaFerramentasResponse>('/consulta/ferramentas', { params: filtros })
+      const { data } = await api.get<ListaFerramentasResponse>('/consulta/ferramentas', {
+        params: filtros,
+        headers: { Authorization: `Bearer ${token}` },
+        skipAuthHandler401: true,
+      })
       return data
     },
-    enabled: habilitado,
+    enabled: !!token,
     placeholderData: (dadoAnterior) => dadoAnterior,
     // Quiosque público: paginar/trocar filtro e voltar não deveria bater na
     // rede de novo a cada foco de janela/remontagem. 15s é curto o bastante
