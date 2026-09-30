@@ -3,6 +3,7 @@ import { AppLayout } from '@/layouts/AppLayout'
 import { RotaAdmin, RotaProtegida } from '@/lib/auth'
 import { AprovacoesPage } from '@/pages/AprovacoesPage'
 import { CadastroPage } from '@/pages/CadastroPage'
+import { ConsultaPage } from '@/pages/ConsultaPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
@@ -54,6 +55,6 @@ export const router = createBrowserRouter([
   },
   { path: '/login', element: <LoginPage /> },
   { path: '/cadastro', element: <CadastroPage /> },
-  { path: '/consulta', element: placeholder('Consulta') },
+  { path: '/consulta', element: <ConsultaPage /> },
   { path: '*', element: placeholder('404') },
 ])
