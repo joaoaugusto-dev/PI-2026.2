@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { AuthController } from '../../controllers/authController.js';
+import { FerramentaController } from '../../controllers/ferramentaController.js';
 import { validate } from '../../middlewares/validate.js';
+import { authenticate } from '../../middlewares/auth.js';
+import { authorize } from '../../middlewares/authorize.js';
 import { consultaSessaoLimiter } from '../../middlewares/rateLimit.js';
 import { consultaSessaoSchema } from '../../validators/authValidator.js';
+import { listarFerramentasQuerySchema } from '../../validators/ferramentaValidator.js';
 
 const router = Router();
 
@@ -37,5 +41,58 @@ const router = Router();
  *         description: Limite de 30 tentativas por minuto por IP excedido
  */
 router.post('/sessao', consultaSessaoLimiter, validate({ body: consultaSessaoSchema }), AuthController.criarSessaoConsulta);
+
+/**
+ * @openapi
+ * /consulta/ferramentas:
+ *   get:
+ *     summary: Busca somente leitura de ferramentas para o modo quiosque (disponibilidade)
+ *     description: >
+ *       Mesma listagem de `/v1/ferramentas`, restrita ao papel `consulta`
+ *       (token de 15 min emitido por `/v1/consulta/sessao`). O retorno já não
+ *       tem dado de colaborador/custo/observação — esses campos vivem em
+ *       `/v1/ferramentas/:id/historico`, que continua exclusivo da manutenção.
+ *     tags:
+ *       - Modo Consulta
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [disponivel, em_uso, indisponivel]
+ *       - in: query
+ *         name: q
+ *         description: Busca textual por nome, descrição, marca ou modelo
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: grupoId
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista paginada de ferramentas
+ *       401:
+ *         description: Token inválido, não fornecido ou expirado (sessão de 15 min)
+ *       403:
+ *         description: Papel diferente de `consulta`
+ */
+router.get(
+  '/ferramentas',
+  authenticate,
+  authorize('consulta'),
+  validate({ query: listarFerramentasQuerySchema }),
+  FerramentaController.listar
+);
 
 export default router;
