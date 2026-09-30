@@ -109,3 +109,24 @@ export function useMarcarEtiquetaImpressa() {
     },
   })
 }
+
+/** Chave para reconhecer a mesma ferramenta: nome, marca e modelo sem caixa nem espaços sobrando. */
+export function chaveFerramenta(nome: string, marca?: string | null, modelo?: string | null) {
+  return [nome, marca, modelo].map((t) => (t ?? '').trim().toLowerCase()).join('|')
+}
+
+/** Todas as ferramentas ativas (páginas de 100, até 5 mil) — para conferir duplicidade antes de importar CSV. */
+export function useTodasFerramentas() {
+  return useQuery({
+    queryKey: ['ferramentas', 'todas'],
+    queryFn: async () => {
+      const todas: Ferramenta[] = []
+      for (let page = 1, total = 1; page <= total && page <= 50; page++) {
+        const { data } = await api.get<ListaFerramentasResponse>('/ferramentas', { params: { page, limit: 100 } })
+        todas.push(...data.data)
+        total = data.meta.totalPages
+      }
+      return todas
+    },
+  })
+}

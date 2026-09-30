@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import { useCategorias } from '@/hooks/useCategorias'
-import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
+import { chaveFerramenta, formatarPatrimonio, useTodasFerramentas, type Ferramenta } from '@/hooks/useFerramentas'
 import { useSetores } from '@/hooks/useSetores'
 
 const schema = z.object({
@@ -18,6 +18,9 @@ const opcional = (v?: string) => v || undefined
 export function CadastroFerramentasPage() {
   const { data: categorias = [] } = useCategorias()
   const { data: setores = [] } = useSetores()
+  const { data: existentes = [] } = useTodasFerramentas()
+  // a API só barra código repetido (gerado por ela): nome, marca e modelo iguais passam, então o CSV confere antes
+  const chaves = new Set(existentes.map((f) => chaveFerramenta(f.nome, f.marca, f.modelo)))
   const nomeDe = (lista: { id: number; nome: string }[], id: number | null) =>
     lista.find((i) => i.id === id)?.nome ?? '—'
 
@@ -74,6 +77,7 @@ export function CadastroFerramentasPage() {
       csv={{
         colunas: ['nome', 'categoria', 'marca', 'modelo'],
         exemplo: ['Furadeira de impacto', categorias[0]?.nome ?? 'Elétricas', 'Bosch', 'GSB 13'],
+        duplicada: (l) => chaves.has(chaveFerramenta(l.nome, l.marca, l.modelo)),
         paraPayload: (l) => {
           const cat = categorias.find((c) => c.nome.toLowerCase() === l.categoria?.toLowerCase())
           if (!cat) throw new Error(`Categoria "${l.categoria}" não cadastrada`)
