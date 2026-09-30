@@ -242,7 +242,9 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.nome).toBe(`${PREFIXO}Colaborador Editado Sem Forjar Autor`);
-      expect(res.body.data.criado_por).not.toBe(999999);
+      // colaboradorParaEditarId foi criado no beforeAll sem criado_por (coluna
+      // nullable) — se o valor forjado tivesse vazado, deixaria de ser null.
+      expect(res.body.data.criado_por).toBeNull();
     });
 
     it('retorna 400 quando nenhum campo é informado', async () => {
