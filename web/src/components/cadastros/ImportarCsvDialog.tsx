@@ -12,6 +12,8 @@ export interface ConfigCsv {
   /** Cabeçalho do CSV modelo (minúsculo, sem acento). */
   colunas: string[]
   exemplo: string[]
+  /** Opcional: indica linha que já existe no sistema (o recurso não tem chave única que a API use para recusar). */
+  duplicada?: (linha: Record<string, string>) => boolean
   /** Converte uma linha do CSV no corpo do POST; pode lançar `Error` com o motivo da rejeição. */
   paraPayload: (linha: Record<string, string>) => Record<string, unknown>
 }
@@ -42,6 +44,7 @@ export function ImportarCsvDialog({
   const [linhas, setLinhas] = useState<Record<string, string>[]>([])
   const [resultado, setResultado] = useState<ResultadoLinha[] | null>(null)
   const [interrompida, setInterrompida] = useState(false)
+  const [ignorarDuplicadas, setIgnorarDuplicadas] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const envio = useRef<AbortController | null>(null)
 
@@ -92,7 +95,10 @@ export function ImportarCsvDialog({
     setEnviando(true)
     const { resultados, interrompida: parou } = await importarLinhas(
       linhas,
-      (linha, signal) => api.post(`/${recurso}`, config.paraPayload(linha), { signal }),
+      (linha, signal) => {
+        if (ignorarDuplicadas && config.duplicada?.(linha)) throw new Error('Já cadastrada, ignorada.')
+        return api.post(`/${recurso}`, config.paraPayload(linha), { signal })
+      },
       controle.signal,
     )
     // o que foi criado antes de parar precisa aparecer na lista, mesmo com o diálogo já fechado
@@ -106,6 +112,7 @@ export function ImportarCsvDialog({
     setResultado(resultados)
   }
 
+  const duplicadas = config.duplicada ? linhas.filter(config.duplicada).length : 0
   const rejeitadas = resultado?.filter((r) => r.erro) ?? []
 
   return (
@@ -162,12 +169,30 @@ export function ImportarCsvDialog({
           </div>
         )}
 
+        {duplicadas > 0 && !resultado && (
+          <label className="flex items-start gap-2 rounded-md border border-status-atraso/40 bg-status-atraso/5 px-3 py-2 text-corpo">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={ignorarDuplicadas}
+              disabled={enviando}
+              onChange={(e) => setIgnorarDuplicadas(e.target.checked)}
+            />
+            <span>
+              {duplicadas} {duplicadas === 1 ? 'linha parece' : 'linhas parecem'} já cadastrada
+              {duplicadas === 1 ? '' : 's'}. Ignorar evita duplicar ao reenviar o mesmo arquivo; desmarque só se forem
+              unidades diferentes.
+            </span>
+          </label>
+        )}
+
         {resultado && (
           <div className="flex flex-col gap-2">
             {interrompida && (
               <p className="text-corpo font-medium text-status-atraso">
                 Importação interrompida após {resultado.length} de {linhas.length} linhas. O que já foi enviado foi
-                cadastrado.
+                cadastrado; a linha que estava sendo enviada no momento do cancelamento também pode ter sido cadastrada
+                — confira na lista.
               </p>
             )}
             <p className="text-corpo">
