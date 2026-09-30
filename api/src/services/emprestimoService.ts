@@ -286,18 +286,17 @@ export async function listar({
   }
 
   const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
-  const totalResult = await query<{ total: string }>(
-    `SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe ${where}`,
-    params
-  );
-
-  params.push(limit, offset);
-  const rowsResult = await query<Emprestimo>(
-    `SELECT * FROM vw_emprestimos_detalhe ${where}
-     ORDER BY data_retirada DESC, id DESC
-     LIMIT $${params.length - 1} OFFSET $${params.length}`,
-    params
-  );
+  const paramsPagina = [...params, limit, offset];
+  // total e página são independentes: rodam juntos (a latência é a da mais lenta)
+  const [totalResult, rowsResult] = await Promise.all([
+    query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe ${where}`, params),
+    query<Emprestimo>(
+      `SELECT * FROM vw_emprestimos_detalhe ${where}
+       ORDER BY data_retirada DESC, id DESC
+       LIMIT $${paramsPagina.length - 1} OFFSET $${paramsPagina.length}`,
+      paramsPagina
+    ),
+  ]);
 
   return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
 }
