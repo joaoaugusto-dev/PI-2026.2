@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import { useCategorias } from '@/hooks/useCategorias'
-import { chaveFerramenta, formatarPatrimonio, useTodasFerramentas, type Ferramenta } from '@/hooks/useFerramentas'
+import { useQueryClient } from '@tanstack/react-query'
+import { chaveFerramenta, formatarPatrimonio, todasFerramentasQuery, type Ferramenta } from '@/hooks/useFerramentas'
 import { useSetores } from '@/hooks/useSetores'
 
 const schema = z.object({
@@ -13,14 +14,13 @@ const schema = z.object({
   localizacao: z.string().max(150, 'Máximo de 150 caracteres'),
 })
 
-const opcional = (v?: string) => v || undefined
+// na edição, campo esvaziado vai como null para limpar o valor no banco (omitir a chave o manteria)
+const opcional = (v: string | undefined, edicao = false) => v || (edicao ? null : undefined)
 
 export function CadastroFerramentasPage() {
   const { data: categorias = [] } = useCategorias()
   const { data: setores = [] } = useSetores()
-  const { data: existentes } = useTodasFerramentas()
-  // a API só barra código repetido (gerado por ela): nome, marca e modelo iguais passam, então o CSV confere antes
-  const chaves = new Set((existentes?.itens ?? []).map((f) => chaveFerramenta(f.nome, f.marca, f.modelo)))
+  const queryClient = useQueryClient()
   const nomeDe = (lista: { id: number; nome: string }[], id: number | null) =>
     lista.find((i) => i.id === id)?.nome ?? '—'
 
@@ -66,21 +66,27 @@ export function CadastroFerramentasPage() {
         setorId: String(f.setor_id ?? ''),
         localizacao: f.localizacao ?? '',
       })}
-      paraPayload={(v) => ({
+      paraPayload={(v, edicao) => ({
         nome: v.nome,
         grupoId: Number(v.grupoId),
-        marca: opcional(v.marca),
-        modelo: opcional(v.modelo),
-        setorId: v.setorId ? Number(v.setorId) : undefined,
-        localizacao: opcional(v.localizacao),
+        marca: opcional(v.marca, edicao),
+        modelo: opcional(v.modelo, edicao),
+        setorId: v.setorId ? Number(v.setorId) : edicao ? null : undefined,
+        localizacao: opcional(v.localizacao, edicao),
       })}
       csv={{
         colunas: ['nome', 'categoria', 'marca', 'modelo'],
         exemplo: ['Furadeira de impacto', categorias[0]?.nome ?? 'Elétricas', 'Bosch', 'GSB 13'],
-        avisoDuplicidade: existentes?.truncado
-          ? 'Catálogo maior que 5.000 itens: a conferência cobre só os primeiros 5.000.'
-          : undefined,
-        duplicada: (l) => chaves.has(chaveFerramenta(l.nome, l.marca, l.modelo)),
+        // a API só barra código repetido (gerado por ela): nome, marca e modelo iguais passam,
+        // então o diálogo confere com as ferramentas ativas ao escolher o arquivo
+        chave: (l) => chaveFerramenta(l.nome, l.marca, l.modelo),
+        conferirDuplicadas: async () => {
+          const { itens, truncado } = await queryClient.fetchQuery(todasFerramentasQuery)
+          return {
+            existentes: new Set(itens.map((f) => chaveFerramenta(f.nome, f.marca, f.modelo))),
+            aviso: truncado ? 'Catálogo maior que 5.000 itens: a conferência cobre só os primeiros 5.000.' : undefined,
+          }
+        },
         paraPayload: (l) => {
           const cat = categorias.find((c) => c.nome.toLowerCase() === l.categoria?.toLowerCase())
           if (!cat) throw new Error(`Categoria "${l.categoria}" não cadastrada`)

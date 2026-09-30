@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios'
 import { describe, expect, it } from 'vitest'
-import { importarLinhas } from '@/lib/importar-csv'
+import { importarLinhas, LinhaIgnorada } from '@/lib/importar-csv'
 
 const linhas = [{ n: 'a' }, { n: 'b' }, { n: 'c' }]
 
@@ -77,5 +77,16 @@ describe('importarLinhas', () => {
       { linha: 2, falha: 'rede', erro: 'Falha de rede: a linha não chegou à API. Reenvie.' },
       { linha: 3, falha: 'rejeitada', erro: 'Registro duplicado' },
     ])
+  })
+
+  it('linha ignorada de propósito não é rejeitada nem para o laço', async () => {
+    const r = await importarLinhas(
+      [{ n: 'a' }, { n: 'b' }],
+      async (l) => {
+        if (l.n === 'a') throw new LinhaIgnorada('Já cadastrada, ignorada.')
+      },
+      new AbortController().signal,
+    )
+    expect(r.resultados).toEqual([{ linha: 2, falha: 'ignorada', erro: 'Já cadastrada, ignorada.' }, { linha: 3 }])
   })
 })

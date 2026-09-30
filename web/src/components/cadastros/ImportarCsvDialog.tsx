@@ -5,17 +5,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { api } from '@/lib/api'
 import { avisarErro } from '@/lib/avisar-erro'
 import { baixarCsv, lerCsv } from '@/lib/csv'
-import { importarLinhas, type ResultadoLinha } from '@/lib/importar-csv'
+import { importarLinhas, LinhaIgnorada, type ResultadoLinha } from '@/lib/importar-csv'
 import { cn } from '@/lib/utils'
 
 export interface ConfigCsv {
   /** Cabeçalho do CSV modelo (minúsculo, sem acento). */
   colunas: string[]
   exemplo: string[]
-  /** Opcional: indica linha que já existe no sistema (o recurso não tem chave única que a API use para recusar). */
-  duplicada?: (linha: Record<string, string>) => boolean
-  /** Opcional: ressalva exibida quando a conferência de duplicadas é parcial (ex.: catálogo maior que o limite lido). */
-  avisoDuplicidade?: string
+  /**
+   * Opcional (duplicidade): recursos sem chave única que a API use para recusar repetidos
+   * (ferramentas) informam `chave` (identidade da linha) e `conferirDuplicadas` (o que já existe,
+   * carregado só ao escolher o arquivo). Repetidas dentro do próprio arquivo também são detectadas.
+   */
+  chave?: (linha: Record<string, string>) => string
+  conferirDuplicadas?: () => Promise<{ existentes: Set<string>; aviso?: string }>
   /** Converte uma linha do CSV no corpo do POST; pode lançar `Error` com o motivo da rejeição. */
   paraPayload: (linha: Record<string, string>) => Record<string, unknown>
 }
@@ -47,6 +50,11 @@ export function ImportarCsvDialog({
   const [resultado, setResultado] = useState<ResultadoLinha[] | null>(null)
   const [interrompida, setInterrompida] = useState(false)
   const [ignorarDuplicadas, setIgnorarDuplicadas] = useState(true)
+  const [existentes, setExistentes] = useState<Set<string>>(new Set())
+  const [avisoConferencia, setAvisoConferencia] = useState<string>()
+  const [conferindo, setConferindo] = useState(false)
+  // cada escolha de arquivo/fechamento invalida a conferência anterior que ainda esteja carregando
+  const geracao = useRef(0)
   const [enviando, setEnviando] = useState(false)
   const envio = useRef<AbortController | null>(null)
 
@@ -60,6 +68,8 @@ export function ImportarCsvDialog({
     // `enviar` vê que não é mais a atual e não publica relatório nenhum.
     cancelarEnvio()
     envio.current = null
+    geracao.current++
+    setConferindo(false)
     setEnviando(false)
     setLinhas([])
     setResultado(null)
@@ -74,6 +84,7 @@ export function ImportarCsvDialog({
     if (!arquivo) return
     setResultado(null)
     setInterrompida(false)
+    const minha = ++geracao.current
     try {
       const lidas = lerCsv(await arquivo.text())
       const ausentes = config.colunas.filter((c) => !(lidas[0] && c in lidas[0]))
@@ -85,6 +96,24 @@ export function ImportarCsvDialog({
         )
       }
       setLinhas(lidas)
+      setExistentes(new Set())
+      setAvisoConferencia(undefined)
+      if (config.chave && config.conferirDuplicadas) {
+        setConferindo(true)
+        try {
+          const conferencia = await config.conferirDuplicadas()
+          if (geracao.current !== minha) return
+          setExistentes(conferencia.existentes)
+          setAvisoConferencia(conferencia.aviso)
+        } catch {
+          if (geracao.current !== minha) return
+          setAvisoConferencia(
+            'Não foi possível conferir duplicadas agora: as linhas serão enviadas sem essa conferência.',
+          )
+        } finally {
+          if (geracao.current === minha) setConferindo(false)
+        }
+      }
     } catch (e) {
       setLinhas([])
       avisarErro(e instanceof Error ? e.message : 'Não foi possível ler o arquivo.')
@@ -98,7 +127,11 @@ export function ImportarCsvDialog({
     const { resultados, interrompida: parou } = await importarLinhas(
       linhas,
       (linha, signal) => {
-        if (ignorarDuplicadas && config.duplicada?.(linha)) throw new Error('Já cadastrada, ignorada.')
+        const motivo = ignorarDuplicadas ? motivos[linhas.indexOf(linha)] : null
+        if (motivo)
+          throw new LinhaIgnorada(
+            motivo === 'existente' ? 'Já cadastrada, ignorada.' : 'Repetida neste arquivo, ignorada.',
+          )
         return api.post(`/${recurso}`, config.paraPayload(linha), { signal })
       },
       controle.signal,
@@ -114,7 +147,18 @@ export function ImportarCsvDialog({
     setResultado(resultados)
   }
 
-  const duplicadas = config.duplicada ? linhas.filter(config.duplicada).length : 0
+  // por linha: já existe no sistema, repetida antes no próprio arquivo, ou nenhuma das duas
+  // (até 500 linhas: recalcular a cada render é barato e evita memo preso a um `config` novo a cada render)
+  const vistas = new Set<string>()
+  const motivos = linhas.map((linha) => {
+    if (!config.chave) return null
+    const k = config.chave(linha)
+    const motivo = existentes.has(k) ? 'existente' : vistas.has(k) ? 'repetida' : null
+    vistas.add(k)
+    return motivo
+  })
+  const duplicadas = motivos.filter(Boolean).length
+  const ignoradas = resultado?.filter((r) => r.falha === 'ignorada') ?? []
   const rejeitadas = resultado?.filter((r) => r.falha === 'rejeitada') ?? []
   const falhasDeRede = resultado?.filter((r) => r.falha === 'rede') ?? []
 
@@ -172,6 +216,11 @@ export function ImportarCsvDialog({
           </div>
         )}
 
+        {conferindo && <p className="text-rotulo text-muted-foreground">Conferindo registros já cadastrados…</p>}
+        {avisoConferencia && !resultado && (
+          <p className="text-corpo font-medium text-status-atraso">{avisoConferencia}</p>
+        )}
+
         {duplicadas > 0 && !resultado && (
           <label className="flex items-start gap-2 rounded-md border border-status-atraso/40 bg-status-atraso/5 px-3 py-2 text-corpo">
             <input
@@ -182,10 +231,10 @@ export function ImportarCsvDialog({
               onChange={(e) => setIgnorarDuplicadas(e.target.checked)}
             />
             <span>
-              {duplicadas} {duplicadas === 1 ? 'linha parece' : 'linhas parecem'} já cadastrada
-              {duplicadas === 1 ? '' : 's'}. Ignorar evita duplicar ao reenviar o mesmo arquivo; desmarque só se forem
-              unidades diferentes. A conferência considera só registros ativos.
-              {config.avisoDuplicidade && <strong className="block">{config.avisoDuplicidade}</strong>}
+              {duplicadas} {duplicadas === 1 ? 'linha parece' : 'linhas parecem'} duplicada
+              {duplicadas === 1 ? '' : 's'} (já cadastrada ou repetida neste arquivo). Ignorar evita duplicar ao
+              reenviar o mesmo arquivo; desmarque só se forem unidades diferentes. A conferência considera só registros
+              ativos.
             </span>
           </label>
         )}
@@ -201,12 +250,18 @@ export function ImportarCsvDialog({
             )}
             <p className="text-corpo">
               <span className="font-medium text-status-disponivel">
-                {resultado.length - rejeitadas.length - falhasDeRede.length} aceitas
+                {resultado.length - rejeitadas.length - falhasDeRede.length - ignoradas.length} aceitas
               </span>
               {' · '}
               <span className={cn('font-medium', rejeitadas.length && 'text-destructive')}>
                 {rejeitadas.length} rejeitadas
               </span>
+              {ignoradas.length > 0 && (
+                <>
+                  {' · '}
+                  <span className="font-medium text-muted-foreground">{ignoradas.length} ignoradas (duplicadas)</span>
+                </>
+              )}
               {falhasDeRede.length > 0 && (
                 <>
                   {' · '}
@@ -243,7 +298,7 @@ export function ImportarCsvDialog({
             </Button>
           )}
           {!resultado && (
-            <Button disabled={!linhas.length || enviando} onClick={enviar}>
+            <Button disabled={!linhas.length || enviando || conferindo} onClick={enviar}>
               {enviando ? 'Importando…' : `Importar ${linhas.length || ''} linhas`}
             </Button>
           )}

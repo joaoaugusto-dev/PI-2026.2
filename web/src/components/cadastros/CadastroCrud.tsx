@@ -52,7 +52,8 @@ export function CadastroCrud<T extends { id: number }>({
   schema: ZodType<Valores, Valores>
   valoresVazios: Valores
   deItem: (item: T) => Valores
-  paraPayload: (valores: Valores) => Record<string, unknown>
+  /** `edicao` é true no PATCH: campos esvaziados devem ir como null para limpar, em vez de omitidos. */
+  paraPayload: (valores: Valores, edicao: boolean) => Record<string, unknown>
   csv: ConfigCsv
   buscaPlaceholder: string
 }) {
@@ -84,7 +85,7 @@ export function CadastroCrud<T extends { id: number }>({
   function aoSalvar(valores: Valores) {
     const id = editando && editando !== 'novo' ? editando.id : undefined
     salvar.mutate(
-      { id, dados: paraPayload(valores) },
+      { id, dados: paraPayload(valores, id !== undefined) },
       {
         onSuccess: () => {
           playSomConfirmacao()

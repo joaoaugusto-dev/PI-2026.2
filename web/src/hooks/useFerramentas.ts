@@ -119,27 +119,26 @@ const PAGINAS_MAX = 50
 
 /**
  * Ferramentas ativas (páginas de 100, até 5 mil) para conferir duplicidade antes de importar CSV.
+ * Só roda quando o usuário escolhe um arquivo (`queryClient.fetchQuery`), não ao abrir a tela.
  * `truncado` avisa quando o catálogo é maior que o limite lido, para a conferência não parecer completa.
  * `GET /ferramentas` só devolve ativas, então uma ferramenta baixada não conta como duplicada.
- * Cache de 5 min: abrir o diálogo de novo não refaz as requisições (a importação invalida `['ferramentas']`).
+ * Cache de 5 min; a importação invalida `['ferramentas']`.
  */
-export function useTodasFerramentas() {
-  return useQuery({
-    queryKey: ['ferramentas', 'todas'],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const itens: Ferramenta[] = []
-      let truncado = false
-      for (let page = 1, total = 1; page <= total; page++) {
-        if (page > PAGINAS_MAX) {
-          truncado = true
-          break
-        }
-        const { data } = await api.get<ListaFerramentasResponse>('/ferramentas', { params: { page, limit: 100 } })
-        itens.push(...data.data)
-        total = data.meta.totalPages
+export const todasFerramentasQuery = {
+  queryKey: ['ferramentas', 'todas'] as const,
+  staleTime: 5 * 60_000,
+  queryFn: async () => {
+    const itens: Ferramenta[] = []
+    let truncado = false
+    for (let page = 1, total = 1; page <= total; page++) {
+      if (page > PAGINAS_MAX) {
+        truncado = true
+        break
       }
-      return { itens, truncado }
-    },
-  })
+      const { data } = await api.get<ListaFerramentasResponse>('/ferramentas', { params: { page, limit: 100 } })
+      itens.push(...data.data)
+      total = data.meta.totalPages
+    }
+    return { itens, truncado }
+  },
 }

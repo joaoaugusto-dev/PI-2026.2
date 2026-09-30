@@ -6,12 +6,17 @@ export interface ResultadoLinha {
   erro?: string
   /**
    * `rede`: a requisição não chegou à API (vale reenviar). `rejeitada`: a API
-   * ou a validação local recusou a linha (precisa corrigir o CSV).
+   * ou a validação local recusou a linha (precisa corrigir o CSV). `ignorada`:
+   * pulada de propósito (duplicada), não é erro.
    */
-  falha?: 'rede' | 'rejeitada'
+  falha?: 'rede' | 'rejeitada' | 'ignorada'
 }
 
+/** Lançada por quem envia para pular a linha de propósito (ex.: duplicada); vira `falha: 'ignorada'`. */
+export class LinhaIgnorada extends Error {}
+
 function descreverFalha(e: unknown): Required<Pick<ResultadoLinha, 'erro' | 'falha'>> {
+  if (e instanceof LinhaIgnorada) return { falha: 'ignorada', erro: e.message }
   if (axios.isAxiosError(e)) {
     if (!e.response) return { falha: 'rede', erro: 'Falha de rede: a linha não chegou à API. Reenvie.' }
     const msg = (e.response.data as { error?: { message?: string } } | undefined)?.error?.message
