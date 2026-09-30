@@ -319,15 +319,40 @@ describe('Rotas de Empréstimos (API-11)', () => {
       expect(res.body.error.code).toBe('EMPRESTIMO_NOT_FOUND');
     });
 
-    it('retorna 400 com condicaoDevolucao ausente ou inválida', async () => {
+    it('retorna 400 com mensagem específica quando condicaoDevolucao está ausente', async () => {
+      const { emprestimoId } = await retirar('CondicaoAusente');
+
+      const res = await patch(emprestimoId, {});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'condicaoDevolucao',
+        message: 'condicaoDevolucao é obrigatória',
+      });
+    });
+
+    it('retorna 400 com mensagem específica quando condicaoDevolucao é inválida', async () => {
       const { emprestimoId } = await retirar('CondicaoInvalida');
 
-      const ausente = await patch(emprestimoId, {});
-      const invalida = await patch(emprestimoId, { condicaoDevolucao: 'quebrada' });
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'quebrada' });
 
-      expect(ausente.status).toBe(400);
-      expect(ausente.body.error.details[0]).toMatchObject({ field: 'condicaoDevolucao' });
-      expect(invalida.status).toBe(400);
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'condicaoDevolucao',
+        message: 'condicaoDevolucao deve ser ok, avaria ou perda',
+      });
+    });
+
+    it('retorna 400 com mensagem específica quando observacaoDevolucao é uma string vazia', async () => {
+      const { emprestimoId } = await retirar('ObservacaoVazia');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'ok', observacaoDevolucao: '   ' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'observacaoDevolucao',
+        message: 'observacaoDevolucao não pode ser vazio',
+      });
     });
 
     it('retorna 401 sem token e 403 com papel consulta', async () => {
