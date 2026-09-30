@@ -19,11 +19,21 @@ interface ListaFerramentasResponse {
   meta: { page: number; limit: number; total: number; totalPages: number }
 }
 
-/** Abre a sessão de 15 min do quiosque (`POST /v1/consulta/sessao`) — só a matrícula, sem senha (Regra 8). */
+/**
+ * Abre a sessão de 15 min do quiosque (`POST /v1/consulta/sessao`) — só a
+ * matrícula, sem senha (Regra 8). Rota pública: `skipAuthToken` evita
+ * carregar o token de uma sessão de almoxarife que porventura esteja ativa
+ * na mesma aba — a rota não usa essa credencial, mas não faz sentido
+ * mandá-la mesmo assim.
+ */
 export function useIniciarSessaoConsulta() {
   return useMutation({
     mutationFn: async (matricula: string) => {
-      const { data } = await api.post<{ data: SessaoConsulta }>('/consulta/sessao', { identificador: matricula })
+      const { data } = await api.post<{ data: SessaoConsulta }>(
+        '/consulta/sessao',
+        { identificador: matricula },
+        { skipAuthToken: true },
+      )
       return data.data
     },
   })
