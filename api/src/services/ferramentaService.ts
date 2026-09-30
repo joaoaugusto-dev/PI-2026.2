@@ -16,6 +16,7 @@ export interface Ferramenta {
   status: 'disponivel' | 'em_uso' | 'indisponivel';
   motivo_indisponivel: 'avaria' | 'perda' | 'manutencao_preventiva' | 'baixada' | null;
   etiqueta_impressa_em: string | null;
+  foto_url: string | null;
   ativo: boolean;
   created_at: string;
 }
@@ -36,7 +37,7 @@ const COLUNAS_ORDENACAO: Record<string, string> = {
 
 const COLUNAS_FERRAMENTA = `id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
             subgrupo_id, setor_id, localizacao, status, motivo_indisponivel,
-            etiqueta_impressa_em, ativo, created_at`;
+            etiqueta_impressa_em, foto_url, ativo, created_at`;
 
 // Escapa os coringas do ILIKE (%, _ e a própria barra invertida) para que
 // caracteres digitados pelo usuário em "q" sejam tratados como texto literal,
