@@ -80,6 +80,24 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.body.data.valorAquisicao).toBe(450.90);
     });
 
+    it('ignora status, ativo e codigoIdentificacao vindos do corpo no cadastro (campos controlados pelo servidor)', async () => {
+      const payload = {
+        nome: 'Chave de Fenda Phillips',
+        grupoId: 1,
+        status: 'indisponivel',
+        ativo: false,
+        codigoIdentificacao: 1234,
+      };
+
+      const res = await request(app).post('/test/ferramentas').send(payload);
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.nome).toBe('Chave de Fenda Phillips');
+      expect(res.body.data).not.toHaveProperty('status');
+      expect(res.body.data).not.toHaveProperty('ativo');
+      expect(res.body.data).not.toHaveProperty('codigoIdentificacao');
+    });
+
     it('aceita edição parcial de ferramenta com nome e grupo válidos', async () => {
       const res = await request(app).patch('/v1/ferramentas/10').send({ nome: 'Furadeira', grupoId: 3 });
 
@@ -110,6 +128,15 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
 
       expect(semNome.status).toBe(400);
       expect(semGrupo.status).toBe(400);
+    });
+
+    it('descarta ativo e codigoIdentificacao na edição (campos controlados pelo servidor)', async () => {
+      const res = await request(app)
+        .patch('/v1/ferramentas/10')
+        .send({ nome: 'Furadeira', ativo: false, codigoIdentificacao: 4321 });
+
+      expect(res.status).toBe(200);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
     });
   });
 
