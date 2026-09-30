@@ -98,3 +98,5 @@ export const listarEmprestimosQuerySchema = z.object({
   situacao: z.enum(['em_aberto', 'atrasado', 'devolvido']).optional(),
   setorId: z.coerce.number().int().positive().optional(),
 });
+
+export type ListarEmprestimosQuery = z.infer<typeof listarEmprestimosQuerySchema>;
