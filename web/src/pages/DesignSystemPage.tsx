@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { CheckCircle2Icon, OctagonXIcon, Volume2Icon } from 'lucide-react'
 import { toast } from 'sonner'
+import { IlustracaoErro } from '@/components/IlustracaoErro'
 import { StatusBadge, type Status } from '@/components/StatusBadge'
 import { avisarErro } from '@/lib/avisar-erro'
 import { cn } from '@/lib/utils'
@@ -567,6 +568,14 @@ export function DesignSystemPage() {
                   />
                 ))}
               </div>
+            </Demo>
+
+            <Demo
+              nome="Engrenagem"
+              classe="engrenagem"
+              nota="Rotação linear de 18s, só transform. Única peça em movimento na tela 404 — o zero do código de erro."
+            >
+              <IlustracaoErro codigo="404" className="w-full max-w-48 text-foreground" />
             </Demo>
           </div>
 
