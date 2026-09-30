@@ -33,3 +33,12 @@ describe('GET /v1/emprestimos (histórico)', () => {
     expect((await get('?situacao=xyz')).status).toBe(400);
   });
 });
+
+describe('GET /v1/emprestimos — busca por patrimônio', () => {
+  it('aceita SF000045, 000045 e 45 como o mesmo patrimônio', async () => {
+    const [a, b, c] = await Promise.all(['SF000045', '000045', '45'].map((q) => get(`?q=${q}&limit=100`)));
+    expect(a.status).toBe(200);
+    expect(a.body.meta.total).toBe(b.body.meta.total);
+    expect(b.body.meta.total).toBe(c.body.meta.total);
+  });
+});

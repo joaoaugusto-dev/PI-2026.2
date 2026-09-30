@@ -263,9 +263,18 @@ export async function listar({
   if (q) {
     params.push(`%${q.replace(/[\\%_]/g, '\\$&')}%`);
     const i = params.length;
-    condicoes.push(
-      `(ferramenta_nome ILIKE $${i} OR colaborador_nome ILIKE $${i} OR colaborador_matricula ILIKE $${i} OR codigo_identificacao::text ILIKE $${i})`
-    );
+    const buscas = [
+      `ferramenta_nome ILIKE $${i}`,
+      `colaborador_nome ILIKE $${i}`,
+      `colaborador_matricula ILIKE $${i}`,
+    ];
+    // "SF000045", "000045" ou "45": patrimônio é busca por igualdade no código numérico
+    const patrimonio = /^(?:sf)?0*(\d{1,4})$/i.exec(q);
+    if (patrimonio) {
+      params.push(Number(patrimonio[1]));
+      buscas.push(`codigo_identificacao = $${params.length}`);
+    }
+    condicoes.push(`(${buscas.join(' OR ')})`);
   }
   if (situacao) {
     params.push(situacao);
