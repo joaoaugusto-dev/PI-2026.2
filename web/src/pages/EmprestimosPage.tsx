@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, History } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import axios from 'axios'
+import { ChevronLeft, ChevronRight, Download, History, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -16,6 +18,7 @@ import {
 } from '@/hooks/useEmprestimos'
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
+import { baixarCsv } from '@/lib/csv'
 import { cn } from '@/lib/utils'
 
 const LIMITE = 20
@@ -33,27 +36,26 @@ const COR: Record<SituacaoEmprestimo, string> = {
 
 const dataBR = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—')
 
-/** Exporta TODAS as páginas do filtro atual (a API limita 100 por página). */
-async function exportarCsv(filtros: FiltrosEmprestimos) {
+// 100 por página (limite da API) × 100 páginas = 10 mil linhas por exportação
+const MAX_PAGINAS_EXPORTACAO = 100
+
+/** Exporta as páginas do filtro atual (até 10 mil linhas); `signal` cancela no meio. Retorna se truncou. */
+async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
   const linhas: Emprestimo[] = []
+  let truncou = false
   for (let page = 1, total = 1; page <= total; page++) {
-    const r = await buscarEmprestimos({ ...filtros, page, limit: 100 })
+    if (page > MAX_PAGINAS_EXPORTACAO) {
+      truncou = true
+      break
+    }
+    const r = await buscarEmprestimos({ ...filtros, page, limit: 100 }, signal)
     linhas.push(...r.data)
     total = r.meta.totalPages
   }
-  const cab = [
-    'Ferramenta',
-    'Código',
-    'Colaborador',
-    'Matrícula',
-    'Setor',
-    'Retirada',
-    'Previsão',
-    'Devolução',
-    'Situação',
-  ]
-  const corpo = linhas.map((e) =>
-    [
+  baixarCsv(
+    'historico-emprestimos.csv',
+    ['Ferramenta', 'Código', 'Colaborador', 'Matrícula', 'Setor', 'Retirada', 'Previsão', 'Devolução', 'Situação'],
+    linhas.map((e) => [
       e.ferramenta_nome,
       formatarPatrimonio(e.codigo_identificacao),
       e.colaborador_nome,
@@ -63,15 +65,9 @@ async function exportarCsv(filtros: FiltrosEmprestimos) {
       dataBR(e.previsao_devolucao),
       dataBR(e.data_devolucao),
       ROTULO[e.situacao],
-    ].map((c) => `"${c.replaceAll('"', '""')}"`),
+    ]),
   )
-  const csv = [cab, ...corpo].map((l) => l.join(';')).join('\n')
-  const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'historico-emprestimos.csv'
-  a.click()
-  URL.revokeObjectURL(url)
+  return truncou
 }
 
 const selectClasse = 'h-9 rounded-md border border-input bg-background px-3 text-corpo'
@@ -83,6 +79,11 @@ export function EmprestimosPage() {
   const [situacao, setSituacao] = useState('')
   const [setorId, setSetorId] = useState('')
   const [page, setPage] = useState(1)
+  const [exportando, setExportando] = useState(false)
+  const exportacao = useRef<AbortController | null>(null)
+
+  // fechar a tela cancela uma exportação em andamento
+  useEffect(() => () => exportacao.current?.abort(), [])
 
   // espera o usuário parar de digitar antes de consultar a API
   useEffect(() => {
@@ -141,10 +142,23 @@ export function EmprestimosPage() {
         <Button
           variant="outline"
           className="ml-auto"
-          disabled={!linhas.length}
-          onClick={() => exportarCsv(filtros).catch(() => avisarErro('Não foi possível exportar o CSV.'))}
+          disabled={!linhas.length || exportando}
+          onClick={async () => {
+            exportacao.current = new AbortController()
+            setExportando(true)
+            try {
+              const truncou = await exportarCsv(filtros, exportacao.current.signal)
+              if (truncou)
+                toast.warning('Exportados os primeiros 10 mil registros. Refine os filtros para ver o restante.')
+            } catch (e) {
+              if (!axios.isCancel(e)) avisarErro('Não foi possível exportar o CSV.')
+            } finally {
+              setExportando(false)
+            }
+          }}
         >
-          <Download /> Exportar CSV
+          {exportando ? <Loader2 className="animate-spin" /> : <Download />}{' '}
+          {exportando ? 'Exportando…' : 'Exportar CSV'}
         </Button>
       </div>
 

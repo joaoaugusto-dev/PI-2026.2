@@ -32,8 +32,8 @@ export interface ListaEmprestimos {
   meta: { page: number; limit: number; total: number; totalPages: number }
 }
 
-export async function buscarEmprestimos(filtros: FiltrosEmprestimos) {
-  const { data } = await api.get<ListaEmprestimos>('/emprestimos', { params: filtros })
+export async function buscarEmprestimos(filtros: FiltrosEmprestimos, signal?: AbortSignal) {
+  const { data } = await api.get<ListaEmprestimos>('/emprestimos', { params: filtros, signal })
   return data
 }
 
