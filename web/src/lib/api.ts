@@ -1,7 +1,10 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import { comDemo } from '@/lib/demo/adapter'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1',
+  // Modo demonstração: respondido por fixtures locais, sem rede (ver lib/demo).
+  adapter: comDemo(axios.getAdapter(axios.defaults.adapter)),
 })
 
 // O quiosque de consulta (ConsultaPage) passa o próprio token por chamada,

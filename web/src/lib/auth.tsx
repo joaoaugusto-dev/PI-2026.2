@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
+import { setModoDemo } from '@/lib/demo/adapter'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {
@@ -21,14 +23,15 @@ interface AuthContextValue {
 }
 
 // Entrega P1 (02/10): a interface é avaliada sem a API REST no ar, então o
-// modo demonstração destrava as telas com os dados simulados de cada página.
-// ponytail: sessão demo não persiste (não tem JWT) — dar refresh volta pro
-// login; quando a API estiver integrada, esse atalho sai junto.
+// modo demonstração não tem token nem sessão: liga a flag de `lib/demo` e o
+// `api.ts` responde tudo com fixtures locais, sem rede e sem tocar a API.
+// ponytail: a demo não persiste (nada vai pro localStorage) — dar refresh
+// volta pro login; quando a API estiver integrada, `lib/demo` sai junto.
 const usuarioDemo: Usuario = {
   id: 0,
   nome: 'Visitante (demonstração)',
   matricula: '0001',
-  papel: 'manutencao',
+  papel: 'admin',
   ativo: true,
 }
 
@@ -84,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   const logout = () => {
+    setModoDemo(false)
     setAuthToken(null)
     setUsuario(null)
     localStorage.removeItem(CHAVE_SESSAO)
@@ -95,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const definirSessao = (token: string, usuarioLogado: Usuario) => {
+    setModoDemo(false)
     setAuthToken(token)
     setUsuario(usuarioLogado)
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ token, usuario: usuarioLogado }))
@@ -108,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const entrarComoDemo = () => {
     setAuthToken(null)
+    setModoDemo(true)
     setUsuario(usuarioDemo)
   }
 
@@ -142,8 +148,9 @@ export function RotaProtegida({ children }: { children: ReactNode }) {
 export function RotaAdmin({ children }: { children: ReactNode }) {
   const { usuario } = useAuth()
 
+  // 404 (não redirect): quem não é admin não deve nem saber que a rota existe
   if (usuario?.papel !== 'admin') {
-    return <Navigate to="/" replace />
+    return <NaoEncontradaPage />
   }
 
   return <>{children}</>
