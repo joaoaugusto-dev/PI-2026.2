@@ -198,7 +198,7 @@ export function CadastroCrud<T extends { id: number }>({
         </div>
       )}
 
-      <Dialog open={editando !== null} onOpenChange={(a) => !a && setEditando(null)}>
+      <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvar.isPending && setEditando(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>

@@ -75,7 +75,7 @@ export function FormularioCadastro({
         </div>
       ))}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancelar}>
+        <Button type="button" variant="outline" disabled={salvando} onClick={onCancelar}>
           Cancelar
         </Button>
         <Button type="submit" disabled={salvando}>
