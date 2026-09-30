@@ -35,9 +35,23 @@ export function lerCsv(texto: string): Record<string, string>[] {
   return corpo.map((l) => Object.fromEntries(chaves.map((k, i) => [k, (l[i] ?? '').trim()])))
 }
 
+const NUMERO = /^[-+]?\d+([.,]\d+)?$/
+
+/**
+ * Injeção de fórmula: no Excel, célula que começa com `=`, `+`, `-`, `@`, tab
+ * ou CR vira fórmula. Texto livre (nome de ferramenta, colaborador, inclusive
+ * vindo de auto-cadastro) ganha um `'` na frente; número de verdade
+ * (`-5`, `+12,5`) passa intacto.
+ */
+export function neutralizarFormula(celula: string) {
+  return /^[=+\-@\t\r]/.test(celula) && !NUMERO.test(celula) ? `'${celula}` : celula
+}
+
 /** Gera e baixa um CSV (`;`, com BOM para o Excel abrir com acento). */
 export function baixarCsv(nome: string, cabecalho: string[], linhas: string[][] = []) {
-  const csv = [cabecalho, ...linhas].map((l) => l.map((c) => `"${c.replaceAll('"', '""')}"`).join(';')).join('\n')
+  const csv = [cabecalho, ...linhas]
+    .map((l) => l.map((c) => `"${neutralizarFormula(c).replaceAll('"', '""')}"`).join(';'))
+    .join('\n')
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
   const a = document.createElement('a')
   a.href = url
