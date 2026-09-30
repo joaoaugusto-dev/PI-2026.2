@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { useCalendario } from '@/hooks/useCalendario'
+import { hojeBrasilia } from '@/lib/formatar'
 import { useSetores } from '@/hooks/useSetores'
 import { cn } from '@/lib/utils'
 
@@ -22,13 +23,14 @@ function iso(ano: number, mes: number, dia: number) {
 }
 
 export function CalendarioPage() {
-  const agora = new Date()
-  const [ano, setAno] = useState(agora.getFullYear())
-  const [mes, setMes] = useState(agora.getMonth())
+  // "hoje" no fuso de Brasília (o do balcão), não no do navegador
+  const agora = hojeBrasilia()
+  const [ano, setAno] = useState(agora.ano)
+  const [mes, setMes] = useState(agora.mes)
   const [setorId, setSetorId] = useState('')
   const [diaAberto, setDiaAberto] = useState<string | null>(null)
 
-  const hoje = iso(agora.getFullYear(), agora.getMonth(), agora.getDate())
+  const hoje = agora.iso
   const { data, isError } = useCalendario(iso(ano, mes, 1).slice(0, 7))
   const { data: setores } = useSetores()
 
@@ -36,7 +38,8 @@ export function CalendarioPage() {
     const mapa = new Map<string, NonNullable<typeof data>[number]['emprestimos']>()
     for (const { dia, emprestimos } of data ?? []) {
       const filtrados = setorId ? emprestimos.filter((e) => e.setor_id === Number(setorId)) : emprestimos
-      if (filtrados.length) mapa.set(dia, filtrados)
+      // tolera `dia` como timestamp (AAAA-MM-DDTHH...): a chave é só a data
+      if (filtrados.length) mapa.set(dia.slice(0, 10), filtrados)
     }
     return mapa
   }, [data, setorId])

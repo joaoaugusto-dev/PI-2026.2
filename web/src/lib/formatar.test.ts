@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dataBR, rotuloCondicao } from '@/lib/formatar'
+import { dataBR, hojeBrasilia, rotuloCondicao } from '@/lib/formatar'
 
 describe('dataBR', () => {
   it('data sem hora não recua um dia por causa do fuso', () => {
@@ -22,5 +22,12 @@ describe('rotuloCondicao', () => {
   it('rotula condições e humaniza valores desconhecidos', () => {
     expect(rotuloCondicao('avaria')).toBe('Avaria')
     expect(rotuloCondicao('em_reparo')).toBe('Em reparo')
+  })
+})
+
+describe('hojeBrasilia', () => {
+  it('usa a data de Brasília, não a do UTC (02:30 UTC ainda é o dia anterior)', () => {
+    expect(hojeBrasilia(new Date('2026-10-01T02:30:00Z'))).toEqual({ iso: '2026-09-30', ano: 2026, mes: 8, dia: 30 })
+    expect(hojeBrasilia(new Date('2026-10-01T03:30:00Z')).iso).toBe('2026-10-01')
   })
 })

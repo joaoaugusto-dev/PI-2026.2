@@ -21,3 +21,10 @@ const CONDICAO: Record<string, string> = { ok: 'OK', avaria: 'Avaria', perda: 'P
 export function rotuloCondicao(valor: string) {
   return CONDICAO[valor] ?? valor.replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase())
 }
+
+/** "Hoje" no fuso de Brasília (mês 0-based, como `Date`), para não depender do relógio/fuso do navegador. */
+export function hojeBrasilia(agora = new Date()) {
+  const iso = agora.toLocaleDateString('en-CA', { timeZone: FUSO }) // AAAA-MM-DD
+  const [ano, mes, dia] = iso.split('-').map(Number)
+  return { iso, ano, mes: mes - 1, dia }
+}
