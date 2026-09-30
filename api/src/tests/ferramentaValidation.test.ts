@@ -20,7 +20,7 @@ import {
 // exercitado. Auth e service são mockados: aqui só interessa a validação.
 vi.mock('../middlewares/auth.js', () => ({
   authenticate: (req: Request, _res: Response, next: () => void) => {
-    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'manutencao' };
+    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'admin' };
     next();
   },
 }));

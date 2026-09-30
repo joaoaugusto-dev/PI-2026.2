@@ -7,7 +7,7 @@ import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_SETOR_';
 
-function gerarToken(usuarioId: number, papel = 'manutencao') {
+function gerarToken(usuarioId: number, papel = 'admin') {
   return jwt.sign(
     { id: usuarioId, nome: 'Test User', papel, matricula: '0001' },
     env.jwt.secret,

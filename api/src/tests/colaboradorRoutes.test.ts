@@ -22,6 +22,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
   let setorId: number;
   let usuarioId: number;
   let manutencaoToken: string;
+  let adminToken: string;
   let consultaToken: string;
 
   let colaboradorMatriculaId: number;
@@ -44,6 +45,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
       .id;
 
     manutencaoToken = gerarToken({ id: usuarioId, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' });
+    adminToken = gerarToken({ id: usuarioId, nome: 'Admin Teste', papel: 'admin', matricula: '0053' });
     // authenticate só decodifica o JWT — não precisa existir colaborador real
     // com essa matrícula para testar autorização (mesmo padrão do authorize.test.ts).
     consultaToken = gerarToken({ id: usuarioId, nome: 'Consulta Teste', papel: 'consulta', matricula: '9309' });
@@ -210,7 +212,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('atualiza somente os campos informados', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ nome: `${PREFIXO}Colaborador Editado` });
 
       expect(res.status).toBe(200);
@@ -221,7 +223,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('retorna 404 quando o colaborador não existe', async () => {
       const res = await request(app)
         .patch('/v1/colaboradores/999999999')
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ nome: 'x' });
 
       expect(res.status).toBe(404);
@@ -231,7 +233,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('retorna 400 quando nenhum campo é informado', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({});
 
       expect(res.status).toBe(400);
@@ -243,21 +245,21 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('inativa (ativo = false) em vez de apagar, e some da consulta por ID em seguida', async () => {
       const res = await request(app)
         .delete(`/v1/colaboradores/${colaboradorParaInativarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`);
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.data.ativo).toBe(false);
 
       const depois = await request(app)
         .get(`/v1/colaboradores/${colaboradorParaInativarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`);
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(depois.status).toBe(404);
     });
 
     it('retorna 404 quando o colaborador não existe', async () => {
       const res = await request(app)
         .delete('/v1/colaboradores/999999999')
-        .set('Authorization', `Bearer ${manutencaoToken}`);
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('COLABORADOR_NOT_FOUND');
@@ -282,6 +284,18 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('TOKEN_NOT_PROVIDED');
+    });
+  });
+
+  describe('Edição e inativação são só do admin', () => {
+    it('manutenção leva 403 em PATCH e DELETE', async () => {
+      const patch = await request(app)
+        .patch('/v1/colaboradores/1')
+        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .send({ nome: 'Outro Nome' });
+      const del = await request(app).delete('/v1/colaboradores/1').set('Authorization', `Bearer ${manutencaoToken}`);
+      expect(patch.status).toBe(403);
+      expect(del.status).toBe(403);
     });
   });
 });
