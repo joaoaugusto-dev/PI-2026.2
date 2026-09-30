@@ -230,6 +230,21 @@ describe('Rotas de Colaboradores (API-09)', () => {
       expect(res.body.error.code).toBe('COLABORADOR_NOT_FOUND');
     });
 
+    it('ignora criado_por vindo do corpo, sem sobrescrever o autor original (Regra 6)', async () => {
+      const res = await request(app)
+        .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
+        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .send({
+          nome: `${PREFIXO}Colaborador Editado Sem Forjar Autor`,
+          criadoPor: 999999, // tentativa de forjar o autor — schema descarta chaves desconhecidas
+          criado_por: 999999,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.nome).toBe(`${PREFIXO}Colaborador Editado Sem Forjar Autor`);
+      expect(res.body.data.criado_por).not.toBe(999999);
+    });
+
     it('retorna 400 quando nenhum campo é informado', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
