@@ -137,7 +137,7 @@ router
 router.get(
   '/por-codigo/:codigo',
   authenticate,
-  authorize('manutencao', 'admin'),
+  authorize('manutencao'),
   validate({ params: ferramentaCodigoParamSchema }),
   FerramentaController.buscarPorCodigo
 );

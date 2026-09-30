@@ -131,7 +131,7 @@ router
 router.get(
   '/identificar',
   authenticate,
-  authorize('manutencao', 'admin'),
+  authorize('manutencao'),
   validate({ query: identificarColaboradorQuerySchema }),
   ColaboradorController.identificar
 );
