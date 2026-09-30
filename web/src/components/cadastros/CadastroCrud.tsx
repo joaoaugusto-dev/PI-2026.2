@@ -31,7 +31,7 @@ type Valores = Record<string, string>
  * telas.md), Editar por linha, Inativar (nunca apaga) e importação de CSV.
  * Cada tela só descreve colunas, campos e schema.
  */
-export function CadastroPage<T extends { id: number }>({
+export function CadastroCrud<T extends { id: number }>({
   recurso,
   singular,
   nomeCsv,

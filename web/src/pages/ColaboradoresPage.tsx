@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CadastroPage } from '@/components/cadastros/CadastroPage'
+import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import type { Colaborador } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
 
@@ -14,7 +14,7 @@ export function ColaboradoresPage() {
   const nomeDoSetor = (id: number | null) => setores.find((s) => s.id === id)?.nome ?? '—'
 
   return (
-    <CadastroPage<Colaborador>
+    <CadastroCrud<Colaborador>
       recurso="colaboradores"
       singular="Colaborador"
       nomeCsv="modelo-colaboradores.csv"

@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { CadastroPage } from '@/components/cadastros/CadastroPage'
+import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import type { Setor } from '@/hooks/useSetores'
 
 const schema = z.object({ nome: z.string().trim().min(1, 'Informe o nome').max(100, 'Máximo de 100 caracteres') })
 
 export function SetoresPage() {
   return (
-    <CadastroPage<Setor>
+    <CadastroCrud<Setor>
       recurso="setores"
       singular="Setor"
       nomeCsv="modelo-setores.csv"

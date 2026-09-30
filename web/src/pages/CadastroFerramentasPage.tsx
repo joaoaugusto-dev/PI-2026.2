@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CadastroPage } from '@/components/cadastros/CadastroPage'
+import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import { useCategorias } from '@/hooks/useCategorias'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
 import { useSetores } from '@/hooks/useSetores'
@@ -22,7 +22,7 @@ export function CadastroFerramentasPage() {
     lista.find((i) => i.id === id)?.nome ?? '—'
 
   return (
-    <CadastroPage<Ferramenta>
+    <CadastroCrud<Ferramenta>
       recurso="ferramentas"
       singular="Ferramenta"
       nomeCsv="modelo-ferramentas.csv"
