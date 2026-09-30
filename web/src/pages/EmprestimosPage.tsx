@@ -39,7 +39,16 @@ const dataBR = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('
 // 100 por página (limite da API) × 100 páginas = 10 mil linhas por exportação
 const MAX_PAGINAS_EXPORTACAO = 100
 
-/** Exporta as páginas do filtro atual (até 10 mil linhas); `signal` cancela no meio. Retorna se truncou. */
+/**
+ * Exporta as páginas do filtro atual (até 10 mil linhas); `signal` cancela no
+ * meio. Retorna se truncou — nesse caso o próprio arquivo ganha uma linha final
+ * avisando, para ninguém tratá-lo como o histórico completo.
+ *
+ * Limitação conhecida: a paginação é por offset. Se um empréstimo for criado ou
+ * devolvido enquanto as páginas são buscadas, uma linha pode sair duplicada ou
+ * faltar. Para o uso interno (histórico, não conciliação) é aceitável; um
+ * `?formato=csv` no servidor, em uma só consulta, elimina o problema.
+ */
 async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
   const linhas: Emprestimo[] = []
   let truncou = false
@@ -52,20 +61,23 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
     linhas.push(...r.data)
     total = r.meta.totalPages
   }
+  const aviso = truncou ? [['ATENÇÃO: exportação truncada em 10.000 registros. Refine os filtros.']] : []
   baixarCsv(
     'historico-emprestimos.csv',
     ['Ferramenta', 'Código', 'Colaborador', 'Matrícula', 'Setor', 'Retirada', 'Previsão', 'Devolução', 'Situação'],
-    linhas.map((e) => [
-      e.ferramenta_nome,
-      formatarPatrimonio(e.codigo_identificacao),
-      e.colaborador_nome,
-      e.colaborador_matricula,
-      e.setor_nome,
-      dataBR(e.data_retirada),
-      dataBR(e.previsao_devolucao),
-      dataBR(e.data_devolucao),
-      ROTULO[e.situacao],
-    ]),
+    linhas
+      .map((e) => [
+        e.ferramenta_nome,
+        formatarPatrimonio(e.codigo_identificacao),
+        e.colaborador_nome,
+        e.colaborador_matricula,
+        e.setor_nome,
+        dataBR(e.data_retirada),
+        dataBR(e.previsao_devolucao),
+        dataBR(e.data_devolucao),
+        ROTULO[e.situacao],
+      ])
+      .concat(aviso),
   )
   return truncou
 }
