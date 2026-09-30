@@ -48,7 +48,7 @@ interface SessaoPersistida {
 // validar assinatura aqui, quem valida de verdade é a API a cada requisição;
 // isso só evita restaurar uma sessão que a gente já sabe que vai ser
 // rejeitada.
-function expiracaoDoToken(token: string): number | null {
+export function expiracaoDoToken(token: string): number | null {
   try {
     const payload = token.split('.')[1]
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
