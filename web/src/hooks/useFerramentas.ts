@@ -18,6 +18,7 @@ export interface Ferramenta {
   status: StatusFerramenta
   motivo_indisponivel: string | null
   etiqueta_impressa_em: string | null
+  foto_url: string | null
   ativo: boolean
   created_at: string
 }
@@ -73,6 +74,33 @@ export function useCriarFerramenta() {
   return useMutation({
     mutationFn: async (dados: NovaFerramenta) => {
       const { data } = await api.post<{ data: Ferramenta }>('/ferramentas', dados)
+      return data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ferramentas'] })
+    },
+  })
+}
+
+export function useFerramenta(id: number) {
+  return useQuery({
+    queryKey: ['ferramentas', id],
+    queryFn: async () => {
+      const { data } = await api.get<{ data: Ferramenta }>(`/ferramentas/${id}`)
+      return data.data
+    },
+    // ferramenta inexistente (404) é resposta definitiva: mostra o 404 na hora, sem esperar os retries
+    retry: (tentativas, erro) =>
+      (erro as { response?: { status?: number } }).response?.status !== 404 && tentativas < 3,
+  })
+}
+
+/** `PATCH /ferramentas/:id/etiqueta-impressa`: grava data/hora da impressão da etiqueta de código de barras. */
+export function useMarcarEtiquetaImpressa() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await api.patch<{ data: Ferramenta }>(`/ferramentas/${id}/etiqueta-impressa`)
       return data.data
     },
     onSuccess: () => {

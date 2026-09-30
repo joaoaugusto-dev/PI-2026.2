@@ -53,6 +53,7 @@ export function OcorrenciaCard({
         <div className="flex items-start gap-5">
           <IconeFerramenta
             nome={ferramenta.nome}
+            fotoUrl={ferramenta.foto_url}
             className="size-14 shrink-0 bg-status-indisponivel/10 text-status-indisponivel"
           />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
