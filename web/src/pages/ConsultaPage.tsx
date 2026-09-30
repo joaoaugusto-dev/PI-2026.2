@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
+import axios from 'axios'
 import { ChevronLeft, ChevronRight, Loader2, LogOut, PackageSearch, Search, TriangleAlert } from 'lucide-react'
 import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link } from 'react-router-dom'
@@ -210,7 +211,7 @@ export function ConsultaPage() {
     },
     sessao?.token ?? null,
   )
-  const erroDeAutenticacao = (error as any)?.response?.status === 401
+  const erroDeAutenticacao = axios.isAxiosError(error) && error.response?.status === 401
 
   // Só um 401 de verdade significa "token do quiosque caiu no meio da
   // sessão" (revogado/expirado no servidor antes do contador local
