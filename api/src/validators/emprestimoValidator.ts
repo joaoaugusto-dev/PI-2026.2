@@ -90,3 +90,13 @@ export const devolverEmprestimoSchema = z.object({
 });
 
 export type DevolverEmprestimoInput = z.infer<typeof devolverEmprestimoSchema>;
+
+export const listarEmprestimosQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(100000).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().trim().min(1).max(150).optional(),
+  situacao: z.enum(['em_aberto', 'atrasado', 'devolvido']).optional(),
+  setorId: z.coerce.number().int().positive().optional(),
+});
+
+export type ListarEmprestimosQuery = z.infer<typeof listarEmprestimosQuerySchema>;

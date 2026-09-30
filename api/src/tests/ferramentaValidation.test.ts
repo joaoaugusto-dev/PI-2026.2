@@ -20,7 +20,7 @@ import {
 // exercitado. Auth e service são mockados: aqui só interessa a validação.
 vi.mock('../middlewares/auth.js', () => ({
   authenticate: (req: Request, _res: Response, next: () => void) => {
-    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'manutencao' };
+    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'admin' };
     next();
   },
 }));
@@ -94,6 +94,22 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
 
       expect(res.status).toBe(200);
       expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
+    });
+
+    it('aceita null na edição para limpar marca, modelo, descrição, localização, setor e subgrupo', async () => {
+      const limpar = { marca: null, modelo: null, descricao: null, localizacao: null, setorId: null, subgrupoId: null };
+      const res = await request(app).patch('/v1/ferramentas/10').send(limpar);
+
+      expect(res.status).toBe(200);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, limpar);
+    });
+
+    it('não aceita null em nome nem grupoId (continuam obrigatórios)', async () => {
+      const semNome = await request(app).patch('/v1/ferramentas/10').send({ nome: null });
+      const semGrupo = await request(app).patch('/v1/ferramentas/10').send({ grupoId: null });
+
+      expect(semNome.status).toBe(400);
+      expect(semGrupo.status).toBe(400);
     });
   });
 

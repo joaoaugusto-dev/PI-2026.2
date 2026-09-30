@@ -237,3 +237,66 @@ export async function sugerirPrevisao(dias: number): Promise<{ previsaoDevolucao
   const data = await adicionarDiasUteis(hoje, dias);
   return { previsaoDevolucao: data.toISOString().slice(0, 10), diasUteis: dias };
 }
+
+export interface ListarEmprestimosParams {
+  offset: number;
+  limit: number;
+  q?: string;
+  situacao?: Emprestimo['situacao'];
+  setorId?: number;
+}
+
+/**
+ * GET /v1/emprestimos — histórico paginado (mais recentes primeiro), lido da
+ * vw_emprestimos_detalhe para já vir com os nomes resolvidos e a `situacao`.
+ */
+export async function listar({
+  offset,
+  limit,
+  q,
+  situacao,
+  setorId,
+}: ListarEmprestimosParams): Promise<{ rows: Emprestimo[]; total: number }> {
+  const condicoes: string[] = [];
+  const params: any[] = [];
+
+  if (q) {
+    params.push(`%${q.replace(/[\\%_]/g, '\\$&')}%`);
+    const i = params.length;
+    const buscas = [
+      `ferramenta_nome ILIKE $${i}`,
+      `colaborador_nome ILIKE $${i}`,
+      `colaborador_matricula ILIKE $${i}`,
+    ];
+    // "SF000045", "000045" ou "45": patrimônio é busca por igualdade no código numérico
+    const patrimonio = /^(?:sf)?0*(\d{1,4})$/i.exec(q);
+    if (patrimonio) {
+      params.push(Number(patrimonio[1]));
+      buscas.push(`codigo_identificacao = $${params.length}`);
+    }
+    condicoes.push(`(${buscas.join(' OR ')})`);
+  }
+  if (situacao) {
+    params.push(situacao);
+    condicoes.push(`situacao = $${params.length}`);
+  }
+  if (setorId) {
+    params.push(setorId);
+    condicoes.push(`setor_id = $${params.length}`);
+  }
+
+  const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
+  const paramsPagina = [...params, limit, offset];
+  // total e página são independentes: rodam juntos (a latência é a da mais lenta)
+  const [totalResult, rowsResult] = await Promise.all([
+    query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe ${where}`, params),
+    query<Emprestimo>(
+      `SELECT * FROM vw_emprestimos_detalhe ${where}
+       ORDER BY data_retirada DESC, id DESC
+       LIMIT $${paramsPagina.length - 1} OFFSET $${paramsPagina.length}`,
+      paramsPagina
+    ),
+  ]);
+
+  return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}

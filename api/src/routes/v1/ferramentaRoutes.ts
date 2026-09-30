@@ -100,13 +100,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarFerramentasQuerySchema }),
     FerramentaController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ body: criarFerramentaSchema }),
     FerramentaController.criar
   );
@@ -166,7 +166,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.buscarPorId
 );
@@ -195,7 +195,7 @@ router.get(
 router.get(
   '/:id/historico',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.historico
 );
@@ -251,7 +251,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
   FerramentaController.atualizar
 );
@@ -348,7 +348,7 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.baixar
 );

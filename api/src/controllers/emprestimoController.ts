@@ -1,8 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import * as emprestimoService from '../services/emprestimoService.js';
 import { sendSuccess } from '../utils/response.js';
+import type { ListarEmprestimosQuery } from '../validators/emprestimoValidator.js';
+import { buildPaginationMeta, getPaginationParams } from '../utils/pagination.js';
 
 export class EmprestimoController {
+  /**
+   * GET /v1/emprestimos
+   */
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { page, limit, offset } = getPaginationParams(req.query);
+      // o validate já coagiu e tipou req.query com listarEmprestimosQuerySchema
+      const { q, situacao, setorId } = req.query as unknown as ListarEmprestimosQuery;
+      const { rows, total } = await emprestimoService.listar({ offset, limit, q, situacao, setorId });
+      return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /**
    * POST /v1/emprestimos
    */

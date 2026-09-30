@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { matriculaSchema } from './matricula.js';
 
 export const listarColaboradoresQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
+  page: z.coerce.number().int().min(1).max(100000).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().trim().min(1).max(150).optional(),
   setorId: z.coerce.number().int().positive().optional(),

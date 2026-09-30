@@ -24,6 +24,7 @@
       "data": {
         "base_url": "http://localhost:3000/v1",
         "token": "",
+        "token_admin": "",
         "token_consulta": "",
         "setor_id": "",
         "colaborador_id": "",
@@ -486,7 +487,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 13000,
       "isPrivate": false,
@@ -513,7 +514,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 14000,
       "isPrivate": false,
@@ -756,7 +757,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 22000,
       "isPrivate": false,
@@ -818,7 +819,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 24000,
       "isPrivate": false,
@@ -845,7 +846,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 25000,
       "isPrivate": false,

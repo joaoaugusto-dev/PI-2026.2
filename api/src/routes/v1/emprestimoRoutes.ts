@@ -7,10 +7,65 @@ import {
   criarEmprestimoSchema,
   devolverEmprestimoSchema,
   emprestimoIdParamSchema,
+  listarEmprestimosQuerySchema,
   previsaoSugeridaQuerySchema,
 } from '../../validators/emprestimoValidator.js';
 
 const router = Router();
+
+/**
+ * @openapi
+ * /emprestimos:
+ *   get:
+ *     summary: Histórico de empréstimos (paginado)
+ *     description: >
+ *       Lista os empréstimos do mais recente para o mais antigo, já com nomes
+ *       resolvidos e a situação (em_aberto, atrasado ou devolvido). Filtros:
+ *       q (ferramenta, código, colaborador ou matrícula), situacao e setorId.
+ *     tags:
+ *       - Empréstimos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         description: Máximo de 100
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: situacao
+ *         schema:
+ *           type: string
+ *           enum: [em_aberto, atrasado, devolvido]
+ *       - in: query
+ *         name: setorId
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Página de empréstimos com meta de paginação
+ *       400:
+ *         description: Filtro inválido
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get(
+  '/',
+  authenticate,
+  authorize('manutencao'),
+  validate({ query: listarEmprestimosQuerySchema }),
+  EmprestimoController.listar
+);
 
 /**
  * @openapi

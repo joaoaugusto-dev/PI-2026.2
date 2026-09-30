@@ -85,13 +85,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarAuxiliaresQuerySchema }),
     CategoriaController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ body: criarCategoriaSchema }),
     CategoriaController.criar
   );
@@ -196,25 +196,25 @@ router
   .route('/:id')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ params: auxiliarIdParamSchema }),
     CategoriaController.buscarPorId
   )
   .put(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ params: auxiliarIdParamSchema, body: atualizarCategoriaSchema }),
     CategoriaController.atualizar
   )
   .patch(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ params: auxiliarIdParamSchema, body: atualizarCategoriaSchema }),
     CategoriaController.atualizar
   )
   .delete(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ params: auxiliarIdParamSchema }),
     CategoriaController.excluir
   );

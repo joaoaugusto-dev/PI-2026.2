@@ -120,12 +120,23 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    código de barras (Code128). A visita técnica à Soufer levantou um código
    curto de 4 dígitos gravado a lápis elétrico como alternativa — decisão
    pendente de ata.
-8. **Três perfis:** `manutencao` (acesso completo, login normal), `admin`
-   (só a aprovação de auto-cadastros pendentes, via
-   `PATCH /v1/usuarios/:id/ativar` e `GET /v1/usuarios?ativo=false` — sem os
-   demais acessos de `manutencao` nesta primeira versão; decisão do time em
-   22/09/2026, issue API-149/#149) e `consulta` (sessão de 15 minutos por
-   matrícula, só leitura de disponibilidade, sem senha).
+8. **Três perfis:** `manutencao` (operação de balcão: retirada, devolução,
+   consulta de ferramentas, indisponíveis, calendário e histórico; também faz
+   o cadastro rápido de colaborador no meio do fluxo), `admin` (aprovação de
+   auto-cadastros pendentes via `PATCH /v1/usuarios/:id/ativar` e
+   `GET /v1/usuarios?ativo=false`, **mais os cadastros auxiliares** —
+   Colaboradores, Ferramentas, Categorias e Setores: edição e inativação são
+   só do `admin`, com 403 na API para `manutencao`; leitura e criação de
+   ferramenta/colaborador seguem abertas à manutenção porque o fluxo de
+   retirada as consome. Continuam só da manutenção as rotas de balcão
+   (identificar colaborador, buscar ferramenta por código, etiqueta impressa,
+   disponibilizar ferramenta, histórico de empréstimos) e as atividades, que
+   alimentam o campo de atividade da retirada — o admin lê e cadastra, mas não
+   opera o balcão; decisão do time em 30/09/2026, revisa a de 22/09/2026,
+   issue API-149/#149) e `consulta` (sessão de 15 minutos por matrícula, só
+   leitura de disponibilidade, sem senha). No front, as telas de cadastro e de
+   aprovação não aparecem no menu para quem não é `admin` e, pela URL direta,
+   respondem 404.
 9. **Feriados vêm da BrasilAPI**, com cache em tabela própria e fallback de
    sábado/domingo se a API estiver fora.
 10. **Entrega fora do prazo ou impressa = nota zero.** Sem exceção institucional.

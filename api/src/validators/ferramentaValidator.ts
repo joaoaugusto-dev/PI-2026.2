@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const listarFerramentasQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
+  page: z.coerce.number().int().min(1).max(100000).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().trim().min(1).max(150).optional(),
   status: z.enum(['disponivel', 'em_uso', 'indisponivel']).optional(),
@@ -68,9 +68,19 @@ export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
 // status, codigo_identificacao e ativo têm rotas/ações próprias (disponibilizar,
 // DELETE) e não são editados por aqui. valorAquisicao e ehKit também ficam
 // fora: chaves desconhecidas são descartadas silenciosamente pelo Zod.
+// Na edição, os campos opcionais aceitam null para serem limpos (o serviço grava
+// NULL); omitir a chave mantém o valor. grupoId e nome seguem obrigatórios no banco.
 export const atualizarFerramentaSchema = criarFerramentaSchema
   .omit({ valorAquisicao: true, ehKit: true })
   .partial()
+  .extend({
+    descricao: criarFerramentaSchema.shape.descricao.nullable(),
+    marca: criarFerramentaSchema.shape.marca.nullable(),
+    modelo: criarFerramentaSchema.shape.modelo.nullable(),
+    subgrupoId: criarFerramentaSchema.shape.subgrupoId.nullable(),
+    setorId: criarFerramentaSchema.shape.setorId.nullable(),
+    localizacao: criarFerramentaSchema.shape.localizacao.nullable(),
+  })
   .refine((dados) => Object.keys(dados).length > 0, {
     message: 'Informe ao menos um campo para atualizar',
   });

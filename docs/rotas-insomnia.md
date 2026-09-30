@@ -16,7 +16,12 @@ documento.
 ## Como ler
 
 - **Perfil** é quem pode chamar a rota. "manutenção" exige login com papel
-  `manutencao`; "público" não exige token; "admin" exige papel `admin`.
+  `manutencao`; "público" não exige token; "admin" exige papel `admin`;
+  "manutenção e admin" aceita os dois. Escrita nos cadastros auxiliares
+  (criar/editar/baixar setor e categoria; editar e inativar colaborador;
+  editar e dar baixa em ferramenta) é só do `admin`, e as requisições dessas
+  rotas usam o `{{ _.token_admin }}` do ambiente, que se obtém por
+  `POST /auth/login` com um usuário admin (Regra 8 do `CLAUDE.md`).
 - **Requisições** mostra o número da requisição na coleção e o status
   esperado. `F` é a coleção de ferramentas e `C` a de colaboradores. Só a
   coleção de ferramentas tem requisições para setores, categorias, atividades,
@@ -36,7 +41,10 @@ documento.
 | `POST /auth/login` | público | F01, C01 (200) | usa | Necessária. |
 | `POST /consulta/sessao` | público | F02, C02 (200) | não | Necessária. É a entrada do quiosque (matrícula, sem senha, 15 min). A tela do quiosque ainda não existe. |
 
-### Ferramentas (`/ferramentas`, todas de manutenção)
+### Ferramentas (`/ferramentas`)
+
+Leitura e criação: manutenção e admin. `por-codigo/:codigo`, `etiqueta-impressa` e
+`disponibilizar` (operação de balcão): só manutenção. `PATCH /:id` e `DELETE /:id`: só admin.
 
 | Rota | Requisições | Avaliação |
 |---|---|---|
@@ -50,7 +58,11 @@ documento.
 | `PATCH /ferramentas/:id/disponibilizar` | F12 (409); F16 (200); F36 (404) | Necessária. Única forma de sair de `indisponivel`, com auditoria e resolução das ocorrências abertas. |
 | `DELETE /ferramentas/:id` | F14 (409); F37 (200); F39, F40 (404) | Necessária. Baixa lógica (`ativo = false`), bloqueada com empréstimo aberto. |
 
-### Colaboradores (`/colaboradores`, todas de manutenção)
+### Colaboradores (`/colaboradores`)
+
+Leitura e criação (`POST` é o cadastro rápido da retirada): manutenção e admin.
+`identificar` (leitura na retirada): só manutenção. `PATCH /:id` e
+`DELETE /:id`: só admin.
 
 | Rota | Requisições | Avaliação |
 |---|---|---|
@@ -61,7 +73,10 @@ documento.
 | `PATCH /colaboradores/:id` | C13 (200); C22 (400); C24 (404) | Necessária. |
 | `DELETE /colaboradores/:id` | C14 (200); C25 (404) | Necessária. Inativação lógica. |
 
-### Cadastros auxiliares (`/setores`, `/categorias`, `/atividades`, todas de manutenção)
+### Cadastros auxiliares (`/setores`, `/categorias`, `/atividades`)
+
+`GET`: manutenção e admin em setores e categorias; escrita: só admin. Atividades
+continuam só da manutenção (alimentam o campo de atividade da retirada).
 
 As três famílias têm o mesmo conjunto de rotas: `GET /`, `POST /`, `GET /:id`,
 `PUT /:id`, `PATCH /:id` e `DELETE /:id`.

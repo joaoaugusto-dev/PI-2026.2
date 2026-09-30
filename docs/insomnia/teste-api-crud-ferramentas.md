@@ -61,6 +61,7 @@ After-response**) das requisições que produzem dados:
 |---|---|---|
 | `token` | 01 Login da manutenção | todas as rotas de ferramentas |
 | `token_consulta` | 02 Login do perfil consulta | 19 (teste de 403) |
+| `token_admin` | **manual**: `POST /auth/login` com um usuário `admin` (ex.: matrícula 0053) e colar o `token` no ambiente | 10, 14, 24, 34, 37, 39, 40 e as requisições de setores e categorias que escrevem (edição e baixa de cadastros são só do admin) |
 | `grupo_id` | 03 Obter um grupoId válido | 04 Cadastrar |
 | `ferramenta_id` | 04 Cadastrar | 07, 09 a 12, 24, 37 a 39 |
 | `ferramenta_codigo` | 04 Cadastrar | 08 |

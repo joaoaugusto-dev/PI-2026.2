@@ -87,13 +87,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarColaboradoresQuerySchema }),
     ColaboradorController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ body: criarColaboradorSchema }),
     ColaboradorController.criar
   );
@@ -160,7 +160,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: colaboradorIdParamSchema }),
   ColaboradorController.buscarPorId
 );
@@ -208,7 +208,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: colaboradorIdParamSchema, body: editarColaboradorSchema }),
   ColaboradorController.atualizar
 );
@@ -239,7 +239,7 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: colaboradorIdParamSchema }),
   ColaboradorController.inativar
 );
