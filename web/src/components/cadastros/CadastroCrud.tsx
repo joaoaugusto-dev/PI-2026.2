@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, FileUp, Inbox } from 'lucide-react'
+import { FileUp, Inbox } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
 import { EmptyState } from '@/components/EmptyState'
+import { Paginacao } from '@/components/Paginacao'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
@@ -173,31 +174,7 @@ export function CadastroCrud<T extends { id: number }>({
         </CardContent>
       </Card>
 
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-end gap-3">
-          <span className="text-rotulo text-muted-foreground">
-            Página {meta.page} de {meta.totalPages} · {meta.total} registros
-          </span>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Página anterior"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Próxima página"
-            disabled={page >= meta.totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            <ChevronRight />
-          </Button>
-        </div>
-      )}
+      <Paginacao meta={meta} page={page} onPage={setPage} itens="registros" />
 
       <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvar.isPending && setEditando(null)}>
         <DialogContent>

@@ -3,6 +3,7 @@ import Barcode from 'react-barcode'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
+import { COR_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/Button'
@@ -10,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { useCategorias } from '@/hooks/useCategorias'
-import type { SituacaoEmprestimo } from '@/hooks/useEmprestimos'
 import { formatarPatrimonio, statusParaBadge, useFerramenta, useMarcarEtiquetaImpressa } from '@/hooks/useFerramentas'
 import { useHistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
@@ -23,12 +23,6 @@ import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 
 const moeda = (v: string | null) =>
   v ? Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'
-
-const SITUACAO: Record<SituacaoEmprestimo, { rotulo: string; cor: string }> = {
-  em_aberto: { rotulo: 'Em aberto', cor: 'text-status-em-uso' },
-  atrasado: { rotulo: 'Atrasado', cor: 'text-status-atraso' },
-  devolvido: { rotulo: 'Devolvido', cor: 'text-status-disponivel' },
-}
 
 const STATUS_OCORRENCIA: Record<string, string> = {
   aberta: 'Aberta',
@@ -210,12 +204,7 @@ export function FerramentaDetalhePage() {
                     <TableCell>{dataBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
                     <TableCell>{dataBR(e.data_devolucao)}</TableCell>
-                    <TableCell className={cn('font-medium', SITUACAO[e.situacao].cor)}>
-                      {SITUACAO[e.situacao].rotulo}
-                      {e.condicao_devolucao &&
-                        e.condicao_devolucao !== 'ok' &&
-                        ` · ${rotuloCondicao(e.condicao_devolucao)}`}
-                    </TableCell>
+                    <TableCell className={cn('font-medium', COR_SITUACAO[e.situacao])}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

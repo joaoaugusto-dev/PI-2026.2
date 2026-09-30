@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
-import { ChevronLeft, ChevronRight, Download, History, Loader2 } from 'lucide-react'
+import { Download, History, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
+import { Paginacao } from '@/components/Paginacao'
+import { COR_SITUACAO, ROTULO_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -19,21 +21,10 @@ import {
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
 import { baixarCsv } from '@/lib/csv'
-import { dataBR, rotuloCondicao } from '@/lib/formatar'
+import { dataBR } from '@/lib/formatar'
 import { cn } from '@/lib/utils'
 
 const LIMITE = 20
-
-const ROTULO: Record<SituacaoEmprestimo, string> = {
-  em_aberto: 'Em aberto',
-  atrasado: 'Atrasado',
-  devolvido: 'Devolvido',
-}
-const COR: Record<SituacaoEmprestimo, string> = {
-  em_aberto: 'text-status-em-uso',
-  atrasado: 'text-status-atraso',
-  devolvido: 'text-status-disponivel',
-}
 
 // 100 por página (limite da API) × 100 páginas = 10 mil linhas por exportação
 const MAX_PAGINAS_EXPORTACAO = 100
@@ -74,7 +65,7 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
         dataBR(e.data_retirada),
         dataBR(e.previsao_devolucao),
         dataBR(e.data_devolucao),
-        ROTULO[e.situacao],
+        ROTULO_SITUACAO[e.situacao],
       ])
       .concat(aviso),
   )
@@ -149,9 +140,9 @@ export function EmprestimosPage() {
           className={selectClasse}
         >
           <option value="">Todas as situações</option>
-          {(Object.keys(ROTULO) as SituacaoEmprestimo[]).map((s) => (
+          {(Object.keys(ROTULO_SITUACAO) as SituacaoEmprestimo[]).map((s) => (
             <option key={s} value={s}>
-              {ROTULO[s]}
+              {ROTULO_SITUACAO[s]}
             </option>
           ))}
         </select>
@@ -207,12 +198,7 @@ export function EmprestimosPage() {
                     <TableCell>{dataBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
                     <TableCell>{dataBR(e.data_devolucao)}</TableCell>
-                    <TableCell className={cn('font-medium', COR[e.situacao])}>
-                      {ROTULO[e.situacao]}
-                      {e.condicao_devolucao &&
-                        e.condicao_devolucao !== 'ok' &&
-                        ` · ${rotuloCondicao(e.condicao_devolucao)}`}
-                    </TableCell>
+                    <TableCell className={cn('font-medium', COR_SITUACAO[e.situacao])}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -221,31 +207,7 @@ export function EmprestimosPage() {
         </CardContent>
       </Card>
 
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-end gap-3">
-          <span className="text-rotulo text-muted-foreground">
-            Página {meta.page} de {meta.totalPages} · {meta.total} empréstimos
-          </span>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Página anterior"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Próxima página"
-            disabled={page >= meta.totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            <ChevronRight />
-          </Button>
-        </div>
-      )}
+      <Paginacao meta={meta} page={page} onPage={setPage} itens="empréstimos" />
     </div>
   )
 }
