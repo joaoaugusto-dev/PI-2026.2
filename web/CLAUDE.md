@@ -209,7 +209,10 @@ não filhas do layout autenticado.
   — a próxima tela nesse molde (ex. outro modo quiosque) deve seguir o mesmo
   padrão. Coberto por teste em `src/lib/api.test.ts` (primeiro teste do
   `/web` — `npm test`, Vitest puro, sem jsdom/testing-library porque testa só
-  a lógica dos interceptors, não componente).
+  a lógica dos interceptors, não componente). `vite.config.ts` já aceita
+  `*.test.tsx` no `include`, mas o `environment` continua `'node'` — o
+  primeiro teste de componente precisa trocar pra `'jsdom'` (e instalar
+  `@testing-library/react` junto), os dois na mesma mudança.
 - **Login e cadastro de almoxarife usam matrícula (4 dígitos) + senha
   numérica de 6 dígitos, nunca e-mail** — e-mail não existe no ambiente
   fabril. A senha é digitada num PIN estilo lock screen de celular

@@ -15,7 +15,11 @@ export default defineConfig({
     },
   },
   test: {
+    // 'node' serve pros testes de hoje (lógica pura, sem componente). O
+    // primeiro teste de componente (.test.tsx) vai precisar trocar pra
+    // 'jsdom' (+ testing-library) — o glob já aceita .tsx pra não esquecer
+    // de ampliar os dois juntos.
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })
