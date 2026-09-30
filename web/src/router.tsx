@@ -6,6 +6,7 @@ import { CadastroPage } from '@/pages/CadastroPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
+import { FerramentasPage } from '@/pages/FerramentasPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import { RetiradaPage } from '@/pages/RetiradaPage'
@@ -25,7 +26,7 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'status', element: <StatusPage /> },
       { path: 'health', element: <StatusPage /> },
-      { path: 'ferramentas', element: placeholder('Ferramentas') },
+      { path: 'ferramentas', element: <FerramentasPage /> },
       { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
       { path: 'retiradas/nova', element: <RetiradaPage /> },
