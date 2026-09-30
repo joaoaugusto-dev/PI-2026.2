@@ -3,10 +3,14 @@ import { AppLayout } from '@/layouts/AppLayout'
 import { RotaAdmin, RotaProtegida } from '@/lib/auth'
 import { AprovacoesPage } from '@/pages/AprovacoesPage'
 import { CadastroPage } from '@/pages/CadastroPage'
+import { ConsultaPage } from '@/pages/ConsultaPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
+import { FerramentasPage } from '@/pages/FerramentasPage'
+import { IndisponiveisPage } from '@/pages/IndisponiveisPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { NovaFerramentaPage } from '@/pages/NovaFerramentaPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import { RetiradaPage } from '@/pages/RetiradaPage'
 import { StatusPage } from '@/pages/StatusPage'
@@ -25,12 +29,12 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'status', element: <StatusPage /> },
       { path: 'health', element: <StatusPage /> },
-      { path: 'ferramentas', element: placeholder('Ferramentas') },
-      { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
+      { path: 'ferramentas', element: <FerramentasPage /> },
+      { path: 'ferramentas/nova', element: <NovaFerramentaPage /> },
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
       { path: 'retiradas/nova', element: <RetiradaPage /> },
       { path: 'devolucoes', element: <DevolucaoPage /> },
-      { path: 'indisponiveis', element: placeholder('Indisponíveis') },
+      { path: 'indisponiveis', element: <IndisponiveisPage /> },
       { path: 'calendario', element: placeholder('Calendário') },
       { path: 'emprestimos', element: placeholder('Histórico de empréstimos') },
       { path: 'colaboradores', element: placeholder('Colaboradores') },
@@ -51,6 +55,6 @@ export const router = createBrowserRouter([
   },
   { path: '/login', element: <LoginPage /> },
   { path: '/cadastro', element: <CadastroPage /> },
-  { path: '/consulta', element: placeholder('Consulta') },
+  { path: '/consulta', element: <ConsultaPage /> },
   { path: '*', element: placeholder('404') },
 ])

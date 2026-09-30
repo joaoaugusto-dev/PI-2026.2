@@ -1,5 +1,5 @@
 import { Axe, Bolt, Cog, Drill, Hammer, Ruler, Toolbox, Wrench } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 const iconesTextura = [Wrench, Hammer, Drill, Ruler, Cog, Axe, Toolbox, Bolt]
 
@@ -31,6 +31,21 @@ function gerarGrade() {
 
 type IconePosicionado = ReturnType<typeof gerarGrade>[number]
 
+// Cache em módulo, não por instância: uma tela que re-renderiza (ex. busca
+// digitada em ConsultaPage) não pode sortear a grade de novo a cada tecla —
+// nem custo de recálculo, nem os ícones "pulando" de lugar. Gerada uma única
+// vez por carregamento de página, reaproveitada por toda montagem/desmontagem.
+let gradeCache: IconePosicionado[] | null = null
+
+// Função à parte (não inline no componente) só pra reassinatura do cache de
+// módulo não acontecer sintaticamente dentro do corpo de render — é o que o
+// react-compiler/oxlint espera pra não marcar como efeito colateral durante
+// render, mesmo sendo idempotente (mesmo resultado se chamado de novo).
+function obterGrade() {
+  if (!gradeCache) gradeCache = gerarGrade()
+  return gradeCache
+}
+
 function CamadaIcones({ icones, opacidadeExtra = 0 }: { icones: IconePosicionado[]; opacidadeExtra?: number }) {
   return (
     <>
@@ -56,11 +71,11 @@ function CamadaIcones({ icones, opacidadeExtra = 0 }: { icones: IconePosicionado
  * Textura de fundo com ícones de ferramentas + lanterna sutil que segue o
  * mouse (perto do cursor os mesmos ícones ficam um pouco mais nítidos, via
  * mask-image — não mexe em layout, só composição). Usar em telas cheias fora
- * do AppLayout (login, cadastro). A grade é gerada uma vez por montagem
- * (useMemo), então cada tela tem sua própria randomização.
+ * do AppLayout (login, cadastro, consulta). A grade é gerada uma única vez
+ * por carregamento de página (cache em módulo) — re-renders não a recalculam.
  */
 export function TexturaFerramentas() {
-  const icones = useMemo(() => gerarGrade(), [])
+  const icones = obterGrade()
   const holofoteRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { CheckCircle2Icon, Volume2Icon } from 'lucide-react'
+import { CheckCircle2Icon, OctagonXIcon, Volume2Icon } from 'lucide-react'
+import { toast } from 'sonner'
 import { StatusBadge, type Status } from '@/components/StatusBadge'
+import { avisarErro } from '@/lib/avisar-erro'
 import { cn } from '@/lib/utils'
 import { playSomConfirmacao, useSomConfirmacaoAtivo } from '@/lib/som-confirmacao'
 
@@ -595,6 +597,38 @@ export function DesignSystemPage() {
             {somAtivo
               ? 'Ativado agora — silencie pelo toggle da sidebar.'
               : 'Desativado na sidebar — o botão acima não toca nada.'}
+          </p>
+        </Card>
+      </Secao>
+
+      <Secao titulo="Notificações">
+        <Card className="space-y-3">
+          <p className="text-corpo text-muted-foreground">
+            Toda notificação — erro <strong className="text-foreground">ou sucesso</strong> — entra por
+            cima da tela, nunca por baixo: canto superior direito, sem exceção de tela. O que distingue
+            erro é a cor sólida no vermelho da marca, não mais a posição.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => avisarErro('Não foi possível concluir a ação.')}
+              className="flex h-(--control-h) items-center gap-2 rounded-lg border bg-background px-4 text-corpo font-medium transition-colors hover:bg-muted active:translate-y-px"
+            >
+              <OctagonXIcon className="size-4 text-status-indisponivel" />
+              Testar erro (topo direito)
+            </button>
+            <button
+              type="button"
+              onClick={() => toast.success('Ação concluída com sucesso.')}
+              className="flex h-(--control-h) items-center gap-2 rounded-lg border bg-background px-4 text-corpo font-medium transition-colors hover:bg-muted active:translate-y-px"
+            >
+              <CheckCircle2Icon className="size-4 text-status-disponivel" />
+              Testar sucesso (topo direito)
+            </button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Toda tela usa <code className="font-mono">avisarErro()</code> pra erro — nunca{' '}
+            <code className="font-mono">toast.error()</code> direto.
           </p>
         </Card>
       </Secao>

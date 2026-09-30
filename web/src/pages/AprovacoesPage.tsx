@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { api } from '@/lib/api'
+import { avisarErro } from '@/lib/avisar-erro'
 
 interface UsuarioPendente {
   id: number
@@ -50,9 +51,7 @@ export function AprovacoesPage() {
     },
     onError: (erro: any) => {
       const codigo = erro?.response?.data?.error?.code
-      toast.error(
-        codigo === 'USUARIO_JA_ATIVO' ? 'Este cadastro já foi aprovado.' : 'Não foi possível aprovar o cadastro.',
-      )
+      avisarErro(codigo === 'USUARIO_JA_ATIVO' ? 'Este cadastro já foi aprovado.' : 'Não foi possível aprovar o cadastro.')
     },
   })
 

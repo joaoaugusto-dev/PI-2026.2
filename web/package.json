@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "vitest run",
     "lint": "oxlint",
     "preview": "vite preview",
     "check:motion": "! grep -oE '@keyframes [a-z-]+\\{[^@]*\\}\\}' dist/assets/*.css | grep -E '(width|height|top|left|right|bottom|margin|padding|box-shadow):' && echo 'motion ok: nenhum keyframe anima propriedade de layout'"
@@ -45,6 +46,7 @@
     "oxlint": "^1.79.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^5.0.3"
   }
 }

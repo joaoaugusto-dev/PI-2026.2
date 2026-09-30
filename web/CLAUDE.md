@@ -196,6 +196,23 @@ não filhas do layout autenticado.
   parecer válido no cliente mas ter sido invalidado no servidor (usuário
   desativado, segredo rotacionado). Consulta (quiosque) continua sem
   persistência nenhuma — sessão de 15 min é descartável por design.
+  **Telas com sessão própria (fora do `AuthProvider`) não usam `setAuthToken`
+  global** — `src/lib/api.ts` (`authToken`) é a mesma variável de módulo que
+  o almoxarife usa, e outra tela setando esse token nela sobrescreve/derruba
+  a sessão dele se estiverem ativos na mesma aba. Em vez disso, cada chamada
+  dessa tela manda o próprio token via `headers: { Authorization }` (que
+  vence o token global — `anexarTokenSeNecessario` só usa o global quando a
+  chamada não define o próprio) e marca `skipAuthHandler401: true` (pra um
+  401 dela não disparar o `handler401`/logout do almoxarife) e, se a rota for
+  pública, `skipAuthToken: true` (pra nem carregar o token global à toa). O
+  quiosque de consulta (`ConsultaPage`/`useConsulta.ts`) é o primeiro exemplo
+  — a próxima tela nesse molde (ex. outro modo quiosque) deve seguir o mesmo
+  padrão. Coberto por teste em `src/lib/api.test.ts` (primeiro teste do
+  `/web` — `npm test`, Vitest puro, sem jsdom/testing-library porque testa só
+  a lógica dos interceptors, não componente). `vite.config.ts` já aceita
+  `*.test.tsx` no `include`, mas o `environment` continua `'node'` — o
+  primeiro teste de componente precisa trocar pra `'jsdom'` (e instalar
+  `@testing-library/react` junto), os dois na mesma mudança.
 - **Login e cadastro de almoxarife usam matrícula (4 dígitos) + senha
   numérica de 6 dígitos, nunca e-mail** — e-mail não existe no ambiente
   fabril. A senha é digitada num PIN estilo lock screen de celular
@@ -223,6 +240,17 @@ não filhas do layout autenticado.
   `localStorage` sozinho não notifica outros componentes já montados na
   mesma aba. O arquivo de áudio fica em `src/assets/sfx/` (importado via
   Vite, resolve para URL).
+- **Notificações (toast, FE-01)**: **toda** notificação — erro ou sucesso —
+  entra por cima da tela, nunca por baixo — regra do design system, sem
+  exceção de tela. `<Toaster position="top-right" />` (`src/App.tsx`) é o
+  padrão global, então `toast.success()` já nasce no canto superior direito
+  sem precisar de configuração por chamada. Notificação de erro usa
+  `avisarErro()` (`src/lib/avisar-erro.ts`), nunca `toast.error()` direto:
+  reforça `top-right`, 5s de duração, fundo sólido em `--brand-red` (não o
+  `--destructive` padrão, que é um vinho escuro que não se destacava no fundo
+  do toast) — essa cor é o que distingue erro de sucesso agora, não mais a
+  posição. Demonstração ao vivo na seção "Notificações" da página de estilos
+  (`DesignSystemPage.tsx`).
 - **Calendário próprio do sistema** (`src/components/SeletorDataCalendario.tsx`)
   em vez do shadcn/`react-day-picker`: grade de mês construída com `Date`
   nativo, sem dependência nova, com atalhos "Hoje"/"Amanhã" ao lado da grade.
