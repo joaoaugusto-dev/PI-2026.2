@@ -2,27 +2,26 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { RotaAdmin, RotaProtegida } from '@/lib/auth'
 import { AprovacoesPage } from '@/pages/AprovacoesPage'
-import { CadastroPage } from '@/pages/CadastroPage'
-import { ConsultaPage } from '@/pages/ConsultaPage'
-import { ErroInesperadoPage } from '@/pages/ErroInesperadoPage'
-import { EmprestimosPage } from '@/pages/EmprestimosPage'
 import { CadastroFerramentasPage } from '@/pages/CadastroFerramentasPage'
+import { CadastroPage } from '@/pages/CadastroPage'
+import { CalendarioPage } from '@/pages/CalendarioPage'
 import { CategoriasPage } from '@/pages/CategoriasPage'
 import { ColaboradoresPage } from '@/pages/ColaboradoresPage'
-import { SetoresPage } from '@/pages/SetoresPage'
-import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
-import { CalendarioPage } from '@/pages/CalendarioPage'
+import { ConsultaPage } from '@/pages/ConsultaPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
+import { EmprestimosPage } from '@/pages/EmprestimosPage'
+import { ErroInesperadoPage } from '@/pages/ErroInesperadoPage'
 import { FerramentaDetalhePage } from '@/pages/FerramentaDetalhePage'
 import { FerramentasPage } from '@/pages/FerramentasPage'
 import { IndisponiveisPage } from '@/pages/IndisponiveisPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 import { NovaFerramentaPage } from '@/pages/NovaFerramentaPage'
 import { RetiradaPage } from '@/pages/RetiradaPage'
+import { SetoresPage } from '@/pages/SetoresPage'
 import { StatusPage } from '@/pages/StatusPage'
-
 
 export const router = createBrowserRouter([
   {
@@ -90,6 +89,8 @@ export const router = createBrowserRouter([
             ),
           },
           { path: 'design-system', element: <DesignSystemPage /> },
+          // 404 dentro do layout: quem está logado não perde a sidebar (deslogado cai no login)
+          { path: '*', element: <NaoEncontradaPage /> },
         ],
       },
     ],
@@ -97,5 +98,4 @@ export const router = createBrowserRouter([
   { path: '/login', errorElement: <ErroInesperadoPage />, element: <LoginPage /> },
   { path: '/cadastro', errorElement: <ErroInesperadoPage />, element: <CadastroPage /> },
   { path: '/consulta', errorElement: <ErroInesperadoPage />, element: <ConsultaPage /> },
-  { path: '*', element: <NaoEncontradaPage /> },
 ])
