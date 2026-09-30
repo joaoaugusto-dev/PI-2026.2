@@ -8,6 +8,7 @@ import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
 import { FerramentasPage } from '@/pages/FerramentasPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { NovaFerramentaPage } from '@/pages/NovaFerramentaPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import { RetiradaPage } from '@/pages/RetiradaPage'
 import { StatusPage } from '@/pages/StatusPage'
@@ -27,7 +28,7 @@ export const router = createBrowserRouter([
       { path: 'status', element: <StatusPage /> },
       { path: 'health', element: <StatusPage /> },
       { path: 'ferramentas', element: <FerramentasPage /> },
-      { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
+      { path: 'ferramentas/nova', element: <NovaFerramentaPage /> },
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
       { path: 'retiradas/nova', element: <RetiradaPage /> },
       { path: 'devolucoes', element: <DevolucaoPage /> },
