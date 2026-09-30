@@ -93,6 +93,19 @@ export function EmprestimosPage() {
   const [exportando, setExportando] = useState(false)
   const exportacao = useRef<AbortController | null>(null)
 
+  async function aoExportar() {
+    exportacao.current = new AbortController()
+    setExportando(true)
+    try {
+      const truncou = await exportarCsv(filtros, exportacao.current.signal)
+      if (truncou) toast.warning('Exportados os primeiros 10 mil registros. Refine os filtros para ver o restante.')
+    } catch (e) {
+      if (!axios.isCancel(e)) avisarErro('Não foi possível exportar o CSV.')
+    } finally {
+      setExportando(false)
+    }
+  }
+
   // fechar a tela cancela uma exportação em andamento
   useEffect(() => () => exportacao.current?.abort(), [])
 
@@ -150,24 +163,7 @@ export function EmprestimosPage() {
             </option>
           ))}
         </select>
-        <Button
-          variant="outline"
-          className="ml-auto"
-          disabled={!linhas.length || exportando}
-          onClick={async () => {
-            exportacao.current = new AbortController()
-            setExportando(true)
-            try {
-              const truncou = await exportarCsv(filtros, exportacao.current.signal)
-              if (truncou)
-                toast.warning('Exportados os primeiros 10 mil registros. Refine os filtros para ver o restante.')
-            } catch (e) {
-              if (!axios.isCancel(e)) avisarErro('Não foi possível exportar o CSV.')
-            } finally {
-              setExportando(false)
-            }
-          }}
-        >
+        <Button variant="outline" className="ml-auto" disabled={!linhas.length || exportando} onClick={aoExportar}>
           {exportando ? <Loader2 className="animate-spin" /> : <Download />}{' '}
           {exportando ? 'Exportando…' : 'Exportar CSV'}
         </Button>
