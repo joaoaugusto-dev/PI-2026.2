@@ -150,17 +150,34 @@ describe('Rotas de Empréstimos (API-11)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.details[0]).toMatchObject({ field: 'previsaoDevolucao' });
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'previsaoDevolucao',
+        message: 'previsaoDevolucao é obrigatória',
+      });
     });
 
-    it('retorna 400 com previsaoDevolucao no passado ou inválida', async () => {
+    it('retorna 400 com mensagem específica para previsaoDevolucao no passado', async () => {
+      const ferramentaId = await criarFerramenta('PrevisaoPassado');
+
+      const res = await post(corpo(ferramentaId, { previsaoDevolucao: '2020-01-01' }));
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'previsaoDevolucao',
+        message: 'previsaoDevolucao não pode estar no passado',
+      });
+    });
+
+    it('retorna 400 com mensagem específica para previsaoDevolucao inválida', async () => {
       const ferramentaId = await criarFerramenta('PrevisaoInvalida');
 
-      const passado = await post(corpo(ferramentaId, { previsaoDevolucao: '2020-01-01' }));
-      const invalida = await post(corpo(ferramentaId, { previsaoDevolucao: 'amanha' }));
+      const res = await post(corpo(ferramentaId, { previsaoDevolucao: 'amanha' }));
 
-      expect(passado.status).toBe(400);
-      expect(invalida.status).toBe(400);
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'previsaoDevolucao',
+        message: 'previsaoDevolucao deve ser uma data válida',
+      });
     });
 
     it('retorna 400 quando falta um campo obrigatório', async () => {

@@ -178,6 +178,10 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'nome',
+        message: 'Nome é obrigatório',
+      });
     });
 
     it('retorna 401 quando nenhum token é enviado', async () => {
@@ -255,6 +259,9 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.details[0]).toMatchObject({
+        message: 'Pelo menos um campo deve ser fornecido para edição',
+      });
     });
   });
 
