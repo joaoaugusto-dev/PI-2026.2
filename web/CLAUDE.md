@@ -241,12 +241,19 @@ não filhas do layout autenticado.
   Categorias, Setores): o grupo some do menu e as rotas usam `RotaAdmin`, que
   responde com a tela de 404 (não redireciona — quem não é admin não deve
   saber que a rota existe). As quatro telas são configurações de
-  `src/components/cadastros/CadastroPage.tsx` (busca, paginação, novo, editar,
-  inativar, importar CSV por linha via POST do recurso).
+  `src/components/cadastros/CadastroCrud.tsx` (busca, paginação, novo, editar,
+  inativar com confirmação em Dialog, importar CSV por linha via POST do
+  recurso). O nome é `CadastroCrud` de propósito: `pages/CadastroPage.tsx` é o
+  auto-cadastro de almoxarife (`/cadastro`). A importação de CSV aceita até 500
+  linhas por arquivo (uma requisição por linha), valida as colunas esperadas e
+  pode ser cancelada — fechar o diálogo interrompe o envio.
 - **Telas de 404 e de erro inesperado** usam `TelaDeFeedback` (textura de
   ferramentas + card discreto) e `IlustracaoErro` (engrenagem girando,
   `.engrenagem` — única peça em loop, some em reduced motion).
-  `ErroInesperadoPage` é o `errorElement` do router.
+  `ErroInesperadoPage` é o `errorElement` do router. O 404 (`path: '*'`) é
+  filho do `AppLayout`: quem está logado mantém a sidebar, tanto numa URL
+  inexistente quanto numa rota de admin (`RotaAdmin`); quem não está logado cai
+  no login antes de ver o 404.
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,
