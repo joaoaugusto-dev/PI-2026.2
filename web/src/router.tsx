@@ -7,6 +7,7 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
 import { FerramentasPage } from '@/pages/FerramentasPage'
+import { IndisponiveisPage } from '@/pages/IndisponiveisPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NovaFerramentaPage } from '@/pages/NovaFerramentaPage'
 import { PlaceholderPage } from '@/pages/PlaceholderPage'
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
       { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
       { path: 'retiradas/nova', element: <RetiradaPage /> },
       { path: 'devolucoes', element: <DevolucaoPage /> },
-      { path: 'indisponiveis', element: placeholder('Indisponíveis') },
+      { path: 'indisponiveis', element: <IndisponiveisPage /> },
       { path: 'calendario', element: placeholder('Calendário') },
       { path: 'emprestimos', element: placeholder('Histórico de empréstimos') },
       { path: 'colaboradores', element: placeholder('Colaboradores') },
