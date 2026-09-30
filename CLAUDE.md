@@ -128,9 +128,11 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    Colaboradores, Ferramentas, Categorias e Setores: edição e inativação são
    só do `admin`, com 403 na API para `manutencao`; leitura e criação de
    ferramenta/colaborador seguem abertas à manutenção porque o fluxo de
-   retirada as consome, e etiqueta impressa e disponibilizar ferramenta
-   continuam só da manutenção — o admin lê e cadastra, mas não opera o
-   balcão; decisão do time em 30/09/2026, revisa a de 22/09/2026,
+   retirada as consome. Continuam só da manutenção as rotas de balcão
+   (identificar colaborador, buscar ferramenta por código, etiqueta impressa,
+   disponibilizar ferramenta, histórico de empréstimos) e as atividades, que
+   alimentam o campo de atividade da retirada — o admin lê e cadastra, mas não
+   opera o balcão; decisão do time em 30/09/2026, revisa a de 22/09/2026,
    issue API-149/#149) e `consulta` (sessão de 15 minutos por matrícula, só
    leitura de disponibilidade, sem senha). No front, as telas de cadastro e de
    aprovação não aparecem no menu para quem não é `admin` e, pela URL direta,
