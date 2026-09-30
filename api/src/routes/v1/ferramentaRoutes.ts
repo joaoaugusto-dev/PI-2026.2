@@ -282,7 +282,7 @@ router.patch(
 router.patch(
   '/:id/etiqueta-impressa',
   authenticate,
-  authorize('manutencao', 'admin'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.marcarEtiquetaImpressa
 );
@@ -315,7 +315,7 @@ router.patch(
 router.patch(
   '/:id/disponibilizar',
   authenticate,
-  authorize('manutencao', 'admin'),
+  authorize('manutencao'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.disponibilizar
 );
