@@ -34,7 +34,7 @@
 | `/indisponiveis` | Guilherme | Tratativa |
 | `/calendario` | João | Vencimentos |
 | `/emprestimos` | Guilherme | Histórico |
-| `/colaboradores` | Kauan | CRUD |
+| `/cadastros/colaboradores` | Kauan | CRUD |
 | `/cadastros/setores` | Kauan | CRUD |
 | `/cadastros/categorias` | Kauan | CRUD |
 | `/cadastros/ferramentas` | Kauan | CRUD |

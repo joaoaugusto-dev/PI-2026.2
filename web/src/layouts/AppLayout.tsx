@@ -20,23 +20,25 @@ import {
 } from '@/components/ui/Sidebar'
 import { CabecalhoApp } from '@/components/layout/CabecalhoApp'
 import { RodapeSidebar } from '@/components/layout/RodapeSidebar'
+import { useFerramentas } from '@/hooks/useFerramentas'
 import { useAuth } from '@/lib/auth'
 
-const navPrincipal = [
+const navPrincipal: { to: string; label: string; contagem?: 'total' | 'indisponiveis' }[] = [
   { to: '/', label: 'Dashboard' },
   { to: '/retiradas/nova', label: 'Registrar retirada' },
   { to: '/devolucoes', label: 'Registrar devolução' },
-  { to: '/ferramentas', label: 'Ferramentas', badge: 486 },
-  { to: '/indisponiveis', label: 'Indisponíveis', badge: 16 },
+  { to: '/ferramentas', label: 'Ferramentas', contagem: 'total' },
+  { to: '/indisponiveis', label: 'Indisponíveis', contagem: 'indisponiveis' },
   { to: '/calendario', label: 'Calendário' },
   { to: '/emprestimos', label: 'Histórico' },
 ]
 
+// `titulo` desambigua aba e cabeçalho: "Ferramentas" existe no menu principal e em Cadastros
 const navCadastros = [
-  { to: '/colaboradores', label: 'Colaboradores' },
-  { to: '/cadastros/ferramentas', label: 'Ferramentas' },
-  { to: '/cadastros/categorias', label: 'Categorias' },
-  { to: '/cadastros/setores', label: 'Setores' },
+  { to: '/cadastros/colaboradores', label: 'Colaboradores', titulo: 'Cadastro de colaboradores' },
+  { to: '/cadastros/ferramentas', label: 'Ferramentas', titulo: 'Cadastro de ferramentas' },
+  { to: '/cadastros/categorias', label: 'Categorias', titulo: 'Cadastro de categorias' },
+  { to: '/cadastros/setores', label: 'Setores', titulo: 'Cadastro de setores' },
 ]
 
 const titulosExtras: Record<string, string> = {
@@ -48,7 +50,7 @@ const titulosExtras: Record<string, string> = {
 function tituloDaPagina(pathname: string) {
   const todasRotas = [...navPrincipal, ...navCadastros]
   const rota = todasRotas.find((item) => (item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)))
-  return rota?.label ?? titulosExtras[pathname] ?? 'Dashboard'
+  return (rota && 'titulo' in rota ? rota.titulo : rota?.label) ?? titulosExtras[pathname] ?? 'Dashboard'
 }
 
 function useTituloDaAba(pathname: string) {
@@ -112,6 +114,11 @@ function useRelogio() {
 export function AppLayout() {
   const location = useLocation()
   const { usuario } = useAuth()
+  // contagens reais nos badges do menu (limit 1: só interessa o meta.total)
+  const contagens = {
+    total: useFerramentas({ limit: 1 }).data?.meta.total,
+    indisponiveis: useFerramentas({ status: 'indisponivel', limit: 1 }).data?.meta.total,
+  }
   const cadastrosAtivo = navCadastros.some((item) => location.pathname.startsWith(item.to))
   const [cadastrosOpen, setCadastrosOpen] = useState(cadastrosAtivo)
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
@@ -153,8 +160,10 @@ export function AppLayout() {
                           {item.label}
                         </NavLink>
                       </SidebarMenuButton>
-                      {item.badge !== undefined && (
-                        <SidebarMenuBadge className="text-sidebar-foreground/50">{item.badge}</SidebarMenuBadge>
+                      {item.contagem && contagens[item.contagem] !== undefined && (
+                        <SidebarMenuBadge className="text-sidebar-foreground/50">
+                          {contagens[item.contagem]}
+                        </SidebarMenuBadge>
                       )}
                     </SidebarMenuItem>
                   )

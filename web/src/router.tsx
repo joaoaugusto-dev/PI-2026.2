@@ -49,7 +49,7 @@ export const router = createBrowserRouter([
           { path: 'calendario', element: <CalendarioPage /> },
           { path: 'emprestimos', element: <EmprestimosPage /> },
           {
-            path: 'colaboradores',
+            path: 'cadastros/colaboradores',
             element: (
               <RotaAdmin>
                 <ColaboradoresPage />
