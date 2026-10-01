@@ -49,6 +49,25 @@ function haQuantoTempo(iso: string) {
   return `há ${Math.floor(min / 1440)} d`
 }
 
+// miolo visual compartilhado entre o item da lista e o popup de notificação nova
+function ConteudoNotificacao({ n }: { n: Notificacao }) {
+  const { rotulo, Icone, icone, texto } = TIPOS[n.tipo]
+  return (
+    <>
+      <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', icone)}>
+        <Icone className="size-4" />
+      </span>
+      <span className="min-w-0 flex-1 text-left">
+        <span className="flex items-baseline justify-between gap-2">
+          <span className={cn('text-[11px] font-semibold uppercase tracking-wide', texto)}>{rotulo}</span>
+          <span className="text-[11px] text-muted-foreground">{haQuantoTempo(n.created_at)}</span>
+        </span>
+        <span className="mt-0.5 block text-xs font-normal leading-snug text-foreground">{n.mensagem}</span>
+      </span>
+    </>
+  )
+}
+
 export function SinoNotificacoes() {
   const [aberto, setAberto] = useState(false)
   const [saindo, setSaindo] = useState<ReadonlySet<number>>(new Set())
@@ -70,10 +89,27 @@ export function SinoNotificacoes() {
     if (primeiraCarga || novas.length === 0) return
     setTocando(true)
     setTimeout(() => setTocando(false), 1000)
-    toast.info(novas.length === 1 ? TIPOS[novas[0].tipo].rotulo : `${novas.length} novas notificações`, {
-      description: novas.length === 1 ? novas[0].mensagem : undefined,
-      action: { label: 'Ver', onClick: () => setAberto(true) },
-    })
+    for (const n of novas.slice(0, 3)) {
+      toast.custom(
+        (id) => (
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(id)
+              setAberto(true)
+            }}
+            className={cn(
+              'flex w-[356px] max-w-[calc(100vw-2rem)] cursor-pointer items-center gap-2 rounded-md border border-l-4 bg-popover py-2.5 pr-3 pl-2 font-sans shadow-lg',
+              TIPOS[n.tipo].borda
+            )}
+          >
+            <ConteudoNotificacao n={n} />
+          </button>
+        ),
+        { duration: 8000 }
+      )
+    }
+    if (novas.length > 3) toast.info(`e mais ${novas.length - 3} notificações novas`)
   }, [data])
 
   // anima a saída e só então avisa a API (a lista refaz a consulta e o item some de vez)
@@ -134,7 +170,7 @@ export function SinoNotificacoes() {
         ) : (
           <ul className="scrollbar-fino max-h-96 overflow-y-auto">
             {itens.map((n) => {
-              const { rotulo, Icone, borda, icone, texto } = TIPOS[n.tipo]
+              const { borda } = TIPOS[n.tipo]
               const saiu = saindo.has(n.id)
               return (
                 // grid 1fr -> 0fr anima a altura sem medir; o translate/opacity dão a saída lateral
@@ -147,15 +183,8 @@ export function SinoNotificacoes() {
                 >
                   <div className="overflow-hidden">
                     <div className={cn('flex items-center gap-2 border-b border-l-4 py-2 pr-3 pl-2 hover:bg-muted', borda)}>
-                      <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', icone)}>
-                        <Icone className="size-4" />
-                      </span>
-                      <button type="button" onClick={() => abrir(n)} className="min-w-0 flex-1 cursor-pointer text-left">
-                        <span className="flex items-baseline justify-between gap-2">
-                          <span className={cn('text-[11px] font-semibold uppercase tracking-wide', texto)}>{rotulo}</span>
-                          <span className="text-[11px] text-muted-foreground">{haQuantoTempo(n.created_at)}</span>
-                        </span>
-                        <span className="mt-0.5 block text-xs font-normal leading-snug text-foreground">{n.mensagem}</span>
+                      <button type="button" onClick={() => abrir(n)} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+                        <ConteudoNotificacao n={n} />
                       </button>
                       <button
                         type="button"
