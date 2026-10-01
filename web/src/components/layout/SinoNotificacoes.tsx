@@ -75,6 +75,8 @@ export function SinoNotificacoes() {
   const { data, isError, refetch } = useNotificacoes(true)
   const marcarLida = useMarcarLida()
   const marcarTodas = useMarcarTodasLidas()
+  const [aba, setAba] = useState<'novas' | 'historico'>('novas')
+  const historico = useNotificacoes(aberto && aba === 'historico', true)
   const itens = data?.data ?? []
   const total = data?.meta.total ?? 0
 
@@ -152,8 +154,24 @@ export function SinoNotificacoes() {
       </PopoverTrigger>
       <PopoverContent>
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <p className="text-sm font-semibold">Notificações</p>
-          {itens.length > 0 && (
+          <div className="flex gap-1" role="tablist">
+            {(['novas', 'historico'] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={aba === id}
+                onClick={() => setAba(id)}
+                className={cn(
+                  'cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold transition-colors',
+                  aba === id ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {id === 'novas' ? `Novas${total > 0 ? ` (${total})` : ''}` : 'Histórico'}
+              </button>
+            ))}
+          </div>
+          {aba === 'novas' && itens.length > 0 && (
             <button
               type="button"
               onClick={() => concluir(itens.map((n) => n.id))}
@@ -163,7 +181,35 @@ export function SinoNotificacoes() {
             </button>
           )}
         </div>
-        {isError ? (
+        {aba === 'historico' ? (
+          historico.isError ? (
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Não foi possível carregar.</p>
+          ) : (historico.data?.data.length ?? 0) === 0 ? (
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+              {historico.isPending ? 'Carregando…' : 'Nenhuma notificação lida nos últimos 30 dias.'}
+            </p>
+          ) : (
+            <ul className="scrollbar-fino max-h-96 overflow-y-auto">
+              {historico.data?.data.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAberto(false)
+                      if (n.link) navegar(n.link)
+                    }}
+                    className={cn(
+                      'flex w-full cursor-pointer items-center gap-2 border-b border-l-4 py-2 pr-3 pl-2 opacity-70 hover:bg-muted hover:opacity-100',
+                      TIPOS[n.tipo].borda
+                    )}
+                  >
+                    <ConteudoNotificacao n={n} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : isError ? (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">Não foi possível carregar.</p>
         ) : itens.length === 0 ? (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nada novo por aqui.</p>

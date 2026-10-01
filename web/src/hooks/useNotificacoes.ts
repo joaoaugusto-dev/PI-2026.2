@@ -16,15 +16,18 @@ interface ListaNotificacoes {
   meta: { total: number }
 }
 
-const CHAVE = ['notificacoes', 'nao-lidas']
+const CHAVE = ['notificacoes']
 
-/** Não lidas (`GET /v1/notificacoes?lida=false`); `meta.total` é o contador do sino. */
-export function useNotificacoes(habilitado: boolean) {
+/**
+ * `GET /v1/notificacoes?lida=...`: as não lidas alimentam o sino (`meta.total` é o contador);
+ * as lidas, a aba Histórico (a API apaga as lidas com mais de 30 dias).
+ */
+export function useNotificacoes(habilitado: boolean, lida = false) {
   return useQuery({
-    queryKey: CHAVE,
-    queryFn: async () => (await api.get<ListaNotificacoes>('/notificacoes', { params: { lida: false, limit: 20 } })).data,
+    queryKey: [...CHAVE, lida ? 'lidas' : 'nao-lidas'],
+    queryFn: async () => (await api.get<ListaNotificacoes>('/notificacoes', { params: { lida, limit: 20 } })).data,
     enabled: habilitado,
-    refetchInterval: 30_000, // polling curto: pega as geradas com a sessão aberta (o sino também refaz ao abrir)
+    refetchInterval: lida ? false : 30_000, // polling curto: pega as geradas com a sessão aberta (o sino também refaz ao abrir)
   })
 }
 
