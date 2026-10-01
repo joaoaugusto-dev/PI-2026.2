@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { NotFoundError } from '../utils/errors.js';
+import { ConflictError, NotFoundError } from '../utils/errors.js';
 import { CriarColaboradorInput, EditarColaboradorInput } from '../validators/colaboradorValidator.js';
 
 export interface Colaborador {
@@ -94,13 +94,16 @@ export async function buscarPorId(id: number): Promise<Colaborador> {
   return colaborador;
 }
 
+const normalizar = (texto: string) => texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+
 /**
  * GET /v1/colaboradores/identificar?termo= — o endpoint mais importante do
  * fluxo de retirada (Regra 5). Tenta, nessa ordem:
  *   1. matrícula exata (mesmo crachá — não existe codigo_cracha separado);
  *   2. nome com unaccent/pg_trgm, tolerante a acento e erro de digitação
  *      (usa idx_colaboradores_nome_trgm, migration 0003).
- * A segunda etapa exige um mínimo de similaridade (`%`, limiar padrão de
+ * Se vários nomes passam, responde 409 COLABORADOR_AMBIGUO com os candidatos
+ * (a menos que um deles seja exatamente o termo). A segunda etapa exige um mínimo de similaridade (`%`, limiar padrão de
  * `pg_trgm.similarity_threshold`) para não devolver qualquer nome parecido;
  * o resultado mais similar vem primeiro.
  *
@@ -127,11 +130,21 @@ export async function identificar(termo: string): Promise<Colaborador> {
      FROM colaboradores
      WHERE ativo = true AND f_unaccent(lower(nome)) % f_unaccent(lower($1))
      ORDER BY similarity(f_unaccent(lower(nome)), f_unaccent(lower($1))) DESC
-     LIMIT 1`,
+     LIMIT 5`,
     [termo]
   );
-  if (porNome.rows[0]) {
+  if (porNome.rows.length === 1) {
     return porNome.rows[0];
+  }
+  if (porNome.rows.length > 1) {
+    // nome exato e único ainda vale; do contrário o balcão escolheria o colaborador errado sem perceber
+    const exatos = porNome.rows.filter((c) => normalizar(c.nome) === normalizar(termo));
+    if (exatos.length === 1) return exatos[0];
+    throw new ConflictError(
+      'Mais de um colaborador corresponde ao termo; use a matrícula',
+      'COLABORADOR_AMBIGUO',
+      porNome.rows.map(({ id, nome, matricula }) => ({ id, nome, matricula }))
+    );
   }
 
   throw new NotFoundError('Colaborador não encontrado', 'COLABORADOR_NOT_FOUND');

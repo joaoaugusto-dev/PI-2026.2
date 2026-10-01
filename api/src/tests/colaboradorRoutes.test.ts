@@ -76,6 +76,12 @@ describe('Rotas de Colaboradores (API-09)', () => {
       [`${PREFIXO}Colaborador Para Inativar`, matriculaParaInativar, setorId]
     );
     colaboradorParaInativarId = paraInativar.rows[0].id;
+
+    // dois nomes parecidos, nenhum igual ao termo buscado nos testes de ambiguidade
+    await query(
+      `INSERT INTO colaboradores (nome, matricula, setor_id) VALUES ($1, '9310', $3), ($2, '9311', $3)`,
+      [`${PREFIXO}Zeferino Quintanilha Alves`, `${PREFIXO}Zeferino Quintanilha Alvim`, setorId]
+    );
   });
 
   afterAll(async () => {
@@ -100,6 +106,25 @@ describe('Rotas de Colaboradores (API-09)', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe(colaboradorNomeId);
       expect(res.body.data.nome).toBe('João Augusto');
+    });
+
+    it('retorna 409 COLABORADOR_AMBIGUO com os candidatos quando vários nomes servem', async () => {
+      const res = await request(app)
+        .get(`/v1/colaboradores/identificar?termo=${encodeURIComponent(`${PREFIXO}Zeferino Quintanilha Alv`)}`)
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('COLABORADOR_AMBIGUO');
+      expect(res.body.error.details.map((c: { matricula: string }) => c.matricula).sort()).toEqual(['9310', '9311']);
+    });
+
+    it('a matrícula resolve a ambiguidade', async () => {
+      const res = await request(app)
+        .get('/v1/colaboradores/identificar?termo=9311')
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.matricula).toBe('9311');
     });
 
     it('retorna 404 quando não encontra nenhum colaborador para o termo', async () => {

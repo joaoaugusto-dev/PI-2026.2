@@ -39,6 +39,26 @@ export const ocorrenciaIdParamSchema = z.object({
   id: idPositivo('id'),
 });
 
+// Sem z.coerce puro de propósito: Number('') é 0, então "" viraria um
+// custo válido em vez de dar erro. Aqui só string numérica de verdade é
+// convertida; qualquer outra coisa (incluindo "") segue como string e
+// cai no invalid_type_error abaixo.
+export const custoEstimadoSchema = z
+  .preprocess((valor) => {
+    if (typeof valor !== 'string') return valor;
+    const texto = valor.trim();
+    if (texto === '') return valor;
+    const numero = Number(texto);
+    return Number.isNaN(numero) ? valor : numero;
+  }, z
+    .number({ invalid_type_error: 'custoEstimado deve ser um número' })
+    .nonnegative('custoEstimado não pode ser negativo')
+    .finite('custoEstimado deve ser um número finito')
+    // NUMERIC(10,2) da coluna custo_estimado: acima disso o banco estoura
+    // em erro 500 em vez de devolver 400 de validação.
+    .max(99999999.99, 'custoEstimado não pode ser maior que 99999999.99'))
+  .optional();
+
 // PATCH /v1/ocorrencias/:id — resolvida_por e data_resolucao não entram aqui
 // de propósito (Regra 6): quando status vira 'resolvida' eles são
 // preenchidos pelo service a partir do usuário logado (JWT), nunca do corpo
@@ -48,25 +68,7 @@ export const atualizarOcorrenciaSchema = z
     status: z.enum(STATUS_OCORRENCIA, {
       errorMap: () => ({ message: `status deve ser um de: ${STATUS_OCORRENCIA.join(', ')}` }),
     }).optional(),
-    // Sem z.coerce puro de propósito: Number('') é 0, então "" viraria um
-    // custo válido em vez de dar erro. Aqui só string numérica de verdade é
-    // convertida; qualquer outra coisa (incluindo "") segue como string e
-    // cai no invalid_type_error abaixo.
-    custoEstimado: z
-      .preprocess((valor) => {
-        if (typeof valor !== 'string') return valor;
-        const texto = valor.trim();
-        if (texto === '') return valor;
-        const numero = Number(texto);
-        return Number.isNaN(numero) ? valor : numero;
-      }, z
-        .number({ invalid_type_error: 'custoEstimado deve ser um número' })
-        .nonnegative('custoEstimado não pode ser negativo')
-        .finite('custoEstimado deve ser um número finito')
-        // NUMERIC(10,2) da coluna custo_estimado: acima disso o banco estoura
-        // em erro 500 em vez de devolver 400 de validação.
-        .max(99999999.99, 'custoEstimado não pode ser maior que 99999999.99'))
-      .optional(),
+    custoEstimado: custoEstimadoSchema,
     observacoesResolucao: z
       .string()
       .trim()

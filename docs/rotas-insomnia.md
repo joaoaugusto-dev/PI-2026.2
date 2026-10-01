@@ -68,7 +68,7 @@ Leitura e criação (`POST` é o cadastro rápido da retirada): manutenção e a
 |---|---|---|
 | `GET /colaboradores` | C03, C11, C12 (200); C20 (401) | Necessária (lista paginada com busca). |
 | `POST /colaboradores` | C08, C17 (201); C16 (409); C21 (400) | Necessária. É o cadastro rápido no meio da retirada e também o que libera a matrícula para o auto-cadastro de usuário. |
-| `GET /colaboradores/identificar` | C04, C05, C09 (200); C06 (404); C07 (400); C18 (401); C19 (403) | Necessária. Identifica por matrícula, nome ou crachá na retirada. Não é redundante com a listagem: devolve um único colaborador e tolera acento e erro de digitação. |
+| `GET /colaboradores/identificar` | C04, C05, C09 (200); C06 (404); C07 (400); 409 `COLABORADOR_AMBIGUO` (vários nomes, `details` traz id/nome/matrícula); C18 (401); C19 (403) | Necessária. Identifica por matrícula, nome ou crachá na retirada. Não é redundante com a listagem: devolve um único colaborador (ou 409 listando os candidatos se o nome for ambíguo) e tolera acento e erro de digitação. |
 | `GET /colaboradores/:id` | C10 (200); C15, C23 (404) | Necessária. |
 | `PATCH /colaboradores/:id` | C13 (200); C22 (400); C24 (404) | Necessária. |
 | `DELETE /colaboradores/:id` | C14 (200); C25 (404) | Necessária. Inativação lógica. |
