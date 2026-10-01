@@ -77,7 +77,8 @@ cadastrado pelo admin já é o funcionário, e o acesso nasce de um link.
 
 ### Bloqueio de login por matrícula
 
-Migration `0009`: `usuarios.tentativas_falhas` e `bloqueado_ate`. 5 senhas erradas seguidas bloqueiam a conta por 15 minutos (`429 CONTA_BLOQUEADA`, até a senha certa é recusada); login correto zera o contador e um novo link de acesso desbloqueia na hora. Complementa o `loginLimiter` por IP, que não segura tentativas vindas de vários IPs contra uma matrícula conhecida. Efeito colateral aceito: quem souber a matrícula consegue bloquear a conta por 15 min.
+Migration `0009`: `usuarios.tentativas_falhas` e `bloqueado_ate`. 5 senhas erradas seguidas bloqueiam a conta por 15 minutos (`429 CONTA_BLOQUEADA`, até a senha certa é recusada); login correto zera o contador e um novo link de acesso desbloqueia na hora. Complementa o `loginLimiter` por IP, que não segura tentativas vindas de vários IPs contra uma matrícula conhecida. 
+**Decisão — admin fora do bloqueio:** como a matrícula não é secreta, o bloqueio total permitiria que qualquer um trancasse a conta do admin repetindo 5 erros a cada 15 min (e o admin é quem gera os links que desbloqueiam). Por isso o bloqueio vale só para `manutencao`; o admin continua protegido apenas pelo `loginLimiter` (10/min por IP). Para `manutencao` o efeito colateral é aceito: quem souber a matrícula consegue bloquear a conta por 15 min, e o admin desbloqueia gerando um link. Emergência (conta de manutenção travada sem admin disponível): `UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL WHERE colaborador_id = (SELECT id FROM colaboradores WHERE matricula = '<matrícula>');`. A mensagem de bloqueio informa os minutos restantes reais.
 
 ## Retirada de ferramenta (fluxo)
 

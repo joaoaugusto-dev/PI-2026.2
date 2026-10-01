@@ -142,6 +142,7 @@ describe('Convites de acesso', () => {
     const bloqueado = await login('123456'); // até a senha certa é recusada
     expect(bloqueado.status).toBe(429);
     expect(bloqueado.body.error.code).toBe('CONTA_BLOQUEADA');
+    expect(bloqueado.body.error.message).toMatch(/em 1[0-5] min/);
 
     const novo = await gerar(bloqId);
     expect((await aceitar(novo.body.data.token, '654321')).status).toBe(200);
