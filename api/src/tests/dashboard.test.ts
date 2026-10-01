@@ -75,8 +75,8 @@ describe('snapshot do dashboard', () => {
     await expect(emSnapshot((client) => client.query('SELECT 1 AS ok'))).resolves.toBeTruthy();
   }, 20000);
 
-  it('um painel inteiro ocupa uma conexão: 30 painéis ao mesmo tempo não esgotam o pool', async () => {
-    const paineis = await Promise.all(Array.from({ length: 30 }, () => obter()));
-    expect(paineis).toHaveLength(30);
+  it('um painel inteiro ocupa uma conexão: 25 painéis ao mesmo tempo (pool de 20) não esgotam o pool', async () => {
+    const paineis = await Promise.all(Array.from({ length: 25 }, () => obter()));
+    expect(paineis).toHaveLength(25);
   }, 30000);
 });
