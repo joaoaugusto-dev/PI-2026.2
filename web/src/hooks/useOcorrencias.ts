@@ -90,6 +90,26 @@ export function ocorrenciaAtiva(ocorrencias: Ocorrencia[]) {
   )
 }
 
+/** `PATCH /ocorrencias/:id/avancar`: anda uma etapa da tratativa (aberta → em_reparo → cobrada → resolvida). */
+export function useAvancarTratativa(ferramentaId: number) {
+  const queryClient = useQueryClient()
+  const chave = ['ferramentas', ferramentaId, 'historico'] as const
+  return useMutation({
+    mutationFn: async (ocorrenciaId: number) => {
+      const { data } = await api.patch<{ data: Ocorrencia }>(`/ocorrencias/${ocorrenciaId}/avancar`)
+      return data.data
+    },
+    onSuccess: (nova) => {
+      // a tela anda na hora com o que a API devolveu; refazer o histórico de todas as
+      // ferramentas (invalidar ['ferramentas']) deixava a animação esperando a rede
+      queryClient.setQueryData<HistoricoFerramenta>(chave, (antigo) =>
+        antigo && { ...antigo, ocorrencias: antigo.ocorrencias.map((o) => (o.id === nova.id ? { ...o, ...nova } : o)) },
+      )
+      queryClient.invalidateQueries({ queryKey: chave })
+    },
+  })
+}
+
 /**
  * `PATCH /ferramentas/:id/disponibilizar`: único endpoint real hoje pra
  * "resolver" uma indisponibilidade — resolve TODAS as ocorrências abertas da

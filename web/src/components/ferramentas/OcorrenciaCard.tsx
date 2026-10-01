@@ -1,12 +1,14 @@
+import { toast } from 'sonner'
 import { ArrowRight, Check, CheckCircle2, Loader2 } from 'lucide-react'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
-import type { Colaborador, Ocorrencia, StatusOcorrencia } from '@/hooks/useOcorrencias'
+import { useAvancarTratativa, type Colaborador, type Ocorrencia, type StatusOcorrencia } from '@/hooks/useOcorrencias'
 import { avisarErro } from '@/lib/avisar-erro'
 import { dataBR } from '@/lib/formatar'
+import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
 
 const ETAPAS: { valor: StatusOcorrencia; label: string }[] = [
@@ -39,6 +41,21 @@ export function OcorrenciaCard({
   onDisponibilizar,
   disponibilizando,
 }: OcorrenciaCardProps) {
+  const avancar = useAvancarTratativa(ferramenta.id)
+  function aoAvancar() {
+    if (!ocorrencia) return
+    avancar.mutate(ocorrencia.id, {
+      onSuccess: (nova) => {
+        playSomConfirmacao()
+        toast.success(`Tratativa avançada para ${ETAPAS.find((e) => e.valor === nova.status)?.label ?? nova.status}.`)
+      },
+      onError: (e) =>
+        avisarErro(
+          (e as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ??
+            'Não foi possível avançar a tratativa.',
+        ),
+    })
+  }
   const etapaAtualIndex = ocorrencia ? ETAPAS.findIndex((e) => e.valor === ocorrencia.status) : -1
   const resolvida = ocorrencia?.status === 'resolvida'
   const tipoTag = ocorrencia?.tipo?.toUpperCase() ?? ferramenta.motivo_indisponivel?.toUpperCase()
@@ -164,14 +181,16 @@ export function OcorrenciaCard({
               </Button>
             ) : (
               <>
-                {/* ponytail: não há PATCH pra avançar etapa de uma ocorrência específica — só o disponibilizar, que resolve tudo de uma vez */}
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    avisarErro('Avançar tratativa por etapa ainda não existe na API — use "Disponibilizar ferramenta".')
-                  }
+                  onClick={aoAvancar}
+                  disabled={!ocorrencia || avancar.isPending}
                 >
-                  <ArrowRight className="size-4" />
+                  {avancar.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ArrowRight className="size-4" />
+                  )}
                   Avançar tratativa
                 </Button>
                 <Button onClick={onDisponibilizar} disabled={disponibilizando}>
