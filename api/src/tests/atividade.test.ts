@@ -50,8 +50,10 @@ describe('CRUD Atividades (/v1/atividades)', () => {
     });
 
     it('lista atividades ativas com paginação e formato padrão', async () => {
+      // filtra pelo prefixo do teste: sem isso a atividade dele podia cair fora da primeira página num banco
+      // com mais de 20 atividades
       const res = await request(app)
-        .get('/v1/atividades')
+        .get(`/v1/atividades?q=${PREFIXO}`)
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
