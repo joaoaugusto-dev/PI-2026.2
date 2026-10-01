@@ -52,7 +52,7 @@ export function SinoNotificacoes() {
   const [aberto, setAberto] = useState(false)
   const [saindo, setSaindo] = useState<ReadonlySet<number>>(new Set())
   const navegar = useNavigate()
-  const { data, isError } = useNotificacoes(true)
+  const { data, isError, refetch } = useNotificacoes(true)
   const marcarLida = useMarcarLida()
   const marcarTodas = useMarcarTodasLidas()
   const itens = data?.data ?? []
@@ -75,7 +75,13 @@ export function SinoNotificacoes() {
   }
 
   return (
-    <Popover open={aberto} onOpenChange={setAberto}>
+    <Popover
+      open={aberto}
+      onOpenChange={(abrindo) => {
+        setAberto(abrindo)
+        if (abrindo) void refetch()
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"

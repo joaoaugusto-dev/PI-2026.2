@@ -24,7 +24,7 @@ export function useNotificacoes(habilitado: boolean) {
     queryKey: CHAVE,
     queryFn: async () => (await api.get<ListaNotificacoes>('/notificacoes', { params: { lida: false, limit: 20 } })).data,
     enabled: habilitado,
-    refetchInterval: 60_000, // notificações chegam 1x/dia, mas o polling curto pega as geradas com a sessão aberta
+    refetchInterval: 30_000, // polling curto: pega as geradas com a sessão aberta (o sino também refaz ao abrir)
   })
 }
 

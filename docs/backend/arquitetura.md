@@ -154,4 +154,4 @@ revisão humana.
 
 - **Geração:** `fn_gerar_notificacoes()` (migration `0006`) cria uma notificação `devolucao_hoje` ou `atraso` por empréstimo aberto, uma única vez por tipo e empréstimo (deduplicada pelo `link`, `/ferramentas/:id?emprestimo=:id`). `usuario_id` fica `NULL` (da equipe toda), então `lida` é compartilhada. Agendada via `pg_cron` de segunda a sexta às 07:00 de Brasília (`0 10 * * 1-5` UTC); onde a extensão não existe, rodar `SELECT fn_gerar_notificacoes();` por fora.
 - **API (perfil `manutencao`):** `GET /v1/notificacoes?lida=false` (`meta.total` é o contador do sino) `PATCH /v1/notificacoes/:id/lida` e `PATCH /v1/notificacoes/lida` (marca todas).
-- **Front:** `SinoNotificacoes` no cabeçalho; cada tipo tem cor, ícone e rótulo próprios; o check marca como lida (com animação), "Limpar tudo" marca todas e clicar no texto abre a ferramenta. Faz polling a cada 60 s.
+- **Front:** `SinoNotificacoes` no cabeçalho; cada tipo tem cor, ícone e rótulo próprios; o check marca como lida (com animação), "Limpar tudo" marca todas e clicar no texto abre a ferramenta. Faz polling a cada 30 s e refaz a consulta ao abrir o sino.
