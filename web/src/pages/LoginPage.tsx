@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
 import { DEMO_PERMITIDO } from '@/lib/demo/flag'
 import { CampoPin } from '@/components/CampoPin'
+import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { TexturaFerramentas } from '@/components/TexturaFerramentas'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -30,6 +31,7 @@ export function LoginPage() {
   const location = useLocation()
   const [erro, setErro] = useState(false)
   const [tentativaErro, setTentativaErro] = useState(0)
+  const [entrou, setEntrou] = useState(false)
   const senhaRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -42,8 +44,7 @@ export function LoginPage() {
     setErro(false)
     try {
       await login(dados.matricula, dados.senha)
-      const destino = (location.state as { from?: Location })?.from?.pathname ?? '/'
-      navigate(destino, { replace: true })
+      setEntrou(true) // toca a animação de entrada; ao fim dela vai para o destino
     } catch (erroRequisicao: any) {
       const codigo = erroRequisicao?.response?.data?.error?.code
       let mensagem = 'Matrícula ou senha inválidas.'
@@ -64,6 +65,11 @@ export function LoginPage() {
   function onErroValidacao(errosForm: FieldErrors<LoginForm>) {
     const primeiraMensagem = Object.values(errosForm)[0]?.message
     if (primeiraMensagem) avisarErro(primeiraMensagem)
+  }
+
+  if (entrou) {
+    const destino = (location.state as { from?: Location })?.from?.pathname ?? '/'
+    return <TelaSucessoAnimada aoTerminarAnimacao={() => navigate(destino, { replace: true })} />
   }
 
   return (
