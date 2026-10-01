@@ -19,7 +19,8 @@ const M_ADMIN = '9401';
 const M_ALVO = '9402';
 const M_INATIVO = '9403';
 const M_RESET = '9404';
-const TODAS = [M_ADMIN, M_ALVO, M_INATIVO, M_RESET];
+const M_BLOQ = '9405';
+const TODAS = [M_ADMIN, M_ALVO, M_INATIVO, M_RESET, M_BLOQ];
 
 describe('Convites de acesso', () => {
   let adminToken: string;
@@ -27,6 +28,7 @@ describe('Convites de acesso', () => {
   let alvoId: number;
   let inativoId: number;
   let resetId: number;
+  let bloqId: number;
 
   const gerar = (id: number, token: string | null = adminToken) => {
     const req = request(app).post(`/v1/colaboradores/${id}/convite`);
@@ -49,6 +51,7 @@ describe('Convites de acesso', () => {
     alvoId = await criar(M_ALVO);
     inativoId = await criar(M_INATIVO, false);
     resetId = await criar(M_RESET);
+    bloqId = await criar(M_BLOQ);
     const adminUsuario = (
       await query<{ id: number }>("INSERT INTO usuarios (colaborador_id, senha_hash, papel) VALUES ($1, 'x', 'admin') RETURNING id", [adminColab])
     ).rows[0].id;
@@ -57,6 +60,7 @@ describe('Convites de acesso', () => {
   });
 
   afterAll(async () => {
+    await query("DELETE FROM auditoria WHERE tabela = 'colaboradores' AND operacao IN ('convite_criado', 'senha_definida') AND registro_id IN (SELECT id FROM colaboradores WHERE matricula = ANY($1))", [TODAS]);
     // usuarios.colaborador_id é RESTRICT: apaga as contas antes (os convites saem em cascata com o colaborador)
     await query('DELETE FROM usuarios WHERE colaborador_id IN (SELECT id FROM colaboradores WHERE matricula = ANY($1))', [TODAS]);
     await query('DELETE FROM colaboradores WHERE matricula = ANY($1)', [TODAS]);
@@ -128,5 +132,25 @@ describe('Convites de acesso', () => {
       expect((await aceitar(token, ruim)).status).toBe(400);
     }
     expect((await abrir(token)).status).toBe(200);
+  });
+
+  it('bloqueia a conta após 5 senhas erradas e o link de acesso desbloqueia; ambos vão para a auditoria', async () => {
+    const link = await gerar(bloqId);
+    await aceitar(link.body.data.token, '123456');
+    const login = (senha: string) => request(app).post('/v1/auth/login').send({ matricula: M_BLOQ, senha });
+    for (let i = 0; i < 5; i++) expect((await login('000000')).status).toBe(401);
+    const bloqueado = await login('123456'); // até a senha certa é recusada
+    expect(bloqueado.status).toBe(429);
+    expect(bloqueado.body.error.code).toBe('CONTA_BLOQUEADA');
+
+    const novo = await gerar(bloqId);
+    expect((await aceitar(novo.body.data.token, '654321')).status).toBe(200);
+    expect((await login('654321')).status).toBe(200);
+
+    const ops = await query<{ operacao: string }>(
+      "SELECT operacao FROM auditoria WHERE tabela = 'colaboradores' AND registro_id = $1 AND operacao IN ('convite_criado', 'senha_definida')",
+      [bloqId]
+    );
+    expect(ops.rows.map((r) => r.operacao).sort()).toEqual(['convite_criado', 'convite_criado', 'senha_definida', 'senha_definida']);
   });
 });

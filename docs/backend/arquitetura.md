@@ -60,21 +60,24 @@ fluxo de gestão de admins (ver `/docs/decisoes-pendentes.md`).
 Substitui o auto-cadastro com aprovação (decisão de 01/10/2026): o colaborador
 cadastrado pelo admin já é o funcionário, e o acesso nasce de um link.
 
-1. **Gerar:** o admin chama `POST /v1/colaboradores/:id/convite` (botão "Link de
-   acesso" na tela de Colaboradores, que copia o link). A resposta traz o `token`
+1. **Gerar:** o admin chama `POST /v1/colaboradores/:id/convite` (botão "Link de acesso e troca de senha" na tela de Colaboradores, que copia o link). A resposta traz o `token`
    (32 bytes aleatórios em base64url) uma única vez; o banco guarda só o hash
    SHA-256 em `convites_acesso` (migration `0008`). Vale 7 dias e uma única vez;
    gerar outro invalida o anterior ainda não usado. O link é `/c/<token>`, sem
-   nenhuma palavra que sugira o conteúdo. Também serve para quem esqueceu a senha.
+   nenhuma palavra que sugira o conteúdo. Também serve para trocar a senha (esquecida ou conta bloqueada).
 2. **Abrir:** `GET /v1/auth/convites/:token` (público) devolve `nome` e `matricula`.
    Link inexistente, expirado ou já usado dá o mesmo 404 `CONVITE_INVALIDO`.
 3. **Definir a senha:** `POST /v1/auth/convites/:token/senha` com `senha` (6
    dígitos) cria a conta ativa (`papel = 'manutencao'`; se já havia conta, troca a
    senha), consome o convite e devolve o mesmo corpo do login (`token` + `usuario`):
-   a pessoa já entra logada. Atenção: o convite **reativa** a conta se o admin a tinha desativado (`usuarios.ativo`), então não use a desativação como bloqueio sem antes desativar o colaborador (que invalida o link). Criação de convite e troca de senha ainda não vão para a auditoria. Os dois endpoints públicos dividem o mesmo `conviteLimiter` e têm limite de 10
+   a pessoa já entra logada. Atenção: o convite **reativa** a conta se o admin a tinha desativado (`usuarios.ativo`), então não use a desativação como bloqueio sem antes desativar o colaborador (que invalida o link). Criação de convite (`convite_criado`) e definição de senha (`senha_definida`) são gravadas em `auditoria` (tabela `colaboradores`, `registro_id` = colaborador). Os dois endpoints públicos dividem o mesmo `conviteLimiter` e têm limite de 10
    tentativas por minuto por IP (429).
 4. **Front:** a página `/c/:token` mostra o nome, pede a senha duas vezes, toca a
    animação de sucesso e abre a sessão.
+
+### Bloqueio de login por matrícula
+
+Migration `0009`: `usuarios.tentativas_falhas` e `bloqueado_ate`. 5 senhas erradas seguidas bloqueiam a conta por 15 minutos (`429 CONTA_BLOQUEADA`, até a senha certa é recusada); login correto zera o contador e um novo link de acesso desbloqueia na hora. Complementa o `loginLimiter` por IP, que não segura tentativas vindas de vários IPs contra uma matrícula conhecida. Efeito colateral aceito: quem souber a matrícula consegue bloquear a conta por 15 min.
 
 ## Retirada de ferramenta (fluxo)
 
