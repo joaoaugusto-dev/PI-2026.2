@@ -290,9 +290,11 @@ não filhas do layout autenticado.
   nenhum `z-index` resolve isso de fora) e desconectado visualmente do
   restante do formulário. Empilha em coluna única abaixo de `sm` (grade de 7
   colunas fica ilegível/difícil de tocar na largura de um celular).
-- **Tela de devolução (`src/pages/DevolucaoPage.tsx`, FE-15)** segue o mesmo
-  padrão mockado da retirada (API-12 e a extração do campo de identificação
-  em FE-09 ainda não existem): busca o empréstimo aberto por código local,
+- **Telas de retirada e devolução** (`RetiradaPage`, `DevolucaoPage`) falam
+  com a API real (`hooks/useRetirada.ts`, `hooks/useDevolucao.ts`): a busca de
+  ferramenta/colaborador/empréstimo espera 300ms depois da digitação ou do
+  leitor e ignora zeros à esquerda no código. A devolução busca o empréstimo
+  aberto pela API,
   mostra o cartão de detalhes (quem retirou, matrícula/setor, atividade,
   saída, registrado por) com uma faixa `status-atraso` no topo quando a
   previsão de devolução já passou, e só exibe descrição da ocorrência/custo
