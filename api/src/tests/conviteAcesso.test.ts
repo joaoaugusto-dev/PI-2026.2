@@ -96,9 +96,12 @@ describe('Convites de acesso', () => {
     const login = await request(app).post('/v1/auth/login').send({ matricula: M_ALVO, senha: '482913' });
     expect(login.status).toBe(200);
 
-    // link de uso único
-    expect((await abrir(token)).status).toBe(404);
-    expect((await aceitar(token, '111111')).status).toBe(404);
+    // link de uso único: depois de usado, 410 com código próprio (o front mostra "já foi usado")
+    const reaberto = await abrir(token);
+    expect(reaberto.status).toBe(410);
+    expect(reaberto.body.error.code).toBe('CONVITE_JA_USADO');
+    expect((await aceitar(token, '111111')).status).toBe(410);
+
   });
 
   it('novo convite invalida o anterior ainda não usado', async () => {
