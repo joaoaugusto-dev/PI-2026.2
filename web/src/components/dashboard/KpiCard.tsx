@@ -17,7 +17,7 @@ type KpiCardProps = {
 
 export function KpiCard({ label, valor, tom }: KpiCardProps) {
   return (
-    <Card className="gap-1 p-4">
+    <Card className="gap-0 px-4 py-3">
       <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">{label}</span>
       <span className={cn('text-kpi tabular-nums', tom ? TOM_CLASSE[tom] : 'text-foreground')}>{valor}</span>
     </Card>
