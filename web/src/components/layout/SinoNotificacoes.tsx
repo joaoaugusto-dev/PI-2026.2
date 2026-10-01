@@ -108,7 +108,7 @@ export function SinoNotificacoes() {
         ) : itens.length === 0 ? (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nada novo por aqui.</p>
         ) : (
-          <ul className="max-h-96 overflow-y-auto">
+          <ul className="scrollbar-fino max-h-96 overflow-y-auto">
             {itens.map((n) => {
               const { rotulo, Icone, borda, icone, texto } = TIPOS[n.tipo]
               const saiu = saindo.has(n.id)

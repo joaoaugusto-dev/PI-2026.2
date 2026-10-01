@@ -523,3 +523,22 @@
     @apply font-sans;
     }
 }
+/* Barra de rolagem discreta para listas curtas (ex.: sino de notificações):
+   fina, sem trilho, e o polegar só ganha cor ao passar o mouse. */
+@utility scrollbar-fino {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  &:hover {
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent) transparent;
+  }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: transparent;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+  }
+}
