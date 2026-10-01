@@ -36,18 +36,18 @@ export function SinoNotificacoes() {
         </button>
       </PopoverTrigger>
       <PopoverContent>
-        <p className="border-b px-3 py-2 text-corpo font-medium">Notificações</p>
+        <p className="border-b px-3 py-2 text-sm font-semibold">Notificações</p>
         {isError ? (
-          <p className="px-3 py-6 text-center text-corpo text-muted-foreground">Não foi possível carregar.</p>
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">Não foi possível carregar.</p>
         ) : itens.length === 0 ? (
-          <p className="px-3 py-6 text-center text-corpo text-muted-foreground">Nada novo por aqui.</p>
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nada novo por aqui.</p>
         ) : (
           <ul className="max-h-96 divide-y overflow-y-auto">
             {itens.map((n) => (
               <li key={n.id} className="flex items-center gap-2 pr-3 hover:bg-muted">
                 <button type="button" onClick={() => abrir(n)} className="min-w-0 flex-1 cursor-pointer px-3 py-2 text-left">
-                  <span className="block text-corpo font-medium">{n.titulo}</span>
-                  <span className="block text-rotulo text-muted-foreground">{n.mensagem}</span>
+                  <span className="block text-sm font-medium leading-tight">{n.titulo}</span>
+                  <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">{n.mensagem}</span>
                 </button>
                 <button
                   type="button"
