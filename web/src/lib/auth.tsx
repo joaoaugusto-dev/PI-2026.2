@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
-import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
+import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { DEMO_PERMITIDO, setModoDemo } from '@/lib/demo/flag'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
@@ -140,7 +140,7 @@ export function RotaProtegida({ children }: { children: ReactNode }) {
   }
 
   if (usuario.ativo === false) {
-    return <TelaAguardandoAprovacao aoSair={logout} />
+    return <TelaSucessoAnimada aoSair={logout} />
   }
 
   return <>{children}</>

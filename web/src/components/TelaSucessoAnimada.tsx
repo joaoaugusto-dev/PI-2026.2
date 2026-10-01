@@ -9,7 +9,7 @@ const DURACAO_ICONE_VISIVEL_MS = 700
 const DURACAO_TINTA_SAI_MS = 800
 
 /**
- * Tela cheia de "cadastro enviado / aguardando aprovação" — estilo tela de
+ * Tela cheia de sucesso (entrada no sistema, senha definida) e de "aguardando aprovação" — estilo tela de
  * finalização de compra: um círculo escuro gigante se
  * espalha feito tinta até cobrir a tela inteira (só `transform: scale`, um
  * elemento do tamanho da viewport nunca recalcula layout). O check aparece
@@ -19,7 +19,7 @@ const DURACAO_TINTA_SAI_MS = 800
  * sempre que um almoxarife ainda inativo entra no sistema (`RotaProtegida`) e,
  * com `aoTerminarAnimacao`, como a celebração de senha definida pelo convite.
  */
-export function TelaAguardandoAprovacao({
+export function TelaSucessoAnimada({
   aoSair,
   aoTerminarAnimacao,
 }: {

@@ -223,7 +223,7 @@ não filhas do layout autenticado.
   pra usar `register` direto porque o componente não é um `<input>` nativo).
   O acesso nasce do **link de convite** que o admin gera na tela de
   Colaboradores (`/c/:token`, `ConviteAcessoPage`): a pessoa define a senha, toca a
-  animação de `TelaAguardandoAprovacao` (prop `aoTerminarAnimacao`) e a sessão abre
+  animação de `TelaSucessoAnimada` (prop `aoTerminarAnimacao`, a mesma do login) e a sessão abre
   sozinha. Não há mais auto-cadastro nem tela de aprovação.
 - **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
   `AuthProvider` (`src/lib/auth.tsx`) não cria token nem sessão: liga a flag

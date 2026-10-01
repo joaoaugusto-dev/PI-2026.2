@@ -7,7 +7,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
 import { CampoPin } from '@/components/CampoPin'
-import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
+import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { TexturaFerramentas } from '@/components/TexturaFerramentas'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -73,7 +73,7 @@ export function ConviteAcessoPage() {
   }
 
   if (concluido) {
-    return <TelaAguardandoAprovacao aoTerminarAnimacao={() => navegar('/', { replace: true })} />
+    return <TelaSucessoAnimada aoTerminarAnimacao={() => navegar('/', { replace: true })} />
   }
 
   const invalido = convite.isError && codigoDoErro(convite.error) === 'CONVITE_INVALIDO'
