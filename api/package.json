@@ -25,6 +25,7 @@
   "author": "Equipe SOUFER Tools",
   "license": "ISC",
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

@@ -56,46 +56,11 @@ const router = Router();
  *         description: Lista paginada de ferramentas
  *       401:
  *         description: Token inválido ou não fornecido
- *   post:
- *     summary: Cadastra uma nova ferramenta
- *     tags:
- *       - Ferramentas
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nome
- *               - grupoId
- *             properties:
- *               nome:
- *                 type: string
- *               descricao:
- *                 type: string
- *               marca:
- *                 type: string
- *               modelo:
- *                 type: string
- *               grupoId:
- *                 type: integer
- *               subgrupoId:
- *                 type: integer
- *               setorId:
- *                 type: integer
- *               localizacao:
- *                 type: string
- *     responses:
- *       201:
- *         description: Ferramenta criada com sucesso
- *       400:
- *         description: Erro de validação nos campos
- *       401:
- *         description: Token inválido ou não fornecido
  */
+// POST /ferramentas não tem comentário @openapi: a documentação dessa
+// operação é gerada a partir de criarFerramentaSchema (zod-to-openapi, ver
+// config/openapiFromZod.ts e o merge em config/swagger.ts), prova de
+// conceito da issue API-14 para não duplicar a lista de campos à mão.
 router
   .route('/')
   .get(
@@ -200,54 +165,8 @@ router.get(
   FerramentaController.historico
 );
 
-/**
- * @openapi
- * /ferramentas/{id}:
- *   patch:
- *     summary: Atualiza os campos editáveis de uma ferramenta
- *     tags:
- *       - Ferramentas
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nome:
- *                 type: string
- *               descricao:
- *                 type: string
- *               marca:
- *                 type: string
- *               modelo:
- *                 type: string
- *               grupoId:
- *                 type: integer
- *               subgrupoId:
- *                 type: integer
- *               setorId:
- *                 type: integer
- *               localizacao:
- *                 type: string
- *     responses:
- *       200:
- *         description: Ferramenta atualizada com sucesso
- *       400:
- *         description: Erro de validação nos campos
- *       401:
- *         description: Token inválido ou não fornecido
- *       404:
- *         description: Ferramenta não encontrada
- */
+// PATCH /ferramentas/{id} também não tem comentário @openapi: gerado a
+// partir de atualizarFerramentaSchema (ver nota acima, no POST /ferramentas).
 router.patch(
   '/:id',
   authenticate,
