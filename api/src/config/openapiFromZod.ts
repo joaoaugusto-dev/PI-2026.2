@@ -8,6 +8,8 @@ import { criarFerramentaSchema, atualizarFerramentaSchema } from '../validators/
 // @openapi de ferramentaRoutes.ts. extendZodWithOpenApi precisa rodar antes
 // de qualquer .openapi() ser chamado — como ele patcheia o prototype de
 // ZodType, funciona mesmo com schemas já criados em ferramentaValidator.ts.
+// ATENÇÃO: efeito colateral global — qualquer módulo que passar a usar
+// .openapi() precisa garantir que este arquivo já foi importado antes.
 extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
@@ -15,7 +17,7 @@ const registry = new OpenAPIRegistry();
 registry.registerPath({
   method: 'post',
   path: '/ferramentas',
-  tags: ['Ferramentas (gerado via zod-to-openapi)'],
+  tags: ['Ferramentas'],
   summary: 'Cadastra uma nova ferramenta',
   security: [{ bearerAuth: [] }],
   request: {
@@ -35,7 +37,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/ferramentas/{id}',
-  tags: ['Ferramentas (gerado via zod-to-openapi)'],
+  tags: ['Ferramentas'],
   summary: 'Atualiza os campos editáveis de uma ferramenta',
   security: [{ bearerAuth: [] }],
   request: {
