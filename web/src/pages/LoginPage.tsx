@@ -69,7 +69,7 @@ export function LoginPage() {
 
   if (entrou) {
     const destino = (location.state as { from?: Location })?.from?.pathname ?? '/'
-    return <TelaSucessoAnimada aoTerminarAnimacao={() => navigate(destino, { replace: true })} />
+    return <TelaSucessoAnimada mensagem="Login realizado com sucesso!" aoTerminarAnimacao={() => navigate(destino, { replace: true })} />
   }
 
   return (

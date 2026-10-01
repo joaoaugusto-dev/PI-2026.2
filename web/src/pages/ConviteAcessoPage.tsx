@@ -73,7 +73,7 @@ export function ConviteAcessoPage() {
   }
 
   if (concluido) {
-    return <TelaSucessoAnimada aoTerminarAnimacao={() => navegar('/', { replace: true })} />
+    return <TelaSucessoAnimada mensagem="Senha definida com sucesso!" aoTerminarAnimacao={() => navegar('/', { replace: true })} />
   }
 
   const invalido = convite.isError && codigoDoErro(convite.error) === 'CONVITE_INVALIDO'
