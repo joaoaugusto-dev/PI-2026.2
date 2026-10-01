@@ -11,12 +11,12 @@ const token = (papel: string) =>
 
 // A autorização roda antes de qualquer consulta ao banco, então 403 não depende de dado.
 describe("Permissões de ferramentas por perfil", () => {
-  it("admin não opera etiqueta nem disponibilizar (operação de balcão é da manutenção)", async () => {
+  it("admin também opera etiqueta e disponibilizar (admin = manutenção + cadastros)", async () => {
     for (const rota of ["etiqueta-impressa", "disponibilizar"]) {
       const res = await request(app)
-        .patch(`/v1/ferramentas/1/${rota}`)
+        .patch(`/v1/ferramentas/999999/${rota}`)
         .set("Authorization", `Bearer ${token("admin")}`);
-      expect(res.status).toBe(403);
+      expect(res.status).not.toBe(403);
     }
   });
 

@@ -66,13 +66,13 @@ describe("Permissões de atividades (regra própria, diferente dos outros cadast
 
     const escritas = [
       request(app).post("/v1/atividades").set(auth("manutencao")).send({ nome: `X${Date.now()}` }),
-      request(app).put("/v1/atividades/1").set(auth("manutencao")).send({ nome: "X" }),
+      request(app).put("/v1/atividades/999999").set(auth("manutencao")).send({ nome: "X" }),
       request(app).patch("/v1/atividades/1").set(auth("manutencao")).send({ nome: "X" }),
     ];
     for (const res of await Promise.all(escritas)) expect(res.status).not.toBe(403);
   });
 
-  it("admin lê e cadastra atividades, mas não edita nem inativa (403)", async () => {
+  it("admin lê, cadastra, edita e inativa atividades (passa da autorização)", async () => {
     expect((await request(app).get("/v1/atividades").set(auth("admin"))).status).toBe(200);
     expect((await request(app).get("/v1/atividades/1").set(auth("admin"))).status).not.toBe(403);
     expect(
@@ -80,23 +80,23 @@ describe("Permissões de atividades (regra própria, diferente dos outros cadast
     ).toBe(201);
 
     const edicoes = [
-      request(app).put("/v1/atividades/1").set(auth("admin")).send({ nome: "X" }),
-      request(app).patch("/v1/atividades/1").set(auth("admin")).send({ nome: "X" }),
-      request(app).delete("/v1/atividades/1").set(auth("admin")),
+      request(app).put("/v1/atividades/999999").set(auth("admin")).send({ nome: "X" }),
+      request(app).patch("/v1/atividades/999999").set(auth("admin")).send({ nome: "X" }),
+      request(app).delete("/v1/atividades/999999").set(auth("admin")),
     ];
-    for (const res of await Promise.all(edicoes)) expect(res.status).toBe(403);
+    for (const res of await Promise.all(edicoes)) expect(res.status).not.toBe(403);
   });
 });
 
-describe("Admin não opera o balcão", () => {
-  it("identificar colaborador, buscar ferramenta por código e histórico de empréstimos dão 403", async () => {
+describe("Admin opera o balcão (é a manutenção com recursos a mais)", () => {
+  it("identificar colaborador, buscar ferramenta por código e histórico de empréstimos não dão 403", async () => {
     const rotas = [
       "/v1/colaboradores/identificar?termo=a",
       "/v1/ferramentas/por-codigo/1",
       "/v1/emprestimos",
     ];
     for (const rota of rotas)
-      expect((await request(app).get(rota).set(auth("admin"))).status).toBe(
+      expect((await request(app).get(rota).set(auth("admin"))).status).not.toBe(
         403,
       );
   });
