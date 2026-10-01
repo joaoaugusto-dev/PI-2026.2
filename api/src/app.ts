@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
+import { uploadsDir } from './config/uploads.js';
 import { swaggerSpec } from './config/swagger.js';
 import { httpLogger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -82,6 +83,17 @@ app.get('/', (req: Request, res: Response) => {
     api: '/v1',
   });
 });
+
+// Fotos de ferramentas (públicas, nomes com UUID). O helmet manda CORP same-origin,
+// o que bloquearia o <img> do front em outra origem; sob /v1 para passar pelo mesmo proxy da API.
+app.use(
+  '/v1/uploads',
+  (_req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  },
+  express.static(uploadsDir, { immutable: true, maxAge: '7d', index: false })
+);
 
 // Rotas da versão 1 (/v1)
 app.use('/v1', v1Routes);

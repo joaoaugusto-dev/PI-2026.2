@@ -14,6 +14,11 @@ export function errorHandler(
     return sendError(res, err.code, err.message, err.details, err.statusCode);
   }
 
+  // Corpo maior que o limite do parser (ex.: foto > 5 MB)
+  if (err.type === 'entity.too.large') {
+    return sendError(res, 'PAYLOAD_TOO_LARGE', 'O arquivo enviado é maior que o limite permitido.', [], 413);
+  }
+
   // Tratamento de erros específicos do PostgreSQL (pg)
   if (err.code) {
     if (err.code === '23505') {

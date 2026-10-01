@@ -1,5 +1,9 @@
+import { randomUUID } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
 import { query, getClient } from '../config/database.js';
-import { NotFoundError, ConflictError } from '../utils/errors.js';
+import { uploadsDir } from '../config/uploads.js';
+import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
@@ -331,5 +335,36 @@ export async function baixar(id: number): Promise<Ferramenta> {
     [id]
   );
 
+  return result.rows[0];
+}
+
+// Tipo real pelo conteúdo (não pelo Content-Type, que o cliente controla).
+function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
+  if (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg';
+  if (b.length > 12 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
+  if (b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'webp';
+  return null;
+}
+
+export async function salvarFoto(id: number, imagem: unknown): Promise<Ferramenta> {
+  const anterior = await buscarPorId(id);
+  if (!Buffer.isBuffer(imagem) || imagem.length === 0) {
+    throw new ValidationError('Envie a imagem (jpeg, png ou webp) no corpo da requisição');
+  }
+  const ext = extensaoDaImagem(imagem);
+  if (!ext) throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
+
+  await fs.mkdir(uploadsDir, { recursive: true });
+  const arquivo = `${id}-${randomUUID()}.${ext}`;
+  await fs.writeFile(path.join(uploadsDir, arquivo), imagem);
+
+  const result = await query<Ferramenta>(`UPDATE ferramentas SET foto_url = $1 WHERE id = $2 RETURNING ${COLUNAS_FERRAMENTA}`, [
+    `/uploads/${arquivo}`,
+    id,
+  ]);
+  // a foto antiga deixa de ser referenciada: apaga (basename evita sair do diretório)
+  if (anterior.foto_url?.startsWith('/uploads/')) {
+    await fs.rm(path.join(uploadsDir, path.basename(anterior.foto_url)), { force: true });
+  }
   return result.rows[0];
 }
