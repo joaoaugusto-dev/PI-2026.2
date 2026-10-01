@@ -559,3 +559,77 @@
     animation: sino-tocar 0.9s ease-in-out;
   }
 }
+
+/* Etiqueta térmica 90 x 60 mm (EtiquetaTermica) — só existe na impressão */
+.etiqueta-impressao {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: 90mm 60mm;
+    margin: 0;
+  }
+
+  body > *:not(.etiqueta-impressao) {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .etiqueta-impressao {
+    display: flex;
+    flex-direction: column;
+    width: 90mm;
+    height: 60mm;
+    padding: 3mm 4mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    break-after: avoid;
+  }
+
+  /* térmica é 1 bit: o vermelho vira cinza escuro, contraste evita sumir no papel */
+  .etiqueta-logo {
+    height: 10mm;
+    width: auto;
+    align-self: flex-start;
+    filter: grayscale(1) contrast(1.8);
+  }
+
+  .etiqueta-nome {
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 1mm;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .etiqueta-meta {
+    font-size: 8pt;
+    margin-bottom: 0.5mm;
+  }
+
+  .etiqueta-impressao svg {
+    width: 100%;
+    height: 26mm;
+  }
+
+  .etiqueta-codigo {
+    margin-top: auto;
+    padding-top: 2.5mm;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+}
