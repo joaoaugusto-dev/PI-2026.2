@@ -204,6 +204,16 @@ O `UPDATE` roda numa transação com `SELECT ... FOR UPDATE` na linha da ocorrê
 
 ## Resposta de erro
 
+### `PATCH /v1/ocorrencias/:id/avancar`
+
+Anda uma etapa da tratativa: `aberta → em_reparo → cobrada → resolvida`. Sem corpo. A etapa de destino é calculada no servidor, com a linha travada (`FOR UPDATE`), então dois cliques seguidos não pulam duas etapas. Ao chegar em `resolvida` grava `resolvida_por`/`data_resolucao` do JWT (Regra 6) e traz `sugestao_disponibilizar_ferramenta_id`, como o `PATCH /:id`. `baixada` fica fora do ciclo (decisão sobre a ferramenta, feita pelo `PATCH /:id`). Perfis `manutencao` e `admin`.
+
+| Status | Código | Quando |
+|---|---|---|
+| 404 | `OCORRENCIA_NOT_FOUND` | Ocorrência inexistente. |
+| 409 | `OCORRENCIA_TRANSICAO_INVALIDA` | Já está `resolvida` ou `baixada`. |
+
+
 ```json
 {
   "error": {
