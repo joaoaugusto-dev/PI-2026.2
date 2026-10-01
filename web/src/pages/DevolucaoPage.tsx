@@ -189,12 +189,11 @@ export function DevolucaoPage() {
               {erroBusca && termoAtual && (
                 <p className="text-sm text-destructive">Não foi possível consultar os empréstimos. Verifique a conexão com a API.</p>
               )}
-
             </div>
           ) : (
             <DetalhesEmprestimo
               emprestimo={emprestimo}
-              saida={dataBR(encontrado!.data_retirada)}
+              saida={dataBR(encontrado?.data_retirada)}
               diasDesdeSaida={diasDesdeSaida}
               diasAtraso={diasAtraso}
               onBuscarOutra={buscarOutra}

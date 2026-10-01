@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Emprestimo } from '@/hooks/useEmprestimos'
 import type { Ferramenta } from '@/hooks/useFerramentas'
 import { api } from '@/lib/api'
+import { erroDaApi, statusDoErro } from '@/lib/avisar-erro'
 import { escolherPorCodigo, parseCodigoPatrimonio, type Escolha } from '@/lib/patrimonio'
 
 export interface ColaboradorIdentificado {
@@ -17,24 +18,26 @@ export interface ColaboradorIdentificado {
  * nenhum é escolhido (`ambiguos` traz as opções). Código numérico vai direto em `/por-codigo`: a listagem
  * ordena por nome, então o de código exato poderia ficar fora da página.
  */
+export async function buscarFerramentaPorTermo(termo: string, signal?: AbortSignal): Promise<Escolha<Ferramenta>> {
+  const codigo = parseCodigoPatrimonio(termo)
+  if (codigo) {
+    try {
+      const { data } = await api.get<{ data: Ferramenta }>(`/ferramentas/por-codigo/${codigo}`, { signal })
+      return { item: data.data, ambiguos: [] }
+    } catch (e) {
+      const status = statusDoErro(e)
+      if (status !== 404 && status !== 400) throw e // sem esse código: pode ser um nome numérico, cai na busca
+    }
+  }
+  const { data } = await api.get<{ data: Ferramenta[] }>('/ferramentas', { params: { q: termo, limit: 10 }, signal })
+  return escolherPorCodigo(data.data, termo, (f) => f.codigo_identificacao)
+}
+
 export function useFerramentaPorTermo(termo: string) {
   return useQuery({
     queryKey: ['ferramentas', 'por-termo', termo],
     enabled: termo.length > 0,
-    queryFn: async ({ signal }): Promise<Escolha<Ferramenta>> => {
-      const codigo = parseCodigoPatrimonio(termo)
-      if (codigo) {
-        try {
-          const { data } = await api.get<{ data: Ferramenta }>(`/ferramentas/por-codigo/${codigo}`, { signal })
-          return { item: data.data, ambiguos: [] }
-        } catch (e) {
-          const status = (e as { response?: { status?: number } }).response?.status
-          if (status !== 404 && status !== 400) throw e // sem esse código: pode ser um nome numérico, cai na busca
-        }
-      }
-      const { data } = await api.get<{ data: Ferramenta[] }>('/ferramentas', { params: { q: termo, limit: 10 }, signal })
-      return escolherPorCodigo(data.data, termo, (f) => f.codigo_identificacao)
-    },
+    queryFn: ({ signal }) => buscarFerramentaPorTermo(termo, signal),
   })
 }
 
@@ -42,25 +45,27 @@ export function useFerramentaPorTermo(termo: string) {
  * `GET /colaboradores/identificar`: matrícula/crachá ou nome. 404 (não achou) vira `item: null` para abrir o
  * cadastro rápido; 409 `COLABORADOR_AMBIGUO` (vários nomes) traz os candidatos em `ambiguos`, para pedir a matrícula.
  */
+export async function identificarColaborador(termo: string, signal?: AbortSignal): Promise<Escolha<ColaboradorIdentificado>> {
+  try {
+    const { data } = await api.get<{ data: ColaboradorIdentificado }>('/colaboradores/identificar', {
+      params: { termo },
+      signal,
+    })
+    return { item: data.data, ambiguos: [] }
+  } catch (e) {
+    if (statusDoErro(e) === 404) return { item: null, ambiguos: [] }
+    const erro = erroDaApi(e)
+    if (erro?.code === 'COLABORADOR_AMBIGUO') return { item: null, ambiguos: (erro.details ?? []) as ColaboradorIdentificado[] }
+    throw e
+  }
+}
+
 export function useColaboradorPorTermo(termo: string) {
   return useQuery({
     queryKey: ['colaboradores', 'identificar', termo],
     enabled: termo.length > 0,
     retry: false,
-    queryFn: async ({ signal }): Promise<Escolha<ColaboradorIdentificado>> => {
-      try {
-        const { data } = await api.get<{ data: ColaboradorIdentificado }>('/colaboradores/identificar', {
-          params: { termo },
-          signal,
-        })
-        return { item: data.data, ambiguos: [] }
-      } catch (e) {
-        const r = (e as { response?: { status?: number; data?: { error?: { code?: string; details?: ColaboradorIdentificado[] } } } }).response
-        if (r?.status === 404) return { item: null, ambiguos: [] }
-        if (r?.data?.error?.code === 'COLABORADOR_AMBIGUO') return { item: null, ambiguos: r.data.error.details ?? [] }
-        throw e
-      }
-    },
+    queryFn: ({ signal }) => identificarColaborador(termo, signal),
   })
 }
 
