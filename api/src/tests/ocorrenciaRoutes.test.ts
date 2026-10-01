@@ -164,6 +164,37 @@ describe('Rotas de Ocorrências (API-13)', () => {
     });
   });
 
+  describe('PATCH /v1/ocorrencias/:id/avancar', () => {
+    const avancar = (id: number, token: string | null = manutencaoToken) => {
+      const req = request(app).patch(`/v1/ocorrencias/${id}/avancar`);
+      if (token) req.set('Authorization', `Bearer ${token}`);
+      return req;
+    };
+
+    it('anda uma etapa por chamada até resolvida (gravando resolvida_por) e depois recusa com 409', async () => {
+      const { id } = await criarOcorrencia('AvancarCiclo');
+
+      for (const esperado of ['em_reparo', 'cobrada', 'resolvida']) {
+        const res = await avancar(id);
+        expect(res.status).toBe(200);
+        expect(res.body.data.status).toBe(esperado);
+      }
+      const resolvida = await avancar(id).catch((e) => e);
+      expect(resolvida.status).toBe(409);
+      expect(resolvida.body.error.code).toBe('OCORRENCIA_TRANSICAO_INVALIDA');
+
+      const final = await get(`?status=resolvida&limit=100`);
+      expect(final.body.data.find((o: any) => o.id === id)).toMatchObject({ resolvida_por: usuarioId });
+    });
+
+    it('retorna 404, 401 e 403 nos casos de borda', async () => {
+      const { id } = await criarOcorrencia('AvancarBorda');
+      expect((await avancar(999999999)).status).toBe(404);
+      expect((await avancar(id, null)).status).toBe(401);
+      expect((await avancar(id, consultaToken)).status).toBe(403);
+    });
+  });
+
   describe('PATCH /v1/ocorrencias/:id', () => {
     it('faz o ciclo aberta → em_reparo → resolvida, gravando resolvida_por e data_resolucao do JWT', async () => {
       const { id } = await criarOcorrencia('CicloCompleto');
