@@ -1,23 +1,20 @@
-import { ArrowLeft, Printer, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import Barcode from 'react-barcode'
+import { BotaoImprimirEtiqueta } from '@/components/ferramentas/BotaoImprimirEtiqueta'
 import { Link, useParams } from 'react-router-dom'
-import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
 import { COR_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
-import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { useCategorias } from '@/hooks/useCategorias'
-import { formatarPatrimonio, statusParaBadge, useFerramenta, useMarcarEtiquetaImpressa } from '@/hooks/useFerramentas'
+import { formatarPatrimonio, statusParaBadge, useFerramenta } from '@/hooks/useFerramentas'
 import { useHistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
-import { avisarErro } from '@/lib/avisar-erro'
 import { dataBR, rotuloCondicao } from '@/lib/formatar'
 import { useAuth } from '@/lib/auth'
-import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 
@@ -49,10 +46,9 @@ export function FerramentaDetalhePage() {
   const { data: historico, isLoading: carregandoHistorico } = useHistoricoFerramenta(id)
   const { data: categorias } = useCategorias()
   const { data: setores } = useSetores()
-  const marcarImpressa = useMarcarEtiquetaImpressa()
-  // operar a etiqueta é do balcão (manutenção); o admin só consulta
   const { usuario } = useAuth()
-  const podeMarcarEtiqueta = usuario?.papel === 'manutencao'
+  // admin é a manutenção com recursos a mais: imprime a etiqueta também
+  const podeImprimirEtiqueta = usuario?.papel === 'manutencao' || usuario?.papel === 'admin'
 
   if (!idValido) return <NaoEncontradaPage />
 
@@ -83,16 +79,6 @@ export function FerramentaDetalhePage() {
   const emprestimos = historico?.emprestimos ?? []
   const ocorrencias = historico?.ocorrencias ?? []
   const emUso = ferramenta.status === 'em_uso'
-
-  function aoMarcarImpressa() {
-    marcarImpressa.mutate(id, {
-      onSuccess: () => {
-        playSomConfirmacao()
-        toast.success('Etiqueta marcada como impressa.')
-      },
-      onError: () => avisarErro('Não foi possível marcar a etiqueta como impressa.'),
-    })
-  }
 
   return (
     <div className="flex animate-entrada flex-col gap-4 p-6">
@@ -161,11 +147,7 @@ export function FerramentaDetalhePage() {
                 ? `Impressa em ${dataBR(ferramenta.etiqueta_impressa_em)}`
                 : 'Ainda não impressa'}
             </p>
-            {podeMarcarEtiqueta && (
-              <Button variant="outline" disabled={marcarImpressa.isPending} onClick={aoMarcarImpressa}>
-                <Printer /> Marcar como impressa
-              </Button>
-            )}
+            {podeImprimirEtiqueta && <BotaoImprimirEtiqueta ferramenta={ferramenta} />}
           </CardContent>
         </Card>
       </div>
