@@ -78,13 +78,15 @@ export class AuthService {
     const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
     if (!senhaValida) {
       // atômico: incrementa e, ao atingir o limite, bloqueia e zera o contador
-      if (contaProtegida) await query(
-        `UPDATE usuarios
-         SET tentativas_falhas = CASE WHEN tentativas_falhas + 1 >= $2 THEN 0 ELSE tentativas_falhas + 1 END,
-             bloqueado_ate = CASE WHEN tentativas_falhas + 1 >= $2 THEN NOW() + make_interval(mins => $3) ELSE bloqueado_ate END
-         WHERE id = $1`,
-        [usuario.id, MAX_FALHAS_LOGIN, BLOQUEIO_LOGIN_MIN]
-      );
+      if (contaProtegida) {
+        await query(
+          `UPDATE usuarios
+           SET tentativas_falhas = CASE WHEN tentativas_falhas + 1 >= $2 THEN 0 ELSE tentativas_falhas + 1 END,
+               bloqueado_ate = CASE WHEN tentativas_falhas + 1 >= $2 THEN NOW() + make_interval(mins => $3) ELSE bloqueado_ate END
+           WHERE id = $1`,
+          [usuario.id, MAX_FALHAS_LOGIN, BLOQUEIO_LOGIN_MIN]
+        );
+      }
       throw new UnauthorizedError('Matrícula ou senha inválidos', 'INVALID_CREDENTIALS');
     }
 
