@@ -22,11 +22,16 @@ export const ferramentaIdParamSchema = z.object({
 
 // codigo_identificacao é SMALLINT entre 1 e 9999 (ver migration 0001).
 export const ferramentaCodigoParamSchema = z.object({
-  codigo: z.coerce
-    .number({ invalid_type_error: 'Código deve ser um número' })
-    .int('Código deve ser um número inteiro')
-    .min(1, 'Código deve estar entre 1 e 9999')
-    .max(9999, 'Código deve estar entre 1 e 9999'),
+  // "000053" e "53" valem o mesmo código; o prefixo "SF" das etiquetas antigas ainda é aceito.
+  // Texto em branco vira NaN (z.coerce faria "" ser 0 e cair na mensagem de faixa, menos clara).
+  codigo: z.preprocess(
+    (v) => (typeof v === 'string' ? (v.trim() === '' ? NaN : v.replace(/^sf/i, '')) : v),
+    z.coerce
+      .number({ invalid_type_error: 'Código deve ser um número' })
+      .int('Código deve ser um número inteiro')
+      .min(1, 'Código deve estar entre 1 e 9999')
+      .max(9999, 'Código deve estar entre 1 e 9999')
+  ),
 });
 
 // Decisão de escopo (API-14): a tabela ferramentas (0001_init.sql) não tem

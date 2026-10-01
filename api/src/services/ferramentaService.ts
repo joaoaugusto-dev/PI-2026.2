@@ -68,9 +68,19 @@ export async function listar({
 
   if (q) {
     params.push(`%${escaparCoringasLike(q)}%`);
-    condicoes.push(
-      `(nome ILIKE $${params.length} OR descricao ILIKE $${params.length} OR marca ILIKE $${params.length} OR modelo ILIKE $${params.length})`
-    );
+    const buscas = [
+      `nome ILIKE $${params.length}`,
+      `descricao ILIKE $${params.length}`,
+      `marca ILIKE $${params.length}`,
+      `modelo ILIKE $${params.length}`,
+    ];
+    // "000053", "000053" ou "53": o código é busca por igualdade, ignorando zeros à esquerda
+    const codigo = /^(?:sf)?0*(\d{1,4})$/i.exec(q.trim());
+    if (codigo) {
+      params.push(Number(codigo[1]));
+      buscas.push(`codigo_identificacao = $${params.length}`);
+    }
+    condicoes.push(`(${buscas.join(' OR ')})`);
   }
 
   if (status) {

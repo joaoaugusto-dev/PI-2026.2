@@ -51,7 +51,7 @@ Esses valores são determinados pelo back-end.
 | PATCH | `/v1/emprestimos/:id/devolucao` | Manutenção | Devolução (ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)) |
 | GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências (ver [Ocorrências](#ocorrências-get-e-patch-v1ocorrencias)) |
 | GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
-| GET | `/v1/dashboard/kpis` | Manutenção | KPIs |
+| GET | `/v1/dashboard` | Manutenção/Admin | Tela inicial: contadores e listas de pendências (ver [Dashboard](#dashboard-get-v1dashboard)) |
 | POST | `/v1/importacoes/ferramentas` | Manutenção | Importação CSV |
 | GET | `/v1/relatorios/emprestimos.csv` | Manutenção | Exportação |
 | GET | `/v1/usuarios?ativo=false` | Admin | Lista cadastros pendentes de aprovação |
@@ -130,6 +130,20 @@ Calcula "hoje + N dias úteis", pulando sábados, domingos e feriados nacionais.
 - Resposta `200`: `{ "data": { "previsaoDevolucao": "2026-10-06", "diasUteis": 2 } }`.
 - Perfil `manutencao` (`401` sem token, `403` para `consulta`).
 
+## Dashboard (`GET /v1/dashboard`)
+
+Tudo que a tela inicial mostra, numa chamada só. Perfis `manutencao` e `admin`.
+
+| Campo | Conteúdo |
+|---|---|
+| `kpis` | Contadores: `cadastradas`, `disponiveis`, `em_uso`, `indisponiveis`, `atrasadas`, `ocorrencias` (abertas). |
+| `cobrar_hoje` | Empréstimos com devolução prevista para hoje (data de Brasília). |
+| `atrasados` | Previsão em dia anterior, o mais antigo primeiro (`dias` = dias de atraso). |
+| `proximos_do_prazo` | Previsão nos próximos 3 dias (`dias` = dias que faltam). |
+| `indisponiveis` | Ferramentas indisponíveis com a ocorrência em andamento (`etapa`, `tipo`) e `dias_parada`. |
+
+Cada lista é `{ "total": n, "itens": [...] }` e traz só as 4 primeiras linhas (as do cartão). O "Mostrar tudo" pagina por `GET /v1/dashboard/:lista` (`cobrar_hoje`, `atrasados`, `proximos_do_prazo` ou `indisponiveis`), com `page` e `limit` (padrão 15, máximo 50) e o `meta` padrão de paginação; lista desconhecida é `400`. `dias_parada` conta desde a abertura da ocorrência em andamento; para ferramenta marcada indisponível à mão, sem ocorrência, cai na última alteração da ferramenta (`updated_at`), que muda a cada edição dela. `page` (1 a 100000) e `limit` (1 a 50) fora do intervalo ou não numéricos devolvem `400`. Contadores e as quatro listas saem de uma conexão só e do mesmo snapshot do banco (transação `REPEATABLE READ` somente leitura), então o painel é coerente entre si e a requisição ocupa 1 conexão do pool; cada página de `GET /v1/dashboard/:lista` também é um snapshot próprio, com total e linhas batendo. `kpis.atrasadas` usa a mesma definição da lista de atrasados (previsão em dia anterior), e não a da view de contadores (já passou do horário), para a barra e o cartão mostrarem o mesmo número.
+
 ## Ocorrências (`GET` e `PATCH /v1/ocorrencias`)
 
 Acompanhamento e fechamento das tratativas de avaria/perda (issue API-13). A ocorrência em si não é criada por aqui — quem abre é o trigger `fn_abre_ocorrencia`, disparado pela devolução com avaria ou perda (Regra 3, ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)). Só o perfil `manutencao` acessa as duas rotas.
@@ -188,6 +202,16 @@ Erros:
 O `UPDATE` roda numa transação com `SELECT ... FOR UPDATE` na linha da ocorrência, mesmo padrão da devolução: dois `PATCH` simultâneos na mesma ocorrência são serializados.
 
 **Extra implementado ("se sobrar tempo"):** ao marcar `resolvida` (só na transição de entrada, não em reenvios), se a ferramenta ainda estiver `indisponivel`, o response traz `sugestao_disponibilizar_ferramenta_id` com o id dela — uma sugestão para o front chamar `PATCH /v1/ferramentas/:id/disponibilizar` em seguida, sem essa chamada acontecer automaticamente. Se a ferramenta já estiver `disponivel` (por exemplo, outra ocorrência dela já foi resolvida por essa rota, que também disponibiliza a ferramenta), o campo vem `null`.
+
+
+### `PATCH /v1/ocorrencias/:id/avancar`
+
+Anda uma etapa da tratativa: `aberta → em_reparo → cobrada → resolvida`. Sem corpo. A etapa de destino é calculada no servidor, com a linha travada (`FOR UPDATE`), então dois cliques seguidos não pulam duas etapas. Ao chegar em `resolvida` grava `resolvida_por`/`data_resolucao` do JWT (Regra 6) e traz `sugestao_disponibilizar_ferramenta_id`, como o `PATCH /:id`. `baixada` fica fora do ciclo (decisão sobre a ferramenta, feita pelo `PATCH /:id`). Perfis `manutencao` e `admin`.
+
+| Status | Código | Quando |
+|---|---|---|
+| 404 | `OCORRENCIA_NOT_FOUND` | Ocorrência inexistente. |
+| 409 | `OCORRENCIA_TRANSICAO_INVALIDA` | Já está `resolvida` ou `baixada`. |
 
 ## Resposta de sucesso
 

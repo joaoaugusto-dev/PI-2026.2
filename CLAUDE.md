@@ -129,12 +129,11 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    Colaboradores, Ferramentas, Categorias e Setores: edição e inativação são
    só do `admin`, com 403 na API para `manutencao`; leitura e criação de
    ferramenta/colaborador seguem abertas à manutenção porque o fluxo de
-   retirada as consome. Continuam só da manutenção as rotas de balcão
-   (identificar colaborador, buscar ferramenta por código, etiqueta impressa,
-   disponibilizar ferramenta, histórico de empréstimos) e as atividades, que
-   alimentam o campo de atividade da retirada — o admin lê e cadastra, mas não
-   opera o balcão; decisão do time em 30/09/2026, revisa a de 22/09/2026,
-   decisão de 01/10/2026: acabou o auto-cadastro com aprovação, o colaborador cadastrado pelo admin já é o
+   retirada as consome. **O admin é a manutenção com recursos a mais:** tudo
+   que a manutenção faz (rotas de balcão, etiqueta impressa, atividades,
+   retirada/devolução) o admin também faz — a manutenção nunca tem permissão
+   que o admin não tenha (decisão de 01/10/2026, revisa a de 30/09/2026, que
+   barrava o admin no balcão). Decisão de 01/10/2026 também: acabou o auto-cadastro com aprovação, o colaborador cadastrado pelo admin já é o
    funcionário, e o admin também recebe as notificações) e `consulta` (sessão de 15 minutos por matrícula, só
    leitura de disponibilidade, sem senha). No front, as telas de cadastro não aparecem no menu para quem não é `admin` e, pela URL direta,
    respondem 404.

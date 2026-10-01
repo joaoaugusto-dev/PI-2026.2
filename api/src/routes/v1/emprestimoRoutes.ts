@@ -63,7 +63,7 @@ const router = Router();
 router.get(
   '/',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: listarEmprestimosQuerySchema }),
   EmprestimoController.listar
 );
@@ -134,7 +134,7 @@ router.get(
 router.post(
   '/',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ body: criarEmprestimoSchema }),
   EmprestimoController.criar
 );
@@ -171,7 +171,7 @@ router.post(
 router.get(
   '/calendario',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: calendarioQuerySchema }),
   EmprestimoController.calendario
 );
@@ -208,7 +208,7 @@ router.get(
 router.get(
   '/previsao-sugerida',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: previsaoSugeridaQuerySchema }),
   EmprestimoController.previsaoSugerida
 );
@@ -269,7 +269,7 @@ router.get(
 router.patch(
   '/:id/devolucao',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: emprestimoIdParamSchema, body: devolverEmprestimoSchema }),
   EmprestimoController.devolver
 );

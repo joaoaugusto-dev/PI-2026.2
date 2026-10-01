@@ -264,6 +264,12 @@ automatizado permanente para essa concorrência na suíte principal.
 
 ## Regra 8 — Três perfis e suas permissões
 
+**Atualização de 01/10/2026:** `admin` é a manutenção com recursos a mais — tudo
+que a manutenção faz (balcão, etiqueta, atividades, retirada/devolução) o admin
+também faz; a manutenção nunca tem permissão que o admin não tenha. Os
+parágrafos abaixo (30/09/2026) que dizem que o admin recebe 403 no balcão ou ao
+editar atividades estão superados; os testes já refletem a nova regra.
+
 **O que diz (atualizado em 30/09/2026):** `manutencao` opera o balcão
 (retirada, devolução, consulta, indisponíveis, calendário, histórico, e faz
 cadastro rápido de colaborador); `admin` aprova auto-cadastros e cuida dos

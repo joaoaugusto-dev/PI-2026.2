@@ -214,19 +214,19 @@ router
   )
   .put(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ params: auxiliarIdParamSchema, body: atualizarAtividadeSchema }),
     AtividadeController.atualizar
   )
   .patch(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ params: auxiliarIdParamSchema, body: atualizarAtividadeSchema }),
     AtividadeController.atualizar
   )
   .delete(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ params: auxiliarIdParamSchema }),
     AtividadeController.excluir
   );

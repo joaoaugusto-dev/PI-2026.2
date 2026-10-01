@@ -66,7 +66,7 @@ cadastrado pelo admin já é o funcionário, e o acesso nasce de um link.
    gerar outro invalida o anterior ainda não usado. O link é `/c/<token>`, sem
    nenhuma palavra que sugira o conteúdo. Também serve para trocar a senha (esquecida ou conta bloqueada).
 2. **Abrir:** `GET /v1/auth/convites/:token` (público) devolve `nome` e `matricula`.
-   Link inexistente, expirado ou já usado dá o mesmo 404 `CONVITE_INVALIDO`.
+   Link inexistente ou expirado dá o mesmo 404 `CONVITE_INVALIDO` (sem revelar o motivo). Link já usado dá 410 `CONVITE_JA_USADO`: o front mostra a tela "Esta definição de senha já foi usada"; para trocar a senha de novo, o admin gera outro link.
 3. **Definir a senha:** `POST /v1/auth/convites/:token/senha` com `senha` (6
    dígitos) cria a conta ativa (`papel = 'manutencao'`; se já havia conta, troca a
    senha), consome o convite e devolve o mesmo corpo do login (`token` + `usuario`):

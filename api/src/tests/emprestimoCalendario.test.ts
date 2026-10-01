@@ -41,7 +41,7 @@ describe('GET /v1/emprestimos/calendario (API-17)', () => {
     for (const dia of dias) expect(dia.startsWith(abertos[0].mes)).toBe(true);
     const item = res.body.data[0].emprestimos[0];
     expect(item).toMatchObject({ ramal: null });
-    expect(item.ferramenta_codigo).toMatch(/^SF\d{6}$|^—$/);
+    expect(item.ferramenta_codigo).toMatch(/^\d{6}$|^—$/);
   });
 
   it('mês sem devoluções devolve lista vazia', async () => {

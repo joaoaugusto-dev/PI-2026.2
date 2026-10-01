@@ -30,7 +30,7 @@ async function runSeed() {
     console.log('🔑 Credenciais de teste:');
     console.log('   - Manutenção: Matrícula 0001 (ou 0002) / Senha: 123456');
     console.log('   - Admin:      Matrícula 0053 / Senha: 123456');
-    console.log('   - Consulta:   Matrícula "0003"');
+    console.log('   - Consulta:   Matrícula "0001" (qualquer colaborador ativo)');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Falha ao executar seed:', error);
