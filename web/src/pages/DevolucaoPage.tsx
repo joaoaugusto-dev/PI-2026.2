@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Barcode, XCircle } from 'lucide-react'
@@ -54,6 +55,8 @@ type FormValues = z.infer<typeof schema>
 
 export function DevolucaoPage() {
   const [hoje] = useState(() => new Date())
+  // o dashboard abre a devolução já com o código da ferramenta atrasada
+  const [params] = useSearchParams()
 
   const {
     register,
@@ -66,7 +69,7 @@ export function DevolucaoPage() {
     resolver: zodResolver(schema),
     mode: 'onChange',
     defaultValues: {
-      ferramentaCodigo: '',
+      ferramentaCodigo: params.get('codigo') ?? '',
       condicao: null,
       descricaoOcorrencia: '',
       custoEstimado: '',
