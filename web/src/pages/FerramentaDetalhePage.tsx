@@ -3,7 +3,7 @@ import Barcode from 'react-barcode'
 import { BotaoImprimirEtiqueta } from '@/components/ferramentas/BotaoImprimirEtiqueta'
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
-import { COR_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
+import { corDaSituacao, textoSituacao } from '@/components/emprestimos/situacao'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -186,7 +186,7 @@ export function FerramentaDetalhePage() {
                     <TableCell>{dataBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
                     <TableCell>{dataBR(e.data_devolucao)}</TableCell>
-                    <TableCell className={cn('font-medium', COR_SITUACAO[e.situacao])}>{textoSituacao(e)}</TableCell>
+                    <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -20,3 +20,10 @@ export function textoSituacao(e: Pick<Emprestimo, 'situacao' | 'condicao_devoluc
     e.condicao_devolucao && e.condicao_devolucao !== 'ok' ? ` · ${rotuloCondicao(e.condicao_devolucao)}` : ''
   return ROTULO_SITUACAO[e.situacao] + condicao
 }
+
+/** Devolvido com avaria (âmbar) ou perda (vermelho) não pode ficar verde como um devolvido ok. */
+export function corDaSituacao(e: Pick<Emprestimo, 'situacao' | 'condicao_devolucao'>) {
+  if (e.condicao_devolucao === 'perda') return 'text-status-indisponivel'
+  if (e.condicao_devolucao === 'avaria') return 'text-status-atraso'
+  return COR_SITUACAO[e.situacao]
+}
