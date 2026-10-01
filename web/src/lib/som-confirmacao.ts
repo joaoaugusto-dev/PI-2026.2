@@ -13,9 +13,15 @@ export function setSomConfirmacaoAtivo(ativo: boolean) {
   window.dispatchEvent(new Event(EVENTO_ALTERADO))
 }
 
+// criado e pré-carregado uma vez: `new Audio()` a cada toque baixava e decodificava o mp3
+// na primeira reprodução, o que travava a tela justo na primeira confirmação
+const audio = typeof Audio === 'undefined' ? null : new Audio(sfxConfirmacao)
+if (audio) audio.preload = 'auto'
+
 export function playSomConfirmacao() {
-  if (!somConfirmacaoAtivo()) return
-  new Audio(sfxConfirmacao).play().catch(() => {})
+  if (!audio || !somConfirmacaoAtivo()) return
+  audio.currentTime = 0
+  audio.play().catch(() => {})
 }
 
 /** Lê a preferência e se mantém sincronizado entre componentes — `localStorage`
