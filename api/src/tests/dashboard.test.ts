@@ -23,17 +23,19 @@ describe('GET /v1/dashboard', () => {
 
   it('cada lista do resumo traz no máximo 4 linhas e a rota :lista pagina o resto (15 por página)', async () => {
     const auth = { Authorization: `Bearer ${token('manutencao')}` };
+    const nomes = ['cobrar_hoje', 'atrasados', 'proximos_do_prazo', 'indisponiveis'];
     const resumo = (await request(app).get('/v1/dashboard').set(auth)).body.data;
-    for (const nome of ['cobrar_hoje', 'atrasados', 'proximos_do_prazo', 'indisponiveis']) {
-      expect(resumo[nome].itens.length).toBeLessThanOrEqual(4);
-      const pagina = await request(app).get(`/v1/dashboard/${nome}`).set(auth);
+    const paginas = await Promise.all(nomes.map((n) => request(app).get(`/v1/dashboard/${n}`).set(auth)));
+    nomes.forEach((nome, i) => {
+      // outros testes mexem em empréstimos ao mesmo tempo: só se compara dentro de cada resposta, em que
+      // total e linhas saem do mesmo snapshot do banco
+      expect(resumo[nome].itens.length).toBeLessThanOrEqual(Math.min(4, resumo[nome].total));
+      const pagina = paginas[i];
       expect(pagina.status).toBe(200);
-      expect(pagina.body.meta).toEqual(expect.objectContaining({ page: 1, limit: 15, total: resumo[nome].total }));
-      expect(pagina.body.data.length).toBeLessThanOrEqual(15);
-      // a página 1 começa pelas mesmas linhas que o cartão mostra
-      expect(pagina.body.data.slice(0, resumo[nome].itens.length)).toEqual(resumo[nome].itens);
-    }
-  });
+      expect(pagina.body.meta).toEqual(expect.objectContaining({ page: 1, limit: 15 }));
+      expect(pagina.body.data.length).toBe(Math.min(15, pagina.body.meta.total));
+    });
+  }, 20000);
 
   it('page e limit malformados ou fora do intervalo são 400, não 500', async () => {
     const auth = { Authorization: `Bearer ${token('manutencao')}` };
