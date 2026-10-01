@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 const ATRASO_ICONE_MS = 400
 const DURACAO_ICONE_VISIVEL_MS = 700
 const DURACAO_TINTA_SAI_MS = 800
+const DIGITACAO_MS_POR_LETRA = 30
+const PAUSA_APOS_DIGITAR_MS = 500
 
 /**
  * Tela cheia de sucesso (entrada no sistema, senha definida) e de "aguardando aprovação" — estilo tela de
@@ -22,27 +24,51 @@ const DURACAO_TINTA_SAI_MS = 800
 export function TelaSucessoAnimada({
   aoSair,
   aoTerminarAnimacao,
+  mensagem,
 }: {
   aoSair?: () => void
   /** Quando informado, a tela é só a animação: ao fim dela chama isto e não mostra o texto de "aguardando aprovação". */
   aoTerminarAnimacao?: () => void
+  /** Frase digitada letra a letra sob o check (ex.: "Login realizado com sucesso"); a tinta espera ela terminar. */
+  mensagem?: string
 }) {
   const [fase, setFase] = useState<'tinta-entra' | 'tinta-sai' | 'conteudo'>('tinta-entra')
   const [iconeVisivel, setIconeVisivel] = useState(false)
+  const [digitado, setDigitado] = useState('')
+  // reduced-motion: a frase aparece inteira, sem digitar
+  const semMovimento = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const tempoDigitando = mensagem && !semMovimento ? mensagem.length * DIGITACAO_MS_POR_LETRA + PAUSA_APOS_DIGITAR_MS : 0
+  const duracaoVisivel = Math.max(DURACAO_ICONE_VISIVEL_MS, tempoDigitando)
 
   useEffect(() => {
     const t1 = window.setTimeout(() => setIconeVisivel(true), ATRASO_ICONE_MS)
-    const t2 = window.setTimeout(() => setFase('tinta-sai'), ATRASO_ICONE_MS + DURACAO_ICONE_VISIVEL_MS)
+    const t2 = window.setTimeout(() => setFase('tinta-sai'), ATRASO_ICONE_MS + duracaoVisivel)
     const t3 = window.setTimeout(
       () => setFase('conteudo'),
-      ATRASO_ICONE_MS + DURACAO_ICONE_VISIVEL_MS + DURACAO_TINTA_SAI_MS,
+      ATRASO_ICONE_MS + duracaoVisivel + DURACAO_TINTA_SAI_MS,
     )
     return () => {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
       window.clearTimeout(t3)
     }
-  }, [])
+  }, [duracaoVisivel])
+
+  // efeito de digitação: começa junto com o check
+  useEffect(() => {
+    if (!iconeVisivel || !mensagem) return
+    if (semMovimento) {
+      setDigitado(mensagem)
+      return
+    }
+    let n = 0
+    const id = window.setInterval(() => {
+      n += 1
+      setDigitado(mensagem.slice(0, n))
+      if (n >= mensagem.length) window.clearInterval(id)
+    }, DIGITACAO_MS_POR_LETRA)
+    return () => window.clearInterval(id)
+  }, [iconeVisivel, mensagem, semMovimento])
 
   useEffect(() => {
     if (fase === 'conteudo') aoTerminarAnimacao?.()
@@ -61,7 +87,18 @@ export function TelaSucessoAnimada({
       )}
 
       {iconeVisivel && fase !== 'conteudo' && (
-        <CheckCircle2 className="relative z-10 size-24 animate-check-entra text-white" strokeWidth={1.5} />
+        <div className="relative z-10 flex flex-col items-center gap-5 text-center">
+          <CheckCircle2 className="size-24 animate-check-entra text-white" strokeWidth={1.5} />
+          {mensagem && (
+            <p className="text-titulo font-medium text-white">
+              <span className="sr-only">{mensagem}</span>
+              <span aria-hidden>
+                {digitado}
+                <span className="ml-0.5 inline-block h-[0.9em] w-0.5 translate-y-[0.1em] animate-pulse bg-white" />
+              </span>
+            </p>
+          )}
+        </div>
       )}
 
       {fase === 'conteudo' && !aoTerminarAnimacao && (
