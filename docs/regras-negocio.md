@@ -97,6 +97,41 @@ como contornar via corpo da requisição.
 `ferramentas.status = 'indisponivel'`, `motivo_indisponivel = 'avaria'`, e
 uma linha nova em `ocorrencias` com o `colaborador_id` correto.
 
+### Diagrama de estados da ferramenta (bônus "se sobrar tempo")
+
+As Regras 1, 2 e 3 juntas definem a máquina de estados completa de
+`ferramentas.status`. Toda transição é automática (trigger de banco) ou uma
+ação explícita e auditada (nunca um `UPDATE` livre de status pelo corpo da
+requisição — não há rota que aceite `status` diretamente, ver Regra 6 e a
+issue API-14):
+
+```mermaid
+stateDiagram-v2
+    [*] --> disponivel: cadastro da ferramenta
+
+    disponivel --> em_uso: POST /emprestimos (retirada)\nfn_valida_retirada bloqueia se já não estiver disponível
+
+    em_uso --> disponivel: PATCH /emprestimos/:id/devolucao\ncondicaoDevolucao = ok\n(fn_sync_status_ferramenta)
+
+    em_uso --> indisponivel: PATCH /emprestimos/:id/devolucao\ncondicaoDevolucao = avaria | perda\n(fn_sync_status_ferramenta + fn_abre_ocorrencia, Regra 3)
+
+    indisponivel --> disponivel: PATCH /ferramentas/:id/disponibilizar\nação explícita e auditada (tabela auditoria)\n409 FERRAMENTA_JA_DISPONIVEL se já não estiver indisponível
+```
+
+Observações sobre o diagrama:
+
+- A transição `indisponivel → disponivel` **não é automática** — é a única
+  ação explícita das quatro, de propósito (regra de negócio documentada em
+  `api/src/services/ferramentaService.ts:243-246`: "após o reparo, a
+  disponibilização deve ser uma ação explícita e auditável"). Tentar
+  disponibilizar uma ferramenta que já está disponível devolve **409
+  FERRAMENTA_JA_DISPONIVEL**.
+- Ferramentas marcadas `eh_kit = true` têm uma variação: o status do kit
+  inteiro só é sincronizado quando o registro de empréstimo/devolução é do
+  kit inteiro (`item_kit_id IS NULL`); devolver uma peça avulsa com
+  avaria/perda abre a ocorrência mas não muda o status do kit container (ver
+  `docs/decisoes-pendentes.md`, seção "Devolução de peça avulsa de kit").
+
 ---
 
 ## Regra 4 — Atividade é campo opcional na retirada
@@ -215,9 +250,15 @@ reescrever a regra por conta própria.
 `RAISE EXCEPTION 'Limite máximo de 9999 ferramentas ativas atingido...'`
 (`api/db/migrations/0001_init.sql:287`).
 
-**Exemplo real:** `api/src/tests/ferramentaService.test.ts:38-45` exercita a
-geração e o reaproveitamento de código quando uma ferramenta é baixada e uma
-nova é cadastrada.
+**Exemplo real:** `api/src/tests/ferramentaService.test.ts:38-45` cadastra
+uma ferramenta sem informar `codigo_identificacao` e confirma que a trigger
+gera o valor automaticamente. A geração concorrente (dois cadastros
+simultâneos disputando o mesmo código) foi corrigida na migration
+`0005_corrige_concorrencia_codigo_identificacao.sql` (serializa com
+`pg_advisory_xact_lock`) e validada por um teste de estresse manual (15/30
+inserções concorrentes) descrito em
+`docs/issues/api-13-endpoints-ocorrencias.md` — não há, hoje, um teste
+automatizado permanente para essa concorrência na suíte principal.
 
 ---
 
