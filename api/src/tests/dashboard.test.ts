@@ -3,6 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
+import { emSnapshot, obter } from '../services/dashboardService.js';
 
 const token = (papel: string) => jwt.sign({ id: 1, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
 
@@ -58,4 +59,24 @@ describe('GET /v1/dashboard', () => {
     expect((await request(app).get('/v1/dashboard')).status).toBe(401);
     expect((await request(app).get('/v1/dashboard').set('Authorization', `Bearer ${token('consulta')}`)).status).toBe(403);
   });
+});
+
+describe('snapshot do dashboard', () => {
+  it('contador de atrasadas e cartão de atrasados mostram o mesmo número (mesmo snapshot, mesma definição)', async () => {
+    const painel = await obter();
+    expect(painel.kpis.atrasadas).toBe(painel.atrasados.total);
+  });
+
+  it('devolve a conexão ao pool mesmo quando a consulta falha (25 falhas seguidas, com o pool em 20)', async () => {
+    for (let i = 0; i < 25; i++) {
+      await expect(emSnapshot((client) => client.query('SELECT * FROM tabela_que_nao_existe'))).rejects.toThrow();
+    }
+    // se alguma conexão tivesse vazado, o pool já teria esgotado e esta chamada estouraria o timeout
+    await expect(emSnapshot((client) => client.query('SELECT 1 AS ok'))).resolves.toBeTruthy();
+  }, 20000);
+
+  it('um painel inteiro ocupa uma conexão: 30 painéis ao mesmo tempo não esgotam o pool', async () => {
+    const paineis = await Promise.all(Array.from({ length: 30 }, () => obter()));
+    expect(paineis).toHaveLength(30);
+  }, 30000);
 });
