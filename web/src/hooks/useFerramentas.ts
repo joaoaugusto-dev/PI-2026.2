@@ -52,9 +52,9 @@ export function statusParaBadge(status: StatusFerramenta): Status {
   return status === 'em_uso' ? 'em-uso' : status
 }
 
-/** Código de patrimônio (regra 7, em revisão): `SF` + 6 dígitos do id de identificação. */
+/** Código de patrimônio (regra 7, em revisão): código de identificação com 6 dígitos (ex.: 000053). */
 export function formatarPatrimonio(codigo: number | null) {
-  return codigo ? `SF${String(codigo).padStart(6, '0')}` : '—'
+  return codigo ? String(codigo).padStart(6, '0') : '—'
 }
 
 export function useFerramentas(filtros: FiltrosFerramentas) {

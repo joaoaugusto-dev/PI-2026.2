@@ -47,7 +47,7 @@ export function ErroInesperadoPage() {
           </Button>
         </>
       }
-      etiqueta={<EtiquetaNaoLocalizada codigo="SF000500" item="Falha inesperada" />}
+      etiqueta={<EtiquetaNaoLocalizada codigo="000500" item="Falha inesperada" />}
     />
   )
 }

@@ -224,7 +224,7 @@ export function DesignSystemPage() {
             <p className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">
               Setor de destino
             </p>
-            <p className="font-mono text-titulo font-medium">SF000452 · 4412 · 23/08/2026</p>
+            <p className="font-mono text-titulo font-medium">000452 · 4412 · 23/08/2026</p>
             <p className="text-kpi">0123456789</p>
           </div>
         </Card>
@@ -316,7 +316,7 @@ export function DesignSystemPage() {
             </p>
             <input
               className="h-(--control-h) w-full rounded-lg border px-3 text-corpo outline-none"
-              value="SF000452"
+              value="000452"
               readOnly
             />
           </div>
@@ -326,14 +326,14 @@ export function DesignSystemPage() {
             </p>
             <div className="flex h-(--control-h) w-full items-center gap-2 rounded-lg border border-status-disponivel/40 bg-status-disponivel/5 px-3">
               <CheckCircle2Icon className="size-5 text-status-disponivel" />
-              <span className="text-corpo">SF000452</span>
+              <span className="text-corpo">000452</span>
             </div>
           </div>
           <div className="space-y-2">
             <p className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Erro</p>
             <input
               className="h-(--control-h) w-full rounded-lg border border-destructive px-3 text-corpo outline-none"
-              value="SF00045"
+              value="00045"
               readOnly
               aria-invalid
             />
@@ -428,7 +428,7 @@ export function DesignSystemPage() {
               nota="20ms entre itens, só nos 6 primeiros — do 7º em diante entra sem animação, senão uma lista de 400 ferramentas vira cascata."
             >
               <ul className="lista-stagger space-y-1">
-                {['SF000452', 'SF000453', 'SF000454', 'SF000455'].map((codigo) => (
+                {['000452', '000453', '000454', '000455'].map((codigo) => (
                   <li
                     key={codigo}
                     className="rounded-md border px-3 py-2 font-mono text-corpo"
@@ -446,7 +446,7 @@ export function DesignSystemPage() {
             >
               <div className="animate-reconhecido flex h-(--control-h) items-center gap-2 rounded-lg border border-status-disponivel/40 bg-status-disponivel/5 px-3">
                 <CheckCircle2Icon className="size-5 text-status-disponivel" />
-                <span className="text-corpo">SF000452</span>
+                <span className="text-corpo">000452</span>
               </div>
             </Demo>
 
@@ -457,7 +457,7 @@ export function DesignSystemPage() {
             >
               <div className="space-y-1">
                 <div className="animate-erro flex h-(--control-h) items-center rounded-lg border border-destructive px-3 font-mono text-corpo">
-                  SF00045
+                  00045
                 </div>
                 <p className="text-sm text-destructive">
                   Código com 7 dígitos — o padrão tem 8.
