@@ -6,7 +6,7 @@ Depende de: API-11, API-12 (concluídas)
 Milestone: Sprint 7
 Data da execução: 01/10/2026
 Branch: `docs/data-04-regras-negocio` (criada a partir da `development`)
-PR: (preencher após abrir)
+PR: [#176](https://github.com/joaoaugusto-dev/PI-2026.2/pull/176)
 
 ## Objetivo
 
