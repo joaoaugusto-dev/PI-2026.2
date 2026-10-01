@@ -27,21 +27,26 @@ export function useFerramentaPorTermo(termo: string) {
   })
 }
 
-/** `GET /colaboradores/identificar`: matrícula/crachá ou nome; 404 (não achou) vira `null` para abrir o cadastro rápido. */
+/**
+ * `GET /colaboradores/identificar`: matrícula/crachá ou nome. 404 (não achou) vira `item: null` para abrir o
+ * cadastro rápido; 409 `COLABORADOR_AMBIGUO` (vários nomes) traz os candidatos em `ambiguos`, para pedir a matrícula.
+ */
 export function useColaboradorPorTermo(termo: string) {
   return useQuery({
     queryKey: ['colaboradores', 'identificar', termo],
     enabled: termo.length > 0,
     retry: false,
-    queryFn: async ({ signal }): Promise<ColaboradorIdentificado | null> => {
+    queryFn: async ({ signal }): Promise<Escolha<ColaboradorIdentificado>> => {
       try {
         const { data } = await api.get<{ data: ColaboradorIdentificado }>('/colaboradores/identificar', {
           params: { termo },
           signal,
         })
-        return data.data
+        return { item: data.data, ambiguos: [] }
       } catch (e) {
-        if ((e as { response?: { status?: number } }).response?.status === 404) return null
+        const r = (e as { response?: { status?: number; data?: { error?: { code?: string; details?: ColaboradorIdentificado[] } } } }).response
+        if (r?.status === 404) return { item: null, ambiguos: [] }
+        if (r?.data?.error?.code === 'COLABORADOR_AMBIGUO') return { item: null, ambiguos: r.data.error.details ?? [] }
         throw e
       }
     },

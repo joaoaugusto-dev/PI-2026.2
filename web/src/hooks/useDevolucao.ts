@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { buscarEmprestimos, type Emprestimo } from '@/hooks/useEmprestimos'
-import type { HistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { api } from '@/lib/api'
 import { escolherPorCodigo, type Escolha } from '@/lib/patrimonio'
 
@@ -30,7 +29,7 @@ interface Devolucao {
   condicao: CondicaoDevolucao
   /** Descrição da ocorrência (vira a observação da devolução e a descrição da ocorrência). */
   observacao?: string
-  /** Custo estimado em reais; a devolução não recebe, então vai num PATCH da ocorrência aberta por ela. */
+  /** Custo estimado em reais (só avaria/perda); a API grava na ocorrência que a devolução abre. */
   custoEstimado?: number
 }
 
@@ -41,23 +40,13 @@ export function useDevolverEmprestimo() {
     mutationFn: async ({ emprestimo, condicao, observacao, custoEstimado }: Devolucao) => {
       const { data } = await api.patch<{ data: Emprestimo & { resumo: string } }>(
         `/emprestimos/${emprestimo.id}/devolucao`,
-        { condicaoDevolucao: condicao, observacaoDevolucao: observacao || undefined },
+        {
+          condicaoDevolucao: condicao,
+          observacaoDevolucao: observacao || undefined,
+          custoEstimado: condicao === 'ok' ? undefined : custoEstimado,
+        },
       )
-      let custoNaoGravado = false
-      if (condicao !== 'ok' && custoEstimado && emprestimo.ferramenta_id) {
-        try {
-          const { data: h } = await api.get<{ data: HistoricoFerramenta }>(
-            `/ferramentas/${emprestimo.ferramenta_id}/historico`,
-          )
-          const ocorrencia = h.data.ocorrencias.find((o) => o.emprestimo_id === emprestimo.id)
-          if (!ocorrencia) throw new Error('ocorrência não encontrada')
-          await api.patch(`/ocorrencias/${ocorrencia.id}`, { custoEstimado })
-        } catch {
-          // a devolução e a ocorrência já estão salvas; a tela avisa que o custo ficou de fora
-          custoNaoGravado = true
-        }
-      }
-      return { ...data.data, custoNaoGravado }
+      return data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ferramentas'] })

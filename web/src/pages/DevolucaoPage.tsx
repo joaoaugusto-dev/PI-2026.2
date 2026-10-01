@@ -143,9 +143,6 @@ export function DevolucaoPage() {
         onSuccess: (devolvido) => {
           playSomConfirmacao()
           toast.success(devolvido.resumo)
-          if (devolvido.custoNaoGravado) {
-            avisarErro('Devolução registrada, mas o custo estimado não foi salvo. Ajuste-o na ocorrência da ferramenta.')
-          }
           buscarOutra()
         },
         onError: (e) =>

@@ -80,10 +80,13 @@ export function RetiradaPage() {
   const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
   const ferramentaNaoEncontrada = termoFerramenta.length > 0 && termoFerramenta === ferramentaCodigo.trim() && !buscandoFerramenta && !erroFerramenta && !ferramentaAchada && ferramentasAmbiguas.length === 0
 
-  const { data: colaboradorAchado, isFetching: buscandoColaborador, isError: erroColaborador } = useColaboradorPorTermo(termoColaborador)
-  const colaboradorEncontrado = termoColaborador === colaborador.trim() ? (colaboradorAchado ?? null) : null
+  const { data: escolhaColaborador, isFetching: buscandoColaborador, isError: erroColaborador } = useColaboradorPorTermo(termoColaborador)
+  const colaboradorAtual = termoColaborador === colaborador.trim()
+  const colaboradorAchado = escolhaColaborador?.item ?? null
+  const colaboradorEncontrado = colaboradorAtual ? colaboradorAchado : null
+  const colaboradoresAmbiguos = colaboradorAtual ? (escolhaColaborador?.ambiguos ?? []) : []
   const colaboradorNaoEncontrado =
-    termoColaborador.length > 0 && termoColaborador === colaborador.trim() && !buscandoColaborador && !erroColaborador && !colaboradorAchado
+    termoColaborador.length > 0 && termoColaborador === colaborador.trim() && !buscandoColaborador && !erroColaborador && !colaboradorAchado && colaboradoresAmbiguos.length === 0
 
   // o setor de destino começa no setor do colaborador identificado (continua editável)
   useEffect(() => {
@@ -220,6 +223,13 @@ export function RetiradaPage() {
                 {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
               </span>
             </div>
+          )}
+
+          {colaboradoresAmbiguos.length > 0 && (
+            <p className="text-sm text-destructive">
+              Vários colaboradores para "{colaborador}" — digite ou bipe a matrícula:{' '}
+              {colaboradoresAmbiguos.map((c) => `${c.matricula} ${c.nome}`).join(' · ')}
+            </p>
           )}
 
           {erroColaborador && termoColaborador === colaborador.trim() && (
