@@ -29,6 +29,13 @@ const GLIFOS = {
       <path d="M290 10 L234 82 H316 M290 10 V112" />
     </>
   ),
+  // 1 ⚙ 1 — link de uso único: "1 uso de 1", a engrenagem no meio
+  usado: (
+    <>
+      <path d="M52 34 L72 12 V112" />
+      <path d="M258 34 L278 12 V112" />
+    </>
+  ),
   // 5 ⚙ 0 — a engrenagem é o primeiro zero
   '500': (
     <>
@@ -46,7 +53,7 @@ const GLIFOS = {
  */
 export function IlustracaoErro({ codigo, className }: { codigo: keyof typeof GLIFOS; className?: string }) {
   return (
-    <svg viewBox="0 0 330 130" role="img" aria-label={`Erro ${codigo}`} className={className}>
+    <svg viewBox="0 0 330 130" role="img" aria-label={codigo === 'usado' ? 'Link de uso único já usado' : `Erro ${codigo}`} className={className}>
       <g fill="none" stroke="currentColor" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round">
         {GLIFOS[codigo]}
       </g>
