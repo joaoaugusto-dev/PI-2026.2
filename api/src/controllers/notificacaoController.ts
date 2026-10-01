@@ -31,4 +31,16 @@ export class NotificacaoController {
       return next(error);
     }
   }
+
+  /**
+   * PATCH /v1/notificacoes/lida
+   */
+  static async marcarTodasLidas(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const atualizadas = await notificacaoService.marcarTodasLidas(req.usuario!.id);
+      return sendSuccess(res, { atualizadas }, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }

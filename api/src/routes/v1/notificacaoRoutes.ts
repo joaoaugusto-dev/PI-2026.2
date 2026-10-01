@@ -85,4 +85,23 @@ router.patch(
   NotificacaoController.marcarLida
 );
 
+/**
+ * @openapi
+ * /notificacoes/lida:
+ *   patch:
+ *     summary: Marca todas as notificações não lidas como lidas
+ *     tags:
+ *       - Notificações
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Quantidade de notificações atualizadas
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.patch('/lida', authenticate, authorize('manutencao'), NotificacaoController.marcarTodasLidas);
+
 export default router;

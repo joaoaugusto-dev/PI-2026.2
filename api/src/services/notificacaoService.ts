@@ -55,3 +55,11 @@ export async function marcarLida(id: number, usuarioId: number): Promise<Notific
   }
   return result.rows[0];
 }
+
+export async function marcarTodasLidas(usuarioId: number): Promise<number> {
+  const result = await query(
+    'UPDATE notificacoes SET lida = TRUE WHERE lida = FALSE AND (usuario_id IS NULL OR usuario_id = $1)',
+    [usuarioId]
+  );
+  return result.rowCount ?? 0;
+}

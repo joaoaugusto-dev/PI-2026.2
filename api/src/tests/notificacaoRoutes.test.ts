@@ -18,6 +18,7 @@ describe('Rotas de Notificações (API-17)', () => {
   let naoLidaId: number;
   let outroUsuarioId: number;
   let alheiaId: number;
+  let naoLidasAntes: number[] = [];
 
   const get = (qs: string, token: string | null = manutencaoToken) => {
     const req = request(app).get(`/v1/notificacoes${qs}`);
@@ -42,12 +43,15 @@ describe('Rotas de Notificações (API-17)', () => {
     manutencaoToken = gerarToken('manutencao', usuarios[0].id);
     consultaToken = gerarToken('consulta', usuarios[0].id);
     outroUsuarioId = usuarios[1].id;
+    // 'marcar todas' mexe nas notificações reais do banco; guarda quais estavam não lidas para restaurar
+    naoLidasAntes = (await query<{ id: number }>('SELECT id FROM notificacoes WHERE lida = FALSE')).rows.map((n) => n.id);
     naoLidaId = await inserir(null);
     alheiaId = await inserir(outroUsuarioId);
   });
 
   afterAll(async () => {
     await query('DELETE FROM notificacoes WHERE titulo LIKE $1', [`${PREFIXO}%`]);
+    await query('UPDATE notificacoes SET lida = FALSE WHERE id = ANY($1)', [naoLidasAntes]);
   });
 
   it('lista não lidas, com o contador em meta.total, sem as de outro usuário', async () => {
@@ -65,6 +69,18 @@ describe('Rotas de Notificações (API-17)', () => {
     expect(res.body.data.lida).toBe(true);
     const ids = (await get('?lida=false&limit=100')).body.data.map((n: { id: number }) => n.id);
     expect(ids).not.toContain(naoLidaId);
+  });
+
+  it('marca todas como lidas, menos as de outro usuário, e exige perfil manutencao', async () => {
+    const extra = await inserir(null);
+    const res = await request(app).patch('/v1/notificacoes/lida').set('Authorization', `Bearer ${manutencaoToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.atualizadas).toBeGreaterThanOrEqual(1);
+    const lidas = await query<{ id: number; lida: boolean }>('SELECT id, lida FROM notificacoes WHERE id = ANY($1)', [[extra, alheiaId]]);
+    expect(lidas.rows.find((n) => n.id === extra)?.lida).toBe(true);
+    expect(lidas.rows.find((n) => n.id === alheiaId)?.lida).toBe(false);
+    const proibido = await request(app).patch('/v1/notificacoes/lida').set('Authorization', `Bearer ${consultaToken}`);
+    expect(proibido.status).toBe(403);
   });
 
   it('404 ao marcar notificação inexistente ou de outro usuário', async () => {
