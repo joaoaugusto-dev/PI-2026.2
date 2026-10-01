@@ -115,7 +115,12 @@ atividade e os usuários de retirada/devolução — além da `situacao` calcula
 
 ### `vw_dashboard_kpis`
 Fornece: total cadastradas, disponíveis, em uso, indisponíveis, atrasadas e
-ocorrências abertas.
+ocorrências abertas. `total_atrasadas` conta quem já passou do **horário** da
+previsão (`NOW() > previsao_devolucao`); `GET /v1/dashboard` usa os outros cinco
+números da view e calcula `atrasadas` pelo **dia** (previsão em dia anterior), igual
+ao cartão de atrasados, para a barra e o cartão mostrarem o mesmo número. Quem
+consultar a view direto (relatório, outra tela) vê a definição por horário. Hoje o
+único consumidor da view é o `dashboardService`.
 
 ### `vw_ocorrencias_por_colaborador`
 Agrupa avarias, perdas e custo (real ou estimado) por colaborador e setor.
