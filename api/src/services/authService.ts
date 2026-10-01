@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getClient, query } from '../config/database.js';
 import { env } from '../config/env.js';
-import { UnauthorizedError, NotFoundError } from '../utils/errors.js';
+import { UnauthorizedError, NotFoundError, TooManyRequestsError } from '../utils/errors.js';
 
 export interface LoginResult {
   token: string;
@@ -22,6 +22,8 @@ export interface ConviteCriado {
 }
 
 const VALIDADE_CONVITE_DIAS = 7;
+const MAX_FALHAS_LOGIN = 5;
+const BLOQUEIO_LOGIN_MIN = 15;
 
 const hashDoToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
@@ -46,7 +48,7 @@ export class AuthService {
    */
   static async login(matricula: string, senha: string): Promise<LoginResult> {
     const result = await query(
-      `SELECT u.id, u.senha_hash, u.papel, u.ativo, c.nome, c.matricula, c.ativo AS colaborador_ativo
+      `SELECT u.id, u.senha_hash, u.papel, u.ativo, u.bloqueado_ate > NOW() AS bloqueado, c.nome, c.matricula, c.ativo AS colaborador_ativo
        FROM colaboradores c
        JOIN usuarios u ON u.colaborador_id = c.id
        WHERE c.matricula = $1`,
@@ -63,10 +65,27 @@ export class AuthService {
       throw new UnauthorizedError('Usuário inativo. Contate o administrador.', 'USER_INACTIVE');
     }
 
+    if (usuario.bloqueado) {
+      throw new TooManyRequestsError(
+        `Muitas tentativas erradas. Tente novamente em ${BLOQUEIO_LOGIN_MIN} minutos ou peça um link de acesso ao administrador.`,
+        'CONTA_BLOQUEADA'
+      );
+    }
+
     const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
     if (!senhaValida) {
+      // atômico: incrementa e, ao atingir o limite, bloqueia e zera o contador
+      await query(
+        `UPDATE usuarios
+         SET tentativas_falhas = CASE WHEN tentativas_falhas + 1 >= $2 THEN 0 ELSE tentativas_falhas + 1 END,
+             bloqueado_ate = CASE WHEN tentativas_falhas + 1 >= $2 THEN NOW() + make_interval(mins => $3) ELSE bloqueado_ate END
+         WHERE id = $1`,
+        [usuario.id, MAX_FALHAS_LOGIN, BLOQUEIO_LOGIN_MIN]
+      );
       throw new UnauthorizedError('Matrícula ou senha inválidos', 'INVALID_CREDENTIALS');
     }
+
+    await query('UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL WHERE id = $1 AND tentativas_falhas > 0', [usuario.id]);
 
     const token = jwt.sign(
       {
@@ -115,6 +134,11 @@ export class AuthService {
          RETURNING expira_em`,
         [colaboradorId, hashDoToken(token), VALIDADE_CONVITE_DIAS, adminId]
       );
+      await client.query(
+        `INSERT INTO auditoria (tabela, operacao, registro_id, dados_novos, usuario_id)
+         VALUES ('colaboradores', 'convite_criado', $1, $2, $3)`,
+        [colaboradorId, JSON.stringify({ expira_em: inserido.rows[0].expira_em }), adminId]
+      );
       await client.query('COMMIT');
       return { token, expiraEm: inserido.rows[0].expira_em, colaborador: colaborador.rows[0] };
     } catch (error) {
@@ -160,11 +184,17 @@ export class AuthService {
       const usuario = await client.query<{ id: number; papel: string }>(
         `INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
          VALUES ($1, $2, 'manutencao', true)
-         ON CONFLICT (colaborador_id) DO UPDATE SET senha_hash = EXCLUDED.senha_hash, ativo = true
+         ON CONFLICT (colaborador_id) DO UPDATE
+           SET senha_hash = EXCLUDED.senha_hash, ativo = true, tentativas_falhas = 0, bloqueado_ate = NULL, updated_at = NOW()
          RETURNING id, papel`,
         [colaboradorId, senhaHash]
       );
       await client.query('UPDATE convites_acesso SET usado_em = NOW() WHERE id = $1', [conviteId]);
+      await client.query(
+        `INSERT INTO auditoria (tabela, operacao, registro_id, dados_novos, usuario_id)
+         VALUES ('colaboradores', 'senha_definida', $1, $2, $3)`,
+        [colaboradorId, JSON.stringify({ convite_id: conviteId }), usuario.rows[0].id]
+      );
       await client.query('COMMIT');
 
       const { id, papel } = usuario.rows[0];
