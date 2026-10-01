@@ -11,7 +11,7 @@ describe('swaggerSpec (merge JSDoc + zod-to-openapi)', () => {
 
   it('gera PATCH /ferramentas/{id} com id integer em path', () => {
     const patch = paths['/ferramentas/{id}']?.patch;
-    expect(patch).toBeDefined();
+    expect(patch?.parameters).toBeDefined();
     const id = (patch?.parameters as Array<{ name: string; in: string; schema: { type: string } }>)
       .find((p) => p.name === 'id');
     expect(id?.in).toBe('path');

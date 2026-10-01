@@ -44,7 +44,6 @@ registry.registerPath({
     params: z.object({
       id: z.coerce.number().int().openapi({
         param: { name: 'id', in: 'path', required: true },
-        type: 'integer',
         description: 'ID da ferramenta',
       }),
     }),
