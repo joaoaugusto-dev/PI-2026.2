@@ -24,6 +24,8 @@ type OcorrenciaCardProps = {
   carregandoDetalhe: boolean
   onDisponibilizar: () => void
   disponibilizando: boolean
+  /** disponibilizada com sucesso: toca a saída (carimbo + colapso) antes de a lista tirar o card */
+  saindo?: boolean
 }
 
 /** Card de ocorrência da tela Indisponíveis — segue o frame "05 - Indisponíveis" do Figma. */
@@ -34,6 +36,7 @@ export function OcorrenciaCard({
   carregandoDetalhe,
   onDisponibilizar,
   disponibilizando,
+  saindo = false,
 }: OcorrenciaCardProps) {
   const avancar = useAvancarTratativa(ferramenta.id)
   function aoAvancar() {
@@ -56,91 +59,106 @@ export function OcorrenciaCard({
   const corTag = tipoTag === 'PERDA' ? 'text-status-indisponivel bg-status-indisponivel/15' : 'text-status-atraso bg-status-atraso/15'
 
   return (
-    <Card className="shadow-xs">
-      <CardContent className="flex flex-col gap-3.5">
-        <div className="flex items-start gap-5">
-          <IconeFerramenta
-            nome={ferramenta.nome}
-            fotoUrl={ferramenta.foto_url}
-            className="size-14 shrink-0 bg-status-indisponivel/10 text-status-indisponivel"
-          />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-center gap-2.5">
-              <p className="truncate text-secao font-semibold">{ferramenta.nome}</p>
-              {tipoTag && (
-                <span className={cn('shrink-0 rounded-sm px-2.5 py-0.5 text-[10px] font-semibold', corTag)}>
-                  {tipoTag}
-                </span>
-              )}
+    <div
+      className={cn(
+        'grid transition-[grid-template-rows,opacity,margin] duration-[420ms] ease-soufer',
+        saindo ? '-mb-4 grid-rows-[0fr] opacity-0 delay-[900ms]' : 'grid-rows-[1fr]',
+      )}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <Card className="relative shadow-xs">
+          {saindo && (
+            <div className="absolute inset-0 z-20 flex animate-entrada items-center justify-center gap-2.5 bg-status-disponivel text-white">
+              <CheckCircle2 className="size-7 animate-check-entra" />
+              <span className="text-secao font-semibold">Disponível novamente</span>
             </div>
-            <p className="font-mono text-rotulo text-muted-foreground">
-              {formatarPatrimonio(ferramenta.codigo_identificacao)}
-            </p>
-            {carregandoDetalhe ? (
-              <Skeleton className="mt-1 h-4 w-2/3" />
-            ) : (
-              <p className="text-corpo text-muted-foreground">{ocorrencia?.descricao ?? '—'}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 border-t pt-3.5 sm:grid-cols-4">
-          {(
-            [
-              ['Responsável', carregandoDetalhe ? null : (colaborador?.nome ?? '—')],
-              ['Matrícula', carregandoDetalhe ? null : (colaborador?.matricula ?? '—')],
-              ['Data', carregandoDetalhe ? null : ocorrencia ? dataBR(ocorrencia.created_at) : '—'],
-              ['Custo estimado', carregandoDetalhe ? null : formatarMoeda(ocorrencia?.custo_estimado ?? null)],
-            ] as const
-          ).map(([label, valor]) => (
-            <div key={label} className="flex flex-col gap-0.5">
-              <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">{label}</span>
-              {valor === null ? (
-                <Skeleton className="h-5 w-20" />
-              ) : (
-                <span className="truncate text-corpo font-semibold">{valor}</span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-3 border-t pt-3.5">
-          <EtapasTratativa etapaAtual={etapaAtualIndex} resolvida={resolvida} />
-
-          <div className="flex justify-end gap-2">
-            {resolvida ? (
-              <Button
-                className="animate-entrada bg-status-disponivel text-white hover:bg-status-disponivel/90"
-                onClick={onDisponibilizar}
-                disabled={disponibilizando}
-              >
-                {disponibilizando ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                Disponibilizar ferramenta
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  className="group"
-                  onClick={aoAvancar}
-                  disabled={!ocorrencia || avancar.isPending}
-                >
-                  {avancar.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+          )}
+          <CardContent className="flex flex-col gap-3.5">
+            <div className="flex items-start gap-5">
+              <IconeFerramenta
+                nome={ferramenta.nome}
+                fotoUrl={ferramenta.foto_url}
+                className="size-14 shrink-0 bg-status-indisponivel/10 text-status-indisponivel"
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex items-center gap-2.5">
+                  <p className="truncate text-secao font-semibold">{ferramenta.nome}</p>
+                  {tipoTag && (
+                    <span className={cn('shrink-0 rounded-sm px-2.5 py-0.5 text-[10px] font-semibold', corTag)}>
+                      {tipoTag}
+                    </span>
                   )}
-                  Avançar tratativa
-                </Button>
-                <Button onClick={onDisponibilizar} disabled={disponibilizando}>
-                  {disponibilizando ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                  Disponibilizar ferramenta
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+                </div>
+                <p className="font-mono text-rotulo text-muted-foreground">
+                  {formatarPatrimonio(ferramenta.codigo_identificacao)}
+                </p>
+                {carregandoDetalhe ? (
+                  <Skeleton className="mt-1 h-4 w-2/3" />
+                ) : (
+                  <p className="text-corpo text-muted-foreground">{ocorrencia?.descricao ?? '—'}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 border-t pt-3.5 sm:grid-cols-4">
+              {(
+                [
+                  ['Responsável', carregandoDetalhe ? null : (colaborador?.nome ?? '—')],
+                  ['Matrícula', carregandoDetalhe ? null : (colaborador?.matricula ?? '—')],
+                  ['Data', carregandoDetalhe ? null : ocorrencia ? dataBR(ocorrencia.created_at) : '—'],
+                  ['Custo estimado', carregandoDetalhe ? null : formatarMoeda(ocorrencia?.custo_estimado ?? null)],
+                ] as const
+              ).map(([label, valor]) => (
+                <div key={label} className="flex flex-col gap-0.5">
+                  <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">{label}</span>
+                  {valor === null ? (
+                    <Skeleton className="h-5 w-20" />
+                  ) : (
+                    <span className="truncate text-corpo font-semibold">{valor}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3 border-t pt-3.5">
+              <EtapasTratativa etapaAtual={etapaAtualIndex} resolvida={resolvida} />
+
+              <div className="flex justify-end gap-2">
+                {resolvida ? (
+                  <Button
+                    className="animate-entrada bg-status-disponivel text-white hover:bg-status-disponivel/90"
+                    onClick={onDisponibilizar}
+                    disabled={disponibilizando}
+                  >
+                    {disponibilizando ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+                    Disponibilizar ferramenta
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="group"
+                      onClick={aoAvancar}
+                      disabled={!ocorrencia || avancar.isPending}
+                    >
+                      {avancar.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                      )}
+                      Avançar tratativa
+                    </Button>
+                    <Button onClick={onDisponibilizar} disabled={disponibilizando}>
+                      {disponibilizando ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+                      Disponibilizar ferramenta
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

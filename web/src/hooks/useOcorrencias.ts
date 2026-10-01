@@ -118,14 +118,11 @@ export function useAvancarTratativa(ferramentaId: number) {
  * específica.
  */
 export function useDisponibilizarFerramenta() {
-  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (ferramentaId: number) => {
       const { data } = await api.patch<{ data: Ferramenta }>(`/ferramentas/${ferramentaId}/disponibilizar`)
       return data.data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ferramentas'] })
-    },
+    // sem invalidar aqui: a tela refaz as listas só depois da animação de saída do card
   })
 }
