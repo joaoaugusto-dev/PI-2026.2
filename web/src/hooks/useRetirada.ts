@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Emprestimo } from '@/hooks/useEmprestimos'
 import type { Ferramenta } from '@/hooks/useFerramentas'
 import { api } from '@/lib/api'
-import { escolherPorCodigo, type Escolha } from '@/lib/patrimonio'
+import { escolherPorCodigo, parseCodigoPatrimonio, type Escolha } from '@/lib/patrimonio'
 
 export interface ColaboradorIdentificado {
   id: number
@@ -14,13 +14,24 @@ export interface ColaboradorIdentificado {
 /**
  * Ferramenta achada por código de patrimônio ou nome (`GET /ferramentas?q=`, que
  * já ignora zeros à esquerda). Com vários resultados, vale o de código igual ao digitado; sem ele,
- * nenhum é escolhido (`ambiguos` traz as opções).
+ * nenhum é escolhido (`ambiguos` traz as opções). Código numérico vai direto em `/por-codigo`: a listagem
+ * ordena por nome, então o de código exato poderia ficar fora da página.
  */
 export function useFerramentaPorTermo(termo: string) {
   return useQuery({
     queryKey: ['ferramentas', 'por-termo', termo],
     enabled: termo.length > 0,
     queryFn: async ({ signal }): Promise<Escolha<Ferramenta>> => {
+      const codigo = parseCodigoPatrimonio(termo)
+      if (codigo) {
+        try {
+          const { data } = await api.get<{ data: Ferramenta }>(`/ferramentas/por-codigo/${codigo}`, { signal })
+          return { item: data.data, ambiguos: [] }
+        } catch (e) {
+          const status = (e as { response?: { status?: number } }).response?.status
+          if (status !== 404 && status !== 400) throw e // sem esse código: pode ser um nome numérico, cai na busca
+        }
+      }
       const { data } = await api.get<{ data: Ferramenta[] }>('/ferramentas', { params: { q: termo, limit: 10 }, signal })
       return escolherPorCodigo(data.data, termo, (f) => f.codigo_identificacao)
     },

@@ -17,7 +17,7 @@ export function useEmprestimoAberto(termo: string) {
     queryFn: async ({ signal }): Promise<Escolha<Emprestimo>> => {
       // o filtro `situacao` é um valor só; "aberto" são as duas, então o histórico devolvido não ocupa a página
       const [noPrazo, atrasados] = await Promise.all(
-        (['em_aberto', 'atrasado'] as const).map((situacao) => buscarEmprestimos({ q: termo, situacao, limit: 20 }, signal)),
+        (['em_aberto', 'atrasado'] as const).map((situacao) => buscarEmprestimos({ q: termo, situacao, limit: 100 }, signal)),
       )
       return escolherPorCodigo([...noPrazo.data, ...atrasados.data], termo, (e) => e.codigo_identificacao)
     },

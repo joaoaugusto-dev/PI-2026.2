@@ -48,7 +48,6 @@ const schema = z
 type FormValues = z.infer<typeof schema>
 
 export function DevolucaoPage() {
-  const [hoje] = useState(() => new Date())
   // o dashboard abre a devolução já com o código da ferramenta atrasada
   const [params] = useSearchParams()
 
@@ -108,6 +107,7 @@ export function DevolucaoPage() {
 
   const precisaOcorrencia = condicao === 'avaria' || condicao === 'perda'
 
+  const hoje = new Date() // a cada render: o balcão deixa a tela aberta de um dia para o outro
   const diasAtraso = encontrado ? Math.max(0, diasEntre(hoje, encontrado.previsao_devolucao)) : 0
   const diasDesdeSaida = encontrado ? diasEntre(hoje, encontrado.data_retirada) : 0
 
@@ -137,7 +137,7 @@ export function DevolucaoPage() {
         emprestimo: encontrado,
         condicao: data.condicao,
         observacao: data.condicao === 'ok' ? undefined : data.descricaoOcorrencia?.trim().slice(0, 500),
-        custoEstimado: Number.isNaN(centavos) ? undefined : centavos / 100,
+        custoEstimado: centavos > 0 ? centavos / 100 : undefined, // NaN e R$ 0,00 viram "sem custo"
       },
       {
         onSuccess: (devolvido) => {
