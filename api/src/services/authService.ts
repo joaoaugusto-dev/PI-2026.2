@@ -1,8 +1,9 @@
+import { createHash, randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { query } from '../config/database.js';
+import { getClient, query } from '../config/database.js';
 import { env } from '../config/env.js';
-import { UnauthorizedError, NotFoundError, ConflictError } from '../utils/errors.js';
+import { UnauthorizedError, NotFoundError } from '../utils/errors.js';
 
 export interface LoginResult {
   token: string;
@@ -14,13 +15,18 @@ export interface LoginResult {
   };
 }
 
-export interface RegistroResult {
-  id: number;
-  nome: string;
-  matricula: string;
-  papel: string;
-  ativo: boolean;
+export interface ConviteCriado {
+  token: string;
+  expiraEm: string;
+  colaborador: { id: number; nome: string; matricula: string };
 }
+
+const VALIDADE_CONVITE_DIAS = 7;
+
+const hashDoToken = (token: string) => createHash('sha256').update(token).digest('hex');
+
+// mesma resposta para inexistente, expirado ou já usado: o link não revela o motivo
+const conviteInvalido = () => new NotFoundError('Link inválido ou expirado. Peça um novo ao administrador.', 'CONVITE_INVALIDO');
 
 export interface ConsultaSessaoResult {
   token: string;
@@ -85,51 +91,92 @@ export class AuthService {
   }
 
   /**
-   * Auto-cadastro da manutenção: a pessoa se identifica pela matrícula, que
-   * precisa existir em colaboradores (ativo) e ainda não ter conta. Cria a conta
-   * inativa, aguardando aprovação de um admin via PATCH /v1/usuarios/:id/ativar.
-   * O nome vem do cadastro do colaborador, não do corpo da requisição.
+   * Gera um link de acesso (convite) para o colaborador definir a própria senha.
+   * Invalida os convites anteriores ainda não usados. O token em claro só existe
+   * nesta resposta: o banco guarda o hash.
    */
-  static async registrar(matricula: string, senha: string): Promise<RegistroResult> {
-    const colaboradorResult = await query<{ id: number; nome: string; matricula: string }>(
-      'SELECT id, nome, matricula FROM colaboradores WHERE matricula = $1 AND ativo = true',
-      [matricula]
+  static async criarConvite(colaboradorId: number, adminId: number): Promise<ConviteCriado> {
+    const colaborador = await query<{ id: number; nome: string; matricula: string }>(
+      'SELECT id, nome, matricula FROM colaboradores WHERE id = $1 AND ativo = true',
+      [colaboradorId]
     );
-    const colaborador = colaboradorResult.rows[0];
-
-    if (!colaborador) {
-      throw new NotFoundError(
-        'Colaborador não encontrado com a matrícula informada ou cadastro inativo',
-        'COLABORADOR_NOT_FOUND'
-      );
+    if (!colaborador.rows[0]) {
+      throw new NotFoundError('Colaborador não encontrado ou inativo', 'COLABORADOR_NOT_FOUND');
     }
 
-    const conflito = new ConflictError('Esta matrícula já possui um cadastro de acesso', 'MATRICULA_JA_CADASTRADA');
-
-    const existente = await query('SELECT id FROM usuarios WHERE colaborador_id = $1', [colaborador.id]);
-    if (existente.rows.length > 0) {
-      throw conflito;
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const senhaHash = await bcrypt.hash(senha, salt);
-
+    const token = randomBytes(32).toString('base64url');
+    const client = await getClient();
     try {
-      const result = await query<{ id: number; papel: string; ativo: boolean }>(
-        `INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
-         VALUES ($1, $2, 'manutencao', false)
-         RETURNING id, papel, ativo`,
-        [colaborador.id, senhaHash]
+      await client.query('BEGIN');
+      await client.query('DELETE FROM convites_acesso WHERE colaborador_id = $1 AND usado_em IS NULL', [colaboradorId]);
+      const inserido = await client.query<{ expira_em: string }>(
+        `INSERT INTO convites_acesso (colaborador_id, token_hash, expira_em, criado_por)
+         VALUES ($1, $2, NOW() + make_interval(days => $3), $4)
+         RETURNING expira_em`,
+        [colaboradorId, hashDoToken(token), VALIDADE_CONVITE_DIAS, adminId]
       );
-
-      return { ...result.rows[0], nome: colaborador.nome, matricula: colaborador.matricula };
-    } catch (error: any) {
-      // Dois registros simultâneos da mesma matrícula: o índice único de
-      // usuarios.colaborador_id barra o segundo.
-      if (error.code === '23505') {
-        throw conflito;
-      }
+      await client.query('COMMIT');
+      return { token, expiraEm: inserido.rows[0].expira_em, colaborador: colaborador.rows[0] };
+    } catch (error) {
+      await client.query('ROLLBACK');
       throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** Quem abre o link vê o nome e a matrícula antes de escolher a senha. */
+  static async consultarConvite(token: string): Promise<{ nome: string; matricula: string }> {
+    const result = await query<{ nome: string; matricula: string }>(
+      `SELECT c.nome, c.matricula
+       FROM convites_acesso v JOIN colaboradores c ON c.id = v.colaborador_id
+       WHERE v.token_hash = $1 AND v.usado_em IS NULL AND v.expira_em > NOW() AND c.ativo = true`,
+      [hashDoToken(token)]
+    );
+    if (!result.rows[0]) throw conviteInvalido();
+    return result.rows[0];
+  }
+
+  /**
+   * Define a senha escolhida pela pessoa, cria a conta (ou troca a senha, se ela já
+   * tinha) ativa e devolve o mesmo resultado do login: a pessoa já entra logada.
+   */
+  static async aceitarConvite(token: string, senha: string): Promise<LoginResult> {
+    const senhaHash = await bcrypt.hash(senha, await bcrypt.genSalt(10));
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
+      // FOR UPDATE: dois acessos simultâneos ao mesmo link não passam os dois
+      const convite = await client.query<{ id: number; colaborador_id: number; nome: string; matricula: string }>(
+        `SELECT v.id, v.colaborador_id, c.nome, c.matricula
+         FROM convites_acesso v JOIN colaboradores c ON c.id = v.colaborador_id
+         WHERE v.token_hash = $1 AND v.usado_em IS NULL AND v.expira_em > NOW() AND c.ativo = true
+         FOR UPDATE OF v`,
+        [hashDoToken(token)]
+      );
+      if (!convite.rows[0]) throw conviteInvalido();
+      const { id: conviteId, colaborador_id: colaboradorId, nome, matricula } = convite.rows[0];
+
+      const usuario = await client.query<{ id: number; papel: string }>(
+        `INSERT INTO usuarios (colaborador_id, senha_hash, papel, ativo)
+         VALUES ($1, $2, 'manutencao', true)
+         ON CONFLICT (colaborador_id) DO UPDATE SET senha_hash = EXCLUDED.senha_hash, ativo = true
+         RETURNING id, papel`,
+        [colaboradorId, senhaHash]
+      );
+      await client.query('UPDATE convites_acesso SET usado_em = NOW() WHERE id = $1', [conviteId]);
+      await client.query('COMMIT');
+
+      const { id, papel } = usuario.rows[0];
+      const tokenSessao = jwt.sign({ id, nome, matricula, papel }, env.jwt.secret, {
+        expiresIn: env.jwt.expiresIn as any,
+      });
+      return { token: tokenSessao, usuario: { id, nome, matricula, papel } };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   }
 

@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { AuthController } from '../../controllers/authController.js';
 import { validate } from '../../middlewares/validate.js';
-import { loginSchema, registroSchema } from '../../validators/authValidator.js';
+import { aceitarConviteSchema, conviteTokenParamSchema, loginSchema } from '../../validators/authValidator.js';
 import { authenticate } from '../../middlewares/auth.js';
-import { loginLimiter, registroLimiter } from '../../middlewares/rateLimit.js';
+import { conviteLimiter, loginLimiter } from '../../middlewares/rateLimit.js';
 
 const router = Router();
 
@@ -41,7 +41,7 @@ const router = Router();
  *       429:
  *         description: Limite de 10 tentativas por minuto por IP excedido
  */
-// loginLimiter depois do validate() (ordem diferente do registroLimiter, que
+// loginLimiter depois do validate() (ordem diferente do conviteLimiter, que
 // vem antes): matrícula fora do formato de 4 dígitos é rejeitada de graça
 // pelo Zod, sem custar nada de banco/bcrypt, então não faz sentido gastar o
 // limite com isso — só tentativas de credencial (matrícula bem formada)
@@ -50,11 +50,44 @@ router.post('/login', validate({ body: loginSchema }), loginLimiter, AuthControl
 
 /**
  * @openapi
- * /auth/registro:
- *   post:
- *     summary: Auto-cadastro de manutenção (fica inativo até aprovação de um admin)
+ * /auth/convites/{token}:
+ *   get:
+ *     summary: Confere o link de convite e devolve nome e matrícula de quem vai definir a senha
  *     tags:
  *       - Autenticação
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Convite válido (nome e matrícula do colaborador)
+ *       404:
+ *         description: Link inválido, expirado ou já usado (CONVITE_INVALIDO)
+ *       429:
+ *         description: Limite de 10 tentativas por minuto por IP excedido
+ */
+router.get('/convites/:token', conviteLimiter, validate({ params: conviteTokenParamSchema }), AuthController.consultarConvite);
+
+/**
+ * @openapi
+ * /auth/convites/{token}/senha:
+ *   post:
+ *     summary: Define a senha pelo link de convite e já devolve a sessão (login automático)
+ *     description: >
+ *       Cria a conta de acesso do colaborador (ou troca a senha, se ela já
+ *       existia) e consome o convite: o link vale uma única vez. A resposta é a
+ *       mesma do login (token + usuario).
+ *     tags:
+ *       - Autenticação
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -62,29 +95,28 @@ router.post('/login', validate({ body: loginSchema }), loginLimiter, AuthControl
  *           schema:
  *             type: object
  *             required:
- *               - matricula
  *               - senha
  *             properties:
- *               matricula:
- *                 type: string
- *                 description: Matrícula do colaborador (exatamente 4 dígitos, 0001 a 9999). Precisa existir e estar ativa, e ainda não ter conta de acesso.
- *                 example: "0003"
  *               senha:
  *                 type: string
+ *                 description: Exatamente 6 dígitos
  *                 example: "123456"
  *     responses:
- *       201:
- *         description: Cadastro criado com sucesso, aguardando aprovação (ativo=false, sem token)
+ *       200:
+ *         description: Senha definida; token JWT e usuario
  *       400:
- *         description: Erro de validação nos campos (matrícula fora do padrão ou senha curta)
+ *         description: Senha fora do padrão de 6 dígitos
  *       404:
- *         description: Matrícula sem colaborador ativo
- *       409:
- *         description: Esta matrícula já possui cadastro de acesso (MATRICULA_JA_CADASTRADA)
+ *         description: Link inválido, expirado ou já usado (CONVITE_INVALIDO)
  *       429:
  *         description: Limite de 10 tentativas por minuto por IP excedido
  */
-router.post('/registro', registroLimiter, validate({ body: registroSchema }), AuthController.registrar);
+router.post(
+  '/convites/:token/senha',
+  conviteLimiter,
+  validate({ params: conviteTokenParamSchema, body: aceitarConviteSchema }),
+  AuthController.aceitarConvite
+);
 
 /**
  * @openapi

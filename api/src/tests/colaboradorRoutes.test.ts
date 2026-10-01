@@ -11,7 +11,7 @@ import { query } from '../config/database.js';
 // motivo do ferramentaService.test.ts); matrícula não aceita mais texto livre
 // (regra de 4 dígitos, issue #150), então a faixa 9301-9309 é reservada só
 // para este arquivo — não colide com o seed (0001-0052), auth.test.ts (9101),
-// authRegistro.test.ts (9201-9210) nem testes-manuais.sql (9005-9006).
+// o antigo authRegistro (9201-9210, removido), conviteAcesso.test.ts (9401-9404) nem testes-manuais.sql (9005-9006).
 const PREFIXO = 'ZZTESTE_API09_';
 
 function gerarToken(payload: Record<string, unknown>) {
