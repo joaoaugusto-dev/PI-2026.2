@@ -8,6 +8,10 @@ export type FotoSelecionada = { tipo: 'arquivo'; arquivo: File } | { tipo: 'url'
 type SeletorFotoProps = {
   value: FotoSelecionada | null
   onChange: (foto: FotoSelecionada | null) => void
+  /** Sem o campo "cole uma URL" (a API só recebe arquivo). */
+  semUrl?: boolean
+  /** `false` esconde o X (ex.: foto que já está salva e não pode ser apagada por aqui). */
+  removivel?: boolean
 }
 
 /**
@@ -18,7 +22,7 @@ type SeletorFotoProps = {
  * físico na API ainda (onde a imagem seria salva fica pra depois), então
  * nada disso é enviado no submit (ver comentário no `onSubmit` da página).
  */
-export function SeletorFoto({ value, onChange }: SeletorFotoProps) {
+export function SeletorFoto({ value, onChange, semUrl = false, removivel = true }: SeletorFotoProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [urlInput, setUrlInput] = useState('')
   const [previewArquivo, setPreviewArquivo] = useState<string | null>(null)
@@ -60,6 +64,7 @@ export function SeletorFoto({ value, onChange }: SeletorFotoProps) {
         {preview ? (
           <>
             <img src={preview} alt="Prévia da ferramenta" className="size-full object-cover" />
+            {removivel && (
             <button
               type="button"
               onClick={() => onChange(null)}
@@ -68,6 +73,7 @@ export function SeletorFoto({ value, onChange }: SeletorFotoProps) {
             >
               <X className="size-3.5" />
             </button>
+            )}
           </>
         ) : (
           <button
@@ -81,7 +87,7 @@ export function SeletorFoto({ value, onChange }: SeletorFotoProps) {
         )}
       </div>
 
-      {!preview && (
+      {!preview && !semUrl && (
         <div className="flex w-full items-center gap-1.5">
           <div className="relative flex-1">
             <Link2 className="absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />

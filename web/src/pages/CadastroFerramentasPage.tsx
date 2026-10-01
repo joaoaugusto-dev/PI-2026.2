@@ -30,6 +30,7 @@ export function CadastroFerramentasPage() {
       singular="Ferramenta"
       nomeCsv="modelo-ferramentas.csv"
       buscaPlaceholder="Buscar por nome, marca ou modelo"
+      foto
       colunas={[
         {
           cabecalho: 'Patrimônio',
