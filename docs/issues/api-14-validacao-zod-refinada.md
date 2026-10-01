@@ -7,7 +7,7 @@ Depende de: API-07 a API-13 (todas concluídas; API-13 mergeada em
 Milestone: Sprint 5
 Data da execução: 30/09/2026
 Branch: `feat/api-14-validacao-zod-refinada`
-PR: (preencher após abrir)
+PR: [#174](https://github.com/joaoaugusto-dev/PI-2026.2/pull/174)
 
 ## Objetivo
 
