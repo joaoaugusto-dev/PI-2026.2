@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Controller, useForm, type FieldErrors } from 'react-hook-form'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
 import { DEMO_PERMITIDO } from '@/lib/demo/flag'
@@ -131,9 +131,6 @@ export function LoginPage() {
               <Button type="submit" className="h-(--control-h)" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
-              </Button>
-              <Button asChild type="button" variant="outline" className="h-(--control-h) text-corpo">
-                <Link to="/cadastro">Criar Cadastro</Link>
               </Button>
               {DEMO_PERMITIDO && (
                 <Button
