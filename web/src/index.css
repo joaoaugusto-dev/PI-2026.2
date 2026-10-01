@@ -561,7 +561,8 @@
 }
 
 /* Etiqueta térmica 90 x 60 mm (EtiquetaTermica) — só existe na impressão */
-.etiqueta-impressao {
+.etiqueta-impressao,
+.cracha-impressao {
   display: none;
 }
 
@@ -571,7 +572,7 @@
     margin: 0;
   }
 
-  body > *:not(.etiqueta-impressao) {
+  body > *:not(.etiqueta-impressao):not(.cracha-impressao) {
     display: none !important;
   }
 
@@ -631,5 +632,117 @@
     font-weight: 700;
     letter-spacing: 0.1em;
     line-height: 1;
+  }
+
+  /* Crachá de colaborador: cartão com borda arredondada, faixa preta no topo (a térmica imprime
+     preto cheio; print-color-adjust força o fundo, que o navegador descartaria por padrão). */
+  .cracha-impressao {
+    display: block;
+    width: 90mm;
+    height: 60mm;
+    padding: 1.5mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    break-after: avoid;
+  }
+
+  .cracha-cartao {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 0.5mm solid #000;
+    border-radius: 3mm;
+    overflow: hidden;
+  }
+
+  .cracha-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 13mm;
+    padding: 0 4mm;
+    background: #000;
+    color: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cracha-topo img {
+    height: 7mm;
+    width: auto;
+  }
+
+  .cracha-topo span {
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .cracha-corpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2.5mm 4mm 3mm;
+    min-height: 0;
+  }
+
+  .cracha-nome {
+    font-size: 15pt;
+    font-weight: 800;
+    line-height: 1.05;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cracha-setor {
+    margin-top: 0.8mm;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .cracha-rodape {
+    display: flex;
+    align-items: flex-end;
+    gap: 4mm;
+  }
+
+  .cracha-barras {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cracha-barras svg {
+    display: block;
+    width: 100%;
+    height: 14mm;
+  }
+
+  .cracha-matricula {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+  }
+
+  .cracha-matricula small {
+    font-size: 6pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .cracha-matricula strong {
+    margin-top: 1mm;
+    font-family: var(--font-mono);
+    font-size: 24pt;
+    font-weight: 800;
+    letter-spacing: 0.05em;
   }
 }
