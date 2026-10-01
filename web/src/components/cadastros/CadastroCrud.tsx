@@ -48,6 +48,7 @@ export function CadastroCrud<T extends { id: number }>({
   csv,
   buscaPlaceholder,
   foto = false,
+  acoesLinha,
 }: {
   recurso: Recurso
   singular: string
@@ -63,6 +64,8 @@ export function CadastroCrud<T extends { id: number }>({
   buscaPlaceholder: string
   /** Mostra o seletor de foto no pop-up (câmera/galeria no celular, arquivo no PC); só para `/ferramentas`. */
   foto?: boolean
+  /** Botões extras por linha, antes de Editar/Inativar (ex.: copiar link de acesso). */
+  acoesLinha?: (item: T) => ReactNode
 }) {
   const queryClient = useQueryClient()
   const [busca, setBusca] = useState('')
@@ -193,6 +196,7 @@ export function CadastroCrud<T extends { id: number }>({
                       <TableCell key={c.cabecalho}>{c.render(item)}</TableCell>
                     ))}
                     <TableCell className="flex justify-end gap-2">
+                      {acoesLinha?.(item)}
                       <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
                         Editar
                       </Button>
