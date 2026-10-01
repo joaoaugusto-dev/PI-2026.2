@@ -101,6 +101,8 @@ export function CadastroCrud<T extends { id: number }>({
   const { data, isLoading, isError } = useListaCadastro<T>(recurso, { q: q || undefined, page, limit: LIMITE })
   const salvar = useSalvarCadastro(recurso)
   const inativar = useInativarCadastro(recurso)
+  // ferramenta é baixa lógica (o histórico fica), mas para o usuário é "excluir"
+  const rotuloInativar = recurso === 'ferramentas' ? 'Excluir' : 'Inativar'
   const linhas = data?.data ?? []
   const meta = data?.meta
 
@@ -147,7 +149,7 @@ export function CadastroCrud<T extends { id: number }>({
     const ultimoDaPagina = linhas.length === 1 && page > 1
     inativar.mutate(inativando.id, {
       onSuccess: () => {
-        toast.success(`${singular} inativado.`)
+        toast.success(`${singular} ${recurso === 'ferramentas' ? 'excluída' : 'inativado'}.`)
         setInativando(null)
         // inativou o único item de uma página que não é a primeira: senão sobra page > totalPages
         if (ultimoDaPagina) setPage(page - 1)
@@ -208,7 +210,7 @@ export function CadastroCrud<T extends { id: number }>({
                         Editar
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setInativando(item)}>
-                        Inativar
+                        {rotuloInativar}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -255,7 +257,7 @@ export function CadastroCrud<T extends { id: number }>({
       <Dialog open={inativando !== null} onOpenChange={(a) => !a && setInativando(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Inativar {singular.toLowerCase()}?</DialogTitle>
+            <DialogTitle>{rotuloInativar} {singular.toLowerCase()}?</DialogTitle>
             <DialogDescription>O registro sai das listas, mas o histórico é mantido.</DialogDescription>
           </DialogHeader>
           {inativando && (
@@ -273,7 +275,7 @@ export function CadastroCrud<T extends { id: number }>({
               Cancelar
             </Button>
             <Button disabled={inativar.isPending} onClick={confirmarInativacao}>
-              Inativar
+              {rotuloInativar}
             </Button>
           </div>
         </DialogContent>
