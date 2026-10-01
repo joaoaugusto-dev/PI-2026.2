@@ -132,6 +132,54 @@ precisar mexer no banco. Funções cogitadas:
 - **Front-end:** nova página protegida pelo papel `admin`, com o layout e a
   responsividade (360px, 768px e 1280px) do restante do sistema.
 
+## `.strip()` explícito vs. comportamento padrão do Zod (issue API-14)
+
+**Contexto:** a issue API-14 pede literalmente que campos sensíveis (como
+`usuario_retirada_id`, `usuario_devolucao_id`, `registrada_por`,
+`resolvida_por`, `criado_por`) sejam "removidos do body com `.strip()`" antes
+de chegar no service. No código, nenhum schema de escrita chama `.strip()`
+explicitamente — o descarte de chaves desconhecidas acontece pelo
+comportamento padrão do `z.object()` do Zod (que já é "strip mode" por
+padrão), já que nenhum validator usa `.passthrough()` nem `.strict()`.
+
+**Decisão do time (30/09/2026):** manter o comportamento padrão do Zod em vez
+de adicionar `.strip()` explícito em cada schema. A chamada seria redundante
+(seu único efeito é reafirmar o que já é padrão) e o projeto já documenta a
+intenção com comentários pontuais nos validators que lidam com campos vindos
+do JWT (Regra 6 do `CLAUDE.md`), por exemplo em `emprestimoValidator.ts` (linha
+42-44, 76-78), `colaboradorValidator.ts` (linha 34-35), `ocorrenciaValidator.ts`
+(linha 42-45) e `authValidator.ts` (linha 19-20). O comportamento é coberto por
+testes de campo proibido em pelo menos 5 rotas (ver suíte de testes
+`colaboradorRoutes.test.ts`, `emprestimoRoutes.test.ts` e
+`ocorrenciaRoutes.test.ts`), que é o que a issue efetivamente pede como
+critério de pronto.
+
+## Prova de conceito de zod-to-openapi (bônus "se sobrar tempo" da issue API-14)
+
+**Situação:** feito como prova de conceito, extensão para as demais rotas
+ainda não decidida.
+
+**O que foi feito:** instalada `@asteasolutions/zod-to-openapi@7.3.4` (última
+versão compatível com Zod 3 — a linha 8.x/9.x exige Zod 4) e criado
+`api/src/config/openapiFromZod.ts`, que gera a documentação Swagger de
+`POST /ferramentas` e `PATCH /ferramentas/:id` diretamente a partir de
+`criarFerramentaSchema`/`atualizarFerramentaSchema`. `config/swagger.ts` faz
+o merge desses paths por método HTTP com o spec do `swagger-jsdoc`, então
+`GET /ferramentas` continua documentado pelo comentário `@openapi` manual
+(só POST e PATCH foram migrados). Os comentários `@openapi` manuais de
+POST/PATCH `/ferramentas` foram removidos para não ficar documentação
+duplicada e divergente.
+
+**Resultado da prova de conceito:** funcionou bem, inclusive para os campos
+com `z.coerce.number()` (preprocess), que foram convertidos corretamente
+para `integer` com os limites `min`/`max` do schema original — sem precisar
+reescrever a lista de campos à mão como era feito no JSDoc manual.
+
+**A decidir:** se vale estender esse padrão para as demais rotas de escrita
+(colaboradores, empréstimos, ocorrências, auth) ou manter como está — só a
+prova de conceito em ferramentas — já que isso era um item opcional da issue
+API-14, não um critério de "pronto quando".
+
 ## Devolução de peça avulsa de kit não deixa o kit indisponível (issue API-12)
 
 **Contexto:** a retirada (API-11) já aceita `itemKitId`, retirando só uma peça

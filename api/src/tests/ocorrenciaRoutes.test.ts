@@ -275,7 +275,10 @@ describe('Rotas de Ocorrências (API-13)', () => {
       const res = await patch(id, { custoEstimado: '' });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.details[0]).toMatchObject({ field: 'custoEstimado' });
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'custoEstimado',
+        message: 'custoEstimado deve ser um número',
+      });
     });
 
     it('retorna 400 com custoEstimado acima do limite da coluna NUMERIC(10,2)', async () => {
@@ -284,7 +287,10 @@ describe('Rotas de Ocorrências (API-13)', () => {
       const res = await patch(id, { custoEstimado: 100000000 });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.details[0]).toMatchObject({ field: 'custoEstimado' });
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'custoEstimado',
+        message: 'custoEstimado não pode ser maior que 99999999.99',
+      });
     });
 
     it('retorna 400 com custoEstimado infinito', async () => {
@@ -295,7 +301,10 @@ describe('Rotas de Ocorrências (API-13)', () => {
       const res = await patch(id, { custoEstimado: 'Infinity' });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.details[0]).toMatchObject({ field: 'custoEstimado' });
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'custoEstimado',
+        message: 'custoEstimado deve ser um número finito',
+      });
     });
 
     it('retorna 404 OCORRENCIA_NOT_FOUND para ocorrência inexistente', async () => {

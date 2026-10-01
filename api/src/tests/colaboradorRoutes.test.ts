@@ -178,6 +178,10 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'nome',
+        message: 'Nome é obrigatório',
+      });
     });
 
     it('retorna 401 quando nenhum token é enviado', async () => {
@@ -230,6 +234,23 @@ describe('Rotas de Colaboradores (API-09)', () => {
       expect(res.body.error.code).toBe('COLABORADOR_NOT_FOUND');
     });
 
+    it('ignora criado_por vindo do corpo, sem sobrescrever o autor original (Regra 6)', async () => {
+      const res = await request(app)
+        .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nome: `${PREFIXO}Colaborador Editado Sem Forjar Autor`,
+          criadoPor: 999999, // tentativa de forjar o autor — schema descarta chaves desconhecidas
+          criado_por: 999999,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.nome).toBe(`${PREFIXO}Colaborador Editado Sem Forjar Autor`);
+      // colaboradorParaEditarId foi criado no beforeAll sem criado_por (coluna
+      // nullable) — se o valor forjado tivesse vazado, deixaria de ser null.
+      expect(res.body.data.criado_por).toBeNull();
+    });
+
     it('retorna 400 quando nenhum campo é informado', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
@@ -238,6 +259,9 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.details[0]).toMatchObject({
+        message: 'Pelo menos um campo deve ser fornecido para edição',
+      });
     });
   });
 

@@ -150,17 +150,34 @@ describe('Rotas de Empréstimos (API-11)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.details[0]).toMatchObject({ field: 'previsaoDevolucao' });
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'previsaoDevolucao',
+        message: 'previsaoDevolucao é obrigatória',
+      });
     });
 
-    it('retorna 400 com previsaoDevolucao no passado ou inválida', async () => {
+    it('retorna 400 com mensagem específica para previsaoDevolucao no passado', async () => {
+      const ferramentaId = await criarFerramenta('PrevisaoPassado');
+
+      const res = await post(corpo(ferramentaId, { previsaoDevolucao: '2020-01-01' }));
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'previsaoDevolucao',
+        message: 'previsaoDevolucao não pode estar no passado',
+      });
+    });
+
+    it('retorna 400 com mensagem específica para previsaoDevolucao inválida', async () => {
       const ferramentaId = await criarFerramenta('PrevisaoInvalida');
 
-      const passado = await post(corpo(ferramentaId, { previsaoDevolucao: '2020-01-01' }));
-      const invalida = await post(corpo(ferramentaId, { previsaoDevolucao: 'amanha' }));
+      const res = await post(corpo(ferramentaId, { previsaoDevolucao: 'amanha' }));
 
-      expect(passado.status).toBe(400);
-      expect(invalida.status).toBe(400);
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'previsaoDevolucao',
+        message: 'previsaoDevolucao deve ser uma data válida',
+      });
     });
 
     it('retorna 400 quando falta um campo obrigatório', async () => {
@@ -319,15 +336,40 @@ describe('Rotas de Empréstimos (API-11)', () => {
       expect(res.body.error.code).toBe('EMPRESTIMO_NOT_FOUND');
     });
 
-    it('retorna 400 com condicaoDevolucao ausente ou inválida', async () => {
+    it('retorna 400 com mensagem específica quando condicaoDevolucao está ausente', async () => {
+      const { emprestimoId } = await retirar('CondicaoAusente');
+
+      const res = await patch(emprestimoId, {});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'condicaoDevolucao',
+        message: 'condicaoDevolucao é obrigatória',
+      });
+    });
+
+    it('retorna 400 com mensagem específica quando condicaoDevolucao é inválida', async () => {
       const { emprestimoId } = await retirar('CondicaoInvalida');
 
-      const ausente = await patch(emprestimoId, {});
-      const invalida = await patch(emprestimoId, { condicaoDevolucao: 'quebrada' });
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'quebrada' });
 
-      expect(ausente.status).toBe(400);
-      expect(ausente.body.error.details[0]).toMatchObject({ field: 'condicaoDevolucao' });
-      expect(invalida.status).toBe(400);
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'condicaoDevolucao',
+        message: 'condicaoDevolucao deve ser ok, avaria ou perda',
+      });
+    });
+
+    it('retorna 400 com mensagem específica quando observacaoDevolucao é uma string vazia', async () => {
+      const { emprestimoId } = await retirar('ObservacaoVazia');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'ok', observacaoDevolucao: '   ' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'observacaoDevolucao',
+        message: 'observacaoDevolucao não pode ser vazio',
+      });
     });
 
     it('retorna 401 sem token e 403 com papel consulta', async () => {
