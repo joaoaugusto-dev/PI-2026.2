@@ -3,7 +3,7 @@ import { DashboardController } from '../../controllers/dashboardController.js';
 import { authenticate } from '../../middlewares/auth.js';
 import { authorize } from '../../middlewares/authorize.js';
 import { validate } from '../../middlewares/validate.js';
-import { dashboardListaParamSchema } from '../../validators/dashboardValidator.js';
+import { dashboardListaParamSchema, dashboardListaQuerySchema } from '../../validators/dashboardValidator.js';
 
 const router = Router();
 
@@ -59,7 +59,7 @@ router.get('/', authenticate, authorize('manutencao', 'admin'), DashboardControl
  *       200:
  *         description: Página da lista, com meta de paginação
  *       400:
- *         description: Lista desconhecida
+ *         description: Lista desconhecida ou page/limit fora do intervalo
  *       401:
  *         description: Token inválido ou não fornecido
  *       403:
@@ -69,7 +69,7 @@ router.get(
   '/:lista',
   authenticate,
   authorize('manutencao', 'admin'),
-  validate({ params: dashboardListaParamSchema }),
+  validate({ params: dashboardListaParamSchema, query: dashboardListaQuerySchema }),
   DashboardController.listar
 );
 

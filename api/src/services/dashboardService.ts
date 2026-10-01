@@ -49,7 +49,7 @@ const DIAS_PROXIMOS = 3;
 const HOJE = "(NOW() AT TIME ZONE 'America/Sao_Paulo')::date";
 const DIA_PREVISTO = "(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo')::date";
 
-const LIMITE_CARTAO = 4; // linhas que cada cartão mostra; o resto vem paginado por listar()
+const LIMITE_CARTAO = 4; // linhas que cada cartão mostra; o resto vem paginado por lista()
 
 async function emprestimos(
   condicaoDia: string,
@@ -58,6 +58,7 @@ async function emprestimos(
   offset = 0
 ): Promise<Lista<EmprestimoPendente>> {
   const where = `data_devolucao IS NULL AND ${condicaoDia}`;
+  const n = params.length;
   const [total, itens] = await Promise.all([
     query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe WHERE ${where}`, params),
     query<EmprestimoPendente>(
@@ -66,19 +67,21 @@ async function emprestimos(
        FROM vw_emprestimos_detalhe
        WHERE ${where}
        ORDER BY previsao_devolucao, id
-       LIMIT ${limit} OFFSET ${offset}`,
-      params
+       LIMIT $${n + 1} OFFSET $${n + 2}`,
+      [...params, limit, offset]
     ),
   ]);
   return { total: Number(total.rows[0].total), itens: itens.rows };
 }
 
 /**
- * Cada lista vem com o total e só as primeiras linhas (as que o cartão mostra); o "Mostrar tudo"
- * pagina por GET /v1/dashboard/:lista.
+ * GET /v1/dashboard — a barra de contadores (vw_dashboard_kpis) e só o que pede uma ação do balcão:
+ * devoluções para cobrar hoje, atrasadas (previsão em dia anterior), próximas do prazo e ferramentas
+ * indisponíveis esperando tratativa.
  *
- * GET /v1/dashboard — a barra de contadores (vw_dashboard_kpis) e só o que pede uma ação do balcão: devoluções para cobrar hoje, atrasadas
- * (previsão em dia anterior), próximas do prazo e ferramentas indisponíveis esperando tratativa.
+ * Cada lista vem com o total e só as primeiras linhas (as que o cartão mostra); o "Mostrar tudo"
+ * pagina por GET /v1/dashboard/:lista. Total e linhas são consultas separadas, sem transação: uma
+ * devolução entre as duas pode deixar o total uma unidade fora da lista, o que no balcão não importa.
  */
 export async function obter(): Promise<Dashboard> {
   const [kpis, cobrarHoje, atrasados, proximos, indisponiveis] = await Promise.all([
@@ -142,7 +145,8 @@ async function ferramentasAguardando(limit: number, offset = 0): Promise<Lista<F
               GREATEST(0, (${HOJE} - (COALESCE(oc.created_at, f.updated_at) AT TIME ZONE 'America/Sao_Paulo')::date))::int AS dias_parada
        ${base}
        ORDER BY COALESCE(oc.created_at, f.updated_at), f.id
-       LIMIT ${limit} OFFSET ${offset}`
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     ),
   ]);
   return { total: Number(total.rows[0].total), itens: itens.rows };

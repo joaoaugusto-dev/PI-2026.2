@@ -35,6 +35,14 @@ describe('GET /v1/dashboard', () => {
     }
   });
 
+  it('page e limit malformados ou fora do intervalo são 400, não 500', async () => {
+    const auth = { Authorization: `Bearer ${token('manutencao')}` };
+    for (const ruim of ['page=abc', 'page=0', 'page=-1', 'page=99999999999', 'page=1e20', 'limit=abc', 'limit=0', 'limit=51']) {
+      expect((await request(app).get(`/v1/dashboard/atrasados?${ruim}`).set(auth)).status, ruim).toBe(400);
+    }
+    expect((await request(app).get('/v1/dashboard/atrasados?page=2&limit=50').set(auth)).status).toBe(200);
+  });
+
   it('lista desconhecida é 400, página além do fim volta vazia e consulta é 403', async () => {
     const auth = { Authorization: `Bearer ${token('admin')}` };
     expect((await request(app).get('/v1/dashboard/qualquer').set(auth)).status).toBe(400);
