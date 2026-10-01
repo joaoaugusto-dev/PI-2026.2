@@ -237,7 +237,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('ignora criado_por vindo do corpo, sem sobrescrever o autor original (Regra 6)', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nome: `${PREFIXO}Colaborador Editado Sem Forjar Autor`,
           criadoPor: 999999, // tentativa de forjar o autor — schema descarta chaves desconhecidas
