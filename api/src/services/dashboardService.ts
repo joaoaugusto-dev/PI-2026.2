@@ -49,7 +49,14 @@ const DIAS_PROXIMOS = 3;
 const HOJE = "(NOW() AT TIME ZONE 'America/Sao_Paulo')::date";
 const DIA_PREVISTO = "(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo')::date";
 
-async function emprestimos(condicaoDia: string, params: unknown[], ordem: 'ASC' | 'DESC'): Promise<Lista<EmprestimoPendente>> {
+const LIMITE_CARTAO = 4; // linhas que cada cartão mostra; o resto vem paginado por listar()
+
+async function emprestimos(
+  condicaoDia: string,
+  params: unknown[],
+  limit: number,
+  offset = 0
+): Promise<Lista<EmprestimoPendente>> {
   const where = `data_devolucao IS NULL AND ${condicaoDia}`;
   const [total, itens] = await Promise.all([
     query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe WHERE ${where}`, params),
@@ -58,7 +65,8 @@ async function emprestimos(condicaoDia: string, params: unknown[], ordem: 'ASC' 
               previsao_devolucao, ABS(${DIA_PREVISTO} - ${HOJE})::int AS dias
        FROM vw_emprestimos_detalhe
        WHERE ${where}
-       ORDER BY previsao_devolucao ${ordem}, id`,
+       ORDER BY previsao_devolucao, id
+       LIMIT ${limit} OFFSET ${offset}`,
       params
     ),
   ]);
@@ -66,8 +74,8 @@ async function emprestimos(condicaoDia: string, params: unknown[], ordem: 'ASC' 
 }
 
 /**
- * Devolve todos os itens de cada lista (o front mostra os primeiros e expande com "Mostrar tudo"):
- * a fila do balcão é de dezenas, não de milhares. Se crescer, paginar por lista.
+ * Cada lista vem com o total e só as primeiras linhas (as que o cartão mostra); o "Mostrar tudo"
+ * pagina por GET /v1/dashboard/:lista.
  *
  * GET /v1/dashboard — a barra de contadores (vw_dashboard_kpis) e só o que pede uma ação do balcão: devoluções para cobrar hoje, atrasadas
  * (previsão em dia anterior), próximas do prazo e ferramentas indisponíveis esperando tratativa.
@@ -75,12 +83,32 @@ async function emprestimos(condicaoDia: string, params: unknown[], ordem: 'ASC' 
 export async function obter(): Promise<Dashboard> {
   const [kpis, cobrarHoje, atrasados, proximos, indisponiveis] = await Promise.all([
     contadores(),
-    emprestimos(`${DIA_PREVISTO} = ${HOJE}`, [], 'ASC'),
-    emprestimos(`${DIA_PREVISTO} < ${HOJE}`, [], 'ASC'),
-    emprestimos(`${DIA_PREVISTO} > ${HOJE} AND ${DIA_PREVISTO} <= ${HOJE} + $1::int`, [DIAS_PROXIMOS], 'ASC'),
-    ferramentasAguardando(),
+    lista('cobrar_hoje', LIMITE_CARTAO),
+    lista('atrasados', LIMITE_CARTAO),
+    lista('proximos_do_prazo', LIMITE_CARTAO),
+    lista('indisponiveis', LIMITE_CARTAO),
   ]);
   return { kpis, cobrar_hoje: cobrarHoje, atrasados, proximos_do_prazo: proximos, indisponiveis };
+}
+
+export const LISTAS_DASHBOARD = ['cobrar_hoje', 'atrasados', 'proximos_do_prazo', 'indisponiveis'] as const;
+export type NomeLista = (typeof LISTAS_DASHBOARD)[number];
+
+/** Uma lista do dashboard, paginada: o "Mostrar tudo" de cada cartão. */
+export function lista(nome: 'indisponiveis', limit: number, offset?: number): Promise<Lista<FerramentaAguardando>>;
+export function lista(nome: Exclude<NomeLista, 'indisponiveis'>, limit: number, offset?: number): Promise<Lista<EmprestimoPendente>>;
+export function lista(nome: NomeLista, limit: number, offset?: number): Promise<Lista<EmprestimoPendente | FerramentaAguardando>>;
+export function lista(nome: NomeLista, limit: number, offset = 0): Promise<Lista<EmprestimoPendente | FerramentaAguardando>> {
+  switch (nome) {
+    case 'cobrar_hoje':
+      return emprestimos(`${DIA_PREVISTO} = ${HOJE}`, [], limit, offset);
+    case 'atrasados':
+      return emprestimos(`${DIA_PREVISTO} < ${HOJE}`, [], limit, offset);
+    case 'proximos_do_prazo':
+      return emprestimos(`${DIA_PREVISTO} > ${HOJE} AND ${DIA_PREVISTO} <= ${HOJE} + $1::int`, [DIAS_PROXIMOS], limit, offset);
+    case 'indisponiveis':
+      return ferramentasAguardando(limit, offset);
+  }
 }
 
 async function contadores(): Promise<Kpis> {
@@ -96,7 +124,7 @@ async function contadores(): Promise<Kpis> {
   };
 }
 
-async function ferramentasAguardando(): Promise<Lista<FerramentaAguardando>> {
+async function ferramentasAguardando(limit: number, offset = 0): Promise<Lista<FerramentaAguardando>> {
   // a ocorrência em andamento mais recente de cada ferramenta indisponível (pode não haver, se foi marcada à mão)
   const base = `
     FROM ferramentas f
@@ -113,7 +141,8 @@ async function ferramentasAguardando(): Promise<Lista<FerramentaAguardando>> {
               oc.id AS ocorrencia_id, oc.tipo, oc.status AS etapa,
               GREATEST(0, (${HOJE} - (COALESCE(oc.created_at, f.updated_at) AT TIME ZONE 'America/Sao_Paulo')::date))::int AS dias_parada
        ${base}
-       ORDER BY COALESCE(oc.created_at, f.updated_at), f.id`
+       ORDER BY COALESCE(oc.created_at, f.updated_at), f.id
+       LIMIT ${limit} OFFSET ${offset}`
     ),
   ]);
   return { total: Number(total.rows[0].total), itens: itens.rows };
