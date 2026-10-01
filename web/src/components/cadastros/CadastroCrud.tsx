@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { FileUp, Inbox } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
 import { EmptyState } from '@/components/EmptyState'
@@ -63,6 +64,15 @@ export function CadastroCrud<T extends { id: number }>({
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
   const [editando, setEditando] = useState<T | 'novo' | null>(null)
+  // quem chega com state.novo (ex.: botão "Cadastrar ferramenta") já cai com o pop-up de criar aberto
+  const location = useLocation()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if ((location.state as { novo?: boolean } | null)?.novo) {
+      setEditando('novo')
+      navigate(location.pathname, { replace: true, state: null }) // refresh não reabre
+    }
+  }, [location, navigate])
   const [importando, setImportando] = useState(false)
   const [inativando, setInativando] = useState<T | null>(null)
 
