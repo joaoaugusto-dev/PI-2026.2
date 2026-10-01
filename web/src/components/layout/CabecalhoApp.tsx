@@ -46,7 +46,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
             <span className="text-[11px] font-medium hidden sm:inline">Status API</span>
           </Badge>
         </Link>
-        {usuario?.papel === 'manutencao' && <SinoNotificacoes />}
+        {(usuario?.papel === 'manutencao' || usuario?.papel === 'admin') && <SinoNotificacoes />}
         <div className="flex items-center gap-2 border-l pl-4">
           <Avatar className="size-8">
             <AvatarFallback className="text-xs font-medium">

@@ -15,6 +15,7 @@ const gerarToken = (papel: string, id: number) =>
 describe('Rotas de Notificações (API-17)', () => {
   let manutencaoToken: string;
   let consultaToken: string;
+  let adminToken: string;
   let naoLidaId: number;
   let outroUsuarioId: number;
   let alheiaId: number;
@@ -42,6 +43,7 @@ describe('Rotas de Notificações (API-17)', () => {
     const usuarios = (await query<{ id: number }>('SELECT id FROM usuarios ORDER BY id LIMIT 2')).rows;
     manutencaoToken = gerarToken('manutencao', usuarios[0].id);
     consultaToken = gerarToken('consulta', usuarios[0].id);
+    adminToken = gerarToken('admin', usuarios[0].id);
     outroUsuarioId = usuarios[1].id;
     // 'marcar todas' mexe nas notificações reais do banco; guarda quais estavam não lidas para restaurar
     naoLidasAntes = (await query<{ id: number }>('SELECT id FROM notificacoes WHERE lida = FALSE')).rows.map((n) => n.id);
@@ -91,6 +93,12 @@ describe('Rotas de Notificações (API-17)', () => {
   it('400 para lida inválida e para id inválido', async () => {
     expect((await get('?lida=talvez')).status).toBe(400);
     expect((await patch('abc')).status).toBe(400);
+  });
+
+  it('admin também lista e marca como lida', async () => {
+    const id = await inserir(null);
+    expect((await get('?lida=false&limit=100', adminToken)).body.data.map((n: { id: number }) => n.id)).toContain(id);
+    expect((await patch(id, adminToken)).status).toBe(200);
   });
 
   it('401 sem token e 403 para perfil consulta', async () => {

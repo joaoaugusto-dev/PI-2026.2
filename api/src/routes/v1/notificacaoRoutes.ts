@@ -45,7 +45,7 @@ const router = Router();
 router.get(
   '/',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: listarNotificacoesQuerySchema }),
   NotificacaoController.listar
 );
@@ -80,7 +80,7 @@ router.get(
 router.patch(
   '/:id/lida',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: notificacaoIdParamSchema }),
   NotificacaoController.marcarLida
 );
@@ -102,6 +102,6 @@ router.patch(
  *       403:
  *         description: Perfil sem permissão
  */
-router.patch('/lida', authenticate, authorize('manutencao'), NotificacaoController.marcarTodasLidas);
+router.patch('/lida', authenticate, authorize('manutencao', 'admin'), NotificacaoController.marcarTodasLidas);
 
 export default router;
