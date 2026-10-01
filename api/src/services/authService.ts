@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getClient, query } from '../config/database.js';
 import { env } from '../config/env.js';
-import { UnauthorizedError, NotFoundError, TooManyRequestsError } from '../utils/errors.js';
+import { AppError, UnauthorizedError, NotFoundError, TooManyRequestsError } from '../utils/errors.js';
 
 export interface LoginResult {
   token: string;
@@ -27,8 +27,19 @@ const BLOQUEIO_LOGIN_MIN = 15;
 
 const hashDoToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
-// mesma resposta para inexistente, expirado ou já usado: o link não revela o motivo
+// mesma resposta para inexistente ou expirado: o link não revela o motivo
 const conviteInvalido = () => new NotFoundError('Link inválido ou expirado. Peça um novo ao administrador.', 'CONVITE_INVALIDO');
+
+/**
+ * Link de uso único: quem tenta de novo um link já consumido recebe 410 (e não o 404 genérico), para o front
+ * explicar que a senha já foi definida. Só quem tem o token consegue chegar aqui, então não vaza nada.
+ */
+async function conviteNaoUtilizavel(token: string) {
+  const usado = await query('SELECT 1 FROM convites_acesso WHERE token_hash = $1 AND usado_em IS NOT NULL', [hashDoToken(token)]);
+  return (usado.rowCount ?? 0) > 0
+    ? new AppError('Este link já foi usado. Para trocar a senha, peça um novo ao administrador.', 410, 'CONVITE_JA_USADO')
+    : conviteInvalido();
+}
 
 export interface ConsultaSessaoResult {
   token: string;
@@ -162,7 +173,7 @@ export class AuthService {
        WHERE v.token_hash = $1 AND v.usado_em IS NULL AND v.expira_em > NOW() AND c.ativo = true`,
       [hashDoToken(token)]
     );
-    if (!result.rows[0]) throw conviteInvalido();
+    if (!result.rows[0]) throw await conviteNaoUtilizavel(token);
     return result.rows[0];
   }
 
@@ -183,7 +194,7 @@ export class AuthService {
          FOR UPDATE OF v`,
         [hashDoToken(token)]
       );
-      if (!convite.rows[0]) throw conviteInvalido();
+      if (!convite.rows[0]) throw await conviteNaoUtilizavel(token);
       const { id: conviteId, colaborador_id: colaboradorId, nome, matricula } = convite.rows[0];
 
       const usuario = await client.query<{ id: number; papel: string }>(
