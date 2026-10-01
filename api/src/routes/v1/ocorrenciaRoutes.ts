@@ -60,7 +60,7 @@ const router = Router();
 router.get(
   '/',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: listarOcorrenciasQuerySchema }),
   OcorrenciaController.listar
 );
@@ -124,7 +124,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ocorrenciaIdParamSchema, body: atualizarOcorrenciaSchema }),
   OcorrenciaController.atualizar
 );

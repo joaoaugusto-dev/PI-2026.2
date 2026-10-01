@@ -102,7 +102,7 @@ router
 router.get(
   '/por-codigo/:codigo',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaCodigoParamSchema }),
   FerramentaController.buscarPorCodigo
 );
@@ -201,7 +201,7 @@ router.patch(
 router.patch(
   '/:id/etiqueta-impressa',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.marcarEtiquetaImpressa
 );
@@ -234,7 +234,7 @@ router.patch(
 router.patch(
   '/:id/disponibilizar',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.disponibilizar
 );
