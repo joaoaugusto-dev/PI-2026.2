@@ -154,6 +154,32 @@ testes de campo proibido em pelo menos 5 rotas (ver suíte de testes
 `ocorrenciaRoutes.test.ts`), que é o que a issue efetivamente pede como
 critério de pronto.
 
+## Prova de conceito de zod-to-openapi (bônus "se sobrar tempo" da issue API-14)
+
+**Situação:** feito como prova de conceito, extensão para as demais rotas
+ainda não decidida.
+
+**O que foi feito:** instalada `@asteasolutions/zod-to-openapi@7.3.4` (última
+versão compatível com Zod 3 — a linha 8.x/9.x exige Zod 4) e criado
+`api/src/config/openapiFromZod.ts`, que gera a documentação Swagger de
+`POST /ferramentas` e `PATCH /ferramentas/:id` diretamente a partir de
+`criarFerramentaSchema`/`atualizarFerramentaSchema`. `config/swagger.ts` faz
+o merge desses paths por método HTTP com o spec do `swagger-jsdoc`, então
+`GET /ferramentas` continua documentado pelo comentário `@openapi` manual
+(só POST e PATCH foram migrados). Os comentários `@openapi` manuais de
+POST/PATCH `/ferramentas` foram removidos para não ficar documentação
+duplicada e divergente.
+
+**Resultado da prova de conceito:** funcionou bem, inclusive para os campos
+com `z.coerce.number()` (preprocess), que foram convertidos corretamente
+para `integer` com os limites `min`/`max` do schema original — sem precisar
+reescrever a lista de campos à mão como era feito no JSDoc manual.
+
+**A decidir:** se vale estender esse padrão para as demais rotas de escrita
+(colaboradores, empréstimos, ocorrências, auth) ou manter como está — só a
+prova de conceito em ferramentas — já que isso era um item opcional da issue
+API-14, não um critério de "pronto quando".
+
 ## Devolução de peça avulsa de kit não deixa o kit indisponível (issue API-12)
 
 **Contexto:** a retirada (API-11) já aceita `itemKitId`, retirando só uma peça
