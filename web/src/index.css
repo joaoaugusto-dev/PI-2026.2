@@ -542,3 +542,20 @@
     background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
   }
 }
+
+/* Sino balançando a partir do topo quando chega notificação nova. */
+@keyframes sino-tocar {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(18deg); }
+  30% { transform: rotate(-16deg); }
+  45% { transform: rotate(12deg); }
+  60% { transform: rotate(-9deg); }
+  75% { transform: rotate(5deg); }
+  90% { transform: rotate(-2deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sino-tocando {
+    transform-origin: 50% 0;
+    animation: sino-tocar 0.9s ease-in-out;
+  }
+}

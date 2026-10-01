@@ -1,6 +1,7 @@
 import { AlertTriangleIcon, BellIcon, CalendarClockIcon, CheckIcon, InfoIcon, WrenchIcon, type LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/Badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover'
 import { useMarcarLida, useMarcarTodasLidas, useNotificacoes, type Notificacao } from '@/hooks/useNotificacoes'
@@ -58,6 +59,23 @@ export function SinoNotificacoes() {
   const itens = data?.data ?? []
   const total = data?.meta.total ?? 0
 
+  // ids já vistos: a primeira carga só inicializa, as seguintes avisam sobre o que é novo
+  const vistas = useRef<Set<number> | null>(null)
+  const [tocando, setTocando] = useState(false)
+  useEffect(() => {
+    if (!data) return
+    const novas = data.data.filter((n) => !vistas.current?.has(n.id))
+    const primeiraCarga = vistas.current === null
+    vistas.current = new Set(data.data.map((n) => n.id))
+    if (primeiraCarga || novas.length === 0) return
+    setTocando(true)
+    setTimeout(() => setTocando(false), 1000)
+    toast.info(novas.length === 1 ? TIPOS[novas[0].tipo].rotulo : `${novas.length} novas notificações`, {
+      description: novas.length === 1 ? novas[0].mensagem : undefined,
+      action: { label: 'Ver', onClick: () => setAberto(true) },
+    })
+  }, [data])
+
   // anima a saída e só então avisa a API (a lista refaz a consulta e o item some de vez)
   function concluir(ids: number[]) {
     setSaindo((atual) => new Set([...atual, ...ids]))
@@ -88,7 +106,7 @@ export function SinoNotificacoes() {
           className="relative cursor-pointer"
           aria-label={total > 0 ? `Notificações: ${total} não lidas` : 'Notificações'}
         >
-          <BellIcon className="size-4 text-muted-foreground hover:text-foreground transition-colors" />
+          <BellIcon className={cn('size-4 text-muted-foreground hover:text-foreground transition-colors', tocando && 'sino-tocando')} />
           {total > 0 && (
             <Badge className="absolute -top-2 -right-2 min-w-4 h-4 justify-center rounded-full px-1 text-[10px] bg-[var(--brand-red)] text-white">
               {total > 99 ? '99+' : total}
