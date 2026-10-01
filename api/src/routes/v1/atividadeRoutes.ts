@@ -12,6 +12,12 @@ import {
 
 const router = Router();
 
+// Regra 8 do CLAUDE.md (atualizada em 30/09/2026, issue DATA-04): atividades
+// não seguem o padrão dos outros cadastros auxiliares (onde escrita é só do
+// admin). A manutenção mantém acesso completo porque consome o campo de
+// atividade na retirada; o admin ganha leitura e cadastro (GET/POST), mas
+// não edição/inativação (PUT/PATCH/DELETE continuam só de manutencao).
+
 /**
  * @openapi
  * /atividades:
@@ -87,13 +93,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarAuxiliaresQuerySchema }),
     AtividadeController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ body: criarAtividadeSchema }),
     AtividadeController.criar
   );
@@ -202,7 +208,7 @@ router
   .route('/:id')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ params: auxiliarIdParamSchema }),
     AtividadeController.buscarPorId
   )
