@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { afterAll, describe, it, expect } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../app.js";
+import { query } from "../config/database.js";
 import { env } from "../config/env.js";
 
 const token = (papel: string) =>
@@ -59,24 +60,36 @@ describe("Permissões dos cadastros auxiliares", () => {
 // leitura e cadastro (não edição/inativação) para poder preparar a lista sem
 // depender da manutenção.
 describe("Permissões de atividades (regra própria, diferente dos outros cadastros)", () => {
+  // as atividades criadas pelos testes saem no fim: sem isso elas se acumulam no banco e empurram
+  // a atividade do atividade.test.ts para fora da primeira página da listagem
+  const criadas: number[] = [];
+  const anotar = (res: { status: number; body: any }) => {
+    if (res.status === 201) criadas.push(res.body.data.id);
+    return res;
+  };
+  afterAll(async () => {
+    if (criadas.length) await query("DELETE FROM atividades WHERE id = ANY($1)", [criadas]);
+  });
+
   it("manutenção continua com acesso completo (ler, criar, editar, inativar)", async () => {
     expect(
       (await request(app).get("/v1/atividades").set(auth("manutencao"))).status,
     ).toBe(200);
 
+    // ids inexistentes: o teste só confere que a autorização passa, sem renomear atividade real
     const escritas = [
       request(app).post("/v1/atividades").set(auth("manutencao")).send({ nome: `X${Date.now()}` }),
       request(app).put("/v1/atividades/999999").set(auth("manutencao")).send({ nome: "X" }),
-      request(app).patch("/v1/atividades/1").set(auth("manutencao")).send({ nome: "X" }),
+      request(app).patch("/v1/atividades/999999").set(auth("manutencao")).send({ nome: "X" }),
     ];
-    for (const res of await Promise.all(escritas)) expect(res.status).not.toBe(403);
+    for (const res of await Promise.all(escritas)) expect(anotar(res).status).not.toBe(403);
   });
 
   it("admin lê, cadastra, edita e inativa atividades (passa da autorização)", async () => {
     expect((await request(app).get("/v1/atividades").set(auth("admin"))).status).toBe(200);
     expect((await request(app).get("/v1/atividades/1").set(auth("admin"))).status).not.toBe(403);
     expect(
-      (await request(app).post("/v1/atividades").set(auth("admin")).send({ nome: `Y${Date.now()}` })).status,
+      anotar(await request(app).post("/v1/atividades").set(auth("admin")).send({ nome: `Y${Date.now()}` })).status,
     ).toBe(201);
 
     const edicoes = [
