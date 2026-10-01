@@ -100,3 +100,10 @@ export const listarEmprestimosQuerySchema = z.object({
 });
 
 export type ListarEmprestimosQuery = z.infer<typeof listarEmprestimosQuerySchema>;
+
+// GET /v1/emprestimos/calendario?mes=AAAA-MM
+export const calendarioQuerySchema = z.object({
+  mes: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'mes deve estar no formato AAAA-MM'),
+});
+
+export type CalendarioQuery = z.infer<typeof calendarioQuerySchema>;

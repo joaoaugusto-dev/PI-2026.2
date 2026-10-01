@@ -300,3 +300,55 @@ export async function listar({
 
   return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
 }
+
+export interface DiaCalendario {
+  dia: string;
+  emprestimos: {
+    id: number;
+    ferramenta_nome: string;
+    ferramenta_codigo: string;
+    colaborador_nome: string;
+    setor_id: number;
+    setor_nome: string;
+    ramal: string | null;
+  }[];
+}
+
+// Devoluções previstas do mês (empréstimos ainda abertos), agrupadas por dia de
+// Brasília. A tabela de colaboradores não tem ramal, então ele vai sempre null.
+export async function calendario(mes: string): Promise<DiaCalendario[]> {
+  const result = await query<{
+    id: number;
+    dia: string;
+    ferramenta_nome: string;
+    codigo_identificacao: number | null;
+    colaborador_nome: string;
+    setor_id: number;
+    setor_nome: string;
+  }>(
+    `SELECT id,
+            TO_CHAR(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') AS dia,
+            ferramenta_nome, codigo_identificacao, colaborador_nome, setor_id, setor_nome
+     FROM vw_emprestimos_detalhe
+     WHERE data_devolucao IS NULL
+       AND TO_CHAR(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') = $1
+     ORDER BY previsao_devolucao, id`,
+    [mes]
+  );
+
+  const dias = new Map<string, DiaCalendario>();
+  for (const r of result.rows) {
+    const dia = dias.get(r.dia) ?? { dia: r.dia, emprestimos: [] };
+    dia.emprestimos.push({
+      id: r.id,
+      ferramenta_nome: r.ferramenta_nome,
+      ferramenta_codigo: r.codigo_identificacao ? `SF${String(r.codigo_identificacao).padStart(6, '0')}` : '—',
+      colaborador_nome: r.colaborador_nome,
+      setor_id: r.setor_id,
+      setor_nome: r.setor_nome,
+      ramal: null,
+    });
+    dias.set(r.dia, dia);
+  }
+  return [...dias.values()];
+}

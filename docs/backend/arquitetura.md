@@ -153,6 +153,7 @@ revisão humana.
 ## Notificações (API-17 / FE-19)
 
 - **Geração:** `fn_gerar_notificacoes()` (migration `0006`) cria uma notificação `devolucao_hoje` ou `atraso` por empréstimo aberto, uma única vez por tipo e empréstimo (deduplicada pelo `link`, `/ferramentas/:id?emprestimo=:id`). `usuario_id` fica `NULL` (da equipe toda), então `lida` é compartilhada. Agendada via `pg_cron` de segunda a sexta às 07:00 de Brasília (`0 10 * * 1-5` UTC); onde a extensão não existe, rodar `SELECT fn_gerar_notificacoes();` por fora.
+- **Calendário:** `GET /v1/emprestimos/calendario?mes=AAAA-MM` devolve as devoluções previstas do mês (empréstimos abertos), agrupadas por dia de Brasília; `ramal` é sempre `null` (não há ramal no cadastro).
 - **API (perfil `manutencao`):** `GET /v1/notificacoes?lida=false` (`meta.total` é o contador do sino) `PATCH /v1/notificacoes/:id/lida` e `PATCH /v1/notificacoes/lida` (marca todas).
 - **Front:** `SinoNotificacoes` no cabeçalho; cada tipo tem cor, ícone e rótulo próprios; o check marca como lida (com animação), "Limpar tudo" marca todas e clicar no texto abre a ferramenta. Faz polling a cada 30 s e refaz a consulta ao abrir o sino; a aba Histórico lista as lidas (`lida=true`).
 - **Limpeza:** `fn_limpar_notificacoes()` (migration `0007`) apaga as notificações já lidas com mais de 30 dias; as não lidas ficam. Agendada diariamente às 03:00 de Brasília (`0 6 * * *` UTC) via `pg_cron`, ou `SELECT fn_limpar_notificacoes();` por fora. Um empréstimo ainda atrasado após a limpeza gera um novo aviso (lembrete mensal).
