@@ -313,7 +313,7 @@ router.delete(
 router.put(
   '/:id/foto',
   authenticate,
-  authorize('manutencao', 'admin'),
+  authorize('admin'),
   validate({ params: ferramentaIdParamSchema }),
   express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' }),
   FerramentaController.salvarFoto

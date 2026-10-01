@@ -71,7 +71,7 @@ cadastrado pelo admin já é o funcionário, e o acesso nasce de um link.
 3. **Definir a senha:** `POST /v1/auth/convites/:token/senha` com `senha` (6
    dígitos) cria a conta ativa (`papel = 'manutencao'`; se já havia conta, troca a
    senha), consome o convite e devolve o mesmo corpo do login (`token` + `usuario`):
-   a pessoa já entra logada. Os dois endpoints públicos têm limite de 10
+   a pessoa já entra logada. Atenção: o convite **reativa** a conta se o admin a tinha desativado (`usuarios.ativo`), então não use a desativação como bloqueio sem antes desativar o colaborador (que invalida o link). Criação de convite e troca de senha ainda não vão para a auditoria. Os dois endpoints públicos dividem o mesmo `conviteLimiter` e têm limite de 10
    tentativas por minuto por IP (429).
 4. **Front:** a página `/c/:token` mostra o nome, pede a senha duas vezes, toca a
    animação de sucesso e abre a sessão.
@@ -147,6 +147,8 @@ revisão humana.
 ## Notificações (API-17 / FE-19)
 
 - **Geração:** `fn_gerar_notificacoes()` (migration `0006`) cria uma notificação `devolucao_hoje` ou `atraso` por empréstimo aberto, uma única vez por tipo e empréstimo (deduplicada pelo `link`, `/ferramentas/:id?emprestimo=:id`). `usuario_id` fica `NULL` (da equipe toda), então `lida` é compartilhada. Agendada via `pg_cron` de segunda a sexta às 07:00 de Brasília (`0 10 * * 1-5` UTC); onde a extensão não existe, rodar `SELECT fn_gerar_notificacoes();` por fora.
+- **Fim de semana:** como o agendamento é só de seg a sex, uma devolução que vence na sexta só vira aviso na segunda, já como `atraso`; `devolucao_hoje` nunca é gerada para vencimento em sábado/domingo.
+- **Lida compartilhada:** "Limpar tudo" e o check marcam também as notificações da equipe toda (`usuario_id` NULL), limpando o sino de todos.
 - **Calendário:** `GET /v1/emprestimos/calendario?mes=AAAA-MM` devolve as devoluções previstas do mês (empréstimos abertos), agrupadas por dia de Brasília; `ramal` é sempre `null` (não há ramal no cadastro).
 - **API (perfis `manutencao` e `admin`):** `GET /v1/notificacoes?lida=false` (`meta.total` é o contador do sino) `PATCH /v1/notificacoes/:id/lida` e `PATCH /v1/notificacoes/lida` (marca todas).
 - **Front:** `SinoNotificacoes` no cabeçalho; cada tipo tem cor, ícone e rótulo próprios; o check marca como lida (com animação), "Limpar tudo" marca todas e clicar no texto abre a ferramenta. Faz polling a cada 30 s e refaz a consulta ao abrir o sino; a aba Histórico lista as lidas (`lida=true`).
@@ -154,6 +156,6 @@ revisão humana.
 
 ## Foto da ferramenta
 
-- **API:** `PUT /v1/ferramentas/:id/foto` (perfis `manutencao` e `admin`) recebe a imagem crua (`image/jpeg`, `image/png` ou `image/webp`, até 5 MB; o tipo é conferido pelos bytes, não pelo `Content-Type`), grava em disco em `UPLOADS_DIR` (padrão `api/uploads`, fora do git), salva o caminho relativo em `foto_url` (`/uploads/<id>-<uuid>.<ext>`) e apaga a foto anterior. Os arquivos são servidos em `GET /v1/uploads/...`, sob o mesmo prefixo da API para passar pelo mesmo proxy.
+- **API:** `PUT /v1/ferramentas/:id/foto` (só `admin`, como a edição da ferramenta) recebe a imagem crua (`image/jpeg`, `image/png` ou `image/webp`, até 5 MB; o tipo é conferido pelos bytes, não pelo `Content-Type`), grava em disco em `UPLOADS_DIR` (padrão `api/uploads`, fora do git), salva o caminho relativo em `foto_url` (`/uploads/<id>-<uuid>.<ext>`) e apaga a foto anterior. Os arquivos são servidos em `GET /v1/uploads/...`, sob o mesmo prefixo da API para passar pelo mesmo proxy.
 - **Limite conhecido:** disco local de um único servidor. Em Render/Railway o disco é efêmero e em mais de uma instância os arquivos não são compartilhados; nesses casos o armazenamento troca para S3 (só o `salvarFoto` e o `express.static` mudam). Em produção, `UPLOADS_DIR` deve apontar para um volume persistente (e ser incluído no backup).
 - **Front:** o pop-up de cadastro/edição de ferramentas tem o seletor de foto (`<input type="file" accept="image/*">`: no celular o sistema oferece câmera ou galeria; no PC, escolher o arquivo). A foto é reduzida para 1280 px (JPEG) no navegador antes do envio e é enviada depois de o cadastro ser salvo.

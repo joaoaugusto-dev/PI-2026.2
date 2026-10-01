@@ -175,6 +175,7 @@ export function SinoNotificacoes() {
             <button
               type="button"
               onClick={() => concluir(itens.map((n) => n.id))}
+              title="Marca como lidas para toda a equipe"
               className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Limpar tudo

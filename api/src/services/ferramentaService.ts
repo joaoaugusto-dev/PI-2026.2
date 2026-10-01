@@ -356,15 +356,23 @@ export async function salvarFoto(id: number, imagem: unknown): Promise<Ferrament
 
   await fs.mkdir(uploadsDir, { recursive: true });
   const arquivo = `${id}-${randomUUID()}.${ext}`;
-  await fs.writeFile(path.join(uploadsDir, arquivo), imagem);
+  const destino = path.join(uploadsDir, arquivo);
+  await fs.writeFile(destino, imagem);
 
-  const result = await query<Ferramenta>(`UPDATE ferramentas SET foto_url = $1 WHERE id = $2 RETURNING ${COLUNAS_FERRAMENTA}`, [
-    `/uploads/${arquivo}`,
-    id,
-  ]);
-  // a foto antiga deixa de ser referenciada: apaga (basename evita sair do diretório)
+  let result;
+  try {
+    result = await query<Ferramenta>(
+      `UPDATE ferramentas SET foto_url = $1, updated_at = NOW() WHERE id = $2 RETURNING ${COLUNAS_FERRAMENTA}`,
+      [`/uploads/${arquivo}`, id]
+    );
+  } catch (error) {
+    await fs.rm(destino, { force: true }).catch(() => {}); // não deixa arquivo órfão
+    throw error;
+  }
+  // a foto antiga deixa de ser referenciada: apaga (basename evita sair do diretório).
+  // Falha aqui não derruba a requisição — a foto nova já está no banco.
   if (anterior.foto_url?.startsWith('/uploads/')) {
-    await fs.rm(path.join(uploadsDir, path.basename(anterior.foto_url)), { force: true });
+    await fs.rm(path.join(uploadsDir, path.basename(anterior.foto_url)), { force: true }).catch(() => {});
   }
   return result.rows[0];
 }

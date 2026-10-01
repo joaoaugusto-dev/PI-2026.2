@@ -132,6 +132,10 @@ não filhas do layout autenticado.
     animar `width`/`height`/`top`/`left`/`margin`/`box-shadow`.
     `npm run check:motion` (depois do `build`) falha se algum keyframe do CSS
     gerado animar propriedade de layout.
+    **Exceção registrada:** a saída de item do `SinoNotificacoes` anima
+    `grid-template-rows` (1fr→0fr) para o item colapsar suavemente; o
+    `check:motion` não cobre `transition` utilitária, só `@keyframes`, então
+    esse caso não é validado por ele. Não replicar fora de listas curtas.
   - **Durações:** `--motion-state` 140ms (hover/foco/pressionado),
     `--motion-screen` 240ms (tela e modal, nunca acima de 300ms),
     `--motion-stagger` 20ms, `--motion-reduced` 80ms. Easing único:

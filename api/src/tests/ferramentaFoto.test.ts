@@ -26,7 +26,7 @@ const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { ex
 
 describe('PUT /v1/ferramentas/:id/foto', () => {
   let id: number;
-  const put = (alvo: number | string, corpo: Buffer | string | undefined, tipo = 'image/png', papel: string | null = 'manutencao') => {
+  const put = (alvo: number | string, corpo: Buffer | string | undefined, tipo = 'image/png', papel: string | null = 'admin') => {
     const req = request(app).put(`/v1/ferramentas/${alvo}/foto`).set('Content-Type', tipo);
     if (papel) req.set('Authorization', `Bearer ${token(papel)}`);
     return req.send(corpo);
@@ -40,6 +40,10 @@ describe('PUT /v1/ferramentas/:id/foto', () => {
   afterAll(async () => {
     await query('DELETE FROM ferramentas WHERE nome LIKE $1', [`${PREFIXO}%`]);
     fs.rmSync(pasta, { recursive: true, force: true });
+  });
+
+  it('é só do admin (manutenção recebe 403)', async () => {
+    expect((await put(id, PNG, 'image/png', 'manutencao')).status).toBe(403);
   });
 
   it('grava a foto, serve em /v1/uploads com CORP cross-origin e apaga a anterior ao trocar', async () => {
