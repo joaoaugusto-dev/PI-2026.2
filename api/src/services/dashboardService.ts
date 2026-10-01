@@ -1,4 +1,5 @@
-import { query } from '../config/database.js';
+import type { PoolClient } from 'pg';
+import { getClient, query } from '../config/database.js';
 
 export interface EmprestimoPendente {
   id: number;
@@ -51,6 +52,25 @@ const DIA_PREVISTO = "(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo')::dat
 
 const LIMITE_CARTAO = 4; // linhas que cada cartão mostra; o resto vem paginado por lista()
 
+/**
+ * Total e linhas da mesma lista na mesma "fotografia" do banco: sem isso, uma devolução entre as duas
+ * consultas deixava o total uma unidade fora da lista.
+ */
+async function emSnapshot<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await getClient();
+  try {
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    const resultado = await fn(client);
+    await client.query('COMMIT');
+    return resultado;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function emprestimos(
   condicaoDia: string,
   params: unknown[],
@@ -59,9 +79,12 @@ async function emprestimos(
 ): Promise<Lista<EmprestimoPendente>> {
   const where = `data_devolucao IS NULL AND ${condicaoDia}`;
   const n = params.length;
-  const [total, itens] = await Promise.all([
-    query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe WHERE ${where}`, params),
-    query<EmprestimoPendente>(
+  return emSnapshot(async (client) => {
+    const total = await client.query<{ total: string }>(
+      `SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe WHERE ${where}`,
+      params
+    );
+    const itens = await client.query<EmprestimoPendente>(
       `SELECT id, colaborador_nome, colaborador_matricula, setor_nome, ferramenta_nome, codigo_identificacao,
               previsao_devolucao, ABS(${DIA_PREVISTO} - ${HOJE})::int AS dias
        FROM vw_emprestimos_detalhe
@@ -69,9 +92,9 @@ async function emprestimos(
        ORDER BY previsao_devolucao, id
        LIMIT $${n + 1} OFFSET $${n + 2}`,
       [...params, limit, offset]
-    ),
-  ]);
-  return { total: Number(total.rows[0].total), itens: itens.rows };
+    );
+    return { total: Number(total.rows[0].total), itens: itens.rows };
+  });
 }
 
 /**
@@ -80,8 +103,7 @@ async function emprestimos(
  * indisponíveis esperando tratativa.
  *
  * Cada lista vem com o total e só as primeiras linhas (as que o cartão mostra); o "Mostrar tudo"
- * pagina por GET /v1/dashboard/:lista. Total e linhas são consultas separadas, sem transação: uma
- * devolução entre as duas pode deixar o total uma unidade fora da lista, o que no balcão não importa.
+ * pagina por GET /v1/dashboard/:lista. Total e linhas de cada lista saem do mesmo snapshot.
  */
 export async function obter(): Promise<Dashboard> {
   const [kpis, cobrarHoje, atrasados, proximos, indisponiveis] = await Promise.all([
@@ -137,9 +159,9 @@ async function ferramentasAguardando(limit: number, offset = 0): Promise<Lista<F
       ORDER BY o.created_at DESC, o.id DESC LIMIT 1
     ) oc ON TRUE
     WHERE f.ativo = TRUE AND f.status = 'indisponivel'`;
-  const [total, itens] = await Promise.all([
-    query<{ total: string }>(`SELECT COUNT(*)::text AS total ${base}`),
-    query<FerramentaAguardando>(
+  return emSnapshot(async (client) => {
+    const total = await client.query<{ total: string }>(`SELECT COUNT(*)::text AS total ${base}`);
+    const itens = await client.query<FerramentaAguardando>(
       `SELECT f.id AS ferramenta_id, f.nome AS ferramenta_nome, f.codigo_identificacao,
               oc.id AS ocorrencia_id, oc.tipo, oc.status AS etapa,
               GREATEST(0, (${HOJE} - (COALESCE(oc.created_at, f.updated_at) AT TIME ZONE 'America/Sao_Paulo')::date))::int AS dias_parada
@@ -147,7 +169,7 @@ async function ferramentasAguardando(limit: number, offset = 0): Promise<Lista<F
        ORDER BY COALESCE(oc.created_at, f.updated_at), f.id
        LIMIT $1 OFFSET $2`,
       [limit, offset]
-    ),
-  ]);
-  return { total: Number(total.rows[0].total), itens: itens.rows };
+    );
+    return { total: Number(total.rows[0].total), itens: itens.rows };
+  });
 }
