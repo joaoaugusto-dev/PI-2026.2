@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { Navigate, useLocation } from 'react-router-dom'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
 import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
-import { DEMO_PERMITIDO, setModoDemo } from '@/lib/demo/flag'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {
@@ -20,21 +19,7 @@ interface AuthContextValue {
   login: (matricula: string, senha: string) => Promise<void>
   /** Abre a sessão com um token já emitido pela API (ex.: definição de senha pelo link de convite). */
   entrarComSessao: (token: string, usuario: Usuario) => void
-  entrarComoDemo: () => void
   logout: () => void
-}
-
-// Entrega P1 (02/10): a interface é avaliada sem a API REST no ar, então o
-// modo demonstração não tem token nem sessão: liga a flag de `lib/demo` e o
-// `api.ts` responde tudo com fixtures locais, sem rede e sem tocar a API.
-// ponytail: a demo não persiste (nada vai pro localStorage) — dar refresh
-// volta pro login; quando a API estiver integrada, `lib/demo` sai junto.
-const usuarioDemo: Usuario = {
-  id: 0,
-  nome: 'Visitante (demonstração)',
-  matricula: '0001',
-  papel: 'admin',
-  ativo: true,
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -89,7 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   const logout = () => {
-    setModoDemo(false)
     setAuthToken(null)
     setUsuario(null)
     localStorage.removeItem(CHAVE_SESSAO)
@@ -101,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const definirSessao = (token: string, usuarioLogado: Usuario) => {
-    setModoDemo(false)
     setAuthToken(token)
     setUsuario(usuarioLogado)
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ token, usuario: usuarioLogado }))
@@ -113,14 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     definirSessao(token, usuarioLogado)
   }
 
-  const entrarComoDemo = () => {
-    if (!DEMO_PERMITIDO) return
-    setAuthToken(null)
-    setModoDemo(true)
-    setUsuario(usuarioDemo)
-  }
-
-  const value = useMemo(() => ({ usuario, login, entrarComSessao: definirSessao, entrarComoDemo, logout }), [usuario])
+  const value = useMemo(() => ({ usuario, login, entrarComSessao: definirSessao, logout }), [usuario])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -229,22 +229,10 @@ não filhas do layout autenticado.
   Colaboradores (`/c/:token`, `ConviteAcessoPage`): a pessoa define a senha, toca a
   animação de `TelaSucessoAnimada` (prop `aoTerminarAnimacao`, a mesma do login) e a sessão abre
   sozinha. Não há mais auto-cadastro nem tela de aprovação.
-- **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
-  `AuthProvider` (`src/lib/auth.tsx`) não cria token nem sessão: liga a flag
-  `setModoDemo(true)` de `src/lib/demo/adapter.ts`, e o adapter do Axios em
-  `src/lib/api.ts` passa a responder toda chamada com fixtures locais
-  (`src/lib/demo/fixtures.ts`), em memória, sem rede e sem credencial —
-  nada chega na API. As fixtures são marcadas como "Demo" no nome/código para
-  nunca serem confundidas com dado real; POST/PATCH/DELETE dos cadastros
-  funcionam em memória e somem ao recarregar. O usuário demo é `admin` para
-  exibir os cadastros. Logout e login real desligam a flag. Só
-  existe em `npm run dev` ou em build com `VITE_DEMO=true` (`DEMO_PERMITIDO`):
-  em produção o botão some, `entrarComoDemo` não faz nada e o adapter com as
-  fixtures nem entra no bundle (`import()` em `lib/api.ts` atrás da condição
-  escrita por extenso; a flag vive em `lib/demo/flag.ts`). Existe
-  porque a P1 avalia a interface **sem exigir integração com a API REST**;
-  remover `src/lib/demo` junto com o botão do login quando o fluxo real
-  estiver integrado.
+- **Sem dado mockado:** nenhuma tela usa lista local, fixture ou modo
+  demonstração — tudo vem da API (`@/lib/api.ts` + TanStack Query). Se a API
+  estiver fora ou faltar um endpoint, a tela mostra o erro: é assim que o
+  problema aparece e é corrigido. Não reintroduzir adaptador/fixtures.
 - **Cadastros auxiliares são só do `admin`** (Colaboradores, Ferramentas,
   Categorias, Setores): o grupo some do menu e as rotas usam `RotaAdmin`, que
   responde com a tela de 404 (não redireciona — quem não é admin não deve
