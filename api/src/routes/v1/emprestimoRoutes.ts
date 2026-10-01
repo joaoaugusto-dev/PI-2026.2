@@ -7,6 +7,7 @@ import {
   criarEmprestimoSchema,
   devolverEmprestimoSchema,
   emprestimoIdParamSchema,
+  calendarioQuerySchema,
   listarEmprestimosQuerySchema,
   previsaoSugeridaQuerySchema,
 } from '../../validators/emprestimoValidator.js';
@@ -136,6 +137,43 @@ router.post(
   authorize('manutencao'),
   validate({ body: criarEmprestimoSchema }),
   EmprestimoController.criar
+);
+
+/**
+ * @openapi
+ * /emprestimos/calendario:
+ *   get:
+ *     summary: Devoluções previstas do mês, agrupadas por dia
+ *     description: >
+ *       Só empréstimos ainda abertos, com o dia da previsão no fuso de
+ *       Brasília. Alimenta a tela de Calendário (FE-18).
+ *     tags:
+ *       - Empréstimos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: mes
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "2026-10"
+ *     responses:
+ *       200:
+ *         description: Lista de dias com os empréstimos que vencem neles
+ *       400:
+ *         description: mes ausente ou fora do formato AAAA-MM
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get(
+  '/calendario',
+  authenticate,
+  authorize('manutencao'),
+  validate({ query: calendarioQuerySchema }),
+  EmprestimoController.calendario
 );
 
 /**

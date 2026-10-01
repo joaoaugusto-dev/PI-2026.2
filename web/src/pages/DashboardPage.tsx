@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpRight, RotateCcw } from 'lucide-react'
+import { ArrowLeftRight, ArrowUpRight, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -111,7 +111,7 @@ export function DashboardPage() {
           to="/devolucoes"
           titulo="Registrar devolução"
           descricao="Busca por código ou colaborador"
-          icone={RotateCcw}
+          icone={ArrowLeftRight}
           variante="escuro"
         />
       </div>

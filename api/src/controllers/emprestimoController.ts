@@ -46,6 +46,18 @@ export class EmprestimoController {
   }
 
   /**
+   * GET /v1/emprestimos/calendario
+   */
+  static async calendario(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { mes } = req.query as unknown as { mes: string };
+      return sendSuccess(res, await emprestimoService.calendario(mes), null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
    * GET /v1/emprestimos/previsao-sugerida
    */
   static async previsaoSugerida(req: Request, res: Response, next: NextFunction): Promise<any> {

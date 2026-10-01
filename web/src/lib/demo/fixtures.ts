@@ -126,21 +126,3 @@ export function calendarioDoMes(mes: string): DiaCalendario[] {
   }))
 }
 
-export const usuariosPendentes = [
-  {
-    id: 1,
-    nome: 'Usuário Demo Pendente 1',
-    matricula: 'DEMO-P1',
-    papel: 'manutencao',
-    ativo: false,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    nome: 'Usuário Demo Pendente 2',
-    matricula: 'DEMO-P2',
-    papel: 'manutencao',
-    ativo: false,
-    created_at: new Date().toISOString(),
-  },
-]

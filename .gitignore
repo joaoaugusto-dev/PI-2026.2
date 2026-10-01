@@ -56,3 +56,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Fotos enviadas pela API
+uploads/

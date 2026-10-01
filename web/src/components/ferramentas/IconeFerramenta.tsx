@@ -44,6 +44,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { urlDaFoto } from '@/lib/imagem'
 import { cn } from '@/lib/utils'
 
 /**
@@ -125,7 +126,7 @@ type IconeFerramentaProps = {
 /** Miniatura de ferramenta: foto quando existir, senão o ícone reconhecido pelo nome. */
 export function IconeFerramenta({ nome, fotoUrl, className }: IconeFerramentaProps) {
   if (fotoUrl) {
-    return <img src={fotoUrl} alt={nome} className={cn('rounded object-cover', className)} />
+    return <img src={urlDaFoto(fotoUrl)} alt={nome} className={cn('rounded object-cover', className)} />
   }
 
   const Icone = iconeParaFerramenta(nome)

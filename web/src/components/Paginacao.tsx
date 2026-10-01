@@ -16,28 +16,22 @@ export function Paginacao({
 }) {
   if (!meta || meta.totalPages <= 1) return null
   return (
-    <div className="flex items-center justify-end gap-3">
-      <span className="text-rotulo text-muted-foreground">
-        Página {meta.page} de {meta.totalPages} · {meta.total} {itens}
+    <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-2.5">
+      <span className="text-sm font-medium">
+        Página {meta.page} de {meta.totalPages}
+        <span className="hidden font-normal text-muted-foreground sm:inline">
+          {' '}
+          · {meta.total} {itens}
+        </span>
       </span>
-      <Button
-        size="icon"
-        variant="outline"
-        aria-label="Página anterior"
-        disabled={page <= 1}
-        onClick={() => onPage(page - 1)}
-      >
-        <ChevronLeft />
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
-        aria-label="Próxima página"
-        disabled={page >= meta.totalPages}
-        onClick={() => onPage(page + 1)}
-      >
-        <ChevronRight />
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="outline" disabled={page <= 1} onClick={() => onPage(page - 1)} className="gap-1">
+          <ChevronLeft className="size-4" /> Anterior
+        </Button>
+        <Button disabled={page >= meta.totalPages} onClick={() => onPage(page + 1)} className="gap-1">
+          Próxima <ChevronRight className="size-4" />
+        </Button>
+      </div>
     </div>
   )
 }

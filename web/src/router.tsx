@@ -1,9 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { RotaAdmin, RotaProtegida } from '@/lib/auth'
-import { AprovacoesPage } from '@/pages/AprovacoesPage'
 import { CadastroFerramentasPage } from '@/pages/CadastroFerramentasPage'
-import { CadastroPage } from '@/pages/CadastroPage'
+import { ConviteAcessoPage } from '@/pages/ConviteAcessoPage'
 import { CalendarioPage } from '@/pages/CalendarioPage'
 import { CategoriasPage } from '@/pages/CategoriasPage'
 import { ColaboradoresPage } from '@/pages/ColaboradoresPage'
@@ -80,14 +79,6 @@ export const router = createBrowserRouter([
               </RotaAdmin>
             ),
           },
-          {
-            path: 'aprovacoes',
-            element: (
-              <RotaAdmin>
-                <AprovacoesPage />
-              </RotaAdmin>
-            ),
-          },
           { path: 'design-system', element: <DesignSystemPage /> },
           // 404 dentro do layout: quem está logado não perde a sidebar (deslogado cai no login)
           { path: '*', element: <NaoEncontradaPage /> },
@@ -96,6 +87,7 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '/login', errorElement: <ErroInesperadoPage />, element: <LoginPage /> },
-  { path: '/cadastro', errorElement: <ErroInesperadoPage />, element: <CadastroPage /> },
+  // link de convite: caminho curto e sem palavra que sugira o que é (o token é o segredo)
+  { path: '/c/:token', errorElement: <ErroInesperadoPage />, element: <ConviteAcessoPage /> },
   { path: '/consulta', errorElement: <ErroInesperadoPage />, element: <ConsultaPage /> },
 ])

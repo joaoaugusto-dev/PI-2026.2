@@ -122,9 +122,10 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    pendente de ata.
 8. **Três perfis:** `manutencao` (operação de balcão: retirada, devolução,
    consulta de ferramentas, indisponíveis, calendário e histórico; também faz
-   o cadastro rápido de colaborador no meio do fluxo), `admin` (aprovação de
-   auto-cadastros pendentes via `PATCH /v1/usuarios/:id/ativar` e
-   `GET /v1/usuarios?ativo=false`, **mais os cadastros auxiliares** —
+   o cadastro rápido de colaborador no meio do fluxo), `admin` (cria os colaboradores e
+   gera o **link de acesso** de cada um — `POST /v1/colaboradores/:id/convite`;
+   quem recebe define a própria senha e já entra logado; **mais os cadastros
+   auxiliares** —
    Colaboradores, Ferramentas, Categorias e Setores: edição e inativação são
    só do `admin`, com 403 na API para `manutencao`; leitura e criação de
    ferramenta/colaborador seguem abertas à manutenção porque o fluxo de
@@ -133,9 +134,9 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    disponibilizar ferramenta, histórico de empréstimos) e as atividades, que
    alimentam o campo de atividade da retirada — o admin lê e cadastra, mas não
    opera o balcão; decisão do time em 30/09/2026, revisa a de 22/09/2026,
-   issue API-149/#149) e `consulta` (sessão de 15 minutos por matrícula, só
-   leitura de disponibilidade, sem senha). No front, as telas de cadastro e de
-   aprovação não aparecem no menu para quem não é `admin` e, pela URL direta,
+   decisão de 01/10/2026: acabou o auto-cadastro com aprovação, o colaborador cadastrado pelo admin já é o
+   funcionário, e o admin também recebe as notificações) e `consulta` (sessão de 15 minutos por matrícula, só
+   leitura de disponibilidade, sem senha). No front, as telas de cadastro não aparecem no menu para quem não é `admin` e, pela URL direta,
    respondem 404.
 9. **Feriados vêm da BrasilAPI**, com cache em tabela própria e fallback de
    sábado/domingo se a API estiver fora.

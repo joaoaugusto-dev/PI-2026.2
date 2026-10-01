@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthService } from '../services/authService.js';
 import * as colaboradorService from '../services/colaboradorService.js';
 import { sendSuccess } from '../utils/response.js';
 import { getPaginationParams, buildPaginationMeta } from '../utils/pagination.js';
@@ -80,6 +81,18 @@ export class ColaboradorController {
       const { id } = req.params as unknown as { id: number };
       const colaborador = await colaboradorService.inativar(id);
       return sendSuccess(res, colaborador, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * POST /v1/colaboradores/:id/convite
+   */
+  static async criarConvite(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      return sendSuccess(res, await AuthService.criarConvite(id, req.usuario!.id), null, 201);
     } catch (error) {
       return next(error);
     }

@@ -244,4 +244,44 @@ router.delete(
   ColaboradorController.inativar
 );
 
+/**
+ * @openapi
+ * /colaboradores/{id}/convite:
+ *   post:
+ *     summary: Gera o link de acesso (convite) para o colaborador definir a própria senha
+ *     description: >
+ *       Só admin. O token aparece apenas nesta resposta (o banco guarda o hash)
+ *       e vale 7 dias, uma única vez; gerar outro invalida o anterior ainda não
+ *       usado. Serve também para quem esqueceu a senha. O front monta o link
+ *       como /c/{token}.
+ *     tags:
+ *       - Colaboradores
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       201:
+ *         description: Convite criado (token, expiraEm e colaborador)
+ *       400:
+ *         description: id inválido
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ *       404:
+ *         description: Colaborador não encontrado ou inativo
+ */
+router.post(
+  '/:id/convite',
+  authenticate,
+  authorize('admin'),
+  validate({ params: colaboradorIdParamSchema }),
+  ColaboradorController.criarConvite
+);
+
 export default router;

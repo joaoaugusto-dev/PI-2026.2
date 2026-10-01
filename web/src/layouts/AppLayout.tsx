@@ -44,7 +44,6 @@ const navCadastros = [
 const titulosExtras: Record<string, string> = {
   '/status': 'Status da API',
   '/design-system': 'Design system',
-  '/aprovacoes': 'Aprovação de cadastros',
 }
 
 function tituloDaPagina(pathname: string) {
@@ -195,18 +194,6 @@ export function AppLayout() {
                       </Collapsible.Content>
                     </SidebarMenuItem>
                   </Collapsible.Root>
-                )}
-
-                {usuario?.papel === 'admin' && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname === '/aprovacoes'}
-                      className="h-(--control-h) px-3 text-corpo"
-                    >
-                      <NavLink to="/aprovacoes">Aprovação de cadastros</NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 )}
 
                 <SidebarMenuItem>

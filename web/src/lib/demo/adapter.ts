@@ -90,11 +90,7 @@ const rotas: Record<string, Rota> = {
       database: { status: 'connected', name: 'demo', serverTime: new Date().toISOString(), error: null },
     },
   }),
-  'GET usuarios': (p) => pagina(dados.usuariosPendentes, p),
-  'PATCH usuarios/:id/ativar': (_, [id]) => {
-    remover(dados.usuariosPendentes, Number(id))
-    return { data: { id: Number(id), ativo: true } }
-  },
+  'POST colaboradores/:id/convite': () => ({ data: { token: 'D'.repeat(43), expiraEm: new Date(Date.now() + 7 * 864e5).toISOString() } }),
   'GET setores': (p) => pagina(filtrarNome(dados.setores, p.q), p),
   'GET categorias': (p) => pagina(filtrarNome(dados.categorias, p.q), p),
   'GET ferramentas': (p) => {

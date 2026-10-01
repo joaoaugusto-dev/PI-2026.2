@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import type { ZodType } from 'zod'
 import { Button } from '@/components/ui/Button'
@@ -23,6 +24,7 @@ export function FormularioCadastro({
   salvando,
   onSubmit,
   onCancelar,
+  extra,
 }: {
   campos: Campo[]
   schema: ZodType<Valores, Valores>
@@ -30,6 +32,8 @@ export function FormularioCadastro({
   salvando: boolean
   onSubmit: (valores: Valores) => void
   onCancelar: () => void
+  /** Conteúdo adicional (ex.: seletor de foto) entre os campos e os botões. */
+  extra?: ReactNode
 }) {
   const {
     register,
@@ -74,6 +78,7 @@ export function FormularioCadastro({
           )}
         </div>
       ))}
+      {extra}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" disabled={salvando} onClick={onCancelar}>
           Cancelar

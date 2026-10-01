@@ -49,38 +49,36 @@ Modo quiosque sem senha (só matrícula, sem crachá). O operador informa apenas
 
 ### Admin
 
-Papel adicional no enum `papel_usuario` (`admin`), separado de `manutencao`
-(decisão do time em 22/09/2026, issue API-149 — substitui a alternativa
-"qualquer manutenção ativo aprova outro" cogitada na issue original). Só um
-`admin` pode aprovar um auto-cadastro pendente via
-`PATCH /v1/usuarios/:id/ativar` ou listar os pendentes via
-`GET /v1/usuarios?ativo=false`. Nesta primeira versão não existe rota para
-promover um usuário a `admin` pela API — a promoção é feita direto no banco,
-até o time decidir se cria um fluxo de gestão de admins (ver
-`/docs/decisoes-pendentes.md`).
+Papel adicional no enum `papel_usuario` (`admin`), separado de `manutencao`.
+Cadastra os colaboradores (que já são os funcionários) e gera o link de acesso
+de cada um. Nesta versão não existe rota para promover um usuário a `admin`
+pela API — a promoção é feita direto no banco, até o time decidir se cria um
+fluxo de gestão de admins (ver `/docs/decisoes-pendentes.md`).
 
-### Auto-cadastro de manutenção (fluxo)
+### Acesso por link de convite (fluxo)
 
-1. `POST /v1/auth/registro` (público) recebe `matricula` (4 dígitos numéricos)
-   e `senha`. O nome vem do cadastro do colaborador; `papel`, `ativo` e `nome`
-   enviados no corpo são ignorados. A matrícula precisa existir em
-   `colaboradores` (ativo) e ainda não ter conta de acesso. Cria a conta com
-   `papel = 'manutencao'` e `ativo = false` e retorna 201 sem token — o usuário
-   não pode logar ainda. Erros: 404 `COLABORADOR_NOT_FOUND` (matrícula sem
-   colaborador ativo), 409 `MATRICULA_JA_CADASTRADA` (a matrícula já tem conta,
-   inclusive em cadastros simultâneos, barrados pelo índice único de
-   `usuarios.colaborador_id`), 400 (matrícula fora do padrão ou senha curta) e
-   429 (mais de 10 tentativas por minuto por IP, porque as respostas 404/409
-   revelam quais matrículas existem).
-2. `POST /v1/auth/login` com esse usuário retorna 401 `USER_INACTIVE` até a
-   aprovação.
-3. Um `admin` autenticado lista os pendentes em
-   `GET /v1/usuarios?ativo=false` (cada item traz `nome` e `matricula` do
-   colaborador) e aprova com
-   `PATCH /v1/usuarios/:id/ativar`, que exige papel `admin` (senão 403
-   `ACCESS_DENIED`) e retorna 409 `USUARIO_JA_ATIVO` se o usuário já estiver
-   ativo.
-4. Depois da aprovação, o login volta a funcionar normalmente.
+Substitui o auto-cadastro com aprovação (decisão de 01/10/2026): o colaborador
+cadastrado pelo admin já é o funcionário, e o acesso nasce de um link.
+
+1. **Gerar:** o admin chama `POST /v1/colaboradores/:id/convite` (botão "Link de acesso e troca de senha" na tela de Colaboradores, que copia o link). A resposta traz o `token`
+   (32 bytes aleatórios em base64url) uma única vez; o banco guarda só o hash
+   SHA-256 em `convites_acesso` (migration `0008`). Vale 7 dias e uma única vez;
+   gerar outro invalida o anterior ainda não usado. O link é `/c/<token>`, sem
+   nenhuma palavra que sugira o conteúdo. Também serve para trocar a senha (esquecida ou conta bloqueada).
+2. **Abrir:** `GET /v1/auth/convites/:token` (público) devolve `nome` e `matricula`.
+   Link inexistente, expirado ou já usado dá o mesmo 404 `CONVITE_INVALIDO`.
+3. **Definir a senha:** `POST /v1/auth/convites/:token/senha` com `senha` (6
+   dígitos) cria a conta ativa (`papel = 'manutencao'`; se já havia conta, troca a
+   senha), consome o convite e devolve o mesmo corpo do login (`token` + `usuario`):
+   a pessoa já entra logada. Atenção: o convite **reativa** a conta se o admin a tinha desativado (`usuarios.ativo`), então não use a desativação como bloqueio sem antes desativar o colaborador (que invalida o link). Criação de convite (`convite_criado`) e definição de senha (`senha_definida`) são gravadas em `auditoria` (tabela `colaboradores`, `registro_id` = colaborador). Os dois endpoints públicos dividem o mesmo `conviteLimiter` e têm limite de 10
+   tentativas por minuto por IP (429).
+4. **Front:** a página `/c/:token` mostra o nome, pede a senha duas vezes, toca a
+   animação de sucesso e abre a sessão.
+
+### Bloqueio de login por matrícula
+
+Migration `0009`: `usuarios.tentativas_falhas` e `bloqueado_ate`. 5 senhas erradas seguidas bloqueiam a conta por 15 minutos (`429 CONTA_BLOQUEADA`, até a senha certa é recusada); login correto zera o contador e um novo link de acesso desbloqueia na hora. Complementa o `loginLimiter` por IP, que não segura tentativas vindas de vários IPs contra uma matrícula conhecida. 
+**Decisão — admin fora do bloqueio:** como a matrícula não é secreta, o bloqueio total permitiria que qualquer um trancasse a conta do admin repetindo 5 erros a cada 15 min (e o admin é quem gera os links que desbloqueiam). Por isso o bloqueio vale só para `manutencao`; o admin continua protegido apenas pelo `loginLimiter` (10/min por IP) e seu contador `tentativas_falhas` não é incrementado (nenhuma tela ou relatório depende dele). **Risco residual:** com senha de 6 dígitos, vários IPs somados conseguem testar as 10⁶ combinações do admin, a conta mais valiosa; aceito no escopo do PI. Evolução possível: atraso crescente por matrícula (sem bloqueio total), que desacelera o ataque distribuído sem permitir trancar a conta. Para `manutencao` o efeito colateral é aceito: quem souber a matrícula consegue bloquear a conta por 15 min, e o admin desbloqueia gerando um link. Emergência (conta de manutenção travada sem admin disponível): `UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL WHERE colaborador_id = (SELECT id FROM colaboradores WHERE matricula = '<matrícula>');`. A mensagem de bloqueio informa os minutos restantes reais.
 
 ## Retirada de ferramenta (fluxo)
 
@@ -149,3 +147,19 @@ workflows (`.github/workflows/`):
 Não substitui a aprovação humana exigida na Seção 5/6 do `CLAUDE.md`
 (pelo menos um aprovador) — é uma checagem automática adicional antes da
 revisão humana.
+
+## Notificações (API-17 / FE-19)
+
+- **Geração:** `fn_gerar_notificacoes()` (migration `0006`) cria uma notificação `devolucao_hoje` ou `atraso` por empréstimo aberto, uma única vez por tipo e empréstimo (deduplicada pelo `link`, `/ferramentas/:id?emprestimo=:id`). `usuario_id` fica `NULL` (da equipe toda), então `lida` é compartilhada. Agendada via `pg_cron` de segunda a sexta às 07:00 de Brasília (`0 10 * * 1-5` UTC); onde a extensão não existe, rodar `SELECT fn_gerar_notificacoes();` por fora.
+- **Fim de semana:** como o agendamento é só de seg a sex, uma devolução que vence na sexta só vira aviso na segunda, já como `atraso`; `devolucao_hoje` nunca é gerada para vencimento em sábado/domingo.
+- **Lida compartilhada:** "Limpar tudo" e o check marcam também as notificações da equipe toda (`usuario_id` NULL), limpando o sino de todos.
+- **Calendário:** `GET /v1/emprestimos/calendario?mes=AAAA-MM` devolve as devoluções previstas do mês (empréstimos abertos), agrupadas por dia de Brasília; `ramal` é sempre `null` (não há ramal no cadastro).
+- **API (perfis `manutencao` e `admin`):** `GET /v1/notificacoes?lida=false` (`meta.total` é o contador do sino) `PATCH /v1/notificacoes/:id/lida` e `PATCH /v1/notificacoes/lida` (marca todas).
+- **Front:** `SinoNotificacoes` no cabeçalho; cada tipo tem cor, ícone e rótulo próprios; o check marca como lida (com animação), "Limpar tudo" marca todas e clicar no texto abre a ferramenta. Faz polling a cada 30 s e refaz a consulta ao abrir o sino; a aba Histórico lista as lidas (`lida=true`).
+- **Limpeza:** `fn_limpar_notificacoes()` (migration `0007`) apaga as notificações já lidas com mais de 30 dias; as não lidas ficam. Agendada diariamente às 03:00 de Brasília (`0 6 * * *` UTC) via `pg_cron`, ou `SELECT fn_limpar_notificacoes();` por fora. Um empréstimo ainda atrasado após a limpeza gera um novo aviso (lembrete mensal).
+
+## Foto da ferramenta
+
+- **API:** `PUT /v1/ferramentas/:id/foto` (só `admin`, como a edição da ferramenta) recebe a imagem crua (`image/jpeg`, `image/png` ou `image/webp`, até 5 MB; o tipo é conferido pelos bytes, não pelo `Content-Type`), grava em disco em `UPLOADS_DIR` (padrão `api/uploads`, fora do git), salva o caminho relativo em `foto_url` (`/uploads/<id>-<uuid>.<ext>`) e apaga a foto anterior. Os arquivos são servidos em `GET /v1/uploads/...`, sob o mesmo prefixo da API para passar pelo mesmo proxy.
+- **Limite conhecido:** disco local de um único servidor. Em Render/Railway o disco é efêmero e em mais de uma instância os arquivos não são compartilhados; nesses casos o armazenamento troca para S3 (só o `salvarFoto` e o `express.static` mudam). Em produção, `UPLOADS_DIR` deve apontar para um volume persistente (e ser incluído no backup).
+- **Front:** o pop-up de cadastro/edição de ferramentas tem o seletor de foto (`<input type="file" accept="image/*">`: no celular o sistema oferece câmera ou galeria; no PC, escolher o arquivo). A foto é reduzida para 1280 px (JPEG) no navegador antes do envio e é enviada depois de o cadastro ser salvo.

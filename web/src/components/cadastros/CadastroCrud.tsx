@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { FileUp, Inbox } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
 import { EmptyState } from '@/components/EmptyState'
+import { SeletorFoto, type FotoSelecionada } from '@/components/ferramentas/SeletorFoto'
 import { Paginacao } from '@/components/Paginacao'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -11,8 +13,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { useInativarCadastro, useListaCadastro, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
+import { useEnviarFoto, useInativarCadastro, useListaCadastro, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
 import { avisarErro } from '@/lib/avisar-erro'
+import { comprimirImagem, urlDaFoto } from '@/lib/imagem'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { FormularioCadastro, type Campo } from './FormularioCadastro'
 import { ImportarCsvDialog, type ConfigCsv } from './ImportarCsvDialog'
@@ -44,6 +47,8 @@ export function CadastroCrud<T extends { id: number }>({
   paraPayload,
   csv,
   buscaPlaceholder,
+  foto = false,
+  acoesLinha,
 }: {
   recurso: Recurso
   singular: string
@@ -57,13 +62,29 @@ export function CadastroCrud<T extends { id: number }>({
   paraPayload: (valores: Valores, edicao: boolean) => Record<string, unknown>
   csv: ConfigCsv
   buscaPlaceholder: string
+  /** Mostra o seletor de foto no pop-up (câmera/galeria no celular, arquivo no PC); só para `/ferramentas`. */
+  foto?: boolean
+  /** Botões extras por linha, antes de Editar/Inativar (ex.: copiar link de acesso). */
+  acoesLinha?: (item: T) => ReactNode
 }) {
   const queryClient = useQueryClient()
   const [busca, setBusca] = useState('')
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
   const [editando, setEditando] = useState<T | 'novo' | null>(null)
+  // quem chega com state.novo (ex.: botão "Cadastrar ferramenta") já cai com o pop-up de criar aberto
+  const location = useLocation()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if ((location.state as { novo?: boolean } | null)?.novo) {
+      setEditando('novo')
+      navigate(location.pathname, { replace: true, state: null }) // refresh não reabre
+    }
+  }, [location, navigate])
+  const [fotoSel, setFotoSel] = useState<FotoSelecionada | null>(null)
+  const enviarFoto = useEnviarFoto()
   const [importando, setImportando] = useState(false)
+  useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
   const [inativando, setInativando] = useState<T | null>(null)
 
   useEffect(() => {
@@ -85,17 +106,33 @@ export function CadastroCrud<T extends { id: number }>({
 
   function aoSalvar(valores: Valores) {
     const id = editando && editando !== 'novo' ? editando.id : undefined
+    const arquivo = fotoSel?.tipo === 'arquivo' ? fotoSel.arquivo : null
     salvar.mutate(
       { id, dados: paraPayload(valores, id !== undefined) },
       {
-        onSuccess: () => {
+        onSuccess: async (resposta) => {
           playSomConfirmacao()
           toast.success(id ? `${singular} atualizado.` : `${singular} cadastrado.`)
+          // o registro já está salvo; se só a foto falhar, avisa e fecha (dá para reenviar editando)
+          const idSalvo = id ?? (resposta.data as { data: { id: number } }).data.id
+          if (foto && arquivo) {
+            try {
+              await enviarFoto.mutateAsync({ id: idSalvo, imagem: await comprimirImagem(arquivo) })
+            } catch (e) {
+              avisarErro(erroDaApi(e) ?? 'O cadastro foi salvo, mas não foi possível enviar a foto.')
+            }
+          }
           setEditando(null)
         },
         onError: (e) => avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`),
       },
     )
+  }
+
+  // ao editar, mostra a foto já salva até o usuário escolher outra
+  function fotoAtual(item: T | 'novo'): FotoSelecionada | null {
+    const url = item === 'novo' ? null : (item as { foto_url?: string | null }).foto_url
+    return url ? { tipo: 'url', url: urlDaFoto(url) } : null
   }
 
   function confirmarInativacao() {
@@ -159,6 +196,7 @@ export function CadastroCrud<T extends { id: number }>({
                       <TableCell key={c.cabecalho}>{c.render(item)}</TableCell>
                     ))}
                     <TableCell className="flex justify-end gap-2">
+                      {acoesLinha?.(item)}
                       <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
                         Editar
                       </Button>
@@ -189,9 +227,19 @@ export function CadastroCrud<T extends { id: number }>({
               campos={campos}
               schema={schema}
               valoresIniciais={editando === 'novo' ? valoresVazios : deItem(editando)}
-              salvando={salvar.isPending}
+              salvando={salvar.isPending || enviarFoto.isPending}
               onSubmit={aoSalvar}
               onCancelar={() => setEditando(null)}
+              extra={
+                foto && (
+                  <SeletorFoto
+                    semUrl
+                    value={fotoSel ?? fotoAtual(editando)}
+                    removivel={fotoSel !== null}
+                    onChange={setFotoSel}
+                  />
+                )
+              }
             />
           )}
         </DialogContent>

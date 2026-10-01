@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { FerramentaController } from '../../controllers/ferramentaController.js';
 import { validate } from '../../middlewares/validate.js';
 import { authenticate } from '../../middlewares/auth.js';
@@ -270,6 +270,53 @@ router.delete(
   authorize('admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.baixar
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}/foto:
+ *   put:
+ *     summary: Envia (ou troca) a foto da ferramenta
+ *     description: >
+ *       Corpo é a imagem crua (Content-Type image/jpeg, image/png ou
+ *       image/webp, até 5 MB; o tipo é conferido pelo conteúdo). Guarda o
+ *       arquivo em disco e grava o caminho em foto_url (servido em /v1/uploads).
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         image/jpeg:
+ *           schema:
+ *             type: string
+ *             format: binary
+ *     responses:
+ *       200:
+ *         description: Ferramenta com foto_url atualizado
+ *       400:
+ *         description: Corpo ausente ou não é uma imagem válida
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ *       413:
+ *         description: Imagem maior que 5 MB
+ */
+router.put(
+  '/:id/foto',
+  authenticate,
+  authorize('admin'),
+  validate({ params: ferramentaIdParamSchema }),
+  express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' }),
+  FerramentaController.salvarFoto
 );
 
 export default router;

@@ -1,7 +1,8 @@
-import { Activity, BellIcon } from 'lucide-react'
+import { Activity } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { SinoNotificacoes } from '@/components/layout/SinoNotificacoes'
 import { SidebarTrigger } from '@/components/ui/Sidebar'
 import { useAuth } from '@/lib/auth'
 
@@ -45,12 +46,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
             <span className="text-[11px] font-medium hidden sm:inline">Status API</span>
           </Badge>
         </Link>
-        <button type="button" className="relative cursor-pointer">
-          <BellIcon className="size-4 text-muted-foreground hover:text-foreground transition-colors" />
-          <Badge className="absolute -top-2 -right-2 size-4 justify-center rounded-full p-0 text-[10px] bg-[var(--brand-red)] text-white">
-            4
-          </Badge>
-        </button>
+        {(usuario?.papel === 'manutencao' || usuario?.papel === 'admin') && <SinoNotificacoes />}
         <div className="flex items-center gap-2 border-l pl-4">
           <Avatar className="size-8">
             <AvatarFallback className="text-xs font-medium">

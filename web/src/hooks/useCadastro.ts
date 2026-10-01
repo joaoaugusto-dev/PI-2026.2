@@ -38,3 +38,13 @@ export function useInativarCadastro(recurso: Recurso) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [recurso] }),
   })
 }
+
+/** `PUT /ferramentas/:id/foto`: o corpo é a imagem crua (jpeg/png/webp, até 5 MB). */
+export function useEnviarFoto() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, imagem }: { id: number; imagem: Blob }) =>
+      api.put(`/ferramentas/${id}/foto`, imagem, { headers: { 'Content-Type': imagem.type || 'image/jpeg' } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ferramentas'] }),
+  })
+}

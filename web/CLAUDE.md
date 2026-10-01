@@ -132,6 +132,10 @@ não filhas do layout autenticado.
     animar `width`/`height`/`top`/`left`/`margin`/`box-shadow`.
     `npm run check:motion` (depois do `build`) falha se algum keyframe do CSS
     gerado animar propriedade de layout.
+    **Exceção registrada:** a saída de item do `SinoNotificacoes` anima
+    `grid-template-rows` (1fr→0fr) para o item colapsar suavemente; o
+    `check:motion` não cobre `transition` utilitária, só `@keyframes`, então
+    esse caso não é validado por ele. Não replicar fora de listas curtas.
   - **Durações:** `--motion-state` 140ms (hover/foco/pressionado),
     `--motion-screen` 240ms (tela e modal, nunca acima de 300ms),
     `--motion-stagger` 20ms, `--motion-reduced` 80ms. Easing único:
@@ -221,8 +225,10 @@ não filhas do layout autenticado.
   ficam mascarados — substitui o `CampoSenha` (input com olho) da FE-07
   nas telas de auth. Integrado ao React Hook Form via `Controller` (não dá
   pra usar `register` direto porque o componente não é um `<input>` nativo).
-  Contrato do back (`/v1/auth/login` e `/v1/auth/registro`) ainda usa e-mail
-  — troca pendente na issue #150 (urgente).
+  O acesso nasce do **link de convite** que o admin gera na tela de
+  Colaboradores (`/c/:token`, `ConviteAcessoPage`): a pessoa define a senha, toca a
+  animação de `TelaSucessoAnimada` (prop `aoTerminarAnimacao`, a mesma do login) e a sessão abre
+  sozinha. Não há mais auto-cadastro nem tela de aprovação.
 - **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
   `AuthProvider` (`src/lib/auth.tsx`) não cria token nem sessão: liga a flag
   `setModoDemo(true)` de `src/lib/demo/adapter.ts`, e o adapter do Axios em
@@ -231,7 +237,7 @@ não filhas do layout autenticado.
   nada chega na API. As fixtures são marcadas como "Demo" no nome/código para
   nunca serem confundidas com dado real; POST/PATCH/DELETE dos cadastros
   funcionam em memória e somem ao recarregar. O usuário demo é `admin` para
-  exibir cadastros e aprovação. Logout e login real desligam a flag. Só
+  exibir os cadastros. Logout e login real desligam a flag. Só
   existe em `npm run dev` ou em build com `VITE_DEMO=true` (`DEMO_PERMITIDO`):
   em produção o botão some, `entrarComoDemo` não faz nada e o adapter com as
   fixtures nem entra no bundle (`import()` em `lib/api.ts` atrás da condição
@@ -245,8 +251,7 @@ não filhas do layout autenticado.
   saber que a rota existe). As quatro telas são configurações de
   `src/components/cadastros/CadastroCrud.tsx` (busca, paginação, novo, editar,
   inativar com confirmação em Dialog, importar CSV por linha via POST do
-  recurso). O nome é `CadastroCrud` de propósito: `pages/CadastroPage.tsx` é o
-  auto-cadastro de almoxarife (`/cadastro`). A importação de CSV aceita até 500
+  recurso). A importação de CSV aceita até 500
   linhas por arquivo (uma requisição por linha), valida as colunas esperadas e
   pode ser cancelada — fechar o diálogo interrompe o envio. Recurso sem chave
   única no banco (ferramentas) declara `chave` + `conferirDuplicadas` no

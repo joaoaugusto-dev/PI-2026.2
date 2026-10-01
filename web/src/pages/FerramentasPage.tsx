@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { useCategorias } from '@/hooks/useCategorias'
+import { useAuth } from '@/lib/auth'
 import { formatarPatrimonio, statusParaBadge, useFerramentas, type StatusFerramenta } from '@/hooks/useFerramentas'
 
 const LIMITE_POR_PAGINA = 20
@@ -33,6 +34,7 @@ function useBuscaComDebounce(valor: string) {
 
 export function FerramentasPage() {
   const navigate = useNavigate()
+  const { usuario } = useAuth()
   const [busca, setBusca] = useState('')
   const [status, setStatus] = useState<StatusFerramenta | 'todas'>('todas')
   const [grupoId, setGrupoId] = useState<number | null>(null)
@@ -68,9 +70,12 @@ export function FerramentasPage() {
             className="h-10 pl-9 text-corpo"
           />
         </div>
-        <Button onClick={() => navigate('/ferramentas/nova')} className="gap-1.5">
-          <Plus className="size-4" /> Cadastrar ferramenta
-        </Button>
+        {/* o cadastro mora em Cadastros > Ferramentas, que é só do admin: abre o pop-up de criar direto */}
+        {usuario?.papel === 'admin' && (
+          <Button onClick={() => navigate('/cadastros/ferramentas', { state: { novo: true } })} className="gap-1.5">
+            <Plus className="size-4" /> Cadastrar ferramenta
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
