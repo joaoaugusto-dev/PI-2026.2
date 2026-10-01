@@ -28,3 +28,10 @@ export function hojeBrasilia(agora = new Date()) {
   const [ano, mes, dia] = iso.split('-').map(Number)
   return { iso, ano, mes: mes - 1, dia }
 }
+
+/** Dias de calendário de `a` até `b` no fuso de Brasília (positivo se `a` é depois de `b`); aceita `AAAA-MM-DD` ou timestamp. */
+export function diasEntre(a: string | Date, b: string | Date) {
+  const dia = (v: string | Date) =>
+    typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : new Date(v).toLocaleDateString('en-CA', { timeZone: FUSO })
+  return Math.round((Date.parse(dia(a)) - Date.parse(dia(b))) / 86_400_000)
+}

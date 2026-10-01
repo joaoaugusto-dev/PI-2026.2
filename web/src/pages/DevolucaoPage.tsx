@@ -10,8 +10,8 @@ import { useCategorias } from '@/hooks/useCategorias'
 import { useDevolverEmprestimo, useEmprestimoAberto } from '@/hooks/useDevolucao'
 import { formatarPatrimonio, useFerramenta } from '@/hooks/useFerramentas'
 import { useAuth } from '@/lib/auth'
-import { avisarErro } from '@/lib/avisar-erro'
-import { dataBR } from '@/lib/formatar'
+import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
+import { dataBR, diasEntre } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { DetalhesEmprestimo } from '@/components/fluxo/DetalhesEmprestimo'
@@ -19,12 +19,6 @@ import { FormularioOcorrencia } from '@/components/fluxo/FormularioOcorrencia'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 import { SeletorCondicao } from '@/components/fluxo/SeletorCondicao'
-
-function diasEntre(a: Date, b: Date) {
-  const inicioA = new Date(a.getFullYear(), a.getMonth(), a.getDate())
-  const inicioB = new Date(b.getFullYear(), b.getMonth(), b.getDate())
-  return Math.round((inicioA.getTime() - inicioB.getTime()) / 86_400_000)
-}
 
 /** Máscara de centavos: cada dígito empurra a casa decimal, igual ao valor do Pix no app do Mercado Pago. */
 function formatarMoeda(digitos: string) {
@@ -92,7 +86,10 @@ export function DevolucaoPage() {
 
   const { usuario } = useAuth()
   const devolver = useDevolverEmprestimo()
-  const { data: encontrado, isFetching: buscando } = useEmprestimoAberto(termo)
+  const { data: escolha, isFetching: buscando, isError: erroBusca } = useEmprestimoAberto(termo)
+  const termoAtual = termo === ferramentaCodigo.trim()
+  const encontrado = escolha?.item ?? null
+  const ambiguos = termoAtual ? (escolha?.ambiguos ?? []) : []
   const { data: ferramentaDoEmprestimo } = useFerramenta(encontrado?.ferramenta_id ?? 0)
   const { data: categorias } = useCategorias()
   const emprestimo = encontrado
@@ -107,12 +104,12 @@ export function DevolucaoPage() {
         registradoPor: encontrado.usuario_retirada_nome ?? '—',
       }
     : null
-  const emprestimoNaoEncontrado = termo.length >= 1 && termo === ferramentaCodigo.trim() && !buscando && !encontrado
+  const emprestimoNaoEncontrado = termo.length >= 1 && termoAtual && !buscando && !erroBusca && !encontrado && ambiguos.length === 0
 
   const precisaOcorrencia = condicao === 'avaria' || condicao === 'perda'
 
-  const diasAtraso = encontrado ? Math.max(0, diasEntre(hoje, new Date(encontrado.previsao_devolucao))) : 0
-  const diasDesdeSaida = encontrado ? diasEntre(hoje, new Date(encontrado.data_retirada)) : 0
+  const diasAtraso = encontrado ? Math.max(0, diasEntre(hoje, encontrado.previsao_devolucao)) : 0
+  const diasDesdeSaida = encontrado ? diasEntre(hoje, encontrado.data_retirada) : 0
 
   const faltando = [
     !emprestimo ? 'ferramenta' : null,
@@ -146,13 +143,13 @@ export function DevolucaoPage() {
         onSuccess: (devolvido) => {
           playSomConfirmacao()
           toast.success(devolvido.resumo)
+          if (devolvido.custoNaoGravado) {
+            avisarErro('Devolução registrada, mas o custo estimado não foi salvo. Ajuste-o na ocorrência da ferramenta.')
+          }
           buscarOutra()
         },
         onError: (e) =>
-          avisarErro(
-            (e as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ??
-              'Não foi possível registrar a devolução.',
-          ),
+          avisarErro(mensagemDeErro(e, 'Não foi possível registrar a devolução.')),
       },
     )
   }
@@ -174,7 +171,7 @@ export function DevolucaoPage() {
                 placeholder="Código de patrimônio ou nome da ferramenta"
                 estadoClassName={cn(
                   'border-2',
-                  emprestimoNaoEncontrado && 'animate-erro border-destructive',
+                  (emprestimoNaoEncontrado || ambiguos.length > 0 || (erroBusca && termoAtual)) && 'animate-erro border-destructive',
                   !ferramentaCodigo && 'border-brand-red',
                 )}
               >
@@ -185,6 +182,15 @@ export function DevolucaoPage() {
                 <p className="text-sm text-destructive">
                   Nenhum empréstimo aberto encontrado para "{ferramentaCodigo}".
                 </p>
+              )}
+              {ambiguos.length > 0 && (
+                <p className="text-sm text-destructive">
+                  Vários empréstimos abertos para "{ferramentaCodigo}" — digite ou bipe o código:{' '}
+                  {ambiguos.map((e) => `${formatarPatrimonio(e.codigo_identificacao)} ${e.ferramenta_nome}`).join(' · ')}
+                </p>
+              )}
+              {erroBusca && termoAtual && (
+                <p className="text-sm text-destructive">Não foi possível consultar os empréstimos. Verifique a conexão com a API.</p>
               )}
 
             </div>

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Emprestimo } from '@/hooks/useEmprestimos'
 import type { Ferramenta } from '@/hooks/useFerramentas'
 import { api } from '@/lib/api'
+import { escolherPorCodigo, type Escolha } from '@/lib/patrimonio'
 
 export interface ColaboradorIdentificado {
   id: number
@@ -12,17 +13,16 @@ export interface ColaboradorIdentificado {
 
 /**
  * Ferramenta achada por código de patrimônio ou nome (`GET /ferramentas?q=`, que
- * já ignora zeros à esquerda). Com vários resultados, prefere o de código igual ao digitado.
+ * já ignora zeros à esquerda). Com vários resultados, vale o de código igual ao digitado; sem ele,
+ * nenhum é escolhido (`ambiguos` traz as opções).
  */
 export function useFerramentaPorTermo(termo: string) {
   return useQuery({
     queryKey: ['ferramentas', 'por-termo', termo],
     enabled: termo.length > 0,
-    queryFn: async ({ signal }): Promise<Ferramenta | null> => {
+    queryFn: async ({ signal }): Promise<Escolha<Ferramenta>> => {
       const { data } = await api.get<{ data: Ferramenta[] }>('/ferramentas', { params: { q: termo, limit: 10 }, signal })
-      const numero = /^(?:sf)?0*(\d{1,4})$/i.exec(termo)
-      const exata = numero && data.data.find((f) => f.codigo_identificacao === Number(numero[1]))
-      return exata || data.data[0] || null
+      return escolherPorCodigo(data.data, termo, (f) => f.codigo_identificacao)
     },
   })
 }

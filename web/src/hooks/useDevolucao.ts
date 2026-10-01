@@ -2,24 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { buscarEmprestimos, type Emprestimo } from '@/hooks/useEmprestimos'
 import type { HistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { api } from '@/lib/api'
+import { escolherPorCodigo, type Escolha } from '@/lib/patrimonio'
 
 export type CondicaoDevolucao = 'ok' | 'avaria' | 'perda'
 
 /**
  * Empréstimo aberto de uma ferramenta, achado por código de patrimônio ou nome
  * (`GET /emprestimos?q=`, que já ignora zeros à esquerda). Com vários abertos
- * (nome parecido), prefere o de código exatamente igual ao digitado.
+ * (nome parecido), vale o de código igual ao digitado; sem ele, nenhum é escolhido.
  */
 export function useEmprestimoAberto(termo: string) {
   return useQuery({
     queryKey: ['emprestimos', 'aberto', termo],
     enabled: termo.length > 0,
-    queryFn: async ({ signal }): Promise<Emprestimo | null> => {
-      const { data } = await buscarEmprestimos({ q: termo, limit: 50 }, signal)
-      const abertos = data.filter((e) => !e.data_devolucao)
-      const numero = /^(?:sf)?0*(\d{1,4})$/i.exec(termo)
-      const exato = numero && abertos.find((e) => e.codigo_identificacao === Number(numero[1]))
-      return exato || abertos[0] || null
+    queryFn: async ({ signal }): Promise<Escolha<Emprestimo>> => {
+      // o filtro `situacao` é um valor só; "aberto" são as duas, então o histórico devolvido não ocupa a página
+      const [noPrazo, atrasados] = await Promise.all(
+        (['em_aberto', 'atrasado'] as const).map((situacao) => buscarEmprestimos({ q: termo, situacao, limit: 20 }, signal)),
+      )
+      return escolherPorCodigo([...noPrazo.data, ...atrasados.data], termo, (e) => e.codigo_identificacao)
     },
   })
 }
@@ -42,18 +43,21 @@ export function useDevolverEmprestimo() {
         `/emprestimos/${emprestimo.id}/devolucao`,
         { condicaoDevolucao: condicao, observacaoDevolucao: observacao || undefined },
       )
+      let custoNaoGravado = false
       if (condicao !== 'ok' && custoEstimado && emprestimo.ferramenta_id) {
         try {
           const { data: h } = await api.get<{ data: HistoricoFerramenta }>(
             `/ferramentas/${emprestimo.ferramenta_id}/historico`,
           )
           const ocorrencia = h.data.ocorrencias.find((o) => o.emprestimo_id === emprestimo.id)
-          if (ocorrencia) await api.patch(`/ocorrencias/${ocorrencia.id}`, { custoEstimado })
+          if (!ocorrencia) throw new Error('ocorrência não encontrada')
+          await api.patch(`/ocorrencias/${ocorrencia.id}`, { custoEstimado })
         } catch {
-          // a devolução e a ocorrência já estão salvas; o custo pode ser ajustado depois
+          // a devolução e a ocorrência já estão salvas; a tela avisa que o custo ficou de fora
+          custoNaoGravado = true
         }
       }
-      return data.data
+      return { ...data.data, custoNaoGravado }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ferramentas'] })

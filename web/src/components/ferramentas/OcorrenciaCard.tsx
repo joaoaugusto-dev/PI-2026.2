@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
 import { useAvancarTratativa, type Colaborador, type Ocorrencia } from '@/hooks/useOcorrencias'
-import { avisarErro } from '@/lib/avisar-erro'
+import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { dataBR } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
@@ -47,10 +47,7 @@ export function OcorrenciaCard({
         toast.success(`Tratativa avançada para ${ETAPAS.find((e) => e.valor === nova.status)?.label ?? nova.status}.`)
       },
       onError: (e) =>
-        avisarErro(
-          (e as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ??
-            'Não foi possível avançar a tratativa.',
-        ),
+        avisarErro(mensagemDeErro(e, 'Não foi possível avançar a tratativa.')),
     })
   }
   const etapaAtualIndex = ocorrencia ? ETAPAS.findIndex((e) => e.valor === ocorrencia.status) : -1

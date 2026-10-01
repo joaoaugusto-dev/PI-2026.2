@@ -23,3 +23,8 @@ export function avisarErro(mensagem: string) {
     },
   })
 }
+
+/** Mensagem do envelope de erro da API (`error.message`) ou o texto padrão quando não há resposta (API fora). */
+export function mensagemDeErro(e: unknown, padrao: string) {
+  return (e as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ?? padrao
+}

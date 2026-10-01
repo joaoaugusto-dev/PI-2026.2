@@ -9,10 +9,10 @@ import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { SeletorDataCalendario } from '@/components/SeletorDataCalendario'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useSetores } from '@/hooks/useSetores'
-import { statusParaBadge } from '@/hooks/useFerramentas'
+import { formatarPatrimonio, statusParaBadge } from '@/hooks/useFerramentas'
 import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPorTermo, useRetirarFerramenta } from '@/hooks/useRetirada'
 import { useAuth } from '@/lib/auth'
-import { avisarErro } from '@/lib/avisar-erro'
+import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
@@ -72,15 +72,18 @@ export function RetiradaPage() {
     return () => clearTimeout(id)
   }, [colaborador])
 
-  const { data: ferramentaAchada, isFetching: buscandoFerramenta } = useFerramentaPorTermo(termoFerramenta)
-  const ferramenta = termoFerramenta === ferramentaCodigo.trim() ? (ferramentaAchada ?? null) : null
+  const { data: escolhaFerramenta, isFetching: buscandoFerramenta, isError: erroFerramenta } = useFerramentaPorTermo(termoFerramenta)
+  const ferramentaAtual = termoFerramenta === ferramentaCodigo.trim()
+  const ferramentaAchada = escolhaFerramenta?.item ?? null
+  const ferramenta = ferramentaAtual ? ferramentaAchada : null
+  const ferramentasAmbiguas = ferramentaAtual ? (escolhaFerramenta?.ambiguos ?? []) : []
   const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
-  const ferramentaNaoEncontrada = termoFerramenta.length > 0 && termoFerramenta === ferramentaCodigo.trim() && !buscandoFerramenta && !ferramentaAchada
+  const ferramentaNaoEncontrada = termoFerramenta.length > 0 && termoFerramenta === ferramentaCodigo.trim() && !buscandoFerramenta && !erroFerramenta && !ferramentaAchada && ferramentasAmbiguas.length === 0
 
-  const { data: colaboradorAchado, isFetching: buscandoColaborador } = useColaboradorPorTermo(termoColaborador)
+  const { data: colaboradorAchado, isFetching: buscandoColaborador, isError: erroColaborador } = useColaboradorPorTermo(termoColaborador)
   const colaboradorEncontrado = termoColaborador === colaborador.trim() ? (colaboradorAchado ?? null) : null
   const colaboradorNaoEncontrado =
-    termoColaborador.length > 0 && termoColaborador === colaborador.trim() && !buscandoColaborador && !colaboradorAchado
+    termoColaborador.length > 0 && termoColaborador === colaborador.trim() && !buscandoColaborador && !erroColaborador && !colaboradorAchado
 
   // o setor de destino começa no setor do colaborador identificado (continua editável)
   useEffect(() => {
@@ -116,10 +119,7 @@ export function RetiradaPage() {
           limpar()
         },
         onError: (e) =>
-          avisarErro(
-            (e as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ??
-              'Não foi possível registrar a retirada.',
-          ),
+          avisarErro(mensagemDeErro(e, 'Não foi possível registrar a retirada.')),
       },
     )
   }
@@ -133,10 +133,7 @@ export function RetiradaPage() {
           setValue('colaborador', novo.matricula, { shouldValidate: true })
         },
         onError: (e) =>
-          avisarErro(
-            (e as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ??
-              'Não foi possível cadastrar o colaborador.',
-          ),
+          avisarErro(mensagemDeErro(e, 'Não foi possível cadastrar o colaborador.')),
       },
     )
   }
@@ -158,7 +155,7 @@ export function RetiradaPage() {
               estadoClassName={cn(
                 'border-2',
                 ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
-                (ferramentaBloqueada || ferramentaNaoEncontrada) && 'animate-erro border-destructive',
+                (ferramentaBloqueada || ferramentaNaoEncontrada || ferramentasAmbiguas.length > 0 || erroFerramenta) && 'animate-erro border-destructive',
                 !ferramentaCodigo && 'border-brand-red',
               )}
               onKeyDown={(e) => {
@@ -186,6 +183,15 @@ export function RetiradaPage() {
             {ferramentaNaoEncontrada && (
               <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
             )}
+            {ferramentasAmbiguas.length > 0 && (
+              <p className="text-sm text-destructive">
+                Vários resultados para "{ferramentaCodigo}" — digite ou bipe o código:{' '}
+                {ferramentasAmbiguas.map((f) => `${formatarPatrimonio(f.codigo_identificacao)} ${f.nome}`).join(' · ')}
+              </p>
+            )}
+            {erroFerramenta && ferramentaAtual && (
+              <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
+            )}
           </div>
 
         </SecaoFluxo>
@@ -198,7 +204,7 @@ export function RetiradaPage() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
-                if (colaborador.trim()) setFocus('atividade')
+                if (colaboradorEncontrado) setFocus('atividade')
               }
             }}
           >
@@ -214,6 +220,10 @@ export function RetiradaPage() {
                 {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
               </span>
             </div>
+          )}
+
+          {erroColaborador && termoColaborador === colaborador.trim() && (
+            <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
           )}
 
           {colaboradorNaoEncontrado && <CadastroRapidoColaborador
