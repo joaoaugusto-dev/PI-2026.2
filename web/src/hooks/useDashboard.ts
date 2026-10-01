@@ -46,6 +46,26 @@ export interface Dashboard {
   indisponiveis: Lista<FerramentaAguardando>
 }
 
+export type NomeLista = 'cobrar_hoje' | 'atrasados' | 'proximos_do_prazo' | 'indisponiveis'
+
+/** Linhas por página do "Mostrar tudo" (a API aceita até 50). */
+export const POR_PAGINA = 15
+
+/** `GET /dashboard/:lista`: a lista completa de um cartão, paginada; só consulta com o pop-up aberto. */
+export function useListaDashboard<T>(lista: NomeLista, page: number, aberto: boolean) {
+  return useQuery({
+    queryKey: ['dashboard', lista, page],
+    enabled: aberto,
+    queryFn: async () =>
+      (
+        await api.get<{ data: T[]; meta: { page: number; totalPages: number; total: number } }>(`/dashboard/${lista}`, {
+          params: { page, limit: POR_PAGINA },
+        })
+      ).data,
+    placeholderData: (anterior) => anterior,
+  })
+}
+
 /** `GET /dashboard`: só o que pede ação do balcão (cobrar hoje, atrasados, próximos do prazo, indisponíveis). */
 export function useDashboard() {
   return useQuery({
