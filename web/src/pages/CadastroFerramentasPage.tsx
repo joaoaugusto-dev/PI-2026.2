@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
+import { BotaoImprimirEtiqueta } from '@/components/ferramentas/BotaoImprimirEtiqueta'
 import { useCategorias } from '@/hooks/useCategorias'
 import { useQueryClient } from '@tanstack/react-query'
 import { chaveFerramenta, formatarPatrimonio, todasFerramentasQuery, type Ferramenta } from '@/hooks/useFerramentas'
@@ -31,6 +32,7 @@ export function CadastroFerramentasPage() {
       nomeCsv="modelo-ferramentas.csv"
       buscaPlaceholder="Buscar por nome, marca ou modelo"
       foto
+      acoesLinha={(f) => <BotaoImprimirEtiqueta ferramenta={f} compacto />}
       colunas={[
         {
           cabecalho: 'Patrimônio',
