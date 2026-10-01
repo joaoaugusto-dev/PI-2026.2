@@ -39,13 +39,15 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
         <span className="text-corpo text-muted-foreground hidden md:inline">
           {dataFormatada} · {horaFormatada}
         </span>
-        <Link to="/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-          <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <Activity className="size-3 text-muted-foreground" />
-            <span className="text-[11px] font-medium hidden sm:inline">Status API</span>
-          </Badge>
-        </Link>
+        {usuario?.papel === 'admin' && (
+          <Link to="/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+            <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <Activity className="size-3 text-muted-foreground" />
+              <span className="text-[11px] font-medium hidden sm:inline">Status API</span>
+            </Badge>
+          </Link>
+        )}
         {(usuario?.papel === 'manutencao' || usuario?.papel === 'admin') && <SinoNotificacoes />}
         <div className="flex items-center gap-2 border-l pl-4">
           <Avatar className="size-8">
