@@ -21,6 +21,29 @@ describe('GET /v1/dashboard', () => {
     }
   });
 
+  it('cada lista do resumo traz no máximo 4 linhas e a rota :lista pagina o resto (15 por página)', async () => {
+    const auth = { Authorization: `Bearer ${token('manutencao')}` };
+    const resumo = (await request(app).get('/v1/dashboard').set(auth)).body.data;
+    for (const nome of ['cobrar_hoje', 'atrasados', 'proximos_do_prazo', 'indisponiveis']) {
+      expect(resumo[nome].itens.length).toBeLessThanOrEqual(4);
+      const pagina = await request(app).get(`/v1/dashboard/${nome}`).set(auth);
+      expect(pagina.status).toBe(200);
+      expect(pagina.body.meta).toEqual(expect.objectContaining({ page: 1, limit: 15, total: resumo[nome].total }));
+      expect(pagina.body.data.length).toBeLessThanOrEqual(15);
+      // a página 1 começa pelas mesmas linhas que o cartão mostra
+      expect(pagina.body.data.slice(0, resumo[nome].itens.length)).toEqual(resumo[nome].itens);
+    }
+  });
+
+  it('lista desconhecida é 400, página além do fim volta vazia e consulta é 403', async () => {
+    const auth = { Authorization: `Bearer ${token('admin')}` };
+    expect((await request(app).get('/v1/dashboard/qualquer').set(auth)).status).toBe(400);
+    const alem = await request(app).get('/v1/dashboard/atrasados?page=9999').set(auth);
+    expect(alem.status).toBe(200);
+    expect(alem.body.data).toEqual([]);
+    expect((await request(app).get('/v1/dashboard/atrasados').set({ Authorization: `Bearer ${token('consulta')}` })).status).toBe(403);
+  });
+
   it('retorna 401 sem token e 403 com papel consulta', async () => {
     expect((await request(app).get('/v1/dashboard')).status).toBe(401);
     expect((await request(app).get('/v1/dashboard').set('Authorization', `Bearer ${token('consulta')}`)).status).toBe(403);
