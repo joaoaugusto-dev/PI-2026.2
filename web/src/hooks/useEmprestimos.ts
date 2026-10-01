@@ -11,6 +11,8 @@ export interface Emprestimo {
   colaborador_nome: string
   colaborador_matricula: string
   setor_id: number
+  /** false quando a ferramenta foi baixada: o código pode já ter sido reaproveitado por outra. */
+  ferramenta_ativa: boolean
   setor_nome: string
   data_retirada: string // ISO
   previsao_devolucao: string // ISO

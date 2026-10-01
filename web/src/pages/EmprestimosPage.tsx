@@ -188,6 +188,7 @@ export function EmprestimosPage() {
                       <p className="font-medium">{e.ferramenta_nome}</p>
                       <p className="font-mono text-rotulo text-muted-foreground">
                         {formatarPatrimonio(e.codigo_identificacao)}
+                        {!e.ferramenta_ativa && ' (baixada)'}
                       </p>
                     </TableCell>
                     <TableCell>
