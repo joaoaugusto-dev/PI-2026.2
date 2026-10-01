@@ -16,9 +16,17 @@ const DURACAO_TINTA_SAI_MS = 800
  * no meio do preenchimento (não espera a tinta cobrir tudo pra não parecer
  * travado), segura um instante, depois a tinta recolhe e dissolve revelando
  * o conteúdo por trás. Reaproveitada tanto logo após o cadastro quanto
- * sempre que um almoxarife ainda inativo entra no sistema (`RotaProtegida`).
+ * sempre que um almoxarife ainda inativo entra no sistema (`RotaProtegida`) e,
+ * com `aoTerminarAnimacao`, como a celebração de senha definida pelo convite.
  */
-export function TelaAguardandoAprovacao({ aoSair }: { aoSair?: () => void }) {
+export function TelaAguardandoAprovacao({
+  aoSair,
+  aoTerminarAnimacao,
+}: {
+  aoSair?: () => void
+  /** Quando informado, a tela é só a animação: ao fim dela chama isto e não mostra o texto de "aguardando aprovação". */
+  aoTerminarAnimacao?: () => void
+}) {
   const [fase, setFase] = useState<'tinta-entra' | 'tinta-sai' | 'conteudo'>('tinta-entra')
   const [iconeVisivel, setIconeVisivel] = useState(false)
 
@@ -36,6 +44,10 @@ export function TelaAguardandoAprovacao({ aoSair }: { aoSair?: () => void }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (fase === 'conteudo') aoTerminarAnimacao?.()
+  }, [fase, aoTerminarAnimacao])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-background p-4">
       {fase !== 'conteudo' && (
@@ -52,7 +64,7 @@ export function TelaAguardandoAprovacao({ aoSair }: { aoSair?: () => void }) {
         <CheckCircle2 className="relative z-10 size-24 animate-check-entra text-white" strokeWidth={1.5} />
       )}
 
-      {fase === 'conteudo' && (
+      {fase === 'conteudo' && !aoTerminarAnimacao && (
         <div className="flex w-full max-w-md flex-col items-center gap-3 text-center animate-entrada">
           <CheckCircle2 className="size-16 shrink-0 text-status-disponivel" strokeWidth={1.5} />
           <h1 className="text-titulo">Cadastro enviado</h1>

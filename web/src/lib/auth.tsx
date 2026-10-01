@@ -18,6 +18,8 @@ interface Usuario {
 interface AuthContextValue {
   usuario: Usuario | null
   login: (matricula: string, senha: string) => Promise<void>
+  /** Abre a sessão com um token já emitido pela API (ex.: definição de senha pelo link de convite). */
+  entrarComSessao: (token: string, usuario: Usuario) => void
   entrarComoDemo: () => void
   logout: () => void
 }
@@ -118,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(usuarioDemo)
   }
 
-  const value = useMemo(() => ({ usuario, login, entrarComoDemo, logout }), [usuario])
+  const value = useMemo(() => ({ usuario, login, entrarComSessao: definirSessao, entrarComoDemo, logout }), [usuario])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
