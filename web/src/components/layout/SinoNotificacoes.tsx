@@ -1,4 +1,4 @@
-import { BellIcon } from 'lucide-react'
+import { BellIcon, CheckIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
@@ -44,14 +44,19 @@ export function SinoNotificacoes() {
         ) : (
           <ul className="max-h-96 divide-y overflow-y-auto">
             {itens.map((n) => (
-              <li key={n.id}>
-                <button
-                  type="button"
-                  onClick={() => abrir(n)}
-                  className="w-full cursor-pointer px-3 py-2 text-left hover:bg-muted"
-                >
+              <li key={n.id} className="flex items-center gap-2 pr-3 hover:bg-muted">
+                <button type="button" onClick={() => abrir(n)} className="min-w-0 flex-1 cursor-pointer px-3 py-2 text-left">
                   <span className="block text-corpo font-medium">{n.titulo}</span>
                   <span className="block text-rotulo text-muted-foreground">{n.mensagem}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => marcarLida.mutate(n.id)}
+                  aria-label="Marcar como lida"
+                  title="Marcar como lida"
+                  className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--brand-red)] text-white hover:opacity-80 transition-opacity"
+                >
+                  <CheckIcon className="size-4" />
                 </button>
               </li>
             ))}
