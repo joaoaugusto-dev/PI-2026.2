@@ -268,7 +268,7 @@ export async function listar({
       `colaborador_nome ILIKE $${i}`,
       `colaborador_matricula ILIKE $${i}`,
     ];
-    // "SF000045", "000045" ou "45": patrimônio é busca por igualdade no código numérico
+    // "000045", "000045" (etiqueta antiga) ou "45": patrimônio é busca por igualdade no código numérico
     const patrimonio = /^(?:sf)?0*(\d{1,4})$/i.exec(q);
     if (patrimonio) {
       params.push(Number(patrimonio[1]));
@@ -342,7 +342,7 @@ export async function calendario(mes: string): Promise<DiaCalendario[]> {
     dia.emprestimos.push({
       id: r.id,
       ferramenta_nome: r.ferramenta_nome,
-      ferramenta_codigo: r.codigo_identificacao ? `SF${String(r.codigo_identificacao).padStart(6, '0')}` : '—',
+      ferramenta_codigo: r.codigo_identificacao ? String(r.codigo_identificacao).padStart(6, '0') : '—',
       colaborador_nome: r.colaborador_nome,
       setor_id: r.setor_id,
       setor_nome: r.setor_nome,
