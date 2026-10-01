@@ -11,7 +11,8 @@ export function getPaginationParams(
   defaultLimit = 20,
   maxLimit = 100
 ): PaginationParams {
-  const page = Math.max(1, parseInt(String(query.page || '1'), 10));
+  // page não numérico (abc) cai na página 1: NaN chegaria ao OFFSET da consulta e viraria erro 500
+  const page = Math.max(1, parseInt(String(query.page || '1'), 10) || 1);
   let limit = parseInt(String(query.limit || defaultLimit), 10);
 
   if (isNaN(limit) || limit < 1) {
