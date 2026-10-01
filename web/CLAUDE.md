@@ -166,6 +166,14 @@ não filhas do layout autenticado.
   - **`.transicao-status`** faz a mudança de status (disponível → em uso)
     atravessar a cor em `--motion-screen` em vez de saltar. É transição
     disparada por mudança de dado, não loop — o `StatusBadge` já a aplica.
+  - **Linha do tempo da tratativa (`EtapasTratativa`, tela Indisponíveis):**
+    ao avançar, o trilho enche por `scaleX` em 560ms (exceção registrada à
+    regra de 240ms de tela: é o momento principal da tela e o compositor
+    resolve sozinho), os marcadores acendem em sequência conforme a ponta do
+    trilho chega neles e o da etapa alcançada "estala" (`animate-etapa-pop`)
+    com um anel que se dissolve (`animate-etapa-pulso`) — disparo único, sem
+    loop (o design system só permite loop em elemento singular). O primeiro
+    render nasce no estado final, sem animar.
   - Animação nova não entra direto na tela: entra como token/keyframe aqui e
     é demonstrada na página de estilos (seções "Animações · demonstração" e
     "Movimento contínuo").

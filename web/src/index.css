@@ -206,6 +206,9 @@
     --animate-check-entra: check-entra 550ms var(--ease-soufer) both;
     --animate-tinta-entra: tinta-entra 1000ms var(--ease-soufer) both;
     --animate-tinta-sai: tinta-sai 800ms var(--ease-soufer) both;
+    --animate-etapa-pop: etapa-pop 560ms var(--ease-soufer) both;
+    --animate-etapa-pulso: etapa-pulso 800ms var(--ease-soufer) both;
+    --animate-etapa-label: etapa-label 320ms var(--ease-soufer) both;
 
     /* Entrada de tela, card e linha de lista. */
     @keyframes entrada {
@@ -315,6 +318,42 @@
         to {
             opacity: 1;
             transform: scale3d(1, 1, 1);
+        }
+    }
+
+    /* Etapa da tratativa que acabou de ser alcançada: o marcador "estala" com
+       overshoot e emite um anel que se dissolve (um disparo só, nunca loop). */
+    @keyframes etapa-pop {
+        from {
+            transform: scale3d(0.7, 0.7, 1);
+        }
+        55% {
+            transform: scale3d(1.18, 1.18, 1);
+        }
+        to {
+            transform: scale3d(1, 1, 1);
+        }
+    }
+
+    @keyframes etapa-pulso {
+        from {
+            opacity: 0.55;
+            transform: scale3d(1, 1, 1);
+        }
+        to {
+            opacity: 0;
+            transform: scale3d(2.4, 2.4, 1);
+        }
+    }
+
+    @keyframes etapa-label {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 4px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: none;
         }
     }
 
@@ -470,6 +509,31 @@
     }
 
     @keyframes check-entra {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes etapa-pop {
+        from,
+        to {
+            transform: none;
+        }
+    }
+
+    @keyframes etapa-pulso {
+        from {
+            opacity: 0.3;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes etapa-label {
         from {
             opacity: 0;
         }

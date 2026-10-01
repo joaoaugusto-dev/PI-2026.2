@@ -1,22 +1,16 @@
 import { toast } from 'sonner'
-import { ArrowRight, Check, CheckCircle2, Loader2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
+import { ETAPAS, EtapasTratativa } from '@/components/ferramentas/EtapasTratativa'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
-import { useAvancarTratativa, type Colaborador, type Ocorrencia, type StatusOcorrencia } from '@/hooks/useOcorrencias'
+import { useAvancarTratativa, type Colaborador, type Ocorrencia } from '@/hooks/useOcorrencias'
 import { avisarErro } from '@/lib/avisar-erro'
 import { dataBR } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
-
-const ETAPAS: { valor: StatusOcorrencia; label: string }[] = [
-  { valor: 'aberta', label: 'Aberta' },
-  { valor: 'em_reparo', label: 'Em reparo' },
-  { valor: 'cobrada', label: 'Cobrada' },
-  { valor: 'resolvida', label: 'Resolvida' },
-]
 
 function formatarMoeda(valor: string | null) {
   if (!valor) return '—'
@@ -111,68 +105,12 @@ export function OcorrenciaCard({
         </div>
 
         <div className="flex flex-col gap-3 border-t pt-3.5">
-          <div className="grid grid-cols-4">
-            {ETAPAS.map((etapa, index) => {
-              const concluida = etapaAtualIndex >= 0 && index <= etapaAtualIndex
-              const atual = index === etapaAtualIndex
-              const ehResolvida = etapa.valor === 'resolvida' && resolvida
-              return (
-                <div key={etapa.valor} className="flex flex-col items-center gap-1">
-                  <div className="relative flex h-7 w-full items-center justify-center">
-                    {index > 0 && (
-                      <div
-                        className={cn(
-                          'absolute top-1/2 right-1/2 h-0.5 w-full -translate-y-1/2',
-                          index <= etapaAtualIndex ? 'bg-foreground' : 'bg-border',
-                        )}
-                      />
-                    )}
-                    <span
-                      className={cn(
-                        'relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-rotulo font-bold',
-                        ehResolvida
-                          ? 'border-status-disponivel bg-status-disponivel text-white'
-                          : atual
-                            ? 'border-status-indisponivel bg-status-indisponivel text-white'
-                            : concluida
-                              ? 'border-foreground bg-foreground text-background'
-                              : 'border-border bg-card text-muted-foreground',
-                      )}
-                    >
-                      {concluida && !atual ? <Check className="size-3.5" /> : index + 1}
-                    </span>
-                    {index < ETAPAS.length - 1 && (
-                      <div
-                        className={cn(
-                          'absolute top-1/2 left-1/2 h-0.5 w-full -translate-y-1/2',
-                          index < etapaAtualIndex ? 'bg-foreground' : 'bg-border',
-                        )}
-                      />
-                    )}
-                  </div>
-                  <span
-                    className={cn(
-                      'text-sm font-medium whitespace-nowrap',
-                      ehResolvida
-                        ? 'text-status-disponivel font-semibold'
-                        : atual
-                          ? 'text-status-indisponivel font-semibold'
-                          : concluida
-                            ? 'text-foreground'
-                            : 'text-muted-foreground',
-                    )}
-                  >
-                    {etapa.label}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+          <EtapasTratativa etapaAtual={etapaAtualIndex} resolvida={resolvida} />
 
           <div className="flex justify-end gap-2">
             {resolvida ? (
               <Button
-                className="bg-status-disponivel text-white hover:bg-status-disponivel/90"
+                className="animate-entrada bg-status-disponivel text-white hover:bg-status-disponivel/90"
                 onClick={onDisponibilizar}
                 disabled={disponibilizando}
               >
@@ -183,13 +121,14 @@ export function OcorrenciaCard({
               <>
                 <Button
                   variant="outline"
+                  className="group"
                   onClick={aoAvancar}
                   disabled={!ocorrencia || avancar.isPending}
                 >
                   {avancar.isPending ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
-                    <ArrowRight className="size-4" />
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                   )}
                   Avançar tratativa
                 </Button>
