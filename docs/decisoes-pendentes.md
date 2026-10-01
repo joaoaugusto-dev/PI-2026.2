@@ -132,6 +132,28 @@ precisar mexer no banco. Funções cogitadas:
 - **Front-end:** nova página protegida pelo papel `admin`, com o layout e a
   responsividade (360px, 768px e 1280px) do restante do sistema.
 
+## `.strip()` explícito vs. comportamento padrão do Zod (issue API-14)
+
+**Contexto:** a issue API-14 pede literalmente que campos sensíveis (como
+`usuario_retirada_id`, `usuario_devolucao_id`, `registrada_por`,
+`resolvida_por`, `criado_por`) sejam "removidos do body com `.strip()`" antes
+de chegar no service. No código, nenhum schema de escrita chama `.strip()`
+explicitamente — o descarte de chaves desconhecidas acontece pelo
+comportamento padrão do `z.object()` do Zod (que já é "strip mode" por
+padrão), já que nenhum validator usa `.passthrough()` nem `.strict()`.
+
+**Decisão do time (30/09/2026):** manter o comportamento padrão do Zod em vez
+de adicionar `.strip()` explícito em cada schema. A chamada seria redundante
+(seu único efeito é reafirmar o que já é padrão) e o projeto já documenta a
+intenção com comentários pontuais nos validators que lidam com campos vindos
+do JWT (Regra 6 do `CLAUDE.md`), por exemplo em `emprestimoValidator.ts` (linha
+42-44, 76-78), `colaboradorValidator.ts` (linha 34-35), `ocorrenciaValidator.ts`
+(linha 42-45) e `authValidator.ts` (linha 19-20). O comportamento é coberto por
+testes de campo proibido em pelo menos 5 rotas (ver suíte de testes
+`colaboradorRoutes.test.ts`, `emprestimoRoutes.test.ts` e
+`ocorrenciaRoutes.test.ts`), que é o que a issue efetivamente pede como
+critério de pronto.
+
 ## Devolução de peça avulsa de kit não deixa o kit indisponível (issue API-12)
 
 **Contexto:** a retirada (API-11) já aceita `itemKitId`, retirando só uma peça
