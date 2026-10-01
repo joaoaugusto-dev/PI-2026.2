@@ -8,7 +8,7 @@ import { KpiCard, type TomKpi } from '@/components/dashboard/KpiCard'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { useDashboard } from '@/hooks/useDashboard'
+import { useDashboard, type EmprestimoPendente, type FerramentaAguardando } from '@/hooks/useDashboard'
 import { formatarPatrimonio } from '@/hooks/useFerramentas'
 
 const ETAPA: Record<string, string> = {
@@ -71,59 +71,65 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-2">
-        <CartaoPendencias
+        <CartaoPendencias<EmprestimoPendente>
+          lista="cobrar_hoje"
           titulo="Cobrar hoje"
           descricao="Devolução prevista para hoje"
           total={data?.cobrar_hoje.total}
+          itens={data?.cobrar_hoje.itens}
+          renderItem={(item) => (
+            <EmprestimoPendenteItem key={item.id} item={item} prazo="hoje" tomPrazo="text-status-atraso" />
+          )}
           tom="text-status-atraso"
           vazio="Nenhuma devolução prevista para hoje."
           carregando={isLoading}
-        >
-          {data?.cobrar_hoje.itens.map((item) => (
-            <EmprestimoPendenteItem key={item.id} item={item} prazo="hoje" tomPrazo="text-status-atraso" />
-          ))}
-        </CartaoPendencias>
+        />
 
-        <CartaoPendencias
+        <CartaoPendencias<EmprestimoPendente>
+          lista="atrasados"
           titulo="Atrasados"
           descricao="Prazo já passou"
           total={data?.atrasados.total}
+          itens={data?.atrasados.itens}
+          renderItem={(item) => (
+            <EmprestimoPendenteItem
+              key={item.id}
+              item={item}
+              prazo={`${item.dias}d`}
+              tomPrazo="text-status-indisponivel"
+            />
+          )}
           tom="text-status-indisponivel"
           vazio="Nenhum empréstimo atrasado."
           carregando={isLoading}
-        >
-          {data?.atrasados.itens.map((item) => (
-            <EmprestimoPendenteItem key={item.id} item={item} prazo={`${item.dias}d`} tomPrazo="text-status-indisponivel" />
-          ))}
-        </CartaoPendencias>
+        />
 
-        <CartaoPendencias
+        <CartaoPendencias<EmprestimoPendente>
+          lista="proximos_do_prazo"
           titulo="Próximos do prazo"
           descricao="Vencem nos próximos 3 dias"
           total={data?.proximos_do_prazo.total}
-          tom="text-foreground"
-          vazio="Nada vencendo nos próximos dias."
-          carregando={isLoading}
-        >
-          {data?.proximos_do_prazo.itens.map((item) => (
+          itens={data?.proximos_do_prazo.itens}
+          renderItem={(item) => (
             <EmprestimoPendenteItem
               key={item.id}
               item={item}
               prazo={`em ${item.dias}d`}
               tomPrazo="text-muted-foreground"
             />
-          ))}
-        </CartaoPendencias>
+          )}
+          tom="text-foreground"
+          vazio="Nada vencendo nos próximos dias."
+          carregando={isLoading}
+        />
 
-        <CartaoPendencias
+        <CartaoPendencias<FerramentaAguardando>
+          lista="indisponiveis"
           titulo="Ferramentas indisponíveis"
           descricao="Aguardando alguma ação"
           total={data?.indisponiveis.total}
-          tom="text-status-indisponivel"
-          vazio="Nenhuma ferramenta indisponível."
-          carregando={isLoading}
-        >
-          {data?.indisponiveis.itens.map((item) => (
+          itens={data?.indisponiveis.itens}
+          renderItem={(item) => (
             <div key={item.ferramenta_id} className="flex items-center justify-between gap-3 py-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-corpo font-medium">{item.ferramenta_nome}</p>
@@ -136,8 +142,11 @@ export function DashboardPage() {
                 <Link to="/indisponiveis">Tratar</Link>
               </Button>
             </div>
-          ))}
-        </CartaoPendencias>
+          )}
+          tom="text-status-indisponivel"
+          vazio="Nenhuma ferramenta indisponível."
+          carregando={isLoading}
+        />
       </div>
     </div>
   )
