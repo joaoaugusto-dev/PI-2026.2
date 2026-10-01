@@ -49,38 +49,32 @@ Modo quiosque sem senha (só matrícula, sem crachá). O operador informa apenas
 
 ### Admin
 
-Papel adicional no enum `papel_usuario` (`admin`), separado de `manutencao`
-(decisão do time em 22/09/2026, issue API-149 — substitui a alternativa
-"qualquer manutenção ativo aprova outro" cogitada na issue original). Só um
-`admin` pode aprovar um auto-cadastro pendente via
-`PATCH /v1/usuarios/:id/ativar` ou listar os pendentes via
-`GET /v1/usuarios?ativo=false`. Nesta primeira versão não existe rota para
-promover um usuário a `admin` pela API — a promoção é feita direto no banco,
-até o time decidir se cria um fluxo de gestão de admins (ver
-`/docs/decisoes-pendentes.md`).
+Papel adicional no enum `papel_usuario` (`admin`), separado de `manutencao`.
+Cadastra os colaboradores (que já são os funcionários) e gera o link de acesso
+de cada um. Nesta versão não existe rota para promover um usuário a `admin`
+pela API — a promoção é feita direto no banco, até o time decidir se cria um
+fluxo de gestão de admins (ver `/docs/decisoes-pendentes.md`).
 
-### Auto-cadastro de manutenção (fluxo)
+### Acesso por link de convite (fluxo)
 
-1. `POST /v1/auth/registro` (público) recebe `matricula` (4 dígitos numéricos)
-   e `senha`. O nome vem do cadastro do colaborador; `papel`, `ativo` e `nome`
-   enviados no corpo são ignorados. A matrícula precisa existir em
-   `colaboradores` (ativo) e ainda não ter conta de acesso. Cria a conta com
-   `papel = 'manutencao'` e `ativo = false` e retorna 201 sem token — o usuário
-   não pode logar ainda. Erros: 404 `COLABORADOR_NOT_FOUND` (matrícula sem
-   colaborador ativo), 409 `MATRICULA_JA_CADASTRADA` (a matrícula já tem conta,
-   inclusive em cadastros simultâneos, barrados pelo índice único de
-   `usuarios.colaborador_id`), 400 (matrícula fora do padrão ou senha curta) e
-   429 (mais de 10 tentativas por minuto por IP, porque as respostas 404/409
-   revelam quais matrículas existem).
-2. `POST /v1/auth/login` com esse usuário retorna 401 `USER_INACTIVE` até a
-   aprovação.
-3. Um `admin` autenticado lista os pendentes em
-   `GET /v1/usuarios?ativo=false` (cada item traz `nome` e `matricula` do
-   colaborador) e aprova com
-   `PATCH /v1/usuarios/:id/ativar`, que exige papel `admin` (senão 403
-   `ACCESS_DENIED`) e retorna 409 `USUARIO_JA_ATIVO` se o usuário já estiver
-   ativo.
-4. Depois da aprovação, o login volta a funcionar normalmente.
+Substitui o auto-cadastro com aprovação (decisão de 01/10/2026): o colaborador
+cadastrado pelo admin já é o funcionário, e o acesso nasce de um link.
+
+1. **Gerar:** o admin chama `POST /v1/colaboradores/:id/convite` (botão "Link de
+   acesso" na tela de Colaboradores, que copia o link). A resposta traz o `token`
+   (32 bytes aleatórios em base64url) uma única vez; o banco guarda só o hash
+   SHA-256 em `convites_acesso` (migration `0008`). Vale 7 dias e uma única vez;
+   gerar outro invalida o anterior ainda não usado. O link é `/c/<token>`, sem
+   nenhuma palavra que sugira o conteúdo. Também serve para quem esqueceu a senha.
+2. **Abrir:** `GET /v1/auth/convites/:token` (público) devolve `nome` e `matricula`.
+   Link inexistente, expirado ou já usado dá o mesmo 404 `CONVITE_INVALIDO`.
+3. **Definir a senha:** `POST /v1/auth/convites/:token/senha` com `senha` (6
+   dígitos) cria a conta ativa (`papel = 'manutencao'`; se já havia conta, troca a
+   senha), consome o convite e devolve o mesmo corpo do login (`token` + `usuario`):
+   a pessoa já entra logada. Os dois endpoints públicos têm limite de 10
+   tentativas por minuto por IP (429).
+4. **Front:** a página `/c/:token` mostra o nome, pede a senha duas vezes, toca a
+   animação de sucesso e abre a sessão.
 
 ## Retirada de ferramenta (fluxo)
 
