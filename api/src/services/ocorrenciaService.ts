@@ -140,10 +140,28 @@ export interface OcorrenciaAtualizada extends Ocorrencia {
   sugestao_disponibilizar_ferramenta_id: number | null;
 }
 
+// Etapas do "avançar tratativa": cada chamada anda um passo. 'baixada' fica de
+// fora de propósito (é decisão explícita sobre a ferramenta, não um passo).
+const PROXIMA_ETAPA: Partial<Record<Ocorrencia['status'], Ocorrencia['status']>> = {
+  aberta: 'em_reparo',
+  em_reparo: 'cobrada',
+  cobrada: 'resolvida',
+};
+
+/**
+ * PATCH /v1/ocorrencias/:id/avancar — anda uma etapa (aberta → em_reparo →
+ * cobrada → resolvida). A etapa de destino é calculada aqui, já com a linha
+ * travada, então dois cliques seguidos não pulam duas etapas.
+ */
+export function avancar(id: number, usuarioId: number): Promise<OcorrenciaAtualizada> {
+  return atualizar(id, {}, usuarioId, true);
+}
+
 export async function atualizar(
   id: number,
   dados: AtualizarOcorrenciaInput,
-  usuarioId: number
+  usuarioId: number,
+  avancarEtapa = false
 ): Promise<OcorrenciaAtualizada> {
   const client = await getClient();
   let resolvendoAgora = false;
@@ -159,6 +177,16 @@ export async function atualizar(
     }
 
     const statusAtual = atual.rows[0].status;
+    if (avancarEtapa) {
+      const proxima = PROXIMA_ETAPA[statusAtual];
+      if (!proxima) {
+        throw new ConflictError(
+          `Tratativa já finalizada (status '${statusAtual}'), não há próxima etapa`,
+          'OCORRENCIA_TRANSICAO_INVALIDA'
+        );
+      }
+      dados = { ...dados, status: proxima };
+    }
     if (dados.status && RANK_STATUS[dados.status] < RANK_STATUS[statusAtual]) {
       throw new ConflictError(
         `Não é possível retroceder de '${statusAtual}' para '${dados.status}'`,

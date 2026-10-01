@@ -32,4 +32,17 @@ export class OcorrenciaController {
       return next(error);
     }
   }
+
+  /**
+   * PATCH /v1/ocorrencias/:id/avancar
+   */
+  static async avancar(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      const ocorrencia = await ocorrenciaService.avancar(id, req.usuario!.id);
+      return sendSuccess(res, ocorrencia, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }

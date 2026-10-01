@@ -129,4 +129,47 @@ router.patch(
   OcorrenciaController.atualizar
 );
 
+/**
+ * @openapi
+ * /ocorrencias/{id}/avancar:
+ *   patch:
+ *     summary: Avança a tratativa de uma ocorrência para a próxima etapa
+ *     description: >
+ *       Anda um passo no ciclo aberta → em_reparo → cobrada → resolvida; a
+ *       etapa de destino é calculada no servidor. Ao chegar em 'resolvida'
+ *       grava resolvida_por/data_resolucao do usuário logado (Regra 6) e traz
+ *       sugestao_disponibilizar_ferramenta_id, como no PATCH /ocorrencias/{id}.
+ *       Ocorrência já resolvida ou baixada devolve 409
+ *       OCORRENCIA_TRANSICAO_INVALIDA.
+ *     tags:
+ *       - Ocorrências
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID da ocorrência
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ocorrência na nova etapa, com nomes de ferramenta e colaborador resolvidos
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ *       404:
+ *         description: Ocorrência não encontrada (OCORRENCIA_NOT_FOUND)
+ *       409:
+ *         description: Tratativa já finalizada (OCORRENCIA_TRANSICAO_INVALIDA)
+ */
+router.patch(
+  '/:id/avancar',
+  authenticate,
+  authorize('manutencao', 'admin'),
+  validate({ params: ocorrenciaIdParamSchema }),
+  OcorrenciaController.avancar
+);
+
 export default router;
