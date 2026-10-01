@@ -142,7 +142,7 @@ Tudo que a tela inicial mostra, numa chamada só. Perfis `manutencao` e `admin`.
 | `proximos_do_prazo` | Previsão nos próximos 3 dias (`dias` = dias que faltam). |
 | `indisponiveis` | Ferramentas indisponíveis com a ocorrência em andamento (`etapa`, `tipo`) e `dias_parada`. |
 
-Cada lista é `{ "total": n, "itens": [...] }` e traz todos os itens; o front mostra os primeiros e abre o resto em "Mostrar tudo". Se a fila crescer demais, a paginação entra por lista.
+Cada lista é `{ "total": n, "itens": [...] }` e traz só as 4 primeiras linhas (as do cartão). O "Mostrar tudo" pagina por `GET /v1/dashboard/:lista` (`cobrar_hoje`, `atrasados`, `proximos_do_prazo` ou `indisponiveis`), com `page` e `limit` (padrão 15, máximo 50) e o `meta` padrão de paginação; lista desconhecida é `400`. `dias_parada` conta desde a abertura da ocorrência em andamento (ou, sem ocorrência, desde a última alteração da ferramenta).
 
 ## Ocorrências (`GET` e `PATCH /v1/ocorrencias`)
 
