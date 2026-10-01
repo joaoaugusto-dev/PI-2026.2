@@ -35,3 +35,11 @@ export function useMarcarLida() {
     onSuccess: () => cliente.invalidateQueries({ queryKey: CHAVE }),
   })
 }
+
+export function useMarcarTodasLidas() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: async () => (await api.patch('/notificacoes/lida')).data,
+    onSuccess: () => cliente.invalidateQueries({ queryKey: CHAVE }),
+  })
+}
