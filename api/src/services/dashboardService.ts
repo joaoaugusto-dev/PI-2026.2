@@ -101,7 +101,7 @@ async function ferramentasAguardando(): Promise<Lista<FerramentaAguardando>> {
   const base = `
     FROM ferramentas f
     LEFT JOIN LATERAL (
-      SELECT id, tipo, status FROM ocorrencias o
+      SELECT id, tipo, status, created_at FROM ocorrencias o
       WHERE o.ferramenta_id = f.id AND o.status IN ('aberta', 'em_reparo', 'cobrada')
       ORDER BY o.created_at DESC, o.id DESC LIMIT 1
     ) oc ON TRUE
@@ -111,9 +111,9 @@ async function ferramentasAguardando(): Promise<Lista<FerramentaAguardando>> {
     query<FerramentaAguardando>(
       `SELECT f.id AS ferramenta_id, f.nome AS ferramenta_nome, f.codigo_identificacao,
               oc.id AS ocorrencia_id, oc.tipo, oc.status AS etapa,
-              GREATEST(0, (${HOJE} - (f.updated_at AT TIME ZONE 'America/Sao_Paulo')::date))::int AS dias_parada
+              GREATEST(0, (${HOJE} - (COALESCE(oc.created_at, f.updated_at) AT TIME ZONE 'America/Sao_Paulo')::date))::int AS dias_parada
        ${base}
-       ORDER BY f.updated_at, f.id`
+       ORDER BY COALESCE(oc.created_at, f.updated_at), f.id`
     ),
   ]);
   return { total: Number(total.rows[0].total), itens: itens.rows };
