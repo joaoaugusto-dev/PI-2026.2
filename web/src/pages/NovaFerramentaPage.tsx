@@ -5,6 +5,7 @@ import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { ImprimirEtiquetaDialog } from '@/components/ferramentas/ImprimirEtiquetaDialog'
 import { SeletorFoto, type FotoSelecionada } from '@/components/ferramentas/SeletorFoto'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/Label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { useCategorias } from '@/hooks/useCategorias'
-import { formatarPatrimonio, useCriarFerramenta } from '@/hooks/useFerramentas'
+import { formatarPatrimonio, useCriarFerramenta, type Ferramenta } from '@/hooks/useFerramentas'
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
@@ -41,6 +42,7 @@ export function NovaFerramentaPage() {
   // endpoint de upload — guarda o arquivo/URL só pro preview, sem enviar no
   // submit. Wire-up fica pra quando a API-XX de upload existir.
   const [foto, setFoto] = useState<FotoSelecionada | null>(null)
+  const [criada, setCriada] = useState<Ferramenta | null>(null)
 
   const {
     register,
@@ -66,7 +68,7 @@ export function NovaFerramentaPage() {
       })
       playSomConfirmacao()
       toast.success(`${ferramenta.nome} cadastrada como ${formatarPatrimonio(ferramenta.codigo_identificacao)}.`)
-      navigate('/ferramentas')
+      setCriada(ferramenta)
     } catch (erroRequisicao: any) {
       const erroApi = erroRequisicao?.response?.data?.error
       if (erroApi?.code === 'VALIDATION_ERROR' && Array.isArray(erroApi.details)) {
@@ -196,6 +198,8 @@ export function NovaFerramentaPage() {
           </Card>
         </div>
       </form>
+
+      <ImprimirEtiquetaDialog ferramenta={criada} aoFechar={() => navigate('/ferramentas')} />
     </div>
   )
 }

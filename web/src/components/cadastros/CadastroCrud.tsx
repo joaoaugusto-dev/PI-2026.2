@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
 import { EmptyState } from '@/components/EmptyState'
+import { ImprimirEtiquetaDialog } from '@/components/ferramentas/ImprimirEtiquetaDialog'
+import type { Ferramenta } from '@/hooks/useFerramentas'
 import { SeletorFoto, type FotoSelecionada } from '@/components/ferramentas/SeletorFoto'
 import { Paginacao } from '@/components/Paginacao'
 import { Button } from '@/components/ui/Button'
@@ -83,6 +85,7 @@ export function CadastroCrud<T extends { id: number }>({
   }, [location, navigate])
   const [fotoSel, setFotoSel] = useState<FotoSelecionada | null>(null)
   const enviarFoto = useEnviarFoto()
+  const [criada, setCriada] = useState<Ferramenta | null>(null)
   const [importando, setImportando] = useState(false)
   useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
   const [inativando, setInativando] = useState<T | null>(null)
@@ -114,7 +117,8 @@ export function CadastroCrud<T extends { id: number }>({
           playSomConfirmacao()
           toast.success(id ? `${singular} atualizado.` : `${singular} cadastrado.`)
           // o registro já está salvo; se só a foto falhar, avisa e fecha (dá para reenviar editando)
-          const idSalvo = id ?? (resposta.data as { data: { id: number } }).data.id
+          const salvo = (resposta.data as { data: Ferramenta }).data
+          const idSalvo = id ?? salvo.id
           if (foto && arquivo) {
             try {
               await enviarFoto.mutateAsync({ id: idSalvo, imagem: await comprimirImagem(arquivo) })
@@ -123,6 +127,9 @@ export function CadastroCrud<T extends { id: number }>({
             }
           }
           setEditando(null)
+          if (!id && recurso === 'ferramentas' && salvo.codigo_identificacao) {
+            setCriada(salvo)
+          }
         },
         onError: (e) => avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`),
       },
@@ -271,6 +278,8 @@ export function CadastroCrud<T extends { id: number }>({
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImprimirEtiquetaDialog ferramenta={criada} aoFechar={() => setCriada(null)} />
 
       <ImportarCsvDialog
         aberto={importando}
