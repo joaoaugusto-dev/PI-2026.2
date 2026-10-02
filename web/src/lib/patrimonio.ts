@@ -1,7 +1,8 @@
-/** `SF53`, `000053` ou `53` -> 53; nome (qualquer outra coisa) -> null. Sem limite de dígitos. */
+/** `SF53`, `000053` ou `53` -> 53; nome (qualquer outra coisa) -> null. Número grande demais para ser inteiro seguro (colagem acidental) também -> null. */
 export function parseCodigoPatrimonio(termo: string) {
   const m = /^(?:sf)?0*(\d+)$/i.exec(termo.trim())
-  return m ? Number(m[1]) : null
+  const n = m ? Number(m[1]) : NaN
+  return Number.isSafeInteger(n) ? n : null
 }
 
 export interface Escolha<T> {

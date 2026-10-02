@@ -9,6 +9,10 @@ describe('parseCodigoPatrimonio', () => {
     expect(parseCodigoPatrimonio('0')).toBe(0)
   })
 
+  it('número além de 15 dígitos não vira um código errado', () => {
+    expect(parseCodigoPatrimonio('12345678901234567890')).toBeNull()
+  })
+
   it('nome não é código', () => {
     expect(parseCodigoPatrimonio('chave 1/4')).toBeNull()
     expect(parseCodigoPatrimonio('')).toBeNull()
