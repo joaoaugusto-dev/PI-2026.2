@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/StatusBadge'
  * ferramentas) para um item "não localizado" — a piada visual da tela 404.
  */
 export function EtiquetaNaoLocalizada({
-  codigo = 'SF000404',
+  codigo = '000404',
   item = 'Página não localizada',
 }: {
   codigo?: string

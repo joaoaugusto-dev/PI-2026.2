@@ -4,7 +4,7 @@ import { Download, History, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
 import { Paginacao } from '@/components/Paginacao'
-import { COR_SITUACAO, ROTULO_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
+import { corDaSituacao, ROTULO_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -188,6 +188,7 @@ export function EmprestimosPage() {
                       <p className="font-medium">{e.ferramenta_nome}</p>
                       <p className="font-mono text-rotulo text-muted-foreground">
                         {formatarPatrimonio(e.codigo_identificacao)}
+                        {!e.ferramenta_ativa && ' (baixada)'}
                       </p>
                     </TableCell>
                     <TableCell>
@@ -198,7 +199,7 @@ export function EmprestimosPage() {
                     <TableCell>{dataBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
                     <TableCell>{dataBR(e.data_devolucao)}</TableCell>
-                    <TableCell className={cn('font-medium', COR_SITUACAO[e.situacao])}>{textoSituacao(e)}</TableCell>
+                    <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

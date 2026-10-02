@@ -27,7 +27,7 @@ export function AtalhoAcao({ to, titulo, descricao, icone: Icone, variante }: At
   const estilo = VARIANTES[variante]
   return (
     <Link to={to}>
-      <Card className={cn('h-full flex-row items-center justify-between gap-3 p-6 transition-colors', estilo.card)}>
+      <Card className={cn('h-full flex-row items-center justify-between gap-3 px-6 py-4 transition-colors', estilo.card)}>
         <div>
           <p className="text-titulo font-semibold">{titulo}</p>
           <p className={cn('text-corpo', estilo.descricao)}>{descricao}</p>

@@ -1,12 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Barcode, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useCategorias } from '@/hooks/useCategorias'
+import { useDevolverEmprestimo, useEmprestimoAberto } from '@/hooks/useDevolucao'
+import { formatarPatrimonio, useFerramenta } from '@/hooks/useFerramentas'
+import { useAuth } from '@/lib/auth'
+import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
+import { dataBR, diasEntre } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
-import { AtalhosDeTeste } from '@/components/fluxo/AtalhosDeTeste'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { DetalhesEmprestimo } from '@/components/fluxo/DetalhesEmprestimo'
 import { FormularioOcorrencia } from '@/components/fluxo/FormularioOcorrencia'
@@ -14,81 +20,10 @@ import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 import { SeletorCondicao } from '@/components/fluxo/SeletorCondicao'
 
-/**
- * Tela mockada (Sprint 4 — FE-15): API-12 (PATCH .../devolucao) e FE-09
- * (campo de identificação compartilhado) ainda não existem, então o
- * empréstimo aberto é resolvido contra uma lista local. Vira chamada real
- * (`@/lib/api.ts` + TanStack Query) quando a API expuser o endpoint.
- */
-function isoDiasAtras(dias: number) {
-  const data = new Date()
-  data.setDate(data.getDate() - dias)
-  return data.toISOString().slice(0, 10)
-}
-
-function diasEntre(a: Date, b: Date) {
-  const inicioA = new Date(a.getFullYear(), a.getMonth(), a.getDate())
-  const inicioB = new Date(b.getFullYear(), b.getMonth(), b.getDate())
-  return Math.round((inicioA.getTime() - inicioB.getTime()) / 86_400_000)
-}
-
-function formatarData(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR')
-}
-
 /** Máscara de centavos: cada dígito empurra a casa decimal, igual ao valor do Pix no app do Mercado Pago. */
 function formatarMoeda(digitos: string) {
   const centavos = Number.parseInt(digitos, 10)
   return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-const EMPRESTIMOS_MOCK: Record<
-  string,
-  {
-    ferramenta: string
-    categoria: string
-    retiradoPor: string
-    matricula: string
-    setor: string
-    atividade?: string
-    saidaEm: string
-    previsaoDevolucao: string
-    registradoPor: string
-  }
-> = {
-  SF000093: {
-    ferramenta: 'Chave de Impacto Pneumática 1/2"',
-    categoria: 'Pneumática',
-    retiradoPor: 'Jocimar Ferreira da Silva',
-    matricula: '4412',
-    setor: 'Caldeiraria',
-    atividade: 'Manutenção corretiva',
-    saidaEm: isoDiasAtras(11),
-    previsaoDevolucao: isoDiasAtras(9),
-    registradoPor: 'Marcos Andrade',
-  },
-  SF000418: {
-    ferramenta: 'Bomba de Teste Hidrostático',
-    categoria: 'Hidráulica',
-    retiradoPor: 'Rafael Antunes',
-    matricula: '6620',
-    setor: 'Montagem',
-    saidaEm: isoDiasAtras(2),
-    previsaoDevolucao: isoDiasAtras(-3),
-    registradoPor: 'Marcos Andrade',
-  },
-}
-
-const USUARIO_LOGADO = 'Marcos Andrade'
-
-function buscarEmprestimo(valor: string) {
-  const chave = valor.trim().toUpperCase()
-  if (!chave) return null
-  if (EMPRESTIMOS_MOCK[chave]) return { codigo: chave, ...EMPRESTIMOS_MOCK[chave] }
-  const porNome = Object.entries(EMPRESTIMOS_MOCK).find(([, e]) =>
-    e.ferramenta.toLowerCase().includes(chave.toLowerCase()),
-  )
-  return porNome ? { codigo: porNome[0], ...porNome[1] } : null
 }
 
 const schema = z
@@ -113,7 +48,8 @@ const schema = z
 type FormValues = z.infer<typeof schema>
 
 export function DevolucaoPage() {
-  const [hoje] = useState(() => new Date())
+  // o dashboard abre a devolução já com o código da ferramenta atrasada
+  const [params] = useSearchParams()
 
   const {
     register,
@@ -126,7 +62,7 @@ export function DevolucaoPage() {
     resolver: zodResolver(schema),
     mode: 'onChange',
     defaultValues: {
-      ferramentaCodigo: '',
+      ferramentaCodigo: params.get('codigo') ?? '',
       condicao: null,
       descricaoOcorrencia: '',
       custoEstimado: '',
@@ -140,13 +76,40 @@ export function DevolucaoPage() {
   const custoEstimado = watch('custoEstimado') ?? ''
   const confirmacaoOcorrencia = watch('confirmacaoOcorrencia') ?? false
 
-  const emprestimo = useMemo(() => buscarEmprestimo(ferramentaCodigo), [ferramentaCodigo])
-  const emprestimoNaoEncontrado = ferramentaCodigo.trim().length >= 3 && !emprestimo
+  // espera o usuário parar de digitar (ou o leitor terminar de bipar) antes de consultar a API
+  const [termo, setTermo] = useState('')
+  useEffect(() => {
+    const id = setTimeout(() => setTermo(ferramentaCodigo.trim()), 300)
+    return () => clearTimeout(id)
+  }, [ferramentaCodigo])
+
+  const { usuario } = useAuth()
+  const devolver = useDevolverEmprestimo()
+  const { data: escolha, isFetching: buscando, isError: erroBusca } = useEmprestimoAberto(termo)
+  const termoAtual = termo === ferramentaCodigo.trim()
+  const encontrado = escolha?.item ?? null
+  const ambiguos = termoAtual ? (escolha?.ambiguos ?? []) : []
+  const { data: ferramentaDoEmprestimo } = useFerramenta(encontrado?.ferramenta_id ?? 0)
+  const { data: categorias } = useCategorias()
+  const emprestimo = encontrado
+    ? {
+        codigo: formatarPatrimonio(encontrado.codigo_identificacao),
+        ferramenta: encontrado.ferramenta_nome,
+        categoria: categorias?.find((c) => c.id === ferramentaDoEmprestimo?.grupo_id)?.nome ?? '—',
+        retiradoPor: encontrado.colaborador_nome,
+        matricula: encontrado.colaborador_matricula,
+        setor: encontrado.setor_nome,
+        atividade: encontrado.atividade_nome ?? undefined,
+        registradoPor: encontrado.usuario_retirada_nome ?? '—',
+      }
+    : null
+  const emprestimoNaoEncontrado = termo.length >= 1 && termoAtual && !buscando && !erroBusca && !encontrado && ambiguos.length === 0
 
   const precisaOcorrencia = condicao === 'avaria' || condicao === 'perda'
 
-  const diasAtraso = emprestimo ? diasEntre(hoje, new Date(`${emprestimo.previsaoDevolucao}T00:00:00`)) : 0
-  const diasDesdeSaida = emprestimo ? diasEntre(hoje, new Date(`${emprestimo.saidaEm}T00:00:00`)) : 0
+  const hoje = new Date() // a cada render: o balcão deixa a tela aberta de um dia para o outro
+  const diasAtraso = encontrado ? Math.max(0, diasEntre(hoje, encontrado.previsao_devolucao)) : 0
+  const diasDesdeSaida = encontrado ? diasEntre(hoje, encontrado.data_retirada) : 0
 
   const faltando = [
     !emprestimo ? 'ferramenta' : null,
@@ -166,18 +129,26 @@ export function DevolucaoPage() {
     setFocus('ferramentaCodigo')
   }
 
-  function simularLeitura(codigo: string) {
-    setValue('ferramentaCodigo', codigo, { shouldValidate: true })
-  }
-
   function onConfirmar(data: FormValues) {
-    playSomConfirmacao()
-    if (data.condicao === 'ok') {
-      toast.success(`Devolução registrada: ${emprestimo?.ferramenta} voltou ao estoque`)
-    } else {
-      toast.success(`Ocorrência aberta: ${emprestimo?.ferramenta} foi para Indisponíveis por ${data.condicao}`)
-    }
-    buscarOutra()
+    if (!encontrado || !data.condicao) return
+    const centavos = Number.parseInt((data.custoEstimado ?? '').replace(/\D/g, ''), 10)
+    devolver.mutate(
+      {
+        emprestimo: encontrado,
+        condicao: data.condicao,
+        observacao: data.condicao === 'ok' ? undefined : data.descricaoOcorrencia?.trim().slice(0, 500),
+        custoEstimado: centavos > 0 ? centavos / 100 : undefined, // NaN e R$ 0,00 viram "sem custo"
+      },
+      {
+        onSuccess: (devolvido) => {
+          playSomConfirmacao()
+          toast.success(devolvido.resumo)
+          buscarOutra()
+        },
+        onError: (e) =>
+          avisarErro(mensagemDeErro(e, 'Não foi possível registrar a devolução.')),
+      },
+    )
   }
 
   return (
@@ -197,7 +168,7 @@ export function DevolucaoPage() {
                 placeholder="Código de patrimônio ou nome da ferramenta"
                 estadoClassName={cn(
                   'border-2',
-                  emprestimoNaoEncontrado && 'animate-erro border-destructive',
+                  (emprestimoNaoEncontrado || ambiguos.length > 0 || (erroBusca && termoAtual)) && 'animate-erro border-destructive',
                   !ferramentaCodigo && 'border-brand-red',
                 )}
               >
@@ -209,19 +180,20 @@ export function DevolucaoPage() {
                   Nenhum empréstimo aberto encontrado para "{ferramentaCodigo}".
                 </p>
               )}
-
-              <AtalhosDeTeste
-                onSimular={simularLeitura}
-                atalhos={[
-                  { codigo: 'SF000093', label: 'Simular leitura · SF000093 (atrasada)' },
-                  { codigo: 'SF000418', label: 'Simular leitura · SF000418 (no prazo)' },
-                ]}
-              />
+              {ambiguos.length > 0 && (
+                <p className="text-sm text-destructive">
+                  Vários empréstimos abertos para "{ferramentaCodigo}" — digite ou bipe o código:{' '}
+                  {ambiguos.map((e) => `${formatarPatrimonio(e.codigo_identificacao)} ${e.ferramenta_nome}`).join(' · ')}
+                </p>
+              )}
+              {erroBusca && termoAtual && (
+                <p className="text-sm text-destructive">Não foi possível consultar os empréstimos. Verifique a conexão com a API.</p>
+              )}
             </div>
           ) : (
             <DetalhesEmprestimo
               emprestimo={emprestimo}
-              saida={formatarData(emprestimo.saidaEm)}
+              saida={dataBR(encontrado?.data_retirada)}
               diasDesdeSaida={diasDesdeSaida}
               diasAtraso={diasAtraso}
               onBuscarOutra={buscarOutra}
@@ -255,10 +227,11 @@ export function DevolucaoPage() {
 
       <RodapeFluxo
         rotuloUsuario="Recebido por"
-        usuario={USUARIO_LOGADO}
+        usuario={usuario?.nome ?? '—'}
         faltando={faltando}
         textoBotao={precisaOcorrencia ? 'Confirmar e abrir ocorrência' : 'Confirmar devolução'}
         comIcones
+        enviando={devolver.isPending}
       />
     </form>
   )

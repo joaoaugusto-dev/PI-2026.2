@@ -23,3 +23,23 @@ export function avisarErro(mensagem: string) {
     },
   })
 }
+
+/** Mensagem do envelope de erro da API (`error.message`) ou o texto padrão quando não há resposta (API fora). */
+export function mensagemDeErro(e: unknown, padrao: string) {
+  return erroDaApi(e)?.message ?? padrao
+}
+
+interface ErroDaApi {
+  code?: string
+  message?: string
+  details?: unknown[]
+}
+
+/** Envelope `error` da resposta da API (`undefined` sem resposta, ex.: API fora). */
+export function erroDaApi(e: unknown) {
+  return (e as { response?: { data?: { error?: ErroDaApi } } }).response?.data?.error
+}
+
+export function statusDoErro(e: unknown) {
+  return (e as { response?: { status?: number } }).response?.status
+}

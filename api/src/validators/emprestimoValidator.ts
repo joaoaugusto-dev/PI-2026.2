@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { custoEstimadoSchema } from './ocorrenciaValidator.js';
 
 const idPositivo = (campo: string) =>
   z.coerce
@@ -77,7 +78,11 @@ export const emprestimoIdParamSchema = z.object({
 // propósito (Regra 6): o responsável vem do JWT e campos desconhecidos são
 // descartados. A condição é obrigatória porque é ela que dispara os triggers de
 // status da ferramenta e de abertura de ocorrência.
-export const devolverEmprestimoSchema = z.object({
+//
+// `custoEstimado` só faz sentido com avaria/perda: vai para a ocorrência que o
+// trigger abre no mesmo UPDATE, para o front não precisar de um PATCH extra.
+export const devolverEmprestimoSchema = z
+  .object({
   condicaoDevolucao: z.enum(['ok', 'avaria', 'perda'], {
     errorMap: (_issue, ctx) => ({
       message:
@@ -87,7 +92,12 @@ export const devolverEmprestimoSchema = z.object({
     }),
   }),
   observacaoDevolucao: z.string().trim().min(1, 'observacaoDevolucao não pode ser vazio').max(500).optional(),
-});
+  custoEstimado: custoEstimadoSchema,
+  })
+  .refine((d) => d.custoEstimado === undefined || d.condicaoDevolucao !== 'ok', {
+    path: ['custoEstimado'],
+    message: 'custoEstimado só se aplica a devolução com avaria ou perda',
+  });
 
 export type DevolverEmprestimoInput = z.infer<typeof devolverEmprestimoSchema>;
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,64 +8,32 @@ import { cn } from '@/lib/utils'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { SeletorDataCalendario } from '@/components/SeletorDataCalendario'
 import { StatusBadge } from '@/components/StatusBadge'
-import { AtalhosDeTeste } from '@/components/fluxo/AtalhosDeTeste'
+import { useSetores } from '@/hooks/useSetores'
+import { formatarPatrimonio, statusParaBadge } from '@/hooks/useFerramentas'
+import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPorTermo, useRetirarFerramenta } from '@/hooks/useRetirada'
+import { useAuth } from '@/lib/auth'
+import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { RotuloCampo } from '@/components/fluxo/RotuloCampo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 
-/**
- * Tela mockada (Sprint 4 — FE-08): não há endpoint de retirada ainda, então
- * ferramenta/colaborador são resolvidos contra listas locais. Vira chamada
- * real (`@/lib/api.ts` + TanStack Query) quando a API expuser os endpoints.
- */
-const FERRAMENTAS_MOCK: Record<string, { nome: string; status: 'disponivel' | 'em-uso' | 'indisponivel' }> = {
-  SF000452: { nome: 'Furadeira de Impacto 1/2"', status: 'disponivel' },
-  SF000418: { nome: 'Bomba de Teste Hidrostático', status: 'disponivel' },
-  SF000093: { nome: 'Chave de Impacto Pneumática 1/2"', status: 'em-uso' },
-  SF000602: { nome: 'Durômetro Portátil', status: 'indisponivel' },
-}
-
-const COLABORADORES_MOCK = [
-  { matricula: '4412', nome: 'Jocimar Ferreira da Silva' },
-  { matricula: '6620', nome: 'Rafael Antunes' },
-  { matricula: '2874', nome: 'Cleiton Barbosa' },
-  { matricula: '3097', nome: 'Wellington Souza Lima' },
-]
-
-const SETORES = ['Caldeiraria', 'Manutenção', 'Montagem', 'Qualidade', 'Expedição', 'Usinagem', 'Pintura']
-
-const USUARIO_LOGADO = 'Marcos Andrade'
-
-function buscarFerramenta(valor: string) {
-  const chave = valor.trim().toUpperCase()
-  if (!chave) return null
-  if (FERRAMENTAS_MOCK[chave]) return { codigo: chave, ...FERRAMENTAS_MOCK[chave] }
-  const porNome = Object.entries(FERRAMENTAS_MOCK).find(([, f]) =>
-    f.nome.toLowerCase().includes(chave.toLowerCase()),
-  )
-  return porNome ? { codigo: porNome[0], ...porNome[1] } : null
-}
-
-function buscarColaborador(valor: string, colaboradores: typeof COLABORADORES_MOCK) {
-  const chave = valor.trim().toLowerCase()
-  if (chave.length < 2) return null
-  return colaboradores.find((c) => c.matricula === chave || c.nome.toLowerCase().includes(chave)) ?? null
-}
-
 const schema = z.object({
   ferramentaCodigo: z.string().trim().min(1, 'Bipe o leitor ou digite o código de patrimônio'),
   colaborador: z.string().trim().min(1, 'Informe matrícula, crachá ou nome'),
   atividade: z.string().trim().optional(),
-  setor: z.string().min(1, 'Selecione o setor de destino'),
+  setor: z.string().min(1, 'Selecione o setor de destino'), // id do setor
   previsaoDevolucao: z.string().min(1, 'Informe a previsão de devolução'),
 })
 
 type FormValues = z.infer<typeof schema>
 
 export function RetiradaPage() {
-  const [colaboradores, setColaboradores] = useState(COLABORADORES_MOCK)
+  const { usuario } = useAuth()
+  const { data: setores } = useSetores()
+  const retirar = useRetirarFerramenta()
+  const cadastrarRapido = useCadastrarColaboradorRapido()
 
   const {
     register,
@@ -92,44 +60,85 @@ export function RetiradaPage() {
   const setor = watch('setor')
   const previsaoDevolucao = watch('previsaoDevolucao')
 
-  const ferramenta = useMemo(() => buscarFerramenta(ferramentaCodigo), [ferramentaCodigo])
-  const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
-  const ferramentaNaoEncontrada = ferramentaCodigo.trim().length >= 3 && !ferramenta
+  // espera o leitor terminar de bipar / o usuário parar de digitar antes de consultar a API
+  const [termoFerramenta, setTermoFerramenta] = useState('')
+  const [termoColaborador, setTermoColaborador] = useState('')
+  useEffect(() => {
+    const id = setTimeout(() => setTermoFerramenta(ferramentaCodigo.trim()), 300)
+    return () => clearTimeout(id)
+  }, [ferramentaCodigo])
+  useEffect(() => {
+    const id = setTimeout(() => setTermoColaborador(colaborador.trim()), 300)
+    return () => clearTimeout(id)
+  }, [colaborador])
 
-  const colaboradorEncontrado = useMemo(
-    () => buscarColaborador(colaborador, colaboradores),
-    [colaborador, colaboradores],
-  )
-  const colaboradorNaoEncontrado = colaborador.trim().length >= 3 && !colaboradorEncontrado
+  const { data: escolhaFerramenta, isFetching: buscandoFerramenta, isError: erroFerramenta } = useFerramentaPorTermo(termoFerramenta)
+  const ferramentaAtual = termoFerramenta === ferramentaCodigo.trim()
+  const ferramentaAchada = escolhaFerramenta?.item ?? null
+  const ferramenta = ferramentaAtual ? ferramentaAchada : null
+  const ferramentasAmbiguas = ferramentaAtual ? (escolhaFerramenta?.ambiguos ?? []) : []
+  const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
+  const ferramentaNaoEncontrada = termoFerramenta.length > 0 && termoFerramenta === ferramentaCodigo.trim() && !buscandoFerramenta && !erroFerramenta && !ferramentaAchada && ferramentasAmbiguas.length === 0
+
+  const { data: escolhaColaborador, isFetching: buscandoColaborador, isError: erroColaborador } = useColaboradorPorTermo(termoColaborador)
+  const colaboradorAtual = termoColaborador === colaborador.trim()
+  const colaboradorAchado = escolhaColaborador?.item ?? null
+  const colaboradorEncontrado = colaboradorAtual ? colaboradorAchado : null
+  const colaboradoresAmbiguos = colaboradorAtual ? (escolhaColaborador?.ambiguos ?? []) : []
+  const colaboradorNaoEncontrado =
+    termoColaborador.length > 0 && termoColaborador === colaborador.trim() && !buscandoColaborador && !erroColaborador && !colaboradorAchado && colaboradoresAmbiguos.length === 0
+
+  // o setor de destino começa no setor do colaborador identificado (continua editável)
+  useEffect(() => {
+    if (colaboradorEncontrado?.setor_id) setValue('setor', String(colaboradorEncontrado.setor_id), { shouldValidate: true })
+  }, [colaboradorEncontrado?.id, colaboradorEncontrado?.setor_id, setValue])
 
   const faltando = [
     !ferramenta || ferramentaBloqueada ? 'ferramenta' : null,
-    !colaborador.trim() || colaboradorNaoEncontrado ? 'colaborador' : null,
+    !colaboradorEncontrado ? 'colaborador' : null,
     !setor ? 'setor de destino' : null,
     !previsaoDevolucao ? 'previsão de devolução' : null,
   ].filter(Boolean) as string[]
 
-  function onConfirmar(data: FormValues) {
-    playSomConfirmacao()
-    toast.success(`Retirada registrada: ${ferramenta?.nome} para ${data.colaborador}`)
-    reset({
-      ferramentaCodigo: '',
-      colaborador: '',
-      atividade: '',
-      setor: '',
-      previsaoDevolucao: '',
-    })
+  function limpar() {
+    reset({ ferramentaCodigo: '', colaborador: '', atividade: '', setor: '', previsaoDevolucao: '' })
     setFocus('ferramentaCodigo')
   }
 
-  function simularLeitura(codigo: string) {
-    setValue('ferramentaCodigo', codigo, { shouldValidate: true })
-    setFocus('colaborador')
+  function onConfirmar(data: FormValues) {
+    if (!ferramenta || !colaboradorEncontrado) return
+    retirar.mutate(
+      {
+        ferramentaId: ferramenta.id,
+        colaboradorId: colaboradorEncontrado.id,
+        setorDestinoId: Number(data.setor),
+        previsaoDevolucao: data.previsaoDevolucao,
+        atividadeObservacao: data.atividade?.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          playSomConfirmacao()
+          toast.success(`Retirada registrada: ${ferramenta.nome} para ${colaboradorEncontrado.nome}`)
+          limpar()
+        },
+        onError: (e) =>
+          avisarErro(mensagemDeErro(e, 'Não foi possível registrar a retirada.')),
+      },
+    )
   }
 
-  function usarCadastroRapido({ nome, matricula }: { nome: string; matricula: string }) {
-    setColaboradores((atual) => [...atual, { nome, matricula }])
-    setValue('colaborador', matricula, { shouldValidate: true })
+  function usarCadastroRapido({ nome, matricula, setorId }: { nome: string; matricula: string; setorId: number }) {
+    cadastrarRapido.mutate(
+      { nome, matricula, setorId },
+      {
+        onSuccess: (novo) => {
+          toast.success(`${novo.nome} cadastrado.`)
+          setValue('colaborador', novo.matricula, { shouldValidate: true })
+        },
+        onError: (e) =>
+          avisarErro(mensagemDeErro(e, 'Não foi possível cadastrar o colaborador.')),
+      },
+    )
   }
 
   return (
@@ -149,7 +158,7 @@ export function RetiradaPage() {
               estadoClassName={cn(
                 'border-2',
                 ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
-                (ferramentaBloqueada || ferramentaNaoEncontrada) && 'animate-erro border-destructive',
+                (ferramentaBloqueada || ferramentaNaoEncontrada || ferramentasAmbiguas.length > 0 || erroFerramenta) && 'animate-erro border-destructive',
                 !ferramentaCodigo && 'border-brand-red',
               )}
               onKeyDown={(e) => {
@@ -165,7 +174,7 @@ export function RetiradaPage() {
             </CampoIdentificacao>
             {ferramenta && (
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={ferramenta.status} />
+                <StatusBadge status={statusParaBadge(ferramenta.status)} />
                 <span className="text-sm text-muted-foreground">{ferramenta.nome}</span>
               </div>
             )}
@@ -177,15 +186,17 @@ export function RetiradaPage() {
             {ferramentaNaoEncontrada && (
               <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
             )}
+            {ferramentasAmbiguas.length > 0 && (
+              <p className="text-sm text-destructive">
+                Vários resultados para "{ferramentaCodigo}" — digite ou bipe o código:{' '}
+                {ferramentasAmbiguas.map((f) => `${formatarPatrimonio(f.codigo_identificacao)} ${f.nome}`).join(' · ')}
+              </p>
+            )}
+            {erroFerramenta && ferramentaAtual && (
+              <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
+            )}
           </div>
 
-          <AtalhosDeTeste
-            onSimular={simularLeitura}
-            atalhos={[
-              { codigo: 'SF000452', label: 'Simular leitura · SF000452' },
-              { codigo: 'SF000093', label: 'Ler ferramenta já emprestada' },
-            ]}
-          />
         </SecaoFluxo>
 
         <SecaoFluxo titulo="2. Colaborador" descricao="Matrícula, crachá ou nome">
@@ -196,7 +207,7 @@ export function RetiradaPage() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
-                if (colaborador.trim()) setFocus('atividade')
+                if (colaboradorEncontrado) setFocus('atividade')
               }
             }}
           >
@@ -204,7 +215,32 @@ export function RetiradaPage() {
             {!colaborador && <DicaEnter />}
           </CampoIdentificacao>
 
-          {colaboradorNaoEncontrado && <CadastroRapidoColaborador onUsar={usarCadastroRapido} />}
+          {colaboradorEncontrado && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium">{colaboradorEncontrado.nome}</span>
+              <span className="text-sm text-muted-foreground">
+                Matrícula {colaboradorEncontrado.matricula} ·{' '}
+                {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
+              </span>
+            </div>
+          )}
+
+          {colaboradoresAmbiguos.length > 0 && (
+            <p className="text-sm text-destructive">
+              Vários colaboradores para "{colaborador}" — digite ou bipe a matrícula:{' '}
+              {colaboradoresAmbiguos.map((c) => `${c.matricula} ${c.nome}`).join(' · ')}
+            </p>
+          )}
+
+          {erroColaborador && termoColaborador === colaborador.trim() && (
+            <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
+          )}
+
+          {colaboradorNaoEncontrado && <CadastroRapidoColaborador
+              setores={setores ?? []}
+              enviando={cadastrarRapido.isPending}
+              onUsar={usarCadastroRapido}
+            />}
         </SecaoFluxo>
 
         <SecaoFluxo
@@ -225,17 +261,17 @@ export function RetiradaPage() {
             <div className="space-y-2">
               <RotuloCampo>Setor de destino</RotuloCampo>
               <div className="flex flex-wrap gap-2">
-                {SETORES.map((s) => (
+                {setores?.map((s) => (
                   <button
-                    key={s}
+                    key={s.id}
                     type="button"
-                    onClick={() => setValue('setor', s, { shouldValidate: true })}
+                    onClick={() => setValue('setor', String(s.id), { shouldValidate: true })}
                     className={cn(
                       'h-(--control-h) rounded-lg border px-4 text-corpo font-medium transition-colors hover:bg-muted',
-                      setor === s && 'border-transparent bg-foreground text-white hover:bg-foreground',
+                      setor === String(s.id) && 'border-transparent bg-foreground text-white hover:bg-foreground',
                     )}
                   >
-                    {s}
+                    {s.nome}
                   </button>
                 ))}
               </div>
@@ -255,7 +291,8 @@ export function RetiradaPage() {
 
       <RodapeFluxo
         rotuloUsuario="Registrado por"
-        usuario={USUARIO_LOGADO}
+        usuario={usuario?.nome ?? '—'}
+        enviando={retirar.isPending}
         faltando={faltando}
         textoBotao="Confirmar retirada"
       />

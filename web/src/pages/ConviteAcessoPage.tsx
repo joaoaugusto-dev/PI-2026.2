@@ -5,6 +5,9 @@ import { useRef, useState } from 'react'
 import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
+import { EtiquetaNaoLocalizada } from '@/components/EtiquetaNaoLocalizada'
+import { IlustracaoErro } from '@/components/IlustracaoErro'
+import { TelaDeFeedback } from '@/components/TelaDeFeedback'
 import { CampoComErro } from '@/components/CampoComErro'
 import { CampoPin } from '@/components/CampoPin'
 import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
@@ -62,7 +65,7 @@ export function ConviteAcessoPage() {
       setConcluido(true)
     } catch (e) {
       setTentativaErro((n) => n + 1)
-      if (codigoDoErro(e) === 'CONVITE_INVALIDO') convite.refetch()
+      if (['CONVITE_INVALIDO', 'CONVITE_JA_USADO'].includes(codigoDoErro(e) ?? '')) convite.refetch()
       else avisarErro('Não foi possível definir a senha. Tente novamente.')
     }
   }
@@ -77,6 +80,27 @@ export function ConviteAcessoPage() {
   }
 
   const invalido = convite.isError && codigoDoErro(convite.error) === 'CONVITE_INVALIDO'
+
+  if (convite.isError && codigoDoErro(convite.error) === 'CONVITE_JA_USADO') {
+    return (
+      <TelaDeFeedback
+        ilustracao={<IlustracaoErro codigo="usado" className="w-full max-w-sm text-foreground sm:max-w-md" />}
+        titulo="Esta definição de senha já foi usada"
+        descricao={
+          <>
+            Esse link é como uma ferramenta emprestada: só sai do balcão uma vez, e esta já foi retirada. Se a
+            senha foi você quem definiu, é só entrar. Se não foi, peça um link novo ao administrador.
+          </>
+        }
+        acoes={
+          <Button asChild className="h-(--control-h) px-6 text-corpo">
+            <Link to="/login">Ir para o login</Link>
+          </Button>
+        }
+        etiqueta={<EtiquetaNaoLocalizada codigo="000001" item="Link de acesso · uso único" />}
+      />
+    )
+  }
 
   return (
     <div className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">

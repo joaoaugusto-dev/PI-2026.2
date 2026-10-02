@@ -5,7 +5,6 @@ import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
-import { DEMO_PERMITIDO } from '@/lib/demo/flag'
 import { CampoPin } from '@/components/CampoPin'
 import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { TexturaFerramentas } from '@/components/TexturaFerramentas'
@@ -26,7 +25,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export function LoginPage() {
-  const { login, entrarComoDemo } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [erro, setErro] = useState(false)
@@ -138,19 +137,6 @@ export function LoginPage() {
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
               </Button>
-              {DEMO_PERMITIDO && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-(--control-h) text-corpo"
-                  onClick={() => {
-                    entrarComoDemo()
-                    navigate('/', { replace: true })
-                  }}
-                >
-                  Entrar sem a API (demonstração)
-                </Button>
-              )}
             </form>
           </CardContent>
         </Card>

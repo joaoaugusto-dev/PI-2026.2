@@ -1,16 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { modoDemoAtivo } from '@/lib/demo/flag'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1',
-  // Modo demonstração: respondido por fixtures locais, sem rede (ver lib/demo/flag.ts).
-  // O import() fica atrás da mesma condição de DEMO_PERMITIDO escrita por extenso: o bundler só
-  // elimina o ramo (e o chunk do adapter) quando a condição é literal neste arquivo.
-  adapter: (config) => {
-    if ((import.meta.env.DEV || import.meta.env.VITE_DEMO === 'true') && modoDemoAtivo())
-      return import('@/lib/demo/adapter').then((m) => m.demoAdapter(config))
-    return axios.getAdapter(axios.defaults.adapter)(config)
-  },
 })
 
 // O quiosque de consulta (ConsultaPage) passa o próprio token por chamada,

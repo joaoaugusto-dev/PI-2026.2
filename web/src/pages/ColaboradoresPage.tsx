@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { BotaoLinkAcesso } from '@/components/cadastros/BotaoLinkAcesso'
+import { BotaoImprimirCracha } from '@/components/cadastros/BotaoImprimirCracha'
 import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import type { Colaborador } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
@@ -20,7 +21,12 @@ export function ColaboradoresPage() {
       singular="Colaborador"
       nomeCsv="modelo-colaboradores.csv"
       buscaPlaceholder="Buscar por nome ou matrícula"
-      acoesLinha={(c) => <BotaoLinkAcesso colaboradorId={c.id} nome={c.nome} />}
+      acoesLinha={(c) => (
+        <>
+          <BotaoImprimirCracha nome={c.nome} matricula={c.matricula} setor={nomeDoSetor(c.setor_id)} />
+          <BotaoLinkAcesso colaboradorId={c.id} nome={c.nome} />
+        </>
+      )}
       colunas={[
         { cabecalho: 'Matrícula', render: (c) => <span className="font-mono font-medium">{c.matricula}</span> },
         { cabecalho: 'Nome', render: (c) => c.nome },

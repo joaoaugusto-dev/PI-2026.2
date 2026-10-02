@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
 import { EmptyState } from '@/components/EmptyState'
+import { ImprimirEtiquetaDialog } from '@/components/ferramentas/ImprimirEtiquetaDialog'
+import type { Ferramenta } from '@/hooks/useFerramentas'
 import { SeletorFoto, type FotoSelecionada } from '@/components/ferramentas/SeletorFoto'
 import { Paginacao } from '@/components/Paginacao'
 import { Button } from '@/components/ui/Button'
@@ -83,6 +85,7 @@ export function CadastroCrud<T extends { id: number }>({
   }, [location, navigate])
   const [fotoSel, setFotoSel] = useState<FotoSelecionada | null>(null)
   const enviarFoto = useEnviarFoto()
+  const [criada, setCriada] = useState<Ferramenta | null>(null)
   const [importando, setImportando] = useState(false)
   useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
   const [inativando, setInativando] = useState<T | null>(null)
@@ -98,6 +101,8 @@ export function CadastroCrud<T extends { id: number }>({
   const { data, isLoading, isError } = useListaCadastro<T>(recurso, { q: q || undefined, page, limit: LIMITE })
   const salvar = useSalvarCadastro(recurso)
   const inativar = useInativarCadastro(recurso)
+  // ferramenta é baixa lógica (o histórico fica), mas para o usuário é "excluir"
+  const rotuloInativar = recurso === 'ferramentas' ? 'Excluir' : 'Inativar'
   const linhas = data?.data ?? []
   const meta = data?.meta
 
@@ -114,7 +119,8 @@ export function CadastroCrud<T extends { id: number }>({
           playSomConfirmacao()
           toast.success(id ? `${singular} atualizado.` : `${singular} cadastrado.`)
           // o registro já está salvo; se só a foto falhar, avisa e fecha (dá para reenviar editando)
-          const idSalvo = id ?? (resposta.data as { data: { id: number } }).data.id
+          const salvo = (resposta.data as { data: Ferramenta }).data
+          const idSalvo = id ?? salvo.id
           if (foto && arquivo) {
             try {
               await enviarFoto.mutateAsync({ id: idSalvo, imagem: await comprimirImagem(arquivo) })
@@ -123,6 +129,9 @@ export function CadastroCrud<T extends { id: number }>({
             }
           }
           setEditando(null)
+          if (!id && recurso === 'ferramentas' && salvo.codigo_identificacao) {
+            setCriada(salvo)
+          }
         },
         onError: (e) => avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`),
       },
@@ -140,7 +149,7 @@ export function CadastroCrud<T extends { id: number }>({
     const ultimoDaPagina = linhas.length === 1 && page > 1
     inativar.mutate(inativando.id, {
       onSuccess: () => {
-        toast.success(`${singular} inativado.`)
+        toast.success(`${singular} ${recurso === 'ferramentas' ? 'excluída' : 'inativado'}.`)
         setInativando(null)
         // inativou o único item de uma página que não é a primeira: senão sobra page > totalPages
         if (ultimoDaPagina) setPage(page - 1)
@@ -201,7 +210,7 @@ export function CadastroCrud<T extends { id: number }>({
                         Editar
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setInativando(item)}>
-                        Inativar
+                        {rotuloInativar}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -248,7 +257,7 @@ export function CadastroCrud<T extends { id: number }>({
       <Dialog open={inativando !== null} onOpenChange={(a) => !a && setInativando(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Inativar {singular.toLowerCase()}?</DialogTitle>
+            <DialogTitle>{rotuloInativar} {singular.toLowerCase()}?</DialogTitle>
             <DialogDescription>O registro sai das listas, mas o histórico é mantido.</DialogDescription>
           </DialogHeader>
           {inativando && (
@@ -266,11 +275,13 @@ export function CadastroCrud<T extends { id: number }>({
               Cancelar
             </Button>
             <Button disabled={inativar.isPending} onClick={confirmarInativacao}>
-              Inativar
+              {rotuloInativar}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImprimirEtiquetaDialog ferramenta={criada} aoFechar={() => setCriada(null)} />
 
       <ImportarCsvDialog
         aberto={importando}

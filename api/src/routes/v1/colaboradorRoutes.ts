@@ -127,6 +127,10 @@ router
  *         description: Token inválido ou não fornecido
  *       404:
  *         description: Nenhum colaborador encontrado para o termo informado
+ *       409:
+ *         description: >
+ *           COLABORADOR_AMBIGUO — vários nomes correspondem; `error.details`
+ *           traz id, nome e matrícula de cada candidato (a matrícula resolve).
  */
 router.get(
   '/identificar',

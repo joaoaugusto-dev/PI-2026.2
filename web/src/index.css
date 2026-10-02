@@ -206,6 +206,9 @@
     --animate-check-entra: check-entra 550ms var(--ease-soufer) both;
     --animate-tinta-entra: tinta-entra 1000ms var(--ease-soufer) both;
     --animate-tinta-sai: tinta-sai 800ms var(--ease-soufer) both;
+    --animate-etapa-pop: etapa-pop 560ms var(--ease-soufer) both;
+    --animate-etapa-pulso: etapa-pulso 800ms var(--ease-soufer) both;
+    --animate-etapa-label: etapa-label 320ms var(--ease-soufer) both;
 
     /* Entrada de tela, card e linha de lista. */
     @keyframes entrada {
@@ -315,6 +318,42 @@
         to {
             opacity: 1;
             transform: scale3d(1, 1, 1);
+        }
+    }
+
+    /* Etapa da tratativa que acabou de ser alcançada: o marcador "estala" com
+       overshoot e emite um anel que se dissolve (um disparo só, nunca loop). */
+    @keyframes etapa-pop {
+        from {
+            transform: scale3d(0.7, 0.7, 1);
+        }
+        55% {
+            transform: scale3d(1.18, 1.18, 1);
+        }
+        to {
+            transform: scale3d(1, 1, 1);
+        }
+    }
+
+    @keyframes etapa-pulso {
+        from {
+            opacity: 0.55;
+            transform: scale3d(1, 1, 1);
+        }
+        to {
+            opacity: 0;
+            transform: scale3d(2.4, 2.4, 1);
+        }
+    }
+
+    @keyframes etapa-label {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 4px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: none;
         }
     }
 
@@ -478,6 +517,31 @@
         }
     }
 
+    @keyframes etapa-pop {
+        from,
+        to {
+            transform: none;
+        }
+    }
+
+    @keyframes etapa-pulso {
+        from {
+            opacity: 0.3;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes etapa-label {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
     @keyframes tinta-entra {
         from {
             opacity: 0;
@@ -557,5 +621,192 @@
   .sino-tocando {
     transform-origin: 50% 0;
     animation: sino-tocar 0.9s ease-in-out;
+  }
+}
+
+/* Etiqueta térmica 90 x 60 mm (EtiquetaTermica) — só existe na impressão */
+.etiqueta-impressao,
+.cracha-impressao {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: 90mm 60mm;
+    margin: 0;
+  }
+
+  body > *:not(.etiqueta-impressao):not(.cracha-impressao) {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .etiqueta-impressao {
+    display: flex;
+    flex-direction: column;
+    width: 90mm;
+    height: 60mm;
+    padding: 3mm 4mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    break-after: avoid;
+  }
+
+  /* térmica é 1 bit: o vermelho vira cinza escuro, contraste evita sumir no papel */
+  .etiqueta-logo {
+    height: 10mm;
+    width: auto;
+    align-self: flex-start;
+    filter: grayscale(1) contrast(1.8);
+  }
+
+  .etiqueta-nome {
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 1mm;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .etiqueta-meta {
+    font-size: 8pt;
+    margin-bottom: 0.5mm;
+  }
+
+  .etiqueta-impressao svg {
+    width: 100%;
+    height: 26mm;
+  }
+
+  .etiqueta-codigo {
+    margin-top: auto;
+    padding-top: 2.5mm;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+
+  /* Crachá de colaborador: cartão com borda arredondada, faixa preta no topo (a térmica imprime
+     preto cheio; print-color-adjust força o fundo, que o navegador descartaria por padrão). */
+  .cracha-impressao {
+    display: block;
+    width: 90mm;
+    height: 60mm;
+    padding: 1.5mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    break-after: avoid;
+  }
+
+  .cracha-cartao {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 0.5mm solid #000;
+    border-radius: 3mm;
+    overflow: hidden;
+  }
+
+  .cracha-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 13mm;
+    padding: 0 4mm;
+    background: #000;
+    color: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cracha-topo img {
+    height: 7mm;
+    width: auto;
+  }
+
+  .cracha-topo span {
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .cracha-corpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2.5mm 4mm 3mm;
+    min-height: 0;
+  }
+
+  .cracha-nome {
+    font-size: 15pt;
+    font-weight: 800;
+    line-height: 1.05;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cracha-setor {
+    margin-top: 0.8mm;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .cracha-rodape {
+    display: flex;
+    align-items: flex-end;
+    gap: 4mm;
+  }
+
+  .cracha-barras {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cracha-barras svg {
+    display: block;
+    width: 100%;
+    height: 14mm;
+  }
+
+  .cracha-matricula {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+  }
+
+  .cracha-matricula small {
+    font-size: 6pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .cracha-matricula strong {
+    margin-top: 1mm;
+    font-family: var(--font-mono);
+    font-size: 24pt;
+    font-weight: 800;
+    letter-spacing: 0.05em;
   }
 }

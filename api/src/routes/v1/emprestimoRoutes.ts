@@ -249,6 +249,9 @@ router.get(
  *                 enum: [ok, avaria, perda]
  *               observacaoDevolucao:
  *                 type: string
+ *               custoEstimado:
+ *                 type: number
+ *                 description: Só com avaria/perda; grava o custo estimado da ocorrência aberta pela devolução.
  *     responses:
  *       200:
  *         description: >

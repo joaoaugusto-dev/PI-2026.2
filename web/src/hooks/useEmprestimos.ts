@@ -6,8 +6,13 @@ export type SituacaoEmprestimo = 'em_aberto' | 'atrasado' | 'devolvido'
 /** Linha de `GET /v1/emprestimos` (vw_emprestimos_detalhe). */
 export interface Emprestimo {
   id: number
+  ferramenta_id?: number
+  atividade_nome?: string | null
+  usuario_retirada_nome?: string
   ferramenta_nome: string
   codigo_identificacao: number | null
+  /** false quando a ferramenta foi baixada: o código pode já ter sido reaproveitado por outra. */
+  ferramenta_ativa: boolean
   colaborador_nome: string
   colaborador_matricula: string
   setor_id: number

@@ -306,6 +306,28 @@ describe('Rotas de Empréstimos (API-11)', () => {
       expect(ocorrencia.rows[0]).toMatchObject({ colaborador_id: colaboradorId, tipo: 'AVARIA', registrada_por: usuarioId });
     });
 
+    it('custoEstimado na devolução com avaria (200) vai para a ocorrência aberta', async () => {
+      const { emprestimoId } = await retirar('DevolucaoCusto');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'avaria', observacaoDevolucao: 'quebrou', custoEstimado: 123.45 });
+
+      expect(res.status).toBe(200);
+      const ocorrencia = await query<{ custo_estimado: string }>(
+        'SELECT custo_estimado FROM ocorrencias WHERE emprestimo_id = $1',
+        [emprestimoId]
+      );
+      expect(ocorrencia.rows[0].custo_estimado).toBe('123.45');
+    });
+
+    it('custoEstimado com condição ok é 400 e não devolve a ferramenta', async () => {
+      const { emprestimoId } = await retirar('DevolucaoCustoOk');
+
+      const res = await patch(emprestimoId, { condicaoDevolucao: 'ok', custoEstimado: 10 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
     it('devolução com perda (200) deixa a ferramenta indisponivel e abre ocorrência', async () => {
       const { emprestimoId, ferramentaId } = await retirar('DevolucaoPerda');
 

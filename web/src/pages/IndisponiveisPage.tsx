@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { PackageX, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
@@ -16,6 +17,8 @@ import { avisarErro } from '@/lib/avisar-erro'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 
 const LIMITE_POR_PAGINA = 50
+// carimbo (240ms) + pausa + colapso do card (420ms); só então a lista é refeita e o card some de vez
+const SAIDA_MS = 1400
 
 function formatarMoeda(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -49,12 +52,19 @@ export function IndisponiveisPage() {
   const custoEstimadoTotal = ocorrenciasPorFerramenta.reduce((soma, o) => soma + Number(o?.custo_estimado ?? 0), 0)
 
   const disponibilizar = useDisponibilizarFerramenta()
+  const queryClient = useQueryClient()
+  const [saindoId, setSaindoId] = useState<number | null>(null)
 
   function handleDisponibilizar(ferramentaId: number, nomeFerramenta: string) {
     disponibilizar.mutate(ferramentaId, {
       onSuccess: () => {
         playSomConfirmacao()
         toast.success(`${nomeFerramenta} disponibilizada novamente.`)
+        setSaindoId(ferramentaId)
+        setTimeout(() => {
+          setSaindoId(null)
+          queryClient.invalidateQueries({ queryKey: ['ferramentas'] })
+        }, SAIDA_MS)
       },
       onError: (erro: any) => {
         avisarErro(erro?.response?.data?.error?.message ?? 'Não foi possível disponibilizar a ferramenta.')
@@ -63,7 +73,7 @@ export function IndisponiveisPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex lista-stagger flex-col gap-4 p-6">
       <Card className="border-l-4 border-l-status-indisponivel">
         <CardContent className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-corpo text-muted-foreground">
@@ -133,6 +143,7 @@ export function IndisponiveisPage() {
             carregandoDetalhe={historicos[i]?.isLoading ?? false}
             onDisponibilizar={() => handleDisponibilizar(ferramenta.id, ferramenta.nome)}
             disponibilizando={disponibilizar.isPending && disponibilizar.variables === ferramenta.id}
+            saindo={saindoId === ferramenta.id}
           />
         ))}
     </div>

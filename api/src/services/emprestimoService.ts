@@ -212,6 +212,11 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
       [id, input.condicaoDevolucao, input.observacaoDevolucao ?? null, usuarioId]
     );
 
+    // a ocorrência acabou de ser aberta pelo trigger, na mesma transação
+    if (input.custoEstimado !== undefined) {
+      await client.query('UPDATE ocorrencias SET custo_estimado = $2 WHERE emprestimo_id = $1', [id, input.custoEstimado]);
+    }
+
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);

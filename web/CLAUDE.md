@@ -166,6 +166,14 @@ não filhas do layout autenticado.
   - **`.transicao-status`** faz a mudança de status (disponível → em uso)
     atravessar a cor em `--motion-screen` em vez de saltar. É transição
     disparada por mudança de dado, não loop — o `StatusBadge` já a aplica.
+  - **Linha do tempo da tratativa (`EtapasTratativa`, tela Indisponíveis):**
+    ao avançar, o trilho enche por `scaleX` em 560ms (exceção registrada à
+    regra de 240ms de tela: é o momento principal da tela e o compositor
+    resolve sozinho), os marcadores acendem em sequência conforme a ponta do
+    trilho chega neles e o da etapa alcançada "estala" (`animate-etapa-pop`)
+    com um anel que se dissolve (`animate-etapa-pulso`) — disparo único, sem
+    loop (o design system só permite loop em elemento singular). O primeiro
+    render nasce no estado final, sem animar.
   - Animação nova não entra direto na tela: entra como token/keyframe aqui e
     é demonstrada na página de estilos (seções "Animações · demonstração" e
     "Movimento contínuo").
@@ -229,22 +237,10 @@ não filhas do layout autenticado.
   Colaboradores (`/c/:token`, `ConviteAcessoPage`): a pessoa define a senha, toca a
   animação de `TelaSucessoAnimada` (prop `aoTerminarAnimacao`, a mesma do login) e a sessão abre
   sozinha. Não há mais auto-cadastro nem tela de aprovação.
-- **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
-  `AuthProvider` (`src/lib/auth.tsx`) não cria token nem sessão: liga a flag
-  `setModoDemo(true)` de `src/lib/demo/adapter.ts`, e o adapter do Axios em
-  `src/lib/api.ts` passa a responder toda chamada com fixtures locais
-  (`src/lib/demo/fixtures.ts`), em memória, sem rede e sem credencial —
-  nada chega na API. As fixtures são marcadas como "Demo" no nome/código para
-  nunca serem confundidas com dado real; POST/PATCH/DELETE dos cadastros
-  funcionam em memória e somem ao recarregar. O usuário demo é `admin` para
-  exibir os cadastros. Logout e login real desligam a flag. Só
-  existe em `npm run dev` ou em build com `VITE_DEMO=true` (`DEMO_PERMITIDO`):
-  em produção o botão some, `entrarComoDemo` não faz nada e o adapter com as
-  fixtures nem entra no bundle (`import()` em `lib/api.ts` atrás da condição
-  escrita por extenso; a flag vive em `lib/demo/flag.ts`). Existe
-  porque a P1 avalia a interface **sem exigir integração com a API REST**;
-  remover `src/lib/demo` junto com o botão do login quando o fluxo real
-  estiver integrado.
+- **Sem dado mockado:** nenhuma tela usa lista local, fixture ou modo
+  demonstração — tudo vem da API (`@/lib/api.ts` + TanStack Query). Se a API
+  estiver fora ou faltar um endpoint, a tela mostra o erro: é assim que o
+  problema aparece e é corrigido. Não reintroduzir adaptador/fixtures.
 - **Cadastros auxiliares são só do `admin`** (Colaboradores, Ferramentas,
   Categorias, Setores): o grupo some do menu e as rotas usam `RotaAdmin`, que
   responde com a tela de 404 (não redireciona — quem não é admin não deve
@@ -294,9 +290,11 @@ não filhas do layout autenticado.
   nenhum `z-index` resolve isso de fora) e desconectado visualmente do
   restante do formulário. Empilha em coluna única abaixo de `sm` (grade de 7
   colunas fica ilegível/difícil de tocar na largura de um celular).
-- **Tela de devolução (`src/pages/DevolucaoPage.tsx`, FE-15)** segue o mesmo
-  padrão mockado da retirada (API-12 e a extração do campo de identificação
-  em FE-09 ainda não existem): busca o empréstimo aberto por código local,
+- **Telas de retirada e devolução** (`RetiradaPage`, `DevolucaoPage`) falam
+  com a API real (`hooks/useRetirada.ts`, `hooks/useDevolucao.ts`): a busca de
+  ferramenta/colaborador/empréstimo espera 300ms depois da digitação ou do
+  leitor e ignora zeros à esquerda no código. A devolução busca o empréstimo
+  aberto pela API,
   mostra o cartão de detalhes (quem retirou, matrícula/setor, atividade,
   saída, registrado por) com uma faixa `status-atraso` no topo quando a
   previsão de devolução já passou, e só exibe descrição da ocorrência/custo
