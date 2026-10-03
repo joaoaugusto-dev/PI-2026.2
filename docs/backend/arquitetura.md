@@ -45,7 +45,7 @@ Acesso operacional completo: ferramentas, colaboradores, retiradas, devoluções
 
 ### Consulta
 
-Modo quiosque sem senha (só matrícula, sem crachá). O operador informa apenas a matrícula (4 dígitos, sem senha). A API busca a matrícula em `colaboradores`, aceita só colaborador ativo e emite um token limitado por 15 minutos. O token permite somente consulta de ferramentas. Como não há senha, `POST /v1/consulta/sessao` tem limite de 30 tentativas por minuto por IP (429 `TOO_MANY_REQUESTS`).
+Modo quiosque sem senha (só matrícula, sem crachá). O operador informa apenas a matrícula (4 dígitos, sem senha). A API busca a matrícula em `colaboradores`, aceita só colaborador ativo e emite um token limitado por 15 minutos. O token permite somente consulta de ferramentas. Como não há senha, `POST /v1/consulta/sessao` tem dois limites (429 `TOO_MANY_REQUESTS`): 30 tentativas por minuto por IP e 5 falhas por minuto na mesma matrícula, somando todos os IPs (entradas bem-sucedidas não contam, para o colaborador legítimo poder entrar de novo).
 
 ### Admin
 
