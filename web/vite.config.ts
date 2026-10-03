@@ -20,6 +20,6 @@ export default defineConfig({
     // 'jsdom' (+ testing-library) — o glob já aceita .tsx pra não esquecer
     // de ampliar os dois juntos.
     environment: 'node',
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['tests/**/*.test.{ts,tsx}'],
   },
 })

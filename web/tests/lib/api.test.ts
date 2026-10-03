@@ -73,3 +73,37 @@ describe('tratarErroDeAutenticacao', () => {
     expect(handler).not.toHaveBeenCalled()
   })
 })
+
+describe('aviso de VITE_API_URL ausente em produção', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+    vi.resetModules()
+  })
+
+  async function importarApi(env: { PROD: boolean; VITE_API_URL: string }) {
+    vi.stubEnv('PROD', env.PROD)
+    vi.stubEnv('VITE_API_URL', env.VITE_API_URL)
+    vi.resetModules()
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { api } = await import('@/lib/api')
+    return { api, erro }
+  }
+
+  it('avisa e cai no fallback quando a variável está vazia em produção', async () => {
+    const { api, erro } = await importarApi({ PROD: true, VITE_API_URL: '' })
+    expect(erro).toHaveBeenCalledOnce()
+    expect(api.defaults.baseURL).toBe('http://localhost:3000/v1')
+  })
+
+  it('não avisa em produção quando a variável está definida', async () => {
+    const { api, erro } = await importarApi({ PROD: true, VITE_API_URL: 'https://api.exemplo.com/v1' })
+    expect(erro).not.toHaveBeenCalled()
+    expect(api.defaults.baseURL).toBe('https://api.exemplo.com/v1')
+  })
+
+  it('não avisa fora de produção', async () => {
+    const { erro } = await importarApi({ PROD: false, VITE_API_URL: '' })
+    expect(erro).not.toHaveBeenCalled()
+  })
+})
