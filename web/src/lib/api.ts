@@ -1,8 +1,17 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1',
-})
+const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1'
+
+// Em build de produção sem VITE_API_URL configurada na plataforma de deploy, o
+// fallback aponta pro localhost e a comunicação com a API quebra em silêncio —
+// loga alto no console do navegador pra não passar despercebido (ver docs/nuvem/dokploy.md).
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.error(
+    '[SOUFER Tools] VITE_API_URL não foi definida no build de produção — a API vai apontar para localhost e as requisições vão falhar.'
+  )
+}
+
+export const api = axios.create({ baseURL })
 
 // O quiosque de consulta (ConsultaPage) passa o próprio token por chamada,
 // em vez de usar este `authToken` global — dá pra ter a sessão do
