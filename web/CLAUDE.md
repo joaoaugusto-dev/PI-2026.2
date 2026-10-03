@@ -219,7 +219,7 @@ não filhas do layout autenticado.
   pública, `skipAuthToken: true` (pra nem carregar o token global à toa). O
   quiosque de consulta (`ConsultaPage`/`useConsulta.ts`) é o primeiro exemplo
   — a próxima tela nesse molde (ex. outro modo quiosque) deve seguir o mesmo
-  padrão. Coberto por teste em `src/lib/api.test.ts` (primeiro teste do
+  padrão. Coberto por teste em `tests/lib/api.test.ts` (primeiro teste do
   `/web` — `npm test`, Vitest puro, sem jsdom/testing-library porque testa só
   a lógica dos interceptors, não componente). `vite.config.ts` já aceita
   `*.test.tsx` no `include`, mas o `environment` continua `'node'` — o
