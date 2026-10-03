@@ -4,7 +4,7 @@ import { FerramentaController } from '../../controllers/ferramentaController.js'
 import { validate } from '../../middlewares/validate.js';
 import { authenticate } from '../../middlewares/auth.js';
 import { authorize } from '../../middlewares/authorize.js';
-import { consultaSessaoLimiter } from '../../middlewares/rateLimit.js';
+import { consultaMatriculaLimiter, consultaSessaoLimiter } from '../../middlewares/rateLimit.js';
 import { consultaSessaoSchema } from '../../validators/authValidator.js';
 import { listarFerramentasQuerySchema } from '../../validators/ferramentaValidator.js';
 
@@ -38,9 +38,15 @@ const router = Router();
  *       404:
  *         description: Colaborador não localizado ou inativo
  *       429:
- *         description: Limite de 30 tentativas por minuto por IP excedido
+ *         description: Limite excedido (30 tentativas por minuto por IP ou 5 falhas por minuto na mesma matrícula)
  */
-router.post('/sessao', consultaSessaoLimiter, validate({ body: consultaSessaoSchema }), AuthController.criarSessaoConsulta);
+router.post(
+  '/sessao',
+  consultaSessaoLimiter,
+  validate({ body: consultaSessaoSchema }),
+  consultaMatriculaLimiter,
+  AuthController.criarSessaoConsulta
+);
 
 /**
  * @openapi

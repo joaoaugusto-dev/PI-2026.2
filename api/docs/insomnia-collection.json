@@ -122,6 +122,21 @@
       ]
     },
     {
+      "_id": "req_consulta_sessao_matricula_inexistente",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/consulta/sessao (matricula bem formada inexistente, 404; na 6ª vez em 1 min, 429)",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"9997\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
       "_id": "req_ferramentas_listar",
       "_type": "request",
       "parentId": "wrk_soufer_tools",

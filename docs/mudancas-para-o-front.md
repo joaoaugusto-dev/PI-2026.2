@@ -23,7 +23,7 @@ Lista rápida para o João revisar. Vale para as issues #150 (login por matrícu
 
 - `POST /v1/consulta/sessao` continua recebendo `{ "identificador": "0003" }`, agora com a **matrícula de 4 dígitos** (o crachá deixou de existir; só matrícula). Sem senha.
 - Matrícula fora do padrão: `400 VALIDATION_ERROR` (antes ia direto para a busca e dava 404). Matrícula sem colaborador ativo: `404 COLABORADOR_NOT_FOUND`.
-- **Novo:** limite de 30 tentativas por minuto por IP. Acima disso: `429 TOO_MANY_REQUESTS`. O front deve tratar o 429 com uma mensagem clara ("aguarde um minuto").
+- **Novo:** limite de 30 tentativas por minuto por IP e de 5 falhas por minuto na mesma matrícula. Acima disso: `429 TOO_MANY_REQUESTS`. O front deve tratar o 429 com uma mensagem clara ("aguarde um minuto").
 - **No front:** nos textos e placeholders, trocar "matrícula, crachá ou nome" por "matrícula ou nome" (ex.: `RetiradaPage.tsx`).
 
 ## 3. Nome do papel: `almoxarife` → `manutencao`
@@ -78,7 +78,7 @@ Conferido em `web/src` nesta branch. Marque `[x]` quando resolvido.
 | Token antigo, emitido antes do rename do papel (`almoxarife`) | 401 | `TOKEN_OUTDATED` |
 | Matrícula fora do padrão de 4 dígitos | 400 | `VALIDATION_ERROR` (`details[].field = "matricula"`; no quiosque o campo é `identificador`) |
 | Quiosque: matrícula sem colaborador ativo | 404 | `COLABORADOR_NOT_FOUND` |
-| Quiosque: mais de 30 tentativas por minuto por IP | 429 | `TOO_MANY_REQUESTS` |
+| Quiosque: mais de 30 tentativas por minuto por IP, ou 6ª falha por minuto na mesma matrícula | 429 | `TOO_MANY_REQUESTS` |
 | Login: mais de 10 tentativas de credencial (matrícula bem formada) por minuto por IP | 429 | `TOO_MANY_REQUESTS` — já tratado na `LoginPage.tsx` ("Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.") |
 
 Formato do `GET /v1/auth/me`: `{ data: { usuario: { id, nome, papel, matricula } } }` (sem `email`). O `nome` vem do cadastro do colaborador.
