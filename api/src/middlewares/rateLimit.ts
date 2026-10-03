@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { TooManyRequestsError } from '../utils/errors.js';
 
 interface LimiterOptions {
