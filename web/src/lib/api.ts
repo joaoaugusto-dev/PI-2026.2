@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
-const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1'
+// `||` (não `??`): variável vazia (`VITE_API_URL=`) também cai no fallback, igual ao aviso abaixo.
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1'
 
 // Em build de produção sem VITE_API_URL configurada na plataforma de deploy, o
 // fallback aponta pro localhost e a comunicação com a API quebra em silêncio —
