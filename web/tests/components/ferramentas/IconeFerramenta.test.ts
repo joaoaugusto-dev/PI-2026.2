@@ -1,6 +1,6 @@
 import { Wrench } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
-import { iconeParaFerramenta } from './IconeFerramenta'
+import { iconeParaFerramenta } from '@/components/ferramentas/IconeFerramenta'
 
 describe('iconeParaFerramenta', () => {
   it('dá ícone próprio a cada família do catálogo (nenhum cai no genérico)', () => {
