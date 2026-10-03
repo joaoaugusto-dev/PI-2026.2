@@ -27,6 +27,7 @@ Antes de começar qualquer issue sua (consulta, importação, auditoria, deploy,
 
 ## 3. Deploy (#58 INFRA-06 e #83 INFRA-11)
 
+- [ ] **PM2 em fork mode (1 instância)** enquanto o rate limit usar memória: os contadores (por IP e por matrícula) são por processo, então em modo cluster o limite efetivo vira o limite × número de instâncias. Com várias instâncias, trocar por store compartilhado (ex.: Redis).
 - [ ] **`TRUST_PROXY_HOPS=1`** no ambiente da API atrás de Nginx/Traefik. Sem isso o rate limit enxerga o IP do proxy e **todos os clientes dividem o mesmo limite de 30/min**. O Nginx precisa repassar `X-Forwarded-For`. Já está no `.env.example` e em [`docs/nuvem/dokploy.md`](nuvem/dokploy.md).
 - [ ] **`JWT_EXPIRES_IN=7d`** (o Dokploy estava com `8h`; o `CLAUDE.md` e o front já assumem 7 dias).
 - [ ] **Migration `0004_papel_admin_e_auto_cadastro.sql`** — antes de rodar em `soufer_prod`, conferir:

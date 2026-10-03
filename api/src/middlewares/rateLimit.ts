@@ -43,12 +43,17 @@ export const consultaSessaoLimiter = criarLimiter({
 // mesma matrícula em um minuto devolve 429. Entradas bem-sucedidas não contam,
 // para o colaborador legítimo entrar de novo no quiosque. Precisa rodar depois
 // do validate(): a chave é a matrícula já validada (4 dígitos), o que também
-// limita a quantidade de contadores em memória a 9.999.
+// limita a quantidade de contadores em memória a 9.999. Sem matrícula no corpo
+// (limiter reaproveitado numa rota sem validate()), cai para o IP, em vez de
+// criar um contador global compartilhado por todos.
 export const consultaMatriculaLimiter = criarLimiter({
   windowMs: 60 * 1000,
   max: 5,
   message: 'Muitas tentativas com esta matrícula. Aguarde um minuto e tente novamente.',
-  keyGenerator: (req) => `matricula:${String(req.body?.identificador)}`,
+  keyGenerator: (req) => {
+    const identificador = req.body?.identificador;
+    return typeof identificador === 'string' ? `matricula:${identificador}` : ipKeyGenerator(req.ip ?? '');
+  },
   skipSuccessfulRequests: true,
 });
 
