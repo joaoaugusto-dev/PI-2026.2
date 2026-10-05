@@ -23,6 +23,8 @@ Esses valores são determinados pelo back-end.
 
 ## Endpoints principais
 
+Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com recursos a mais), exceto edição e inativação de cadastros, que são só do `admin`. O `consulta` só acessa as rotas de `/v1/consulta`.
+
 | Método | Rota | Perfil | Função |
 |---|---|---|---|
 | GET | `/v1/health` | Público | Healthcheck |
@@ -59,7 +61,7 @@ Esses valores são determinados pelo back-end.
 
 ## Retirada de ferramenta (`POST /v1/emprestimos`)
 
-Endpoint central do sistema (issue API-11). Só o perfil `manutencao` acessa.
+Endpoint central do sistema (issue API-11). Perfis `manutencao` e `admin` acessam.
 
 Corpo (JSON, camelCase):
 
@@ -86,7 +88,7 @@ Erros:
 | 400 | `VALIDATION_ERROR` | Campo obrigatório ausente, tipo inválido, `previsaoDevolucao` inválida ou no passado (`details` lista os campos). |
 | 400 | `ITEM_KIT_INVALIDO` | `itemKitId` não pertence à ferramenta ou a ferramenta não é kit. |
 | 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
-| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao` (por exemplo, `consulta`). |
+| 403 | `ACCESS_DENIED` | Perfil sem permissão (diferente de `manutencao` e `admin`, por exemplo `consulta`). |
 | 404 | `FERRAMENTA_NOT_FOUND`, `COLABORADOR_NOT_FOUND`, `SETOR_NOT_FOUND`, `ATIVIDADE_NOT_FOUND`, `ITEM_KIT_NOT_FOUND` | Recurso inexistente ou inativo. |
 | 409 | `FERRAMENTA_INDISPONIVEL` | Ferramenta ou kit fora de `disponivel` (`em_uso` ou `indisponivel`, inclusive para peça avulsa de kit indisponível — Regra 2), já com empréstimo em aberto, kit inteiro com peça emprestada (ou o inverso). A mensagem informa o motivo. |
 
@@ -94,7 +96,7 @@ O bloqueio de disponibilidade fica no banco (trigger `fn_valida_retirada`, `fn_v
 
 ## Devolução de ferramenta (`PATCH /v1/emprestimos/:id/devolucao`)
 
-Fecha o ciclo do empréstimo (issue API-12). Só o perfil `manutencao` acessa.
+Fecha o ciclo do empréstimo (issue API-12). Perfis `manutencao` e `admin` acessam.
 
 Corpo (JSON, camelCase):
 
@@ -113,7 +115,7 @@ Erros:
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | `condicaoDevolucao` ausente ou fora de `ok`/`avaria`/`perda` (`details` lista o campo). |
 | 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
-| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao`. |
+| 403 | `ACCESS_DENIED` | Perfil sem permissão (diferente de `manutencao` e `admin`, por exemplo `consulta`). |
 | 404 | `EMPRESTIMO_NOT_FOUND` | Id de empréstimo inexistente. |
 | 409 | `EMPRESTIMO_JA_DEVOLVIDO` | O empréstimo já tem `data_devolucao` preenchida. |
 
@@ -128,7 +130,7 @@ Calcula "hoje + N dias úteis", pulando sábados, domingos e feriados nacionais.
 - `dias`: obrigatório, inteiro de 1 a 30 (senão `400 VALIDATION_ERROR`).
 - "Hoje" é a data em Brasília.
 - Resposta `200`: `{ "data": { "previsaoDevolucao": "2026-10-06", "diasUteis": 2 } }`.
-- Perfil `manutencao` (`401` sem token, `403` para `consulta`).
+- Perfis `manutencao` e `admin` (`401` sem token, `403` para `consulta`).
 
 ## Dashboard (`GET /v1/dashboard`)
 
@@ -146,7 +148,7 @@ Cada lista é `{ "total": n, "itens": [...] }` e traz só as 4 primeiras linhas 
 
 ## Ocorrências (`GET` e `PATCH /v1/ocorrencias`)
 
-Acompanhamento e fechamento das tratativas de avaria/perda (issue API-13). A ocorrência em si não é criada por aqui — quem abre é o trigger `fn_abre_ocorrencia`, disparado pela devolução com avaria ou perda (Regra 3, ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)). Só o perfil `manutencao` acessa as duas rotas.
+Acompanhamento e fechamento das tratativas de avaria/perda (issue API-13). A ocorrência em si não é criada por aqui — quem abre é o trigger `fn_abre_ocorrencia`, disparado pela devolução com avaria ou perda (Regra 3, ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)). Perfis `manutencao` e `admin` acessam as duas rotas.
 
 ### `GET /v1/ocorrencias`
 
@@ -169,7 +171,7 @@ Erros:
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | `status` ou `tipo` fora dos valores aceitos. |
 | 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
-| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao`. |
+| 403 | `ACCESS_DENIED` | Perfil sem permissão (diferente de `manutencao` e `admin`, por exemplo `consulta`). |
 
 ### `PATCH /v1/ocorrencias/:id`
 
@@ -195,7 +197,7 @@ Erros:
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Corpo vazio, `status`/`custoEstimado`/`observacoesResolucao` inválidos. |
 | 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
-| 403 | `ACCESS_DENIED` | Perfil diferente de `manutencao`. |
+| 403 | `ACCESS_DENIED` | Perfil sem permissão (diferente de `manutencao` e `admin`, por exemplo `consulta`). |
 | 404 | `OCORRENCIA_NOT_FOUND` | Id de ocorrência inexistente. |
 | 409 | `OCORRENCIA_TRANSICAO_INVALIDA` | Tentativa de retroceder o status. |
 

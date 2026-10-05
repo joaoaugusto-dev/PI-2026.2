@@ -272,7 +272,7 @@ editar atividades estão superados; os testes já refletem a nova regra.
 
 **O que diz (atualizado em 30/09/2026):** `manutencao` opera o balcão
 (retirada, devolução, consulta, indisponíveis, calendário, histórico, e faz
-cadastro rápido de colaborador); `admin` aprova auto-cadastros e cuida dos
+cadastro rápido de colaborador); `admin` cria os colaboradores, gera o link de acesso de cada um e cuida dos
 cadastros auxiliares (Colaboradores, Ferramentas, Categorias, Setores —
 edição/inativação exclusivas do admin, leitura/criação de
 ferramenta/colaborador abertas à manutenção) e, desde esta issue, também lê
