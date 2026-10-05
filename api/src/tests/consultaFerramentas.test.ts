@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
+import { logger } from '../middlewares/logger.js';
 
 // GET /v1/consulta/ferramentas reaproveita o FerramentaController.listar já
 // coberto por ferramentaService.test.ts — este arquivo cobre só o que é
@@ -135,5 +136,23 @@ describe('GET /v1/consulta/ferramentas (API-16)', () => {
       const res = await request(app).get(rota).set('Authorization', `Bearer ${token}`);
       expect(res.status, rota).toBe(403);
     }
+  });
+
+  it('registra no log quem consultou e com quais filtros, sem gravar em tabela de negócio', async () => {
+    const info = vi.spyOn(logger, 'info');
+
+    await request(app).get('/v1/consulta/ferramentas?q=chave&status=disponivel').set('Authorization', `Bearer ${consultaToken}`);
+
+    expect(info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        evento: 'consulta_ferramentas',
+        colaboradorId: 0,
+        matricula: '9999',
+        q: 'chave',
+        status: 'disponivel',
+      }),
+      'Consulta pública de ferramentas'
+    );
+    info.mockRestore();
   });
 });

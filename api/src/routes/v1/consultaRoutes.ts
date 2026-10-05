@@ -59,7 +59,8 @@ router.post(
  *       `id`, `nome`, `categoria` (nome do grupo), `status`, `localizacao` e
  *       `codigo_identificacao`. Nunca traz quem está com a ferramenta,
  *       histórico, motivo da indisponibilidade nem valores — esses dados vivem
- *       em `/v1/ferramentas/:id/historico`, exclusivo da manutenção.
+ *       em `/v1/ferramentas/:id/historico`, exclusivo da manutenção. Cada
+ *       consulta é registrada no log (matrícula e filtros), sem tabela de negócio.
  *     tags:
  *       - Modo Consulta
  *     security:

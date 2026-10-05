@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as ferramentaService from '../services/ferramentaService.js';
 import { sendSuccess } from '../utils/response.js';
 import { getPaginationParams, buildPaginationMeta } from '../utils/pagination.js';
+import { logger } from '../middlewares/logger.js';
 
 export class FerramentaController {
   /**
@@ -34,6 +35,11 @@ export class FerramentaController {
       const sort = req.query.sort as 'nome' | 'status' | undefined;
 
       const { rows, total } = await ferramentaService.listarParaConsulta({ offset, limit, q, status, grupoId, sort });
+      // Auditoria simples (só log, sem tabela de negócio): quem consultou e com quais filtros.
+      logger.info(
+        { evento: 'consulta_ferramentas', colaboradorId: req.usuario?.id, matricula: req.usuario?.matricula, q, status, grupoId, page, total },
+        'Consulta pública de ferramentas'
+      );
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
     } catch (error) {
       return next(error);
