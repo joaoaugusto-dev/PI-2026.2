@@ -183,7 +183,7 @@ O sistema possui dois modos de acesso via JWT:
    - Acesso a todas as rotas operacionais.
 
 2. **Consulta Quiosque (`papel: 'consulta'`):**
-   - Autenticado via `POST /v1/consulta/sessao` informando apenas a matrícula (4 dígitos, sem senha), buscada em `colaboradores` (só colaborador ativo entra). Limite de 30 tentativas por minuto por IP (429 `TOO_MANY_REQUESTS`); atrás de proxy, configure `TRUST_PROXY_HOPS`.
+   - Autenticado via `POST /v1/consulta/sessao` informando apenas a matrícula (4 dígitos, sem senha), buscada em `colaboradores` (só colaborador ativo entra). Dois limites (429 `TOO_MANY_REQUESTS`): 30 tentativas por minuto por IP e 5 falhas por minuto na mesma matrícula (somando todos os IPs; entradas bem-sucedidas não contam); atrás de proxy, configure `TRUST_PROXY_HOPS`.
    - Token temporário válido por **15 minutos**.
    - Acesso restrito somente a rotas de leitura de disponibilidade.
 
