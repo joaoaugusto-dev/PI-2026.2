@@ -30,7 +30,7 @@ Esses valores são determinados pelo back-end.
 | POST | `/v1/auth/registro` | Público | Auto-cadastro por matrícula (cria conta inativa, aguardando aprovação) |
 | GET | `/v1/auth/me` | Autenticado | Usuário atual |
 | POST | `/v1/consulta/sessao` | Público | Token limitado de consulta |
-| GET | `/v1/consulta/ferramentas` | Consulta | Busca somente leitura |
+| GET | `/v1/consulta/ferramentas` | Consulta | Busca somente leitura; cada item traz só `id`, `nome`, `categoria`, `status`, `localizacao` e `codigo_identificacao` (nunca colaborador, histórico nem valores). Consulta registrada no log |
 | GET | `/v1/ferramentas` | Manutenção | Lista de ferramentas (filtros `q`, `status`, `grupoId`, `sort`) |
 | GET | `/v1/ferramentas/:id` | Manutenção | Detalhe de uma ferramenta |
 | GET | `/v1/ferramentas/por-codigo/:codigo` | Manutenção | Leitura do código |
