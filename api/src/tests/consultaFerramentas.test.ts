@@ -46,6 +46,35 @@ describe('GET /v1/consulta/ferramentas (API-16)', () => {
     expect(res.body.meta).toMatchObject({ page: 1 });
   });
 
+  it('devolve só id, nome, categoria, status, localização e código — nada de colaborador, histórico ou valores', async () => {
+    const res = await request(app)
+      .get('/v1/consulta/ferramentas?limit=100')
+      .set('Authorization', `Bearer ${consultaToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    for (const item of res.body.data) {
+      expect(Object.keys(item).sort()).toEqual(
+        ['categoria', 'codigo_identificacao', 'id', 'localizacao', 'nome', 'status'].sort()
+      );
+      expect(typeof item.categoria).toBe('string');
+    }
+  });
+
+  it('categoria vem do nome do grupo e o filtro por status continua valendo', async () => {
+    const { rows } = await query<{ nome: string }>(
+      `SELECT g.nome FROM ferramentas f JOIN grupos_ferramentas g ON g.id = f.grupo_id
+       WHERE f.ativo = true AND f.status = 'disponivel' ORDER BY f.nome, f.id LIMIT 1`
+    );
+    if (rows.length === 0) return; // banco de teste sem ferramenta disponível: nada a comparar
+
+    const res = await request(app)
+      .get('/v1/consulta/ferramentas?status=disponivel&limit=1')
+      .set('Authorization', `Bearer ${consultaToken}`);
+
+    expect(res.body.data[0]).toMatchObject({ status: 'disponivel', categoria: rows[0].nome });
+  });
+
   it('retorna 403 com token de manutenção (rota é exclusiva do papel consulta)', async () => {
     const res = await request(app).get('/v1/consulta/ferramentas').set('Authorization', `Bearer ${manutencaoToken}`);
 
