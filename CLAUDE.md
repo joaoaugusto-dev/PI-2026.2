@@ -135,7 +135,10 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    que o admin não tenha (decisão de 01/10/2026, revisa a de 30/09/2026, que
    barrava o admin no balcão). Decisão de 01/10/2026 também: acabou o auto-cadastro com aprovação, o colaborador cadastrado pelo admin já é o
    funcionário, e o admin também recebe as notificações) e `consulta` (sessão de 15 minutos por matrícula, só
-   leitura de disponibilidade, sem senha). No front, as telas de cadastro não aparecem no menu para quem não é `admin` e, pela URL direta,
+   leitura de disponibilidade, sem senha; vê apenas nome, categoria, status e
+   localização da ferramenta, nunca quem está com ela, histórico ou valores; o
+   token de consulta e o da manutenção/admin são isolados nos dois sentidos, e a
+   entrada tem limite de tentativas por IP e por matrícula). No front, as telas de cadastro não aparecem no menu para quem não é `admin` e, pela URL direta,
    respondem 404.
 9. **Feriados vêm da BrasilAPI**, com cache em tabela própria e fallback de
    sábado/domingo se a API estiver fora.

@@ -276,7 +276,7 @@ cadastro rápido de colaborador); `admin` aprova auto-cadastros e cuida dos
 cadastros auxiliares (Colaboradores, Ferramentas, Categorias, Setores —
 edição/inativação exclusivas do admin, leitura/criação de
 ferramenta/colaborador abertas à manutenção) e, desde esta issue, também lê
-e cadastra Atividades; `consulta` tem sessão de 15 minutos só leitura.
+e cadastra Atividades; `consulta` tem sessão de 15 minutos só leitura (nome, categoria, status e localização da ferramenta; nunca quem está com ela, histórico ou valores), com token isolado do da manutenção/admin.
 
 **Onde está implementada** (confirmado rota a rota, `authorize(...)` em cada
 arquivo de `api/src/routes/v1/`):
