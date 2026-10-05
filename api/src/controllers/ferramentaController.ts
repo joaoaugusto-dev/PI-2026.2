@@ -23,6 +23,24 @@ export class FerramentaController {
   }
 
   /**
+   * GET /v1/consulta/ferramentas — quiosque: só nome, categoria, status e localização.
+   */
+  static async listarParaConsulta(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { page, limit, offset } = getPaginationParams(req.query);
+      const q = req.query.q as string | undefined;
+      const status = req.query.status as string | undefined;
+      const grupoId = req.query.grupoId ? Number(req.query.grupoId) : undefined;
+      const sort = req.query.sort as 'nome' | 'status' | undefined;
+
+      const { rows, total } = await ferramentaService.listarParaConsulta({ offset, limit, q, status, grupoId, sort });
+      return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
    * GET /v1/ferramentas/:id
    */
   static async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<any> {

@@ -54,10 +54,12 @@ router.post(
  *   get:
  *     summary: Busca somente leitura de ferramentas para o modo quiosque (disponibilidade)
  *     description: >
- *       Mesma listagem de `/v1/ferramentas`, restrita ao papel `consulta`
- *       (token de 15 min emitido por `/v1/consulta/sessao`). O retorno já não
- *       tem dado de colaborador/custo/observação — esses campos vivem em
- *       `/v1/ferramentas/:id/historico`, que continua exclusivo da manutenção.
+ *       Mesma busca e filtros de `/v1/ferramentas`, restrita ao papel `consulta`
+ *       (token de 15 min emitido por `/v1/consulta/sessao`). Cada item traz só
+ *       `id`, `nome`, `categoria` (nome do grupo), `status`, `localizacao` e
+ *       `codigo_identificacao`. Nunca traz quem está com a ferramenta,
+ *       histórico, motivo da indisponibilidade nem valores — esses dados vivem
+ *       em `/v1/ferramentas/:id/historico`, exclusivo da manutenção.
  *     tags:
  *       - Modo Consulta
  *     security:
@@ -98,7 +100,7 @@ router.get(
   authenticate,
   authorize('consulta'),
   validate({ query: listarFerramentasQuerySchema }),
-  FerramentaController.listar
+  FerramentaController.listarParaConsulta
 );
 
 export default router;

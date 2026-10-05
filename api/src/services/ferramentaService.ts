@@ -25,6 +25,15 @@ export interface Ferramenta {
   created_at: string;
 }
 
+export interface FerramentaConsulta {
+  id: number;
+  nome: string;
+  categoria: string;
+  status: 'disponivel' | 'em_uso' | 'indisponivel';
+  localizacao: string | null;
+  codigo_identificacao: number | null;
+}
+
 export interface ListarFerramentasParams {
   offset: number;
   limit: number;
@@ -55,6 +64,40 @@ function escaparCoringasLike(valor: string): string {
  * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
  * nunca aparecem misturadas com ferramentas baixadas).
  */
+function montarFiltro({ q, status, grupoId }: Pick<ListarFerramentasParams, 'q' | 'status' | 'grupoId'>) {
+  const condicoes = ['f.ativo = true'];
+  const params: any[] = [];
+
+  if (q) {
+    params.push(`%${escaparCoringasLike(q)}%`);
+    const buscas = [
+      `f.nome ILIKE $${params.length}`,
+      `f.descricao ILIKE $${params.length}`,
+      `f.marca ILIKE $${params.length}`,
+      `f.modelo ILIKE $${params.length}`,
+    ];
+    // "000053", "000053" ou "53": o código é busca por igualdade, ignorando zeros à esquerda
+    const codigo = /^(?:sf)?0*(\d{1,4})$/i.exec(q.trim());
+    if (codigo) {
+      params.push(Number(codigo[1]));
+      buscas.push(`f.codigo_identificacao = $${params.length}`);
+    }
+    condicoes.push(`(${buscas.join(' OR ')})`);
+  }
+
+  if (status) {
+    params.push(status);
+    condicoes.push(`f.status = $${params.length}`);
+  }
+
+  if (grupoId) {
+    params.push(grupoId);
+    condicoes.push(`f.grupo_id = $${params.length}`);
+  }
+
+  return { where: `WHERE ${condicoes.join(' AND ')}`, params };
+}
+
 export async function listar({
   offset,
   limit,
@@ -63,50 +106,59 @@ export async function listar({
   grupoId,
   sort,
 }: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
-  const condicoes = ['ativo = true'];
-  const params: any[] = [];
-
-  if (q) {
-    params.push(`%${escaparCoringasLike(q)}%`);
-    const buscas = [
-      `nome ILIKE $${params.length}`,
-      `descricao ILIKE $${params.length}`,
-      `marca ILIKE $${params.length}`,
-      `modelo ILIKE $${params.length}`,
-    ];
-    // "000053", "000053" ou "53": o código é busca por igualdade, ignorando zeros à esquerda
-    const codigo = /^(?:sf)?0*(\d{1,4})$/i.exec(q.trim());
-    if (codigo) {
-      params.push(Number(codigo[1]));
-      buscas.push(`codigo_identificacao = $${params.length}`);
-    }
-    condicoes.push(`(${buscas.join(' OR ')})`);
-  }
-
-  if (status) {
-    params.push(status);
-    condicoes.push(`status = $${params.length}`);
-  }
-
-  if (grupoId) {
-    params.push(grupoId);
-    condicoes.push(`grupo_id = $${params.length}`);
-  }
-
-  const where = `WHERE ${condicoes.join(' AND ')}`;
+  const { where, params } = montarFiltro({ q, status, grupoId });
   const ordenacao = COLUNAS_ORDENACAO[sort ?? 'nome'] ?? 'nome';
 
   const totalResult = await query<{ total: string }>(
-    `SELECT COUNT(*)::text AS total FROM ferramentas ${where}`,
+    `SELECT COUNT(*)::text AS total FROM ferramentas f ${where}`,
     params
   );
 
   params.push(limit, offset);
   const rowsResult = await query<Ferramenta>(
     `SELECT ${COLUNAS_FERRAMENTA}
-     FROM ferramentas
+     FROM ferramentas f
      ${where}
-     ORDER BY ${ordenacao}, id
+     ORDER BY f.${ordenacao}, f.id
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+
+  return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}
+
+/**
+ * Listagem do quiosque (GET /v1/consulta/ferramentas): mesma busca e filtros de
+ * `listar`, mas devolve só o que a consulta pública pode mostrar — nome,
+ * categoria, status e localização (mais id e código de patrimônio, que a tela
+ * usa para identificar a ferramenta). Projeção própria, e não "listar sem
+ * alguns campos": coluna nova em `ferramentas` não vaza para o quiosque por
+ * acidente. Nunca traz colaborador, histórico, motivo da indisponibilidade
+ * nem valores.
+ */
+export async function listarParaConsulta({
+  offset,
+  limit,
+  q,
+  status,
+  grupoId,
+  sort,
+}: ListarFerramentasParams): Promise<{ rows: FerramentaConsulta[]; total: number }> {
+  const { where, params } = montarFiltro({ q, status, grupoId });
+  const ordenacao = COLUNAS_ORDENACAO[sort ?? 'nome'] ?? 'nome';
+
+  const totalResult = await query<{ total: string }>(
+    `SELECT COUNT(*)::text AS total FROM ferramentas f ${where}`,
+    params
+  );
+
+  params.push(limit, offset);
+  const rowsResult = await query<FerramentaConsulta>(
+    `SELECT f.id, f.nome, g.nome AS categoria, f.status, f.localizacao, f.codigo_identificacao
+     FROM ferramentas f
+     JOIN grupos_ferramentas g ON g.id = f.grupo_id
+     ${where}
+     ORDER BY f.${ordenacao}, f.id
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );
