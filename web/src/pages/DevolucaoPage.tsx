@@ -96,6 +96,7 @@ export function DevolucaoPage() {
     ? {
         codigo: formatarPatrimonio(encontrado.codigo_identificacao),
         ferramenta: encontrado.ferramenta_nome,
+        fotoUrl: ferramentaDoEmprestimo?.foto_url,
         categoria: categorias?.find((c) => c.id === ferramentaDoEmprestimo?.grupo_id)?.nome ?? '—',
         retiradoPor: encontrado.colaborador_nome,
         matricula: encontrado.colaborador_matricula,

@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import sharp from 'sharp';
 
 // o diretório de uploads é lido na importação: aponta para uma pasta temporária antes de tudo
 const pasta = vi.hoisted(() => {
@@ -50,7 +51,7 @@ describe('PUT /v1/ferramentas/:id/foto', () => {
     const r1 = await put(id, PNG);
     expect(r1.status).toBe(200);
     const url1: string = r1.body.data.foto_url;
-    expect(url1).toMatch(/^\/uploads\/\d+-[\w-]+\.png$/);
+    expect(url1).toMatch(/^\/uploads\/\d+-[\w-]+\.webp$/);
 
     const arquivo = await request(app).get(`/v1${url1}`);
     expect(arquivo.status).toBe(200);
@@ -78,5 +79,69 @@ describe('PUT /v1/ferramentas/:id/foto', () => {
     expect((await put(id, PNG, 'image/png', 'consulta')).status).toBe(403);
     expect((await put(2147483647, PNG)).status).toBe(404);
     expect((await put('abc', PNG)).status).toBe(400);
+  });
+});
+
+describe('processamento da foto', () => {
+  it('reduz para 1280 px, converte para webp e 400 para imagem corrompida', async () => {
+    const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
+    const id = (await query<{ id: number }>('INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING id', [`${PREFIXO}proc`, grupoId])).rows[0].id;
+    const h = { Authorization: `Bearer ${token('admin')}` };
+    try {
+      const grande = await sharp({ create: { width: 3000, height: 2000, channels: 3, background: '#c33' } }).jpeg().toBuffer();
+      const r = await request(app).put(`/v1/ferramentas/${id}/foto`).set(h).set('Content-Type', 'image/jpeg').send(grande);
+      expect(r.status).toBe(200);
+      const meta = await sharp(path.join(pasta, path.basename(r.body.data.foto_url))).metadata();
+      expect([meta.format, meta.width, meta.height]).toEqual(['webp', 1280, 853]);
+
+      // PNG de 8000x6000 (48 MP) pequeno em bytes: estoura o limite de pixels e vira 400
+      const gigante = await sharp({ create: { width: 8000, height: 6000, channels: 3, background: '#fff' } }).png({ compressionLevel: 9 }).toBuffer();
+      expect((await request(app).put(`/v1/ferramentas/${id}/foto`).set(h).set('Content-Type', 'image/png').send(gigante)).status).toBe(400);
+
+      const truncada = grande.subarray(0, 40); // cabeçalho JPEG válido, resto cortado
+      expect((await request(app).put(`/v1/ferramentas/${id}/foto`).set(h).set('Content-Type', 'image/jpeg').send(truncada)).status).toBe(400);
+    } finally {
+      await query('DELETE FROM ferramentas WHERE id = $1', [id]);
+    }
+  });
+});
+
+describe('DELETE /v1/ferramentas/:id/foto e baixa', () => {
+  let id: number;
+  const auth = { Authorization: `Bearer ${token('admin')}` };
+  const enviar = async () => {
+    const r = await request(app).put(`/v1/ferramentas/${id}/foto`).set(auth).set('Content-Type', 'image/png').send(PNG);
+    return path.join(pasta, path.basename(r.body.data.foto_url));
+  };
+
+  beforeAll(async () => {
+    const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
+    id = (await query<{ id: number }>('INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING id', [`${PREFIXO}del`, grupoId])).rows[0].id;
+  });
+
+  afterAll(async () => {
+    await query('DELETE FROM ferramentas WHERE nome LIKE $1', [`${PREFIXO}%`]);
+    fs.rmSync(pasta, { recursive: true, force: true });
+  });
+
+  it('remove a foto: arquivo apagado e foto_url nulo', async () => {
+    const arquivo = await enviar();
+    expect(fs.existsSync(arquivo)).toBe(true);
+    const r = await request(app).delete(`/v1/ferramentas/${id}/foto`).set(auth);
+    expect(r.status).toBe(200);
+    expect(r.body.data.foto_url).toBeNull();
+    expect(fs.existsSync(arquivo)).toBe(false);
+  });
+
+  it('401 sem token, 403 para manutenção e 404 para ferramenta inexistente', async () => {
+    expect((await request(app).delete(`/v1/ferramentas/${id}/foto`)).status).toBe(401);
+    expect((await request(app).delete(`/v1/ferramentas/${id}/foto`).set('Authorization', `Bearer ${token('manutencao')}`)).status).toBe(403);
+    expect((await request(app).delete('/v1/ferramentas/2147483647/foto').set(auth)).status).toBe(404);
+  });
+
+  it('baixar a ferramenta apaga o arquivo da foto', async () => {
+    const arquivo = await enviar();
+    expect((await request(app).delete(`/v1/ferramentas/${id}`).set(auth)).status).toBe(200);
+    expect(fs.existsSync(arquivo)).toBe(false);
   });
 });

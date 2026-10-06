@@ -159,4 +159,16 @@ export class FerramentaController {
       return next(error);
     }
   }
+
+  /**
+   * DELETE /v1/ferramentas/:id/foto
+   */
+  static async removerFoto(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      return sendSuccess(res, await ferramentaService.removerFoto(id), null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }

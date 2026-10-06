@@ -8,10 +8,12 @@ import { cn } from '@/lib/utils'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { SeletorDataCalendario } from '@/components/SeletorDataCalendario'
 import { StatusBadge } from '@/components/StatusBadge'
+import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { useSetores } from '@/hooks/useSetores'
 import { formatarPatrimonio, statusParaBadge } from '@/hooks/useFerramentas'
 import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPorTermo, useRetirarFerramenta } from '@/hooks/useRetirada'
 import { useAuth } from '@/lib/auth'
+import { parseCodigoPatrimonio } from '@/lib/patrimonio'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
@@ -96,6 +98,19 @@ export function RetiradaPage() {
     if (colaboradorEncontrado?.setor_id) setValue('setor', String(colaboradorEncontrado.setor_id), { shouldValidate: true })
   }, [colaboradorEncontrado?.id, colaboradorEncontrado?.setor_id, setValue])
 
+  // código bipado/digitado reconhecido: pula para o próximo campo sem precisar do Enter.
+  // Busca por nome não avança sozinha (o usuário ainda pode estar digitando).
+  useEffect(() => {
+    if (ferramenta && !ferramentaBloqueada && parseCodigoPatrimonio(termoFerramenta)) setFocus('colaborador')
+    // só quando uma ferramenta nova é reconhecida
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ferramenta?.id])
+  useEffect(() => {
+    // só a matrícula exata: um valor parcial que já case com alguém não pode roubar o foco no meio da digitação
+    if (colaboradorEncontrado && colaboradorEncontrado.matricula === termoColaborador) setFocus('atividade')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colaboradorEncontrado?.id])
+
   const faltando = [
     !ferramenta || ferramentaBloqueada ? 'ferramenta' : null,
     !colaboradorEncontrado ? 'colaborador' : null,
@@ -147,111 +162,116 @@ export function RetiradaPage() {
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
       {concluida && <TelaSucessoAnimada contida mensagem="Retirada registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
-      <div className="animate-entrada flex-1 space-y-8 p-6 pb-28">
-        <SecaoFluxo
-          titulo="1. Ferramenta"
-          descricao="Dispare o leitor no código de patrimônio ou digite o código / nome"
-        >
-          <div className="space-y-2">
-            <CampoIdentificacao
-              {...register('ferramentaCodigo')}
-              icone={Barcode}
-              mono
-              autoFocus
-              placeholder="Código de patrimônio ou nome da ferramenta"
-              estadoClassName={cn(
-                'border-2',
-                ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
-                (ferramentaBloqueada || ferramentaNaoEncontrada || ferramentasAmbiguas.length > 0 || erroFerramenta) && 'animate-erro border-destructive',
-                !ferramentaCodigo && 'border-brand-red',
+      <div className="animate-entrada flex-1 space-y-6 p-6 pb-4">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SecaoFluxo
+            titulo="1. Ferramenta"
+            descricao="Dispare o leitor no código de patrimônio ou digite o código / nome"
+          >
+            <div className="space-y-2">
+              <CampoIdentificacao
+                {...register('ferramentaCodigo')}
+                icone={Barcode}
+                mono
+                autoFocus
+                placeholder="Código de patrimônio ou nome da ferramenta"
+                estadoClassName={cn(
+                  'border-2',
+                  ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
+                  (ferramentaBloqueada || ferramentaNaoEncontrada || ferramentasAmbiguas.length > 0 || erroFerramenta) && 'animate-erro border-destructive',
+                  !ferramentaCodigo && 'border-brand-red',
+                )}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (ferramenta && !ferramentaBloqueada) setFocus('colaborador')
+                  }
+                }}
+              >
+                {ferramenta && !ferramentaBloqueada && <CheckCircle2 className="size-5 shrink-0 text-status-disponivel" />}
+                {(ferramentaBloqueada || ferramentaNaoEncontrada) && <XCircle className="size-5 shrink-0 text-destructive" />}
+                {!ferramentaCodigo && <DicaEnter />}
+              </CampoIdentificacao>
+              {ferramenta && (
+                <div className="animate-entrada flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+                  <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-20 shrink-0" />
+                  <div className="min-w-0 space-y-1.5">
+                    <p className="truncate font-medium">{ferramenta.nome}</p>
+                    <StatusBadge status={statusParaBadge(ferramenta.status)} />
+                  </div>
+                </div>
               )}
+              {ferramenta && ferramentaBloqueada && (
+                <p className="text-sm text-destructive">
+                  Só um empréstimo aberto por ferramenta — não é possível retirar.
+                </p>
+              )}
+              {ferramentaNaoEncontrada && (
+                <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
+              )}
+              {ferramentasAmbiguas.length > 0 && (
+                <OpcoesAmbiguas
+                  titulo={`Vários resultados para "${ferramentaCodigo}" — escolha a ferramenta:`}
+                  opcoes={ferramentasAmbiguas.map((f) => ({
+                    chave: f.id,
+                    identificador: formatarPatrimonio(f.codigo_identificacao),
+                    rotulo: f.nome,
+                  }))}
+                  aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
+                />
+              )}
+              {erroFerramenta && ferramentaAtual && (
+                <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
+              )}
+            </div>
+
+          </SecaoFluxo>
+
+          <SecaoFluxo titulo="2. Colaborador" descricao="Matrícula, crachá ou nome">
+            <CampoIdentificacao
+              {...register('colaborador')}
+              icone={IdCard}
+              placeholder="Matrícula ou nome do colaborador"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
-                  if (ferramenta && !ferramentaBloqueada) setFocus('colaborador')
+                  if (colaboradorEncontrado) setFocus('atividade')
                 }
               }}
             >
-              {ferramenta && !ferramentaBloqueada && <CheckCircle2 className="size-5 shrink-0 text-status-disponivel" />}
-              {(ferramentaBloqueada || ferramentaNaoEncontrada) && <XCircle className="size-5 shrink-0 text-destructive" />}
-              {!ferramentaCodigo && <DicaEnter />}
+              {colaboradorEncontrado && <CheckCircle2 className="size-5 shrink-0 text-status-disponivel" />}
+              {!colaborador && <DicaEnter />}
             </CampoIdentificacao>
-            {ferramenta && (
+
+            {colaboradorEncontrado && (
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={statusParaBadge(ferramenta.status)} />
-                <span className="text-sm text-muted-foreground">{ferramenta.nome}</span>
+                <span className="text-sm font-medium">{colaboradorEncontrado.nome}</span>
+                <span className="text-sm text-muted-foreground">
+                  Matrícula {colaboradorEncontrado.matricula} ·{' '}
+                  {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
+                </span>
               </div>
             )}
-            {ferramenta && ferramentaBloqueada && (
-              <p className="text-sm text-destructive">
-                Só um empréstimo aberto por ferramenta — não é possível retirar.
-              </p>
-            )}
-            {ferramentaNaoEncontrada && (
-              <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
-            )}
-            {ferramentasAmbiguas.length > 0 && (
+
+            {colaboradoresAmbiguos.length > 0 && (
               <OpcoesAmbiguas
-                titulo={`Vários resultados para "${ferramentaCodigo}" — escolha a ferramenta:`}
-                opcoes={ferramentasAmbiguas.map((f) => ({
-                  chave: f.id,
-                  identificador: formatarPatrimonio(f.codigo_identificacao),
-                  rotulo: f.nome,
-                }))}
-                aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
+                titulo={`Vários colaboradores para "${colaborador}" — escolha o colaborador:`}
+                opcoes={colaboradoresAmbiguos.map((c) => ({ chave: c.id, identificador: c.matricula, rotulo: c.nome }))}
+                aoEscolher={(matricula) => setValue('colaborador', matricula, { shouldValidate: true })}
               />
             )}
-            {erroFerramenta && ferramentaAtual && (
-              <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
+
+            {erroColaborador && termoColaborador === colaborador.trim() && (
+              <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
             )}
-          </div>
 
-        </SecaoFluxo>
-
-        <SecaoFluxo titulo="2. Colaborador" descricao="Matrícula, crachá ou nome">
-          <CampoIdentificacao
-            {...register('colaborador')}
-            icone={IdCard}
-            placeholder="Matrícula ou nome do colaborador"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                if (colaboradorEncontrado) setFocus('atividade')
-              }
-            }}
-          >
-            {colaboradorEncontrado && <CheckCircle2 className="size-5 shrink-0 text-status-disponivel" />}
-            {!colaborador && <DicaEnter />}
-          </CampoIdentificacao>
-
-          {colaboradorEncontrado && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium">{colaboradorEncontrado.nome}</span>
-              <span className="text-sm text-muted-foreground">
-                Matrícula {colaboradorEncontrado.matricula} ·{' '}
-                {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
-              </span>
-            </div>
-          )}
-
-          {colaboradoresAmbiguos.length > 0 && (
-            <OpcoesAmbiguas
-              titulo={`Vários colaboradores para "${colaborador}" — escolha o colaborador:`}
-              opcoes={colaboradoresAmbiguos.map((c) => ({ chave: c.id, identificador: c.matricula, rotulo: c.nome }))}
-              aoEscolher={(matricula) => setValue('colaborador', matricula, { shouldValidate: true })}
-            />
-          )}
-
-          {erroColaborador && termoColaborador === colaborador.trim() && (
-            <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
-          )}
-
-          {colaboradorNaoEncontrado && <CadastroRapidoColaborador
-              setores={setores ?? []}
-              enviando={cadastrarRapido.isPending}
-              onUsar={usarCadastroRapido}
-            />}
-        </SecaoFluxo>
+            {colaboradorNaoEncontrado && <CadastroRapidoColaborador
+                setores={setores ?? []}
+                enviando={cadastrarRapido.isPending}
+                onUsar={usarCadastroRapido}
+              />}
+          </SecaoFluxo>
+        </div>
 
         <SecaoFluxo
           titulo="3. Detalhes da retirada"

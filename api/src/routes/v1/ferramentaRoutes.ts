@@ -319,4 +319,35 @@ router.put(
   FerramentaController.salvarFoto
 );
 
+/**
+ * @openapi
+ * /ferramentas/{id}/foto:
+ *   delete:
+ *     summary: Remove a foto da ferramenta (apaga o arquivo do disco)
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ferramenta com foto_url nulo
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.delete(
+  '/:id/foto',
+  authenticate,
+  authorize('admin'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.removerFoto
+);
+
 export default router;

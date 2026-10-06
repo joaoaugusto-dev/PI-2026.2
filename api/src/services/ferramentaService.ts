@@ -1,9 +1,11 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import sharp from 'sharp';
 import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
+import { logger } from '../middlewares/logger.js';
 import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
@@ -357,7 +359,7 @@ export async function disponibilizar(id: number, usuarioId: number): Promise<Fer
  * uma ferramenta baixada.
  */
 export async function baixar(id: number): Promise<Ferramenta> {
-  await buscarPorId(id);
+  const atual = await buscarPorId(id);
 
   const emprestimoAberto = await query(
     `SELECT 1 FROM emprestimos WHERE ferramenta_id = $1 AND data_devolucao IS NULL LIMIT 1`,
@@ -372,12 +374,14 @@ export async function baixar(id: number): Promise<Ferramenta> {
 
   const result = await query<Ferramenta>(
     `UPDATE ferramentas
-     SET ativo = false, status = 'indisponivel', motivo_indisponivel = 'baixada', updated_at = NOW()
+     SET ativo = false, status = 'indisponivel', motivo_indisponivel = 'baixada', foto_url = NULL, updated_at = NOW()
      WHERE id = $1 AND ativo = true
      RETURNING ${COLUNAS_FERRAMENTA}`,
     [id]
   );
 
+  // ferramenta baixada não mostra foto: apaga o arquivo para não sobrar órfão
+  if ((result.rowCount ?? 0) > 0) await apagarArquivoFoto(atual.foto_url);
   return result.rows[0];
 }
 
@@ -389,18 +393,38 @@ function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
   return null;
 }
 
+// foto de celular chega a ~40 MP; acima disso o sharp recusa (limita a memória por requisição)
+const LIMITE_PIXELS_FOTO = 40_000_000;
+
+// basename evita sair do diretório. Falha ao apagar não derruba a requisição:
+// o banco já foi atualizado e o pior caso é um arquivo sobrando.
+async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
+  if (fotoUrl?.startsWith('/uploads/')) {
+    await fs
+      .rm(path.join(uploadsDir, path.basename(fotoUrl)), { force: true })
+      .catch((erro) => logger.warn({ erro, fotoUrl }, 'não foi possível apagar o arquivo da foto (arquivo órfão)'));
+  }
+}
+
 export async function salvarFoto(id: number, imagem: unknown): Promise<Ferramenta> {
   const anterior = await buscarPorId(id);
   if (!Buffer.isBuffer(imagem) || imagem.length === 0) {
     throw new ValidationError('Envie a imagem (jpeg, png ou webp) no corpo da requisição');
   }
-  const ext = extensaoDaImagem(imagem);
-  if (!ext) throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
+  if (!extensaoDaImagem(imagem)) throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
+
+  // máx. 1280 px, webp, sem EXIF (o sharp descarta metadados por padrão; rotate() aplica a orientação antes)
+  let processada: Buffer;
+  try {
+    processada = await sharp(imagem, { limitInputPixels: LIMITE_PIXELS_FOTO }).rotate().resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+  } catch {
+    throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
+  }
 
   await fs.mkdir(uploadsDir, { recursive: true });
-  const arquivo = `${id}-${randomUUID()}.${ext}`;
+  const arquivo = `${id}-${randomUUID()}.webp`;
   const destino = path.join(uploadsDir, arquivo);
-  await fs.writeFile(destino, imagem);
+  await fs.writeFile(destino, processada);
 
   let result;
   try {
@@ -412,10 +436,16 @@ export async function salvarFoto(id: number, imagem: unknown): Promise<Ferrament
     await fs.rm(destino, { force: true }).catch(() => {}); // não deixa arquivo órfão
     throw error;
   }
-  // a foto antiga deixa de ser referenciada: apaga (basename evita sair do diretório).
-  // Falha aqui não derruba a requisição — a foto nova já está no banco.
-  if (anterior.foto_url?.startsWith('/uploads/')) {
-    await fs.rm(path.join(uploadsDir, path.basename(anterior.foto_url)), { force: true }).catch(() => {});
-  }
+  await apagarArquivoFoto(anterior.foto_url); // a antiga deixa de ser referenciada
+  return result.rows[0];
+}
+
+export async function removerFoto(id: number): Promise<Ferramenta> {
+  const anterior = await buscarPorId(id);
+  const result = await query<Ferramenta>(
+    `UPDATE ferramentas SET foto_url = NULL, updated_at = NOW() WHERE id = $1 RETURNING ${COLUNAS_FERRAMENTA}`,
+    [id]
+  );
+  await apagarArquivoFoto(anterior.foto_url);
   return result.rows[0];
 }

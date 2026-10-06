@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Search, TriangleAlert, Wrench } from 'lucide-react'
+import { Plus, Search, TriangleAlert, Wrench } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
+import { Paginacao } from '@/components/Paginacao'
 import { ChipFiltro } from '@/components/ferramentas/ChipFiltro'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -42,7 +43,7 @@ export function FerramentasPage() {
   const buscaDebounced = useBuscaComDebounce(busca)
 
   const { data: categorias } = useCategorias()
-  const { data, isLoading, isError, isPlaceholderData } = useFerramentas({
+  const { data, isLoading, isError } = useFerramentas({
     page,
     limit: LIMITE_POR_PAGINA,
     q: buscaDebounced || undefined,
@@ -51,8 +52,6 @@ export function FerramentasPage() {
   })
 
   const ferramentas = data?.data ?? []
-  const total = data?.meta.total ?? 0
-  const totalPaginas = data?.meta.totalPages ?? 1
   const nomeCategoria = (id: number) => categorias?.find((c) => c.id === id)?.nome ?? '—'
 
   return (
@@ -213,31 +212,7 @@ export function FerramentasPage() {
         />
       )}
 
-      {!isLoading && !isError && ferramentas.length > 0 && (
-        <div className="flex items-center justify-between text-corpo text-muted-foreground">
-          <span>
-            Página {page} de {totalPaginas} · {total} ferramentas
-          </span>
-          <div className="flex items-center gap-1.5">
-            <Button
-              size="icon-sm"
-              variant="outline"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="outline"
-              disabled={page >= totalPaginas || isPlaceholderData}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {!isLoading && !isError && <Paginacao meta={data?.meta} page={page} onPage={setPage} itens="ferramentas" />}
     </div>
   )
 }
