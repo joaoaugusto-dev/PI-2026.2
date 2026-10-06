@@ -11,6 +11,14 @@ const DURACAO_TINTA_SAI_MS = 800
 const DIGITACAO_MS_POR_LETRA = 30
 const PAUSA_APOS_DIGITAR_MS = 500
 
+function medirAreaConteudo(contida?: boolean) {
+  if (!contida || typeof document === 'undefined') return null
+  const r = document.querySelector('[data-slot="sidebar-inset"]')?.getBoundingClientRect()
+  if (!r) return null
+  const topo = Math.max(r.top, 0)
+  return { left: r.left, top: topo, width: r.width, height: Math.min(r.bottom, window.innerHeight) - topo }
+}
+
 /**
  * Tela cheia de sucesso (entrada no sistema, senha definida) e de "aguardando aprovação" — estilo tela de
  * finalização de compra: um círculo escuro gigante se
@@ -36,14 +44,21 @@ export function TelaSucessoAnimada({
   /** A tinta enche só a área de conteúdo do app (o `<main>` ao lado da sidebar), sem fundo próprio, em vez da tela toda. */
   contida?: boolean
 }) {
-  // retângulo visível do <main> no instante em que a animação começa (fixa na viewport: rolagem da página não desloca o centro)
-  const [caixa] = useState(() => {
-    if (!contida || typeof document === 'undefined') return null
-    const r = document.querySelector('[data-slot="sidebar-inset"]')?.getBoundingClientRect()
-    if (!r) return null
-    const topo = Math.max(r.top, 0)
-    return { left: r.left, top: topo, width: r.width, height: Math.min(r.bottom, window.innerHeight) - topo }
-  })
+  // retângulo visível do <main> (fixo na viewport: rolagem da página não desloca o centro); remedido se a janela
+  // for redimensionada ou a sidebar abrir/fechar durante a animação
+  const [caixa, setCaixa] = useState(() => medirAreaConteudo(contida))
+  useEffect(() => {
+    if (!contida) return
+    const alvo = document.querySelector('[data-slot="sidebar-inset"]')
+    const remedir = () => setCaixa(medirAreaConteudo(contida))
+    window.addEventListener('resize', remedir)
+    const observador = alvo ? new ResizeObserver(remedir) : null
+    if (alvo) observador?.observe(alvo)
+    return () => {
+      window.removeEventListener('resize', remedir)
+      observador?.disconnect()
+    }
+  }, [contida])
   const [fase, setFase] = useState<'tinta-entra' | 'tinta-sai' | 'conteudo'>('tinta-entra')
   const [iconeVisivel, setIconeVisivel] = useState(false)
   const [digitado, setDigitado] = useState('')

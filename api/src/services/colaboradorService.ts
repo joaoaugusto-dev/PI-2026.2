@@ -94,6 +94,9 @@ export async function buscarPorId(id: number): Promise<Colaborador> {
   return colaborador;
 }
 
+/** Tamanho mínimo do termo para a busca por nome aceitar "contém" (abaixo disso só similaridade). */
+const MIN_TERMO_CONTEM = 3;
+
 const normalizar = (texto: string) => texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 
 /**
@@ -107,6 +110,10 @@ const normalizar = (texto: string) => texto.normalize('NFD').replace(/\p{M}/gu, 
  * (a menos que um deles seja exatamente o termo). A segunda etapa exige um mínimo de similaridade (`%`, limiar padrão de
  * `pg_trgm.similarity_threshold`) para não devolver qualquer nome parecido;
  * o resultado mais similar vem primeiro.
+ *
+ * O ramo "contém" usa strpos, que não aproveita idx_colaboradores_nome_trgm (varredura sequencial);
+ * na escala da Soufer é irrelevante. Se a tabela crescer, trocar por ILIKE '%termo%' (escapando os
+ * coringas), que o índice trigram atende para termos de 3+ caracteres.
  *
  * Desempenho (API-09, item "se sobrar tempo"): com os 50 colaboradores do
  * seed, a busca por nome leva ~1ms (média de 20 execuções, round-trip
@@ -126,17 +133,20 @@ export async function identificar(termo: string): Promise<Colaborador> {
     return porMatricula.rows[0];
   }
 
+  // "contém" só vale a partir de MIN_TERMO_CONTEM caracteres: com "a" ou "ma" quase todo nome passaria
+  // e o balcão receberia 10 candidatos arbitrários; abaixo disso só entra a similaridade (`%`)
+  const permiteContem = normalizar(termo).length >= MIN_TERMO_CONTEM;
   const porNome = await query<Colaborador>(
     `SELECT ${COLUNAS_COLABORADOR}
      FROM colaboradores
      WHERE ativo = true
-       AND (strpos(f_unaccent(lower(nome)), f_unaccent(lower($1))) > 0
+       AND (($2::boolean AND strpos(f_unaccent(lower(nome)), f_unaccent(lower($1))) > 0)
             OR f_unaccent(lower(nome)) % f_unaccent(lower($1)))
-     ORDER BY strpos(f_unaccent(lower(nome)), f_unaccent(lower($1))) > 0 DESC,
+     ORDER BY ($2::boolean AND strpos(f_unaccent(lower(nome)), f_unaccent(lower($1))) > 0) DESC,
               similarity(f_unaccent(lower(nome)), f_unaccent(lower($1))) DESC,
               nome
      LIMIT 10`,
-    [termo]
+    [termo, permiteContem]
   );
   if (porNome.rows.length === 1) {
     return porNome.rows[0];

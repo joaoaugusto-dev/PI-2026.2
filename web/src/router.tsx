@@ -8,7 +8,6 @@ import { CategoriasPage } from '@/pages/CategoriasPage'
 import { ColaboradoresPage } from '@/pages/ColaboradoresPage'
 import { ConsultaPage } from '@/pages/ConsultaPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
 import { EmprestimosPage } from '@/pages/EmprestimosPage'
 import { ErroInesperadoPage } from '@/pages/ErroInesperadoPage'
@@ -84,11 +83,17 @@ export const router = createBrowserRouter([
             ? [
                 {
                   path: 'design-system',
-                  element: (
-                    <RotaAdmin>
-                      <DesignSystemPage />
-                    </RotaAdmin>
-                  ),
+                  // import dinâmico dentro do ramo DEV: o build de produção elimina o ramo e a página sai do bundle
+                  lazy: async () => {
+                    const { DesignSystemPage } = await import('@/pages/DesignSystemPage')
+                    return {
+                      element: (
+                        <RotaAdmin>
+                          <DesignSystemPage />
+                        </RotaAdmin>
+                      ),
+                    }
+                  },
                 },
               ]
             : []),
