@@ -1,10 +1,12 @@
 import { BotaoSecundario } from '@/components/fluxo/BotaoSecundario'
+import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { DadoRotulado } from '@/components/fluxo/DadoRotulado'
 
 export type EmprestimoAberto = {
   codigo: string
   ferramenta: string
   categoria: string
+  fotoUrl?: string | null
   retiradoPor: string
   matricula: string
   setor: string
@@ -43,11 +45,14 @@ export function DetalhesEmprestimo({
       )}
       <div className="space-y-4 p-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-secao font-semibold">{emprestimo.ferramenta}</h3>
-            <p className="text-sm text-muted-foreground">
-              {emprestimo.codigo} · {emprestimo.categoria}
-            </p>
+          <div className="flex items-center gap-3">
+            <IconeFerramenta nome={emprestimo.ferramenta} fotoUrl={emprestimo.fotoUrl} ampliavel className="size-20 shrink-0" />
+            <div>
+              <h3 className="text-secao font-semibold">{emprestimo.ferramenta}</h3>
+              <p className="text-sm text-muted-foreground">
+                {emprestimo.codigo} · {emprestimo.categoria}
+              </p>
+            </div>
           </div>
           <BotaoSecundario onClick={onBuscarOutra}>Buscar outra</BotaoSecundario>
         </div>

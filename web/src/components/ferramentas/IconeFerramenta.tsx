@@ -46,6 +46,7 @@ import {
 } from 'lucide-react'
 import { urlDaFoto } from '@/lib/imagem'
 import { cn } from '@/lib/utils'
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/Dialog'
 
 /**
  * Reconhecimento por palavra-chave no nome do catálogo de ferramentas da
@@ -120,13 +121,31 @@ export function iconeParaFerramenta(nome: string): LucideIcon {
 type IconeFerramentaProps = {
   nome: string
   fotoUrl?: string | null
+  /** Clicar na foto abre ela ampliada num popup (só vale quando há foto). */
+  ampliavel?: boolean
   className?: string
 }
 
 /** Miniatura de ferramenta: foto quando existir, senão o ícone reconhecido pelo nome. */
-export function IconeFerramenta({ nome, fotoUrl, className }: IconeFerramentaProps) {
+export function IconeFerramenta({ nome, fotoUrl, ampliavel, className }: IconeFerramentaProps) {
   if (fotoUrl) {
-    return <img src={urlDaFoto(fotoUrl)} alt={nome} className={cn('rounded object-cover', className)} />
+    const src = urlDaFoto(fotoUrl)
+    const miniatura = <img src={src} alt={nome} className={cn('rounded object-cover', className)} />
+    if (!ampliavel) return miniatura
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <button type="button" aria-label={`Ampliar foto de ${nome}`} className="shrink-0 cursor-zoom-in rounded transition hover:brightness-90 focus-visible:ring-2 focus-visible:ring-ring">
+            {miniatura}
+          </button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-xl">
+          <DialogTitle>{nome}</DialogTitle>
+          <DialogDescription className="sr-only">Foto ampliada da ferramenta</DialogDescription>
+          <img src={src} alt={nome} className="max-h-[70vh] w-full rounded-lg object-contain" />
+        </DialogContent>
+      </Dialog>
+    )
   }
 
   const Icone = iconeParaFerramenta(nome)

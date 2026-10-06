@@ -8,10 +8,12 @@ import { cn } from '@/lib/utils'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { SeletorDataCalendario } from '@/components/SeletorDataCalendario'
 import { StatusBadge } from '@/components/StatusBadge'
+import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { useSetores } from '@/hooks/useSetores'
 import { formatarPatrimonio, statusParaBadge } from '@/hooks/useFerramentas'
 import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPorTermo, useRetirarFerramenta } from '@/hooks/useRetirada'
 import { useAuth } from '@/lib/auth'
+import { parseCodigoPatrimonio } from '@/lib/patrimonio'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
@@ -96,6 +98,18 @@ export function RetiradaPage() {
     if (colaboradorEncontrado?.setor_id) setValue('setor', String(colaboradorEncontrado.setor_id), { shouldValidate: true })
   }, [colaboradorEncontrado?.id, colaboradorEncontrado?.setor_id, setValue])
 
+  // código bipado/digitado reconhecido: pula para o próximo campo sem precisar do Enter.
+  // Busca por nome não avança sozinha (o usuário ainda pode estar digitando).
+  useEffect(() => {
+    if (ferramenta && !ferramentaBloqueada && parseCodigoPatrimonio(termoFerramenta)) setFocus('colaborador')
+    // só quando uma ferramenta nova é reconhecida
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ferramenta?.id])
+  useEffect(() => {
+    if (colaboradorEncontrado && /^\S*\d\S*$/.test(termoColaborador)) setFocus('atividade')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colaboradorEncontrado?.id])
+
   const faltando = [
     !ferramenta || ferramentaBloqueada ? 'ferramenta' : null,
     !colaboradorEncontrado ? 'colaborador' : null,
@@ -147,7 +161,8 @@ export function RetiradaPage() {
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
       {concluida && <TelaSucessoAnimada contida mensagem="Retirada registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
-      <div className="animate-entrada flex-1 space-y-8 p-6 pb-28">
+      <div className="animate-entrada flex-1 space-y-6 p-6 pb-4">
+        <div className="grid gap-6 lg:grid-cols-2">
         <SecaoFluxo
           titulo="1. Ferramenta"
           descricao="Dispare o leitor no código de patrimônio ou digite o código / nome"
@@ -177,9 +192,12 @@ export function RetiradaPage() {
               {!ferramentaCodigo && <DicaEnter />}
             </CampoIdentificacao>
             {ferramenta && (
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={statusParaBadge(ferramenta.status)} />
-                <span className="text-sm text-muted-foreground">{ferramenta.nome}</span>
+              <div className="animate-entrada flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+                <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-20 shrink-0" />
+                <div className="min-w-0 space-y-1.5">
+                  <p className="truncate font-medium">{ferramenta.nome}</p>
+                  <StatusBadge status={statusParaBadge(ferramenta.status)} />
+                </div>
               </div>
             )}
             {ferramenta && ferramentaBloqueada && (
@@ -252,6 +270,7 @@ export function RetiradaPage() {
               onUsar={usarCadastroRapido}
             />}
         </SecaoFluxo>
+        </div>
 
         <SecaoFluxo
           titulo="3. Detalhes da retirada"
