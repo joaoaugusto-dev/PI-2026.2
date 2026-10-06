@@ -1,5 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -25,13 +26,24 @@ export function TelaSucessoAnimada({
   aoSair,
   aoTerminarAnimacao,
   mensagem,
+  contida,
 }: {
   aoSair?: () => void
   /** Quando informado, a tela é só a animação: ao fim dela chama isto e não mostra o texto de "aguardando aprovação". */
   aoTerminarAnimacao?: () => void
   /** Frase digitada letra a letra sob o check (ex.: "Login realizado com sucesso"); a tinta espera ela terminar. */
   mensagem?: string
+  /** A tinta enche só a área de conteúdo do app (o `<main>` ao lado da sidebar), sem fundo próprio, em vez da tela toda. */
+  contida?: boolean
 }) {
+  // retângulo visível do <main> no instante em que a animação começa (fixa na viewport: rolagem da página não desloca o centro)
+  const [caixa] = useState(() => {
+    if (!contida || typeof document === 'undefined') return null
+    const r = document.querySelector('[data-slot="sidebar-inset"]')?.getBoundingClientRect()
+    if (!r) return null
+    const topo = Math.max(r.top, 0)
+    return { left: r.left, top: topo, width: r.width, height: Math.min(r.bottom, window.innerHeight) - topo }
+  })
   const [fase, setFase] = useState<'tinta-entra' | 'tinta-sai' | 'conteudo'>('tinta-entra')
   const [iconeVisivel, setIconeVisivel] = useState(false)
   const [digitado, setDigitado] = useState('')
@@ -74,13 +86,20 @@ export function TelaSucessoAnimada({
     if (fase === 'conteudo') aoTerminarAnimacao?.()
   }, [fase, aoTerminarAnimacao])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-background p-4">
+  // portal no <body>: dentro de uma tela animada (`animate-entrada` deixa `transform`), o `fixed` viraria relativo a ela e a tinta não cobriria a viewport
+  return createPortal(
+    <div
+      className={cn(
+        'fixed z-50 flex items-center justify-center overflow-hidden',
+        caixa ? 'rounded-xl' : 'inset-0 bg-background p-4',
+      )}
+      style={caixa ?? undefined}
+    >
       {fase !== 'conteudo' && (
         <div
           aria-hidden
           className={cn(
-            'fixed left-1/2 top-1/2 size-[300vmax] rounded-full bg-foreground',
+            'absolute left-1/2 top-1/2 size-[300vmax] rounded-full bg-foreground',
             fase === 'tinta-sai' ? 'animate-tinta-sai' : 'animate-tinta-entra',
           )}
         />
@@ -120,6 +139,7 @@ export function TelaSucessoAnimada({
           )}
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }

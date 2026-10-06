@@ -4,7 +4,6 @@ import { useSearchParams } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Barcode, XCircle } from 'lucide-react'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useCategorias } from '@/hooks/useCategorias'
 import { useDevolverEmprestimo, useEmprestimoAberto } from '@/hooks/useDevolucao'
@@ -16,6 +15,7 @@ import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { DetalhesEmprestimo } from '@/components/fluxo/DetalhesEmprestimo'
 import { FormularioOcorrencia } from '@/components/fluxo/FormularioOcorrencia'
+import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 import { SeletorCondicao } from '@/components/fluxo/SeletorCondicao'
@@ -85,6 +85,7 @@ export function DevolucaoPage() {
 
   const { usuario } = useAuth()
   const devolver = useDevolverEmprestimo()
+  const [concluida, setConcluida] = useState(false)
   const { data: escolha, isFetching: buscando, isError: erroBusca } = useEmprestimoAberto(termo)
   const termoAtual = termo === ferramentaCodigo.trim()
   const encontrado = escolha?.item ?? null
@@ -140,10 +141,10 @@ export function DevolucaoPage() {
         custoEstimado: centavos > 0 ? centavos / 100 : undefined, // NaN e R$ 0,00 viram "sem custo"
       },
       {
-        onSuccess: (devolvido) => {
+        onSuccess: () => {
           playSomConfirmacao()
-          toast.success(devolvido.resumo)
           buscarOutra()
+          setConcluida(true)
         },
         onError: (e) =>
           avisarErro(mensagemDeErro(e, 'Não foi possível registrar a devolução.')),
@@ -153,6 +154,7 @@ export function DevolucaoPage() {
 
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
+      {concluida && <TelaSucessoAnimada contida mensagem="Devolução registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
       <div className="animate-entrada flex-1 space-y-8 p-6 pb-28">
         <SecaoFluxo
           titulo="1. Ferramenta em empréstimo"
