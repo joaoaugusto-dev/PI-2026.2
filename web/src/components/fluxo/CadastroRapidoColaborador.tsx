@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { BotaoSecundario } from '@/components/fluxo/BotaoSecundario'
+import { avisarErro } from '@/lib/avisar-erro'
+import { MATRICULA_CADASTRO_MENSAGEM, MATRICULA_CADASTRO_REGEX } from '@/lib/matricula'
 
 type CadastroRapidoColaboradorProps = {
   setores: { id: number; nome: string }[]
@@ -18,6 +20,10 @@ export function CadastroRapidoColaborador({ setores, enviando, onUsar }: Cadastr
     const nome = rascunho.nome.trim()
     const matricula = rascunho.matricula.trim()
     if (!nome || !matricula || !rascunho.setorId) return
+    if (!MATRICULA_CADASTRO_REGEX.test(matricula)) {
+      avisarErro(MATRICULA_CADASTRO_MENSAGEM)
+      return
+    }
     onUsar({ nome, matricula, setorId: Number(rascunho.setorId) })
     setRascunho({ nome: '', matricula: '', setorId: '' })
   }
@@ -39,6 +45,8 @@ export function CadastroRapidoColaborador({ setores, enviando, onUsar }: Cadastr
           value={rascunho.matricula}
           onChange={(e) => setRascunho((r) => ({ ...r, matricula: e.target.value }))}
           placeholder="Matrícula"
+          inputMode="numeric"
+          maxLength={4}
           className={CLASSE_INPUT}
         />
         <select

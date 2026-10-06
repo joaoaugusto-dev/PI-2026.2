@@ -19,17 +19,22 @@ export function useImprimir() {
     const quadro1 = requestAnimationFrame(() => {
       quadro2 = requestAnimationFrame(async () => {
         const logos = [...document.querySelectorAll<HTMLImageElement>('img[src^="/brand/"]')]
+        let relogio = 0
         try {
           // sem nenhum logo no DOM não há o que esperar, mas também não há etiqueta/crachá válido para sair
           if (logos.length === 0) throw new Error('logo ausente')
           // um src que nunca resolve deixaria o decode() pendente: o timeout libera o botão
           await Promise.race([
             Promise.all(logos.map((img) => img.decode())),
-            new Promise((_, rejeitar) => window.setTimeout(() => rejeitar(new Error('timeout')), TIMEOUT_LOGO_MS)),
+            new Promise((_, rejeitar) => {
+              relogio = window.setTimeout(() => rejeitar(new Error('timeout')), TIMEOUT_LOGO_MS)
+            }),
           ])
           if (!cancelado) window.print()
         } catch {
           if (!cancelado) avisarErro('Não foi possível carregar o logo da Soufer. Tente imprimir de novo.')
+        } finally {
+          window.clearTimeout(relogio)
         }
         if (!cancelado) setImprimindo(false)
       })

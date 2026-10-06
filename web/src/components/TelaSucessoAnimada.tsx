@@ -50,7 +50,14 @@ export function TelaSucessoAnimada({
   useEffect(() => {
     if (!contida) return
     const alvo = document.querySelector('[data-slot="sidebar-inset"]')
-    const remedir = () => setCaixa(medirAreaConteudo(contida))
+    const remedir = () =>
+      setCaixa((atual) => {
+        const nova = medirAreaConteudo(contida)
+        // mesma caixa: devolve o objeto anterior para o React não re-renderizar à toa
+        const igual =
+          atual && nova && atual.left === nova.left && atual.top === nova.top && atual.width === nova.width && atual.height === nova.height
+        return igual ? atual : nova
+      })
     window.addEventListener('resize', remedir)
     const observador = alvo ? new ResizeObserver(remedir) : null
     if (alvo) observador?.observe(alvo)
@@ -104,6 +111,7 @@ export function TelaSucessoAnimada({
   // portal no <body>: dentro de uma tela animada (`animate-entrada` deixa `transform`), o `fixed` viraria relativo a ela e a tinta não cobriria a viewport
   return createPortal(
     <div
+      role="status"
       className={cn(
         'fixed z-50 flex items-center justify-center overflow-hidden',
         caixa ? 'rounded-xl' : 'inset-0 bg-background p-4',
