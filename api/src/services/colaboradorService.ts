@@ -100,7 +100,8 @@ const normalizar = (texto: string) => texto.normalize('NFD').replace(/\p{M}/gu, 
  * GET /v1/colaboradores/identificar?termo= — o endpoint mais importante do
  * fluxo de retirada (Regra 5). Tenta, nessa ordem:
  *   1. matrícula exata (mesmo crachá — não existe codigo_cracha separado);
- *   2. nome com unaccent/pg_trgm, tolerante a acento e erro de digitação
+ *   2. nome que contém o termo ("lucas" acha todo Lucas) ou parecido, com
+ *      unaccent/pg_trgm, tolerante a acento e erro de digitação
  *      (usa idx_colaboradores_nome_trgm, migration 0003).
  * Se vários nomes passam, responde 409 COLABORADOR_AMBIGUO com os candidatos
  * (a menos que um deles seja exatamente o termo). A segunda etapa exige um mínimo de similaridade (`%`, limiar padrão de
@@ -128,9 +129,13 @@ export async function identificar(termo: string): Promise<Colaborador> {
   const porNome = await query<Colaborador>(
     `SELECT ${COLUNAS_COLABORADOR}
      FROM colaboradores
-     WHERE ativo = true AND f_unaccent(lower(nome)) % f_unaccent(lower($1))
-     ORDER BY similarity(f_unaccent(lower(nome)), f_unaccent(lower($1))) DESC
-     LIMIT 5`,
+     WHERE ativo = true
+       AND (strpos(f_unaccent(lower(nome)), f_unaccent(lower($1))) > 0
+            OR f_unaccent(lower(nome)) % f_unaccent(lower($1)))
+     ORDER BY strpos(f_unaccent(lower(nome)), f_unaccent(lower($1))) > 0 DESC,
+              similarity(f_unaccent(lower(nome)), f_unaccent(lower($1))) DESC,
+              nome
+     LIMIT 10`,
     [termo]
   );
   if (porNome.rows.length === 1) {
