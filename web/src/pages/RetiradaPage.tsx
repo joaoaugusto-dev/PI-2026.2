@@ -15,6 +15,8 @@ import { useAuth } from '@/lib/auth'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
+import { OpcoesAmbiguas } from '@/components/fluxo/OpcoesAmbiguas'
+import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { RotuloCampo } from '@/components/fluxo/RotuloCampo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
@@ -34,6 +36,7 @@ export function RetiradaPage() {
   const { data: setores } = useSetores()
   const retirar = useRetirarFerramenta()
   const cadastrarRapido = useCadastrarColaboradorRapido()
+  const [concluida, setConcluida] = useState(false)
 
   const {
     register,
@@ -118,8 +121,8 @@ export function RetiradaPage() {
       {
         onSuccess: () => {
           playSomConfirmacao()
-          toast.success(`Retirada registrada: ${ferramenta.nome} para ${colaboradorEncontrado.nome}`)
           limpar()
+          setConcluida(true)
         },
         onError: (e) =>
           avisarErro(mensagemDeErro(e, 'Não foi possível registrar a retirada.')),
@@ -143,6 +146,7 @@ export function RetiradaPage() {
 
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
+      {concluida && <TelaSucessoAnimada contida mensagem="Retirada registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
       <div className="animate-entrada flex-1 space-y-8 p-6 pb-28">
         <SecaoFluxo
           titulo="1. Ferramenta"
@@ -187,10 +191,15 @@ export function RetiradaPage() {
               <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
             )}
             {ferramentasAmbiguas.length > 0 && (
-              <p className="text-sm text-destructive">
-                Vários resultados para "{ferramentaCodigo}" — digite ou bipe o código:{' '}
-                {ferramentasAmbiguas.map((f) => `${formatarPatrimonio(f.codigo_identificacao)} ${f.nome}`).join(' · ')}
-              </p>
+              <OpcoesAmbiguas
+                titulo={`Vários resultados para "${ferramentaCodigo}" — escolha a ferramenta:`}
+                opcoes={ferramentasAmbiguas.map((f) => ({
+                  chave: f.id,
+                  identificador: formatarPatrimonio(f.codigo_identificacao),
+                  rotulo: f.nome,
+                }))}
+                aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
+              />
             )}
             {erroFerramenta && ferramentaAtual && (
               <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
@@ -226,10 +235,11 @@ export function RetiradaPage() {
           )}
 
           {colaboradoresAmbiguos.length > 0 && (
-            <p className="text-sm text-destructive">
-              Vários colaboradores para "{colaborador}" — digite ou bipe a matrícula:{' '}
-              {colaboradoresAmbiguos.map((c) => `${c.matricula} ${c.nome}`).join(' · ')}
-            </p>
+            <OpcoesAmbiguas
+              titulo={`Vários colaboradores para "${colaborador}" — escolha o colaborador:`}
+              opcoes={colaboradoresAmbiguos.map((c) => ({ chave: c.id, identificador: c.matricula, rotulo: c.nome }))}
+              aoEscolher={(matricula) => setValue('colaborador', matricula, { shouldValidate: true })}
+            />
           )}
 
           {erroColaborador && termoColaborador === colaborador.trim() && (
