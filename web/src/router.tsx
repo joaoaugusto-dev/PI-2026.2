@@ -79,7 +79,19 @@ export const router = createBrowserRouter([
               </RotaAdmin>
             ),
           },
-          { path: 'design-system', element: <DesignSystemPage /> },
+          // só em dev (import.meta.env.DEV) e para admin; em produção a rota não existe e cai no 404
+          ...(import.meta.env.DEV
+            ? [
+                {
+                  path: 'design-system',
+                  element: (
+                    <RotaAdmin>
+                      <DesignSystemPage />
+                    </RotaAdmin>
+                  ),
+                },
+              ]
+            : []),
           // 404 dentro do layout: quem está logado não perde a sidebar (deslogado cai no login)
           { path: '*', element: <NaoEncontradaPage /> },
         ],
