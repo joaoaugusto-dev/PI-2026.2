@@ -94,6 +94,10 @@ describe('processamento da foto', () => {
       const meta = await sharp(path.join(pasta, path.basename(r.body.data.foto_url))).metadata();
       expect([meta.format, meta.width, meta.height]).toEqual(['webp', 1280, 853]);
 
+      // PNG de 8000x6000 (48 MP) pequeno em bytes: estoura o limite de pixels e vira 400
+      const gigante = await sharp({ create: { width: 8000, height: 6000, channels: 3, background: '#fff' } }).png({ compressionLevel: 9 }).toBuffer();
+      expect((await request(app).put(`/v1/ferramentas/${id}/foto`).set(h).set('Content-Type', 'image/png').send(gigante)).status).toBe(400);
+
       const truncada = grande.subarray(0, 40); // cabeçalho JPEG válido, resto cortado
       expect((await request(app).put(`/v1/ferramentas/${id}/foto`).set(h).set('Content-Type', 'image/jpeg').send(truncada)).status).toBe(400);
     } finally {

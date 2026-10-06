@@ -393,6 +393,9 @@ function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
   return null;
 }
 
+// foto de celular chega a ~40 MP; acima disso o sharp recusa (limita a memória por requisição)
+const LIMITE_PIXELS_FOTO = 40_000_000;
+
 // basename evita sair do diretório. Falha ao apagar não derruba a requisição:
 // o banco já foi atualizado e o pior caso é um arquivo sobrando.
 async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
@@ -413,7 +416,7 @@ export async function salvarFoto(id: number, imagem: unknown): Promise<Ferrament
   // máx. 1280 px, webp, sem EXIF (o sharp descarta metadados por padrão; rotate() aplica a orientação antes)
   let processada: Buffer;
   try {
-    processada = await sharp(imagem).rotate().resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    processada = await sharp(imagem, { limitInputPixels: LIMITE_PIXELS_FOTO }).rotate().resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
   } catch {
     throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
   }
