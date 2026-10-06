@@ -58,3 +58,6 @@ dist-ssr
 *.sw?
 # Fotos enviadas pela API
 uploads/
+
+# Dumps do banco (têm hashes de senha e dados reais)
+api/db/backups/
