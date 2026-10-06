@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import type { Ferramenta, FiltrosFerramentas } from '@/hooks/useFerramentas'
+import type { FiltrosFerramentas, StatusFerramenta } from '@/hooks/useFerramentas'
 import { api } from '@/lib/api'
 
 export interface ColaboradorConsulta {
@@ -14,8 +14,18 @@ export interface SessaoConsulta {
   colaborador: ColaboradorConsulta
 }
 
+/** Item de `GET /v1/consulta/ferramentas`: só o que o quiosque pode mostrar (sem colaborador, histórico nem valores). */
+export interface FerramentaConsulta {
+  id: number
+  nome: string
+  categoria: string
+  status: StatusFerramenta
+  localizacao: string | null
+  codigo_identificacao: number | null
+}
+
 interface ListaFerramentasResponse {
-  data: Ferramenta[]
+  data: FerramentaConsulta[]
   meta: { page: number; limit: number; total: number; totalPages: number }
 }
 
@@ -40,7 +50,7 @@ export function useIniciarSessaoConsulta() {
 }
 
 /**
- * Mesma listagem de `/ferramentas`, exclusiva do papel `consulta`. Recebe o
+ * Mesma busca de `/ferramentas`, exclusiva do papel `consulta`, com só nome, categoria, status e localização. Recebe o
  * token da sessão do quiosque por parâmetro e o manda só nesta chamada
  * (`skipAuthHandler401`), em vez de setar o token global de `@/lib/api` —
  * assim uma sessão de almoxarife ativa na mesma aba não é sobrescrita nem

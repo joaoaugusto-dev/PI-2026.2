@@ -388,8 +388,8 @@ export function ConsultaPage() {
                 <IconeFerramenta nome={ferramenta.nome} className="size-12 shrink-0 bg-muted text-muted-foreground" />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <p className="truncate text-corpo font-semibold">{ferramenta.nome}</p>
-                  <p className="font-mono text-rotulo text-muted-foreground">
-                    {formatarPatrimonio(ferramenta.codigo_identificacao)}
+                  <p className="truncate font-mono text-rotulo text-muted-foreground">
+                    {formatarPatrimonio(ferramenta.codigo_identificacao)} · {ferramenta.categoria}
                     {ferramenta.localizacao ? ` · ${ferramenta.localizacao}` : ''}
                   </p>
                 </div>

@@ -156,6 +156,28 @@
       ]
     },
     {
+      "_id": "req_consulta_ferramentas",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/consulta/ferramentas (token de consulta, 200)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/consulta/ferramentas?status=disponivel&limit=20",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.tokenConsulta }}" }
+      ]
+    },
+    {
+      "_id": "req_consulta_ferramentas_token_manutencao",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/consulta/ferramentas (token da manutencao, 403)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/consulta/ferramentas",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
       "_id": "req_ferramentas_listar_perfil_consulta",
       "_type": "request",
       "parentId": "wrk_soufer_tools",

@@ -24,6 +24,7 @@ Lista rápida para o João revisar. Vale para as issues #150 (login por matrícu
 - `POST /v1/consulta/sessao` continua recebendo `{ "identificador": "0003" }`, agora com a **matrícula de 4 dígitos** (o crachá deixou de existir; só matrícula). Sem senha.
 - Matrícula fora do padrão: `400 VALIDATION_ERROR` (antes ia direto para a busca e dava 404). Matrícula sem colaborador ativo: `404 COLABORADOR_NOT_FOUND`.
 - **Novo:** limite de 30 tentativas por minuto por IP e de 5 falhas por minuto na mesma matrícula. Acima disso: `429 TOO_MANY_REQUESTS`. O front deve tratar o 429 com uma mensagem clara ("aguarde um minuto").
+- **Novo (API-16):** `GET /v1/consulta/ferramentas` devolve só `id`, `nome`, `categoria` (nome do grupo), `status`, `localizacao` e `codigo_identificacao`. Campos como `descricao`, `marca`, `modelo`, `grupo_id`, `setor_id`, `motivo_indisponivel` e `foto_url` não vêm mais nessa rota (o tipo `FerramentaConsulta` em `useConsulta.ts` já reflete isso).
 - **No front:** nos textos e placeholders, trocar "matrícula, crachá ou nome" por "matrícula ou nome" (ex.: `RetiradaPage.tsx`).
 
 ## 3. Nome do papel: `almoxarife` → `manutencao`

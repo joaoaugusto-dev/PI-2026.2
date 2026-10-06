@@ -16,7 +16,8 @@ Antes de começar qualquer issue sua (consulta, importação, auditoria, deploy,
 ### #60 — API-16, endpoint e sessão de consulta pública
 - [x] `POST /v1/consulta/sessao` já existe: recebe **só a matrícula** (campo `identificador`, 4 dígitos), valida contra `colaboradores` ativos e emite token `papel: 'consulta'` de 15 minutos.
 - [x] **Mudou em relação ao texto da issue:** não existe mais "código de crachá". Só matrícula.
-- [ ] **Falta (continua sendo sua):** `GET /v1/consulta/ferramentas` aceitando só o token de consulta (sem quem está com a ferramenta, histórico ou valores) e o teste de isolamento entre o token normal e o de consulta. Hoje só a rota `/sessao` existe.
+- [x] `GET /v1/consulta/ferramentas` aceita só o token de consulta e devolve apenas `id`, `nome`, `categoria`, `status`, `localizacao` e `codigo_identificacao` (nunca quem está com a ferramenta, histórico nem valores), com testes de isolamento entre o token da manutenção/admin e o de consulta nos dois sentidos (API-16).
+- [x] "Se sobrar tempo" da #60: cada consulta é registrada no log do Pino (`evento: consulta_ferramentas`, matrícula e filtros), sem tabela de negócio.
 
 ## 2. Impacto direto em outras issues suas
 

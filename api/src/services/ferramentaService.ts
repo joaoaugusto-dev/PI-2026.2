@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
 import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
@@ -23,6 +24,15 @@ export interface Ferramenta {
   foto_url: string | null;
   ativo: boolean;
   created_at: string;
+}
+
+export interface FerramentaConsulta {
+  id: number;
+  nome: string;
+  categoria: string;
+  status: 'disponivel' | 'em_uso' | 'indisponivel';
+  localizacao: string | null;
+  codigo_identificacao: number | null;
 }
 
 export interface ListarFerramentasParams {
@@ -50,68 +60,91 @@ function escaparCoringasLike(valor: string): string {
   return valor.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
-/**
- * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
- * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
- * nunca aparecem misturadas com ferramentas baixadas).
- */
-export async function listar({
-  offset,
-  limit,
-  q,
-  status,
-  grupoId,
-  sort,
-}: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
-  const condicoes = ['ativo = true'];
+// WHERE compartilhado por listar e listarParaConsulta (sempre só ferramentas ativas).
+function montarFiltro({ q, status, grupoId }: Pick<ListarFerramentasParams, 'q' | 'status' | 'grupoId'>) {
+  const condicoes = ['f.ativo = true'];
   const params: any[] = [];
 
   if (q) {
     params.push(`%${escaparCoringasLike(q)}%`);
     const buscas = [
-      `nome ILIKE $${params.length}`,
-      `descricao ILIKE $${params.length}`,
-      `marca ILIKE $${params.length}`,
-      `modelo ILIKE $${params.length}`,
+      `f.nome ILIKE $${params.length}`,
+      `f.descricao ILIKE $${params.length}`,
+      `f.marca ILIKE $${params.length}`,
+      `f.modelo ILIKE $${params.length}`,
     ];
     // "000053", "000053" ou "53": o código é busca por igualdade, ignorando zeros à esquerda
     const codigo = /^(?:sf)?0*(\d{1,4})$/i.exec(q.trim());
     if (codigo) {
       params.push(Number(codigo[1]));
-      buscas.push(`codigo_identificacao = $${params.length}`);
+      buscas.push(`f.codigo_identificacao = $${params.length}`);
     }
     condicoes.push(`(${buscas.join(' OR ')})`);
   }
 
   if (status) {
     params.push(status);
-    condicoes.push(`status = $${params.length}`);
+    condicoes.push(`f.status = $${params.length}`);
   }
 
   if (grupoId) {
     params.push(grupoId);
-    condicoes.push(`grupo_id = $${params.length}`);
+    condicoes.push(`f.grupo_id = $${params.length}`);
   }
 
-  const where = `WHERE ${condicoes.join(' AND ')}`;
+  return { where: `WHERE ${condicoes.join(' AND ')}`, params };
+}
+
+// COUNT, ordenação e paginação comuns às duas listagens; só o SELECT/JOIN muda.
+async function listarPaginado<T extends QueryResultRow>(
+  selectFrom: string,
+  { offset, limit, q, status, grupoId, sort }: ListarFerramentasParams
+): Promise<{ rows: T[]; total: number }> {
+  const { where, params } = montarFiltro({ q, status, grupoId });
   const ordenacao = COLUNAS_ORDENACAO[sort ?? 'nome'] ?? 'nome';
 
   const totalResult = await query<{ total: string }>(
-    `SELECT COUNT(*)::text AS total FROM ferramentas ${where}`,
+    `SELECT COUNT(*)::text AS total FROM ferramentas f ${where}`,
     params
   );
 
   params.push(limit, offset);
-  const rowsResult = await query<Ferramenta>(
-    `SELECT ${COLUNAS_FERRAMENTA}
-     FROM ferramentas
+  const rowsResult = await query<T>(
+    `${selectFrom}
      ${where}
-     ORDER BY ${ordenacao}, id
+     ORDER BY f.${ordenacao}, f.id
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );
 
   return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}
+
+/**
+ * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
+ * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
+ * nunca aparecem misturadas com ferramentas baixadas).
+ */
+export function listar(params: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
+  return listarPaginado<Ferramenta>(`SELECT ${COLUNAS_FERRAMENTA} FROM ferramentas f`, params);
+}
+
+/**
+ * Listagem do quiosque (GET /v1/consulta/ferramentas): mesma busca e filtros de
+ * `listar`, mas devolve só o que a consulta pública pode mostrar — nome,
+ * categoria, status e localização (mais id e código de patrimônio, que a tela
+ * usa para identificar a ferramenta). Projeção própria, e não "listar sem
+ * alguns campos": coluna nova em `ferramentas` não vaza para o quiosque por
+ * acidente. Nunca traz colaborador, histórico, motivo da indisponibilidade
+ * nem valores.
+ */
+export function listarParaConsulta(params: ListarFerramentasParams): Promise<{ rows: FerramentaConsulta[]; total: number }> {
+  return listarPaginado<FerramentaConsulta>(
+    `SELECT f.id, f.nome, g.nome AS categoria, f.status, f.localizacao, f.codigo_identificacao
+     FROM ferramentas f
+     JOIN grupos_ferramentas g ON g.id = f.grupo_id`,
+    params
+  );
 }
 
 export async function buscarPorId(id: number): Promise<Ferramenta> {
