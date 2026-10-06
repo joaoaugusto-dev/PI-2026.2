@@ -6,12 +6,16 @@ export function urlDaFoto(fotoUrl: string): string {
 }
 
 const LADO_MAXIMO = 1280
+const LIMITE_ORIGINAL = 4.5 * 1024 * 1024 // margem sob os 5 MB da API
 
 /**
- * Foto de celular passa fácil de 5 MB (limite da API): reduz para no máximo 1280 px no maior
+ * Foto de celular passa fácil de 5 MB (limite da API): acima de 4,5 MB reduz para no máximo 1280 px no maior
  * lado e regrava em JPEG. `createImageBitmap` já aplica a orientação EXIF (foto não sai deitada).
  */
 export async function comprimirImagem(arquivo: File): Promise<Blob> {
+  // a API já reduz e converte para webp: só recomprime aqui o que não cabe no limite de 5 MB
+  // (evita perda dupla em arquivo pequeno)
+  if (arquivo.size <= LIMITE_ORIGINAL && ['image/jpeg', 'image/png', 'image/webp'].includes(arquivo.type)) return arquivo
   const bitmap = await createImageBitmap(arquivo)
   const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
