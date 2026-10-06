@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
+import { logger } from '../middlewares/logger.js';
 import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
@@ -396,7 +397,9 @@ function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
 // o banco já foi atualizado e o pior caso é um arquivo sobrando.
 async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
   if (fotoUrl?.startsWith('/uploads/')) {
-    await fs.rm(path.join(uploadsDir, path.basename(fotoUrl)), { force: true }).catch(() => {});
+    await fs
+      .rm(path.join(uploadsDir, path.basename(fotoUrl)), { force: true })
+      .catch((erro) => logger.warn({ erro, fotoUrl }, 'não foi possível apagar o arquivo da foto (arquivo órfão)'));
   }
 }
 

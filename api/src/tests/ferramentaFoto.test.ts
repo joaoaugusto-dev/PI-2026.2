@@ -104,8 +104,7 @@ describe('processamento da foto', () => {
 
 describe('DELETE /v1/ferramentas/:id/foto e baixa', () => {
   let id: number;
-  const token2 = jwt.sign({ id: 1, papel: 'admin' }, env.jwt.secret, { expiresIn: '1h' });
-  const auth = { Authorization: `Bearer ${token2}` };
+  const auth = { Authorization: `Bearer ${token('admin')}` };
   const enviar = async () => {
     const r = await request(app).put(`/v1/ferramentas/${id}/foto`).set(auth).set('Content-Type', 'image/png').send(PNG);
     return path.join(pasta, path.basename(r.body.data.foto_url));
@@ -130,8 +129,9 @@ describe('DELETE /v1/ferramentas/:id/foto e baixa', () => {
     expect(fs.existsSync(arquivo)).toBe(false);
   });
 
-  it('401 sem token e 404 para ferramenta inexistente', async () => {
+  it('401 sem token, 403 para manutenção e 404 para ferramenta inexistente', async () => {
     expect((await request(app).delete(`/v1/ferramentas/${id}/foto`)).status).toBe(401);
+    expect((await request(app).delete(`/v1/ferramentas/${id}/foto`).set('Authorization', `Bearer ${token('manutencao')}`)).status).toBe(403);
     expect((await request(app).delete('/v1/ferramentas/2147483647/foto').set(auth)).status).toBe(404);
   });
 

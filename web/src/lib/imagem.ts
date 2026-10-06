@@ -20,6 +20,6 @@ export async function comprimirImagem(arquivo: File): Promise<Blob> {
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
   bitmap.close()
   return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Falha ao comprimir a imagem'))), 'image/jpeg', 0.82),
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Falha ao comprimir a imagem'))), 'image/jpeg', 0.92),
   )
 }

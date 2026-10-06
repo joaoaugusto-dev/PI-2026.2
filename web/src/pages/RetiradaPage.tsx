@@ -106,7 +106,8 @@ export function RetiradaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ferramenta?.id])
   useEffect(() => {
-    if (colaboradorEncontrado && /^\S*\d\S*$/.test(termoColaborador)) setFocus('atividade')
+    // só a matrícula exata: um valor parcial que já case com alguém não pode roubar o foco no meio da digitação
+    if (colaboradorEncontrado && colaboradorEncontrado.matricula === termoColaborador) setFocus('atividade')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colaboradorEncontrado?.id])
 

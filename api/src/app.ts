@@ -92,7 +92,7 @@ app.use(
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
   },
-  express.static(uploadsDir, { immutable: true, maxAge: '7d', index: false })
+  express.static(uploadsDir, { immutable: true, maxAge: '365d', index: false })
 );
 
 // Rotas da versão 1 (/v1)
