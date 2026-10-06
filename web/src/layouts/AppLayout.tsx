@@ -196,15 +196,17 @@ export function AppLayout() {
                   </Collapsible.Root>
                 )}
 
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === '/design-system'}
-                    className="h-(--control-h) px-3 text-corpo"
-                  >
-                    <NavLink to="/design-system">Design system</NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {import.meta.env.DEV && usuario?.papel === 'admin' && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === '/design-system'}
+                      className="h-(--control-h) px-3 text-corpo"
+                    >
+                      <NavLink to="/design-system">Design system</NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

@@ -4,9 +4,10 @@ import { BotaoImprimirCracha } from '@/components/cadastros/BotaoImprimirCracha'
 import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import type { Colaborador } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
+import { MATRICULA_CADASTRO_MENSAGEM, MATRICULA_CADASTRO_REGEX } from '@/lib/matricula'
 
 const schema = z.object({
-  matricula: z.string().regex(/^(?!0000)\d{4}$/, 'A matrícula tem 4 dígitos'),
+  matricula: z.string().regex(MATRICULA_CADASTRO_REGEX, MATRICULA_CADASTRO_MENSAGEM),
   nome: z.string().trim().min(1, 'Informe o nome').max(150, 'Máximo de 150 caracteres'),
   setorId: z.string().min(1, 'Selecione o setor'),
 })
@@ -33,7 +34,7 @@ export function ColaboradoresPage() {
         { cabecalho: 'Setor', render: (c) => nomeDoSetor(c.setor_id) },
       ]}
       campos={[
-        { name: 'matricula', label: 'Matrícula (4 dígitos)', inputMode: 'numeric', placeholder: '0000' },
+        { name: 'matricula', label: 'Matrícula (1 a 4 dígitos)', inputMode: 'numeric', placeholder: '0000' },
         { name: 'nome', label: 'Nome completo' },
         { name: 'setorId', label: 'Setor', opcoes: setores.map((s) => ({ value: String(s.id), label: s.nome })) },
       ]}

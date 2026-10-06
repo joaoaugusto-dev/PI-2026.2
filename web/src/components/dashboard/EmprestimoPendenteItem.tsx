@@ -11,7 +11,7 @@ export function EmprestimoPendenteItem({
   tomPrazo,
 }: {
   item: EmprestimoPendente
-  /** Texto à direita (ex.: "7d", "hoje", "em 2d"). */
+  /** Texto à direita (ex.: "7d", "Hoje", "Em 2d"). */
   prazo: string
   tomPrazo: string
 }) {

@@ -1,5 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,14 @@ const DURACAO_ICONE_VISIVEL_MS = 700
 const DURACAO_TINTA_SAI_MS = 800
 const DIGITACAO_MS_POR_LETRA = 30
 const PAUSA_APOS_DIGITAR_MS = 500
+
+function medirAreaConteudo(contida?: boolean) {
+  if (!contida || typeof document === 'undefined') return null
+  const r = document.querySelector('[data-slot="sidebar-inset"]')?.getBoundingClientRect()
+  if (!r) return null
+  const topo = Math.max(r.top, 0)
+  return { left: r.left, top: topo, width: r.width, height: Math.min(r.bottom, window.innerHeight) - topo }
+}
 
 /**
  * Tela cheia de sucesso (entrada no sistema, senha definida) e de "aguardando aprovação" — estilo tela de
@@ -25,13 +34,38 @@ export function TelaSucessoAnimada({
   aoSair,
   aoTerminarAnimacao,
   mensagem,
+  contida,
 }: {
   aoSair?: () => void
   /** Quando informado, a tela é só a animação: ao fim dela chama isto e não mostra o texto de "aguardando aprovação". */
   aoTerminarAnimacao?: () => void
   /** Frase digitada letra a letra sob o check (ex.: "Login realizado com sucesso"); a tinta espera ela terminar. */
   mensagem?: string
+  /** A tinta enche só a área de conteúdo do app (o `<main>` ao lado da sidebar), sem fundo próprio, em vez da tela toda. */
+  contida?: boolean
 }) {
+  // retângulo visível do <main> (fixo na viewport: rolagem da página não desloca o centro); remedido se a janela
+  // for redimensionada ou a sidebar abrir/fechar durante a animação
+  const [caixa, setCaixa] = useState(() => medirAreaConteudo(contida))
+  useEffect(() => {
+    if (!contida) return
+    const alvo = document.querySelector('[data-slot="sidebar-inset"]')
+    const remedir = () =>
+      setCaixa((atual) => {
+        const nova = medirAreaConteudo(contida)
+        // mesma caixa: devolve o objeto anterior para o React não re-renderizar à toa
+        const igual =
+          atual && nova && atual.left === nova.left && atual.top === nova.top && atual.width === nova.width && atual.height === nova.height
+        return igual ? atual : nova
+      })
+    window.addEventListener('resize', remedir)
+    const observador = alvo ? new ResizeObserver(remedir) : null
+    if (alvo) observador?.observe(alvo)
+    return () => {
+      window.removeEventListener('resize', remedir)
+      observador?.disconnect()
+    }
+  }, [contida])
   const [fase, setFase] = useState<'tinta-entra' | 'tinta-sai' | 'conteudo'>('tinta-entra')
   const [iconeVisivel, setIconeVisivel] = useState(false)
   const [digitado, setDigitado] = useState('')
@@ -74,13 +108,21 @@ export function TelaSucessoAnimada({
     if (fase === 'conteudo') aoTerminarAnimacao?.()
   }, [fase, aoTerminarAnimacao])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-background p-4">
+  // portal no <body>: dentro de uma tela animada (`animate-entrada` deixa `transform`), o `fixed` viraria relativo a ela e a tinta não cobriria a viewport
+  return createPortal(
+    <div
+      role="status"
+      className={cn(
+        'fixed z-50 flex items-center justify-center overflow-hidden',
+        caixa ? 'rounded-xl' : 'inset-0 bg-background p-4',
+      )}
+      style={caixa ?? undefined}
+    >
       {fase !== 'conteudo' && (
         <div
           aria-hidden
           className={cn(
-            'fixed left-1/2 top-1/2 size-[300vmax] rounded-full bg-foreground',
+            'absolute left-1/2 top-1/2 size-[300vmax] rounded-full bg-foreground',
             fase === 'tinta-sai' ? 'animate-tinta-sai' : 'animate-tinta-entra',
           )}
         />
@@ -120,6 +162,7 @@ export function TelaSucessoAnimada({
           )}
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }

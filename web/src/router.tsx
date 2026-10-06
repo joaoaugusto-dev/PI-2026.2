@@ -8,7 +8,6 @@ import { CategoriasPage } from '@/pages/CategoriasPage'
 import { ColaboradoresPage } from '@/pages/ColaboradoresPage'
 import { ConsultaPage } from '@/pages/ConsultaPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { DevolucaoPage } from '@/pages/DevolucaoPage'
 import { EmprestimosPage } from '@/pages/EmprestimosPage'
 import { ErroInesperadoPage } from '@/pages/ErroInesperadoPage'
@@ -79,7 +78,25 @@ export const router = createBrowserRouter([
               </RotaAdmin>
             ),
           },
-          { path: 'design-system', element: <DesignSystemPage /> },
+          // só em dev (import.meta.env.DEV) e para admin; em produção a rota não existe e cai no 404
+          ...(import.meta.env.DEV
+            ? [
+                {
+                  path: 'design-system',
+                  // import dinâmico dentro do ramo DEV: o build de produção elimina o ramo e a página sai do bundle
+                  lazy: async () => {
+                    const { DesignSystemPage } = await import('@/pages/DesignSystemPage')
+                    return {
+                      element: (
+                        <RotaAdmin>
+                          <DesignSystemPage />
+                        </RotaAdmin>
+                      ),
+                    }
+                  },
+                },
+              ]
+            : []),
           // 404 dentro do layout: quem está logado não perde a sidebar (deslogado cai no login)
           { path: '*', element: <NaoEncontradaPage /> },
         ],

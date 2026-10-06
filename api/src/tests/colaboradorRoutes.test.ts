@@ -118,6 +118,24 @@ describe('Rotas de Colaboradores (API-09)', () => {
       expect(res.body.error.details.map((c: { matricula: string }) => c.matricula).sort()).toEqual(['9310', '9311']);
     });
 
+    it('acha por trecho do nome mesmo em nome longo ("zeferino" perde na similaridade, ganha no contém)', async () => {
+      const res = await request(app)
+        .get('/v1/colaboradores/identificar?termo=zeferino')
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('COLABORADOR_AMBIGUO');
+      expect(res.body.error.details.map((c: { matricula: string }) => c.matricula).sort()).toEqual(['9310', '9311']);
+    });
+
+    it('termo com menos de 3 caracteres não entra pelo "contém" (não devolve candidatos arbitrários)', async () => {
+      const res = await request(app)
+        .get('/v1/colaboradores/identificar?termo=zz')
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(404);
+    });
+
     it('a matrícula resolve a ambiguidade', async () => {
       const res = await request(app)
         .get('/v1/colaboradores/identificar?termo=9311')

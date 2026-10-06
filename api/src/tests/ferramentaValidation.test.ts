@@ -359,5 +359,18 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.body.data.nome).toBe('Carlos Silva');
       expect(res.body.data.matricula).toBe('0123');
     });
+
+    it.each([['36', '0036'], ['5', '0005']])('completa matrícula curta com zeros à esquerda (%s -> %s)', async (entrada, esperada) => {
+      const res = await request(app).post('/test/colaboradores').send({ nome: 'Ana', matricula: entrada, setorId: 1 });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.matricula).toBe(esperada);
+    });
+
+    it.each(['0', '0000', '12345', 'ab'])('continua recusando matrícula inválida (%s)', async (entrada) => {
+      const res = await request(app).post('/test/colaboradores').send({ nome: 'Ana', matricula: entrada, setorId: 1 });
+
+      expect(res.status).toBe(400);
+    });
   });
 });

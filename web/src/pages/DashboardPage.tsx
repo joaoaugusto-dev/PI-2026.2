@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowUpRight, TriangleAlert } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { AtalhoAcao } from '@/components/dashboard/AtalhoAcao'
@@ -65,7 +65,7 @@ export function DashboardPage() {
           to="/devolucoes"
           titulo="Registrar devolução"
           descricao="Busca por código ou colaborador"
-          icone={ArrowLeftRight}
+          icone={ArrowDownLeft}
           variante="escuro"
         />
       </div>
@@ -78,7 +78,7 @@ export function DashboardPage() {
           total={data?.cobrar_hoje.total}
           itens={data?.cobrar_hoje.itens}
           renderItem={(item) => (
-            <EmprestimoPendenteItem key={item.id} item={item} prazo="hoje" tomPrazo="text-status-atraso" />
+            <EmprestimoPendenteItem key={item.id} item={item} prazo="Hoje" tomPrazo="text-status-atraso" />
           )}
           tom="text-status-atraso"
           vazio="Nenhuma devolução prevista para hoje."
@@ -114,7 +114,7 @@ export function DashboardPage() {
             <EmprestimoPendenteItem
               key={item.id}
               item={item}
-              prazo={`em ${item.dias}d`}
+              prazo={`Em ${item.dias}d`}
               tomPrazo="text-muted-foreground"
             />
           )}
