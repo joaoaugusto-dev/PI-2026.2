@@ -52,6 +52,10 @@ O modo quiosque da regra 8: o colaborador abre uma sessão curta só com a matr�
 2. No Insomnia: `POST /v1/consulta/sessao` com uma matrícula ativa, colocar o token em `tokenConsulta` e chamar `GET /v1/consulta/ferramentas` (200, só os 6 campos).
 3. Chamar a mesma rota com o token da manutenção (403) e `GET /v1/ferramentas` com o token de consulta (403).
 
+## Limitações conhecidas
+
+- A auditoria é só log (Pino): a retenção depende do CloudWatch, então não é evidência durável. Se a Soufer precisar disso como prova, será preciso uma tabela própria. O texto livre `q` é truncado em 100 caracteres antes de ir para o log.
+
 ## Se sobrar tempo (fora do escopo)
 
 - Auditoria da abertura de sessão do quiosque (hoje só a consulta de ferramentas é logada).

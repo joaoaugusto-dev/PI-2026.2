@@ -37,7 +37,7 @@ export class FerramentaController {
       const { rows, total } = await ferramentaService.listarParaConsulta({ offset, limit, q, status, grupoId, sort });
       // Auditoria simples (só log, sem tabela de negócio): quem consultou e com quais filtros.
       logger.info(
-        { evento: 'consulta_ferramentas', colaboradorId: req.usuario?.id, matricula: req.usuario?.matricula, q, status, grupoId, page, total },
+        { evento: 'consulta_ferramentas', colaboradorId: req.usuario?.id, matricula: req.usuario?.matricula, q: q?.slice(0, 100), status, grupoId, page, total },
         'Consulta pública de ferramentas'
       );
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);

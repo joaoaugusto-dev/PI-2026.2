@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
 import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
@@ -59,11 +60,7 @@ function escaparCoringasLike(valor: string): string {
   return valor.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
-/**
- * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
- * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
- * nunca aparecem misturadas com ferramentas baixadas).
- */
+// WHERE compartilhado por listar e listarParaConsulta (sempre só ferramentas ativas).
 function montarFiltro({ q, status, grupoId }: Pick<ListarFerramentasParams, 'q' | 'status' | 'grupoId'>) {
   const condicoes = ['f.ativo = true'];
   const params: any[] = [];
@@ -98,14 +95,11 @@ function montarFiltro({ q, status, grupoId }: Pick<ListarFerramentasParams, 'q' 
   return { where: `WHERE ${condicoes.join(' AND ')}`, params };
 }
 
-export async function listar({
-  offset,
-  limit,
-  q,
-  status,
-  grupoId,
-  sort,
-}: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
+// COUNT, ordenação e paginação comuns às duas listagens; só o SELECT/JOIN muda.
+async function listarPaginado<T extends QueryResultRow>(
+  selectFrom: string,
+  { offset, limit, q, status, grupoId, sort }: ListarFerramentasParams
+): Promise<{ rows: T[]; total: number }> {
   const { where, params } = montarFiltro({ q, status, grupoId });
   const ordenacao = COLUNAS_ORDENACAO[sort ?? 'nome'] ?? 'nome';
 
@@ -115,9 +109,8 @@ export async function listar({
   );
 
   params.push(limit, offset);
-  const rowsResult = await query<Ferramenta>(
-    `SELECT ${COLUNAS_FERRAMENTA}
-     FROM ferramentas f
+  const rowsResult = await query<T>(
+    `${selectFrom}
      ${where}
      ORDER BY f.${ordenacao}, f.id
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -125,6 +118,15 @@ export async function listar({
   );
 
   return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}
+
+/**
+ * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
+ * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
+ * nunca aparecem misturadas com ferramentas baixadas).
+ */
+export function listar(params: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
+  return listarPaginado<Ferramenta>(`SELECT ${COLUNAS_FERRAMENTA} FROM ferramentas f`, params);
 }
 
 /**
@@ -136,34 +138,13 @@ export async function listar({
  * acidente. Nunca traz colaborador, histórico, motivo da indisponibilidade
  * nem valores.
  */
-export async function listarParaConsulta({
-  offset,
-  limit,
-  q,
-  status,
-  grupoId,
-  sort,
-}: ListarFerramentasParams): Promise<{ rows: FerramentaConsulta[]; total: number }> {
-  const { where, params } = montarFiltro({ q, status, grupoId });
-  const ordenacao = COLUNAS_ORDENACAO[sort ?? 'nome'] ?? 'nome';
-
-  const totalResult = await query<{ total: string }>(
-    `SELECT COUNT(*)::text AS total FROM ferramentas f ${where}`,
-    params
-  );
-
-  params.push(limit, offset);
-  const rowsResult = await query<FerramentaConsulta>(
+export function listarParaConsulta(params: ListarFerramentasParams): Promise<{ rows: FerramentaConsulta[]; total: number }> {
+  return listarPaginado<FerramentaConsulta>(
     `SELECT f.id, f.nome, g.nome AS categoria, f.status, f.localizacao, f.codigo_identificacao
      FROM ferramentas f
-     JOIN grupos_ferramentas g ON g.id = f.grupo_id
-     ${where}
-     ORDER BY f.${ordenacao}, f.id
-     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+     JOIN grupos_ferramentas g ON g.id = f.grupo_id`,
     params
   );
-
-  return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
 }
 
 export async function buscarPorId(id: number): Promise<Ferramenta> {

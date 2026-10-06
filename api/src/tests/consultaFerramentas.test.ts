@@ -70,7 +70,9 @@ describe('GET /v1/consulta/ferramentas (API-16)', () => {
       `SELECT g.nome FROM ferramentas f JOIN grupos_ferramentas g ON g.id = f.grupo_id
        WHERE f.ativo = true AND f.status = 'disponivel' ORDER BY f.nome, f.id LIMIT 1`
     );
-    if (rows.length === 0) return; // banco de teste sem ferramenta disponível: nada a comparar
+    if (rows.length === 0) {
+      throw new Error('Nenhuma ferramenta disponível no banco de teste — rode o seed (npm run db:seed) antes de rodar os testes.');
+    }
 
     const res = await request(app)
       .get('/v1/consulta/ferramentas?status=disponivel&limit=1')
