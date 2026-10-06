@@ -142,19 +142,20 @@ describe('GET /v1/consulta/ferramentas (API-16)', () => {
 
   it('registra no log quem consultou e com quais filtros, sem gravar em tabela de negócio', async () => {
     const info = vi.spyOn(logger, 'info');
-
-    await request(app).get('/v1/consulta/ferramentas?q=chave&status=disponivel').set('Authorization', `Bearer ${consultaToken}`);
-
-    expect(info).toHaveBeenCalledWith(
-      expect.objectContaining({
-        evento: 'consulta_ferramentas',
-        colaboradorId: 0,
-        matricula: '9999',
-        q: 'chave',
-        status: 'disponivel',
-      }),
-      'Consulta pública de ferramentas'
-    );
-    info.mockRestore();
+    try {
+      await request(app).get('/v1/consulta/ferramentas?q=chave&status=disponivel').set('Authorization', `Bearer ${consultaToken}`);
+      expect(info).toHaveBeenCalledWith(
+        expect.objectContaining({
+          evento: 'consulta_ferramentas',
+          colaboradorId: 0,
+          matricula: '9999',
+          q: 'chave',
+          status: 'disponivel',
+        }),
+        'Consulta pública de ferramentas'
+      );
+    } finally {
+      info.mockRestore();
+    }
   });
 });
