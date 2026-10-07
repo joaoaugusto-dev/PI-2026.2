@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Search, TriangleAlert, Wrench } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { Paginacao } from '@/components/Paginacao'
 import { ChipFiltro } from '@/components/ferramentas/ChipFiltro'
@@ -37,7 +37,12 @@ export function FerramentasPage() {
   const navigate = useNavigate()
   const { usuario } = useAuth()
   const [busca, setBusca] = useState('')
-  const [status, setStatus] = useState<StatusFerramenta | 'todas'>('todas')
+  const [params] = useSearchParams()
+  const statusInicial = params.get('status')
+  // ponytail: filtro lido só na montagem (vindo dos KPIs do dashboard), não sincronizado de volta na URL
+  const [status, setStatus] = useState<StatusFerramenta | 'todas'>(
+    statusInicial === 'disponivel' || statusInicial === 'em_uso' || statusInicial === 'indisponivel' ? statusInicial : 'todas',
+  )
   const [grupoId, setGrupoId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const buscaDebounced = useBuscaComDebounce(busca)

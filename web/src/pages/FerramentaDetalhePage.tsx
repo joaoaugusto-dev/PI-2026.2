@@ -13,7 +13,7 @@ import { useCategorias } from '@/hooks/useCategorias'
 import { formatarPatrimonio, statusParaBadge, useFerramenta } from '@/hooks/useFerramentas'
 import { useHistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
-import { dataBR, rotuloCondicao } from '@/lib/formatar'
+import { dataBR, dataHoraBR, rotuloCondicao } from '@/lib/formatar'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
@@ -117,7 +117,7 @@ export function FerramentaDetalhePage() {
               <Campo rotulo="Modelo">{ferramenta.modelo}</Campo>
               <Campo rotulo="Setor">{setor}</Campo>
               <Campo rotulo="Localização">{ferramenta.localizacao}</Campo>
-              <Campo rotulo="Cadastrada em">{dataBR(ferramenta.created_at)}</Campo>
+              <Campo rotulo="Cadastrada em">{dataHoraBR(ferramenta.created_at)}</Campo>
               <div className="sm:col-span-2 lg:col-span-3">
                 <Campo rotulo="Descrição">{ferramenta.descricao}</Campo>
               </div>
@@ -144,7 +144,7 @@ export function FerramentaDetalhePage() {
             )}
             <p className="text-rotulo text-muted-foreground">
               {ferramenta.etiqueta_impressa_em
-                ? `Impressa em ${dataBR(ferramenta.etiqueta_impressa_em)}`
+                ? `Impressa em ${dataHoraBR(ferramenta.etiqueta_impressa_em)}`
                 : 'Ainda não impressa'}
             </p>
             {podeImprimirEtiqueta && <BotaoImprimirEtiqueta ferramenta={ferramenta} />}
@@ -183,9 +183,9 @@ export function FerramentaDetalhePage() {
                       <p className="text-rotulo text-muted-foreground">{e.colaborador_matricula}</p>
                     </TableCell>
                     <TableCell>{e.setor_nome}</TableCell>
-                    <TableCell>{dataBR(e.data_retirada)}</TableCell>
+                    <TableCell>{dataHoraBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
-                    <TableCell>{dataBR(e.data_devolucao)}</TableCell>
+                    <TableCell>{dataHoraBR(e.data_devolucao)}</TableCell>
                     <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
@@ -210,7 +210,7 @@ export function FerramentaDetalhePage() {
                 <div className="flex flex-col items-end gap-0.5 text-right">
                   <span className="text-corpo font-medium">{STATUS_OCORRENCIA[o.status] ?? o.status}</span>
                   <span className="text-rotulo text-muted-foreground">
-                    {dataBR(o.created_at)} · custo estimado {moeda(o.custo_estimado)}
+                    {dataHoraBR(o.created_at)} · custo estimado {moeda(o.custo_estimado)}
                   </span>
                 </div>
               </div>

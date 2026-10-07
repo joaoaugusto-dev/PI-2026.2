@@ -17,13 +17,13 @@ const ETAPA: Record<string, string> = {
   cobrada: 'Cobrada do colaborador',
 }
 
-const KPIS: { chave: keyof NonNullable<ReturnType<typeof useDashboard>['data']>['kpis']; label: string; tom?: TomKpi }[] = [
-  { chave: 'cadastradas', label: 'Cadastradas' },
-  { chave: 'disponiveis', label: 'Disponíveis', tom: 'disponivel' },
-  { chave: 'em_uso', label: 'Em uso' },
-  { chave: 'indisponiveis', label: 'Indisponíveis', tom: 'indisponivel' },
-  { chave: 'atrasadas', label: 'Atrasadas', tom: 'atraso' },
-  { chave: 'ocorrencias', label: 'Ocorrências', tom: 'indisponivel' },
+const KPIS: { chave: keyof NonNullable<ReturnType<typeof useDashboard>['data']>['kpis']; label: string; tom?: TomKpi; to: string }[] = [
+  { to: '/ferramentas', chave: 'cadastradas', label: 'Cadastradas' },
+  { to: '/ferramentas?status=disponivel', chave: 'disponiveis', label: 'Disponíveis', tom: 'disponivel' },
+  { to: '/ferramentas?status=em_uso', chave: 'em_uso', label: 'Em uso' },
+  { to: '/ferramentas?status=indisponivel', chave: 'indisponiveis', label: 'Indisponíveis', tom: 'indisponivel' },
+  { to: '/emprestimos?situacao=atrasado', chave: 'atrasadas', label: 'Atrasadas', tom: 'atraso' },
+  { to: '/indisponiveis', chave: 'ocorrencias', label: 'Ocorrências', tom: 'indisponivel' },
 ]
 
 export function DashboardPage() {
@@ -50,7 +50,7 @@ export function DashboardPage() {
                 <Skeleton className="h-9 w-14" />
               </Card>
             ))
-          : data && KPIS.map((k) => <KpiCard key={k.chave} label={k.label} valor={data.kpis[k.chave]} tom={k.tom} />)}
+          : data && KPIS.map((k) => <KpiCard key={k.chave} label={k.label} valor={data.kpis[k.chave]} tom={k.tom} to={k.to} />)}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">

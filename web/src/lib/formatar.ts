@@ -15,6 +15,13 @@ export function dataBR(valor: string | null | undefined) {
   return new Date(valor).toLocaleDateString('pt-BR', { timeZone: FUSO })
 }
 
+/** Data e hora (`dd/mm/aaaa HH:mm`) no fuso de Brasília; texto só-data fica sem hora. */
+export function dataHoraBR(valor: string | null | undefined) {
+  if (!valor) return '—'
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return dataBR(valor)
+  return new Date(valor).toLocaleString('pt-BR', { timeZone: FUSO, dateStyle: 'short', timeStyle: 'short' }).replace(',', '')
+}
+
 const CONDICAO: Record<string, string> = { ok: 'OK', avaria: 'Avaria', perda: 'Perda' }
 
 /** `avaria` -> `Avaria`; valor desconhecido vira texto legível (`em_reparo` -> `Em reparo`). */

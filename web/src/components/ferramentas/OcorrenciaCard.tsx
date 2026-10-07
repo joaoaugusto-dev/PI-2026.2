@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
 import { useAvancarTratativa, type Colaborador, type Ocorrencia } from '@/hooks/useOcorrencias'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
-import { dataBR } from '@/lib/formatar'
+import { dataHoraBR } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { cn } from '@/lib/utils'
 
@@ -102,7 +102,7 @@ export function OcorrenciaCard({
                 [
                   ['Responsável', carregandoDetalhe ? null : (colaborador?.nome ?? '—')],
                   ['Matrícula', carregandoDetalhe ? null : (colaborador?.matricula ?? '—')],
-                  ['Data', carregandoDetalhe ? null : ocorrencia ? dataBR(ocorrencia.created_at) : '—'],
+                  ['Data', carregandoDetalhe ? null : ocorrencia ? dataHoraBR(ocorrencia.created_at) : '—'],
                   ['Custo estimado', carregandoDetalhe ? null : formatarMoeda(ocorrencia?.custo_estimado ?? null)],
                 ] as const
               ).map(([label, valor]) => (
