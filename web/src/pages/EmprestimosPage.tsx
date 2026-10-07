@@ -95,6 +95,12 @@ export function EmprestimosPage() {
     )
   const [setorId, setSetorId] = useState('')
   const [page, setPage] = useState(1)
+  // voltar/avançar pode trocar a situação sem passar pelo select: volta para a primeira página
+  const [situacaoVista, setSituacaoVista] = useState(situacao)
+  if (situacaoVista !== situacao) {
+    setSituacaoVista(situacao)
+    setPage(1)
+  }
   const [exportando, setExportando] = useState(false)
   const exportacao = useRef<AbortController | null>(null)
 

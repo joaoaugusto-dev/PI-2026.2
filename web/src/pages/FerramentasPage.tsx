@@ -53,6 +53,12 @@ export function FerramentasPage() {
     )
   const [grupoId, setGrupoId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
+  // voltar/avançar pode trocar o filtro sem passar pelo chip: volta para a primeira página
+  const [statusVisto, setStatusVisto] = useState(status)
+  if (statusVisto !== status) {
+    setStatusVisto(status)
+    setPage(1)
+  }
   const buscaDebounced = useBuscaComDebounce(busca)
 
   const { data: categorias } = useCategorias()
