@@ -55,11 +55,21 @@ export function lerCsv(arquivo: Buffer): { cabecalho: string[]; linhas: LinhaCsv
 
   return {
     cabecalho: cabecalho.record,
-    linhas: corpo.map((r) => ({ numero: r.info.lines, celulas: r.record })),
+    linhas: corpo.map((r) => ({ numero: r.info.lines, celulas: r.record.map(desfazerNeutralizacao) })),
   };
 }
 
 const NUMERO = /^[-+]?\d+([.,]\d+)?$/;
+
+/**
+ * Inverso exato de neutralizarFormula: um arquivo exportado pela API e
+ * reimportado não grava o `'` de proteção como parte do nome. Só tira o `'`
+ * quando o resto é algo que a exportação teria protegido.
+ */
+function desfazerNeutralizacao(celula: string): string {
+  const resto = celula.slice(1);
+  return celula.startsWith("'") && neutralizarFormula(resto) === celula ? resto : celula;
+}
 
 /**
  * Injeção de fórmula (mesma regra de neutralizarFormula no front): no Excel,

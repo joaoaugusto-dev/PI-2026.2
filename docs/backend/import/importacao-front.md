@@ -94,6 +94,14 @@ interface RelatorioImportacao {
   precisa somar nada.
 - **A resposta é `200` mesmo com linhas rejeitadas.** Rejeição de linha não é
   erro HTTP: o resultado de cada linha está no relatório.
+- **Os motivos repetem o que veio na planilha**, por exemplo
+  `Categoria "<texto da célula>" não cadastrada`. Renderize sempre como texto
+  (`{motivo}` no JSX), **nunca** com `dangerouslySetInnerHTML`: o conteúdo vem do
+  arquivo do usuário.
+- **Unidades idênticas de ferramenta viram `ignoradas`.** Três `MARTELO` sem
+  marca nem modelo resultam em 1 aceita e 2 `Repetida no arquivo`. Vale um aviso
+  na tela de resultado: unidades iguais precisam ser diferenciadas na planilha
+  (pelo modelo, por exemplo) ou cadastradas pela tela de ferramentas.
 
 ### Reaproveitando a tela de resultado atual
 
@@ -156,6 +164,7 @@ importar o arquivo')` e `avisarErro`, como no resto do sistema.
 |---|---|---|
 | `400` | Arquivo vazio, só cabeçalho, mais de 5000 linhas, CSV ilegível | `O arquivo tem 6200 linhas; o limite é 5000 por importação. Divida em ondas.` |
 | `400` | Faltou uma coluna obrigatória no cabeçalho | `Coluna(s) obrigatória(s) ausente(s) no cabeçalho: categoria` |
+| `400` | A mesma coluna duas vezes (inclusive `categoria` e `grupo` juntas) | `Coluna repetida no cabeçalho: categoria` |
 | `400` | Corpo vazio ou sem `Content-Type: text/csv` | `Envie o arquivo CSV no corpo da requisição (Content-Type: text/csv)` |
 | `401` | Token expirado | (o interceptor já desloga) |
 | `403` | Perfil sem permissão (manutenção importando `categorias` ou `setores`) | `Perfil 'manutencao' não possui permissão…` |

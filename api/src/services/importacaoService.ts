@@ -224,6 +224,14 @@ export async function importar(recurso: RecursoImportavel, arquivo: Buffer, usua
   });
   const conhecida = (coluna: string) => definicao.colunas.includes(coluna);
 
+  // "categoria" e "grupo" no mesmo arquivo viram a mesma coluna: a segunda sobrescreveria a primeira em silêncio
+  const repetidas = colunas.filter((c, i) => conhecida(c) && colunas.indexOf(c) !== i);
+  if (repetidas.length) {
+    throw new ValidationError(`Coluna repetida no cabeçalho: ${[...new Set(repetidas)].join(', ')}`, [
+      { field: 'cabecalho', message: 'Cada coluna (ou apelido dela, como grupo/categoria) só pode aparecer uma vez' },
+    ]);
+  }
+
   const faltando = definicao.obrigatorias.filter((c) => !colunas.includes(c));
   if (faltando.length) {
     throw new ValidationError(`Coluna(s) obrigatória(s) ausente(s) no cabeçalho: ${faltando.join(', ')}`, [

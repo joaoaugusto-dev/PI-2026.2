@@ -205,7 +205,8 @@ Nesses casos nenhuma linha é processada, e a mensagem em `error.message` explic
 o motivo:
 
 - `400`: recurso que não existe na URL; arquivo vazio ou só com o cabeçalho;
-  cabeçalho sem uma coluna obrigatória; mais de 5000 linhas; corpo enviado sem o
+  cabeçalho sem uma coluna obrigatória; a mesma coluna duas vezes (inclusive
+  `categoria` e `grupo` juntas); mais de 5000 linhas; corpo enviado sem o
   `Content-Type: text/csv` (por exemplo, como formulário).
 - `403`: o seu perfil não pode importar esse recurso (por exemplo, a manutenção
   importando categorias).
@@ -234,6 +235,12 @@ Como o sistema reconhece um registro que já existe:
 A mesma combinação repetida dentro do próprio arquivo também é ignorada, com o
 motivo `Repetida no arquivo (mesma da linha N)`.
 
+**Atenção às unidades iguais.** Três linhas `MARTELO` sem marca nem modelo são,
+para o sistema, a mesma ferramenta: a primeira entra e as outras duas voltam como
+`Repetida no arquivo`. Para cadastrar várias unidades idênticas, diferencie as
+linhas (por exemplo, no modelo) ou cadastre as demais pela tela de ferramentas
+(ver a seção 9).
+
 ## 8. Exportando
 
 A exportação devolve um `.csv` pronto para abrir no Excel (com acentos e
@@ -248,11 +255,14 @@ O arquivo é salvo como `ferramentas-AAAA-MM-DD.csv`. Troque `ferramentas` por
 `colaboradores`, `categorias`, `setores` ou `emprestimos`. Pelo Swagger, use
 **Exportações → GET /exportacoes/{recurso}** e o link "Download file" da resposta.
 
-- **Cadastros** saem só com os registros ativos e **com o mesmo cabeçalho do
-  modelo de importação**. Dá para exportar, acrescentar linhas novas no Excel e
-  importar o arquivo inteiro de volta: o que já existia volta como `ignoradas` e
-  só o que é novo entra. Em ferramentas, as colunas `codigo` e `status` são só
-  informativas e são ignoradas na volta.
+- **Cadastros** saem só com os registros ativos e **com as colunas do modelo de
+  importação**, menos o `valor` das ferramentas (ver a seção 9). Dá para
+  exportar, acrescentar linhas novas no Excel e importar o arquivo inteiro de
+  volta: o que já existia volta como `ignoradas` e só o que é novo entra. Em
+  ferramentas, as colunas `codigo` e `status` são só informativas e são
+  ignoradas na volta.
+- **Células que começam com `=`, `+`, `-` ou `@`** saem com um `'` na frente,
+  para o Excel não executar como fórmula. Na reimportação, esse `'` é removido.
 - **Empréstimos** saem com as mesmas colunas do botão "Exportar CSV" da tela de
   histórico e aceitam os mesmos filtros da listagem:
 

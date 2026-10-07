@@ -143,6 +143,10 @@ describe('POST /v1/importacoes/ferramentas', () => {
     expect((await importar('\n\n')).body.error.message).toBe('O arquivo CSV está vazio');
     expect((await importar('nome;categoria\n')).body.error.message).toMatch(/nenhuma linha além do cabeçalho/);
 
+    const repetida = await importar(`nome;categoria;Grupo\n${PREFIXO}x;${GRUPO};${GRUPO}`);
+    expect(repetida.status).toBe(400);
+    expect(repetida.body.error.message).toBe('Coluna repetida no cabeçalho: categoria');
+
     const semCategoria = await importar(`nome;marca\n${PREFIXO}x;y`);
     expect(semCategoria.status).toBe(400);
     expect(semCategoria.body.error.message).toMatch(/ausente\(s\) no cabeçalho: categoria/);

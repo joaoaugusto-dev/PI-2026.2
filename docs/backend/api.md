@@ -260,7 +260,8 @@ Colunas de cada recurso (\* = obrigatória):
 
 Regras comuns a todos os recursos:
 
-- **Cabeçalho:** não diferencia maiúsculas nem acentos (`Localização` vale `localizacao`).
+- **Cabeçalho:** não diferencia maiúsculas nem acentos (`Localização` vale `localizacao`). A mesma coluna duas vezes, inclusive por apelido (`categoria` e `grupo`), devolve `400`, em vez de uma sobrescrever a outra.
+- **Proteção contra fórmula:** um `'` inicial que a exportação acrescentou (célula começando com `=`, `+`, `-` ou `@`) é removido. Assim, reimportar um arquivo exportado não grava o `'` no nome.
 - **Colunas desconhecidas:** são ignoradas e listadas em `colunas_ignoradas`.
 - **Espaços:** em todo campo, os das pontas são removidos e os repetidos viram um só.
 - **Nomes de categoria e setor:** comparados sem diferenciar maiúsculas.
@@ -299,7 +300,7 @@ Resposta `200`:
 
 | Status | Código | Quando |
 |---|---|---|
-| 400 | `VALIDATION_ERROR` | Recurso desconhecido; sem corpo ou com `Content-Type` diferente dos aceitos; CSV ilegível ou vazio; só cabeçalho; cabeçalho sem as colunas obrigatórias; mais de 5000 linhas. |
+| 400 | `VALIDATION_ERROR` | Recurso desconhecido; sem corpo ou com `Content-Type` diferente dos aceitos; CSV ilegível ou vazio; só cabeçalho; cabeçalho sem as colunas obrigatórias ou com coluna repetida; mais de 5000 linhas. |
 | 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
 | 403 | `ACCESS_DENIED` | Perfil sem permissão para o recurso (`consulta`; ou `manutencao` em `categorias`/`setores`). |
 | 413 | `PAYLOAD_TOO_LARGE` | Arquivo maior que 2 MB. |
@@ -316,7 +317,8 @@ Devolve um arquivo para download (`<recurso>-AAAA-MM-DD.csv`, com a data de Bras
 
 O formato é o mesmo do `baixarCsv` do front, para o Excel em português abrir direto: UTF-8 com BOM, separador `;`, todas as células entre aspas. Células que o Excel trataria como fórmula (começando com `=`, `+`, `-` ou `@`) ganham um `'` na frente, contra injeção de fórmula.
 
-- **Cadastros** (`ferramentas`, `colaboradores`, `categorias`, `setores`): só os registros ativos, com **o mesmo cabeçalho do modelo de importação**. O arquivo exportado pode ser editado e reenviado em `POST /v1/importacoes/:recurso`: o que já existe volta como `ignoradas` e só as linhas novas entram. Em `ferramentas`, as colunas a mais (`codigo` e `status`) são ignoradas na volta. `valor_aquisicao` não é exportado, porque a listagem de ferramentas também não o expõe.
+- **Cadastros** (`ferramentas`, `colaboradores`, `categorias`, `setores`): só os registros ativos, com **as colunas do modelo de importação**. A exceção é `valor` em `ferramentas`, que não é exportado porque a listagem de ferramentas também não expõe `valor_aquisicao` (incluir depende de decisão da equipe). Em `ferramentas` saem também `codigo` e `status`, que são ignoradas se o arquivo voltar pela importação.
+- **Exportar → editar → reimportar** serve para **acrescentar registros novos**: o que já existe volta como `ignoradas`. Alterar um registro existente pela planilha não tem efeito; edição é pela rota de cadastro.
 - **`emprestimos`:** as mesmas colunas e o mesmo formato do "Exportar CSV" da tela de histórico. Aceita os mesmos filtros de `GET /v1/emprestimos` (`q`, `situacao`, `setorId`), e filtro inválido devolve `400`. Sai numa consulta só, sem paginação, até 50 mil linhas. Acima disso, o arquivo é cortado e ganha uma linha final avisando.
 
 ## Resposta de sucesso

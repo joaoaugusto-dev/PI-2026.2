@@ -155,6 +155,18 @@ describe('GET /v1/exportacoes/:recurso', () => {
     expect(minha).toMatch(/"Disponível"$/);
   });
 
+  it('reimportar a exportação não grava o apóstrofo de proteção contra fórmula', async () => {
+    const exportado = await baixar('/exportacoes/ferramentas');
+    const res = await importar('ferramentas', exportado.body);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.colunas_ignoradas).toEqual(['codigo', 'status']);
+    const minha = res.body.data.ignoradas.find((i: any) => i.dados.nome?.startsWith(PREFIXO));
+    // ignorada porque já existe: a chave bateu com a marca original, sem o '
+    expect(minha.dados.marca).toBe('=HYPERLINK("x")');
+    expect(minha.motivo).toMatch(/^Já cadastrada/);
+  });
+
   it('o arquivo exportado volta pela importação sem duplicar nada', async () => {
     const exportado = await baixar('/exportacoes/setores');
     const res = await importar('setores', exportado.body);

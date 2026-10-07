@@ -40,9 +40,12 @@ Authorization: Bearer <token>
 | `categorias` | `nome` | nenhum |
 | `setores` | `nome` | nenhum |
 
-- **Cadastros** saem só com os registros ativos e **com o mesmo cabeçalho do
-  modelo de importação**. O usuário pode exportar, acrescentar linhas no Excel e
-  importar o mesmo arquivo de volta: o que já existia volta como `ignoradas`.
+- **Cadastros** saem só com os registros ativos e **com as colunas do modelo de
+  importação**, menos o `valor` das ferramentas, que a listagem também não
+  expõe. O usuário pode exportar, acrescentar linhas no Excel e importar o mesmo
+  arquivo de volta: o que já existia volta como `ignoradas`. Isso serve para
+  **incluir** registros, não para editar: mudar uma linha existente na planilha
+  não altera nada no banco. Não ofereça isso na tela como "editar em massa".
 - **Empréstimos** saem até 50 mil linhas. Acima disso, a última linha do arquivo
   avisa que ele foi cortado. Não há cabeçalho nem campo na resposta indicando
   isso, porque o aviso está dentro do próprio arquivo, como no `exportarCsv` de

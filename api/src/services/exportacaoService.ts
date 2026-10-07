@@ -4,15 +4,38 @@ import { filtroEmprestimos, FiltrosEmprestimos } from './emprestimoService.js';
 import type { RecursoExportavel } from '../validators/exportacaoValidator.js';
 
 // Histórico de empréstimos cresce sem limite; acima disso o arquivo é cortado
-// e ganha uma linha final avisando, para ninguém tratá-lo como completo.
+// e ganha uma linha final avisando, para ninguém tratá-lo como completo. O
+// arquivo é montado em memória: se o histórico passar muito disso, o próximo
+// passo é streaming (pg-cursor) direto para a resposta.
 export const MAX_LINHAS_EXPORTACAO = 50000;
 
-const FUSO = 'America/Sao_Paulo';
+// Partes numéricas no fuso de Brasília, montadas à mão: não depende da
+// pontuação que cada versão do ICU põe entre data e hora em toLocaleString.
+const partesBR = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Sao_Paulo',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
 
-/** Mesmo formato da tela (lib/formatar.ts no front): no fuso de Brasília, "—" quando vazio. */
-const dataBR = (d: Date | null) => (d ? d.toLocaleDateString('pt-BR', { timeZone: FUSO }) : '—');
-const dataHoraBR = (d: Date | null) =>
-  d ? d.toLocaleString('pt-BR', { timeZone: FUSO, dateStyle: 'short', timeStyle: 'short' }).replace(',', '') : '—';
+function partes(d: Date): Record<string, string> {
+  return Object.fromEntries(partesBR.formatToParts(d).map((p) => [p.type, p.value]));
+}
+
+/** Mesmo formato da tela (lib/formatar.ts no front): dd/mm/aaaa [HH:mm] em Brasília, "—" quando vazio. */
+const dataBR = (d: Date | null) => {
+  if (!d) return '—';
+  const p = partes(d);
+  return `${p.day}/${p.month}/${p.year}`;
+};
+const dataHoraBR = (d: Date | null) => {
+  if (!d) return '—';
+  const p = partes(d);
+  return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`;
+};
 /** Mesmo formato de formatarPatrimonio no front. */
 const patrimonio = (codigo: number | null) => (codigo ? String(codigo).padStart(6, '0') : '—');
 
