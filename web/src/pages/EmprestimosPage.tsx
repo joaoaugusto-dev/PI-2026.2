@@ -79,12 +79,11 @@ export function EmprestimosPage() {
   const { data: setores } = useSetores()
   const [busca, setBusca] = useState('')
   const [q, setQ] = useState('')
-  const [params] = useSearchParams()
-  const situacaoInicial = params.get('situacao')
-  // ponytail: lido só na montagem (vindo do KPI "Atrasadas" do dashboard)
-  const [situacao, setSituacao] = useState(
-    situacaoInicial === 'em_aberto' || situacaoInicial === 'atrasado' || situacaoInicial === 'devolvido' ? situacaoInicial : '',
-  )
+  // a situação vive na URL (link do KPI "Atrasadas", voltar/avançar e compartilhamento)
+  const [params, setParams] = useSearchParams()
+  const situacaoUrl = params.get('situacao') ?? ''
+  const situacao = situacaoUrl in ROTULO_SITUACAO ? situacaoUrl : ''
+  const setSituacao = (v: string) => setParams(v ? { situacao: v } : {}, { replace: true })
   const [setorId, setSetorId] = useState('')
   const [page, setPage] = useState(1)
   const [exportando, setExportando] = useState(false)

@@ -37,12 +37,11 @@ export function FerramentasPage() {
   const navigate = useNavigate()
   const { usuario } = useAuth()
   const [busca, setBusca] = useState('')
-  const [params] = useSearchParams()
-  const statusInicial = params.get('status')
-  // ponytail: filtro lido só na montagem (vindo dos KPIs do dashboard), não sincronizado de volta na URL
-  const [status, setStatus] = useState<StatusFerramenta | 'todas'>(
-    statusInicial === 'disponivel' || statusInicial === 'em_uso' || statusInicial === 'indisponivel' ? statusInicial : 'todas',
-  )
+  // o filtro vive na URL: o link do dashboard, voltar/avançar e o compartilhamento refletem o mesmo estado
+  const [params, setParams] = useSearchParams()
+  const statusUrl = STATUS_FILTROS.find((i) => i.valor === params.get('status'))
+  const status = statusUrl?.valor ?? 'todas'
+  const setStatus = (v: StatusFerramenta | 'todas') => setParams(v === 'todas' ? {} : { status: v }, { replace: true })
   const [grupoId, setGrupoId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const buscaDebounced = useBuscaComDebounce(busca)
