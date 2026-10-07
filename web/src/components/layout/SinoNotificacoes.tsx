@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/Badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover'
 import { useMarcarLida, useMarcarTodasLidas, useNotificacoes, type Notificacao } from '@/hooks/useNotificacoes'
+import { devoAvisarResumo, textoResumo } from '@/lib/resumo-diario'
 import { cn } from '@/lib/utils'
 
 // cada tipo tem cor, ícone e rótulo próprios para a lista não virar uma massa uniforme
@@ -39,6 +40,7 @@ const TIPOS: Record<Notificacao['tipo'], { rotulo: string; Icone: LucideIcon; bo
   },
 }
 
+const ICONE_AVISO = '/icon-192.png' // logo mostrado nos avisos do navegador
 const ATRASO_SAIDA_MS = 350 // tempo da animação de saída antes de tirar o item da lista
 
 function haQuantoTempo(iso: string) {
@@ -80,6 +82,9 @@ export function SinoNotificacoes() {
   const itens = data?.data ?? []
   const total = data?.meta.total ?? 0
 
+  // o navegador só deixa pedir permissão após um gesto do usuário, então o pedido é um botão
+  const [permissao, setPermissao] = useState(() => (typeof Notification === 'undefined' ? 'unsupported' : Notification.permission))
+
   // ids já vistos: a primeira carga só inicializa, as seguintes avisam sobre o que é novo
   const vistas = useRef<Set<number> | null>(null)
   const [tocando, setTocando] = useState(false)
@@ -90,6 +95,10 @@ export function SinoNotificacoes() {
     vistas.current = new Set(data.data.map((n) => n.id))
     if (primeiraCarga || novas.length === 0) return
     setTocando(true)
+    // notificação do sistema (só com permissão): avisa mesmo com a aba em segundo plano
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
+      for (const n of novas.slice(0, 3)) new Notification(n.titulo, { body: n.mensagem, icon: ICONE_AVISO, tag: `notificacao-${n.id}` })
+    }
     setTimeout(() => setTocando(false), 1000)
     for (const n of novas.slice(0, 3)) {
       toast.custom(
@@ -113,6 +122,37 @@ export function SinoNotificacoes() {
     }
     if (novas.length > 3) toast.info(`e mais ${novas.length - 3} notificações novas`)
   }, [data])
+
+  // resumo diário do navegador: dias úteis, a partir das 08:30, uma vez por dia (aba aberta;
+  // se a aba abrir depois das 08:30 o resumo sai na primeira carga).
+  // ponytail: dia útil = seg-sex, feriado não conta; aviso com o navegador fechado exigiria Web Push.
+  const dadosRef = useRef(data)
+  dadosRef.current = data
+  useEffect(() => {
+    function resumoDiario() {
+      const agora = new Date()
+      const lista = dadosRef.current?.data
+      if (!lista || typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+      let ultimo: string | null = null
+      try {
+        ultimo = localStorage.getItem('resumo-notificacoes')
+      } catch {
+        // sem localStorage o resumo pode repetir a cada carga; aceitável
+      }
+      if (!devoAvisarResumo(agora, ultimo)) return
+      const corpo = textoResumo(lista)
+      if (!corpo) return
+      try {
+        localStorage.setItem('resumo-notificacoes', agora.toLocaleDateString('sv'))
+      } catch {
+        // idem
+      }
+      new Notification('SOUFER Tools: resumo do dia', { body: corpo, icon: ICONE_AVISO, tag: 'resumo-diario' })
+    }
+    resumoDiario()
+    const t = setInterval(resumoDiario, 60_000)
+    return () => clearInterval(t)
+  }, [data, permissao])
 
   // anima a saída e só então avisa a API (a lista refaz a consulta e o item some de vez)
   function concluir(ids: number[]) {
@@ -182,6 +222,30 @@ export function SinoNotificacoes() {
             </button>
           )}
         </div>
+        {permissao === 'default' && (
+          <button
+            type="button"
+            onClick={() => void Notification.requestPermission().then(setPermissao)}
+            className="w-full cursor-pointer border-b bg-muted px-3 py-2 text-left text-xs font-medium hover:bg-muted/70"
+          >
+            Ativar avisos no navegador para ser notificado com a aba em segundo plano
+          </button>
+        )}
+        {import.meta.env.DEV && permissao !== 'unsupported' && (
+          <button
+            type="button"
+            onClick={async () => {
+              const resultado = permissao === 'default' ? await Notification.requestPermission() : permissao
+              setPermissao(resultado)
+              if (resultado !== 'granted') return toast.error('Permissão de notificação negada no navegador')
+              // ignora horário, dia da semana e localStorage; usa o resumo real ou um exemplo
+              new Notification('SOUFER Tools: resumo do dia', { body: textoResumo(itens) ?? '1 devolução(ões) prevista(s) para hoje (exemplo)', icon: ICONE_AVISO })
+            }}
+            className="w-full cursor-pointer border-b border-dashed px-3 py-2 text-left text-xs font-medium text-muted-foreground hover:bg-muted"
+          >
+            [dev] Testar aviso do navegador
+          </button>
+        )}
         {aba === 'historico' ? (
           historico.isError ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">Não foi possível carregar.</p>
