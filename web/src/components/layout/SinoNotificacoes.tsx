@@ -123,8 +123,9 @@ export function SinoNotificacoes() {
     if (novas.length > 3) toast.info(`e mais ${novas.length - 3} notificações novas`)
   }, [data])
 
-  // resumo diário do navegador: dias úteis, a partir das 08:30, uma vez por dia (aba aberta;
-  // se a aba abrir depois das 08:30 o resumo sai na primeira carga).
+  // resumo diário do navegador: dias úteis, a partir das 08:30, uma vez por dia, mesmo com a
+  // aba em foco (diferente dos avisos de notificação nova, que só saem com a aba oculta).
+  // Se a aba abrir depois das 08:30 o resumo sai em até 1 min (próxima volta do intervalo).
   // ponytail: dia útil = seg-sex, feriado não conta; aviso com o navegador fechado exigiria Web Push.
   const dadosRef = useRef(data)
   dadosRef.current = data
@@ -152,7 +153,7 @@ export function SinoNotificacoes() {
     resumoDiario()
     const t = setInterval(resumoDiario, 60_000)
     return () => clearInterval(t)
-  }, [data, permissao])
+  }, [permissao]) // dadosRef traz o dado mais recente; sem `data` aqui o intervalo não é recriado a cada refetch
 
   // anima a saída e só então avisa a API (a lista refaz a consulta e o item some de vez)
   function concluir(ids: number[]) {
