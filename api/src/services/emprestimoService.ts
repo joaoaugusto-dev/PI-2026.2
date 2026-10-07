@@ -251,17 +251,13 @@ export interface ListarEmprestimosParams {
   setorId?: number;
 }
 
+export type FiltrosEmprestimos = Pick<ListarEmprestimosParams, 'q' | 'situacao' | 'setorId'>;
+
 /**
- * GET /v1/emprestimos — histórico paginado (mais recentes primeiro), lido da
- * vw_emprestimos_detalhe para já vir com os nomes resolvidos e a `situacao`.
+ * WHERE sobre a vw_emprestimos_detalhe, compartilhado pela listagem e pela
+ * exportação em CSV (GET /v1/exportacoes/emprestimos) para as duas filtrarem igual.
  */
-export async function listar({
-  offset,
-  limit,
-  q,
-  situacao,
-  setorId,
-}: ListarEmprestimosParams): Promise<{ rows: Emprestimo[]; total: number }> {
+export function filtroEmprestimos({ q, situacao, setorId }: FiltrosEmprestimos): { where: string; params: any[] } {
   const condicoes: string[] = [];
   const params: any[] = [];
 
@@ -290,7 +286,19 @@ export async function listar({
     condicoes.push(`setor_id = $${params.length}`);
   }
 
-  const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
+  return { where: condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '', params };
+}
+
+/**
+ * GET /v1/emprestimos — histórico paginado (mais recentes primeiro), lido da
+ * vw_emprestimos_detalhe para já vir com os nomes resolvidos e a `situacao`.
+ */
+export async function listar({
+  offset,
+  limit,
+  ...filtros
+}: ListarEmprestimosParams): Promise<{ rows: Emprestimo[]; total: number }> {
+  const { where, params } = filtroEmprestimos(filtros);
   const paramsPagina = [...params, limit, offset];
   // total e página são independentes: rodam juntos (a latência é a da mais lenta)
   const [totalResult, rowsResult] = await Promise.all([

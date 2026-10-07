@@ -54,8 +54,9 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências (ver [Ocorrências](#ocorrências-get-e-patch-v1ocorrencias)) |
 | GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
 | GET | `/v1/dashboard` | Manutenção/Admin | Tela inicial: contadores e listas de pendências (ver [Dashboard](#dashboard-get-v1dashboard)) |
-| POST | `/v1/importacoes/ferramentas` | Manutenção | Importação CSV |
-| GET | `/v1/relatorios/emprestimos.csv` | Manutenção | Exportação |
+| POST | `/v1/importacoes/:recurso` | Manutenção/Admin (categorias e setores: Admin) | Importação CSV de ferramentas, colaboradores, categorias e setores (ver [Importação e exportação CSV](#importação-e-exportação-csv)) |
+| GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
+| GET | `/v1/exportacoes/:recurso` | Manutenção/Admin | Exportação CSV de cadastros e do histórico de empréstimos |
 | GET | `/v1/usuarios?ativo=false` | Admin | Lista cadastros pendentes de aprovação |
 | PATCH | `/v1/usuarios/:id/ativar` | Admin | Aprova um cadastro pendente |
 
@@ -214,6 +215,109 @@ Anda uma etapa da tratativa: `aberta → em_reparo → cobrada → resolvida`. S
 |---|---|---|
 | 404 | `OCORRENCIA_NOT_FOUND` | Ocorrência inexistente. |
 | 409 | `OCORRENCIA_TRANSICAO_INVALIDA` | Já está `resolvida` ou `baixada`. |
+
+## Importação e exportação CSV
+
+Toda entrada e saída de planilha passa por três rotas genéricas, escolhendo o recurso pela URL. O passo a passo para quem vai usar está em [`importacao.md`](importacao.md).
+
+| Rota | Recursos |
+|---|---|
+| `POST /v1/importacoes/:recurso` | `ferramentas`, `colaboradores`, `categorias`, `setores` |
+| `GET /v1/importacoes/:recurso/modelo` | os mesmos quatro |
+| `GET /v1/exportacoes/:recurso` | os quatro acima e `emprestimos` |
+
+Recurso fora da lista devolve `400 VALIDATION_ERROR`.
+
+### Importação (`POST /v1/importacoes/:recurso`)
+
+Origem: issue DATA-03. Cada recurso exige **os mesmos perfis da rota de cadastro dele**:
+
+- `ferramentas` e `colaboradores`: `manutencao` e `admin`;
+- `categorias` e `setores`: só `admin`, com `403` para a manutenção.
+
+O corpo é o **arquivo CSV cru**, não JSON nem multipart:
+
+- `Content-Type: text/csv` (também aceita `application/csv`, `application/vnd.ms-excel` e `text/plain`);
+- até 2 MB e 5000 linhas;
+- separador `;` ou `,`, detectado pelo cabeçalho como no front (`lib/csv.ts`);
+- codificação UTF-8 (com ou sem BOM) ou Windows-1252, que é como o Excel em português salva CSV.
+
+Colunas de cada recurso (\* = obrigatória):
+
+| Recurso | Coluna | Regra |
+|---|---|---|
+| `ferramentas` | `nome`\* | 2 a 150 caracteres. Gravado em **maiúsculas**. |
+| | `categoria`\* (ou `grupo`) | Nome de uma categoria ativa. |
+| | `marca`, `modelo` | Até 100 caracteres. |
+| | `setor` | Nome de um setor ativo. |
+| | `localizacao` | Até 150 caracteres. |
+| | `descricao` | Até 2000 caracteres. |
+| | `valor` (ou `valor_aquisicao`) | Formato brasileiro: `1.234,56`, `1234,56`, `R$ 89,90` (também aceita `89.90`). Vai para `valor_aquisicao`. |
+| `colaboradores` | `matricula`\* | 4 dígitos (`0001` a `9999`). Com 1 a 3 dígitos, completa com zeros (`36` vira `0036`), porque o Excel apaga o zero à esquerda. |
+| | `nome`\* | Até 150 caracteres. |
+| | `setor`\* | Nome de um setor ativo. |
+| `categorias`, `setores` | `nome`\* | Até 100 caracteres. |
+
+Regras comuns a todos os recursos:
+
+- **Cabeçalho:** não diferencia maiúsculas nem acentos (`Localização` vale `localizacao`).
+- **Colunas desconhecidas:** são ignoradas e listadas em `colunas_ignoradas`.
+- **Espaços:** em todo campo, os das pontas são removidos e os repetidos viram um só.
+- **Nomes de categoria e setor:** comparados sem diferenciar maiúsculas.
+- **Validação:** cada linha passa pelo Zod, com as mesmas regras da rota de cadastro, e **linha inválida não bloqueia as válidas**.
+- **Transação:** a carga roda numa transação, com um `SAVEPOINT` por linha. Uma falha do banco numa linha (por exemplo, o limite de 9999 códigos de ferramenta) só rejeita aquela linha.
+- **Concorrência:** duas importações simultâneas do mesmo recurso são serializadas por advisory lock.
+- **Regra 6:** em `colaboradores`, `criado_por` vem do JWT, como no `POST /v1/colaboradores`.
+
+**Deduplicação.** Uma linha igual a um registro que já existe, ou a uma linha anterior do próprio arquivo, vai para `ignoradas`, e não para `rejeitadas`. Assim, **reenviar o mesmo arquivo é seguro**, o que permite carregar o inventário em ondas (visita técnica de 01/09). A chave de cada recurso:
+
+| Recurso | Chave | Compara com |
+|---|---|---|
+| `ferramentas` | `nome` + `marca` + `modelo`, sem diferenciar maiúsculas e espaços (a mesma de `chaveFerramenta` no front) | ferramentas ativas |
+| `colaboradores` | `matricula` | todos os colaboradores, inclusive os inativos (a matrícula é única no banco) |
+| `categorias`, `setores` | `nome`, sem diferenciar maiúsculas | todos os registros, inclusive os inativos (o índice único é em `LOWER(nome)`) |
+
+Não há `patrimonio_legado` no schema (ver o [dicionário de dados](../banco-de-dados/dicionario-de-dados.md)).
+
+Resposta `200`:
+
+```json
+{
+  "data": {
+    "resumo": { "total_linhas": 5, "aceitas": 3, "rejeitadas": 2, "ignoradas": 0 },
+    "aceitas": [{ "linha": 2, "id": 41, "codigo_identificacao": 41, "nome": "FURADEIRA DE IMPACTO" }],
+    "rejeitadas": [{ "linha": 4, "motivos": ["Categoria é obrigatória"], "dados": { "nome": "Grifo", "marca": "Irwin" } }],
+    "ignoradas": [],
+    "colunas_ignoradas": []
+  }
+}
+```
+
+- `linha` é a linha física do arquivo (o cabeçalho é a 1).
+- Cada item de `aceitas` traz o `id` e os campos que identificam o registro: `codigo_identificacao` e `nome` em ferramentas, `matricula` e `nome` em colaboradores, `nome` em categorias e setores.
+- `dados` traz os valores como vieram no arquivo, para o front montar um CSV de correção com as rejeitadas.
+
+| Status | Código | Quando |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Recurso desconhecido; sem corpo ou com `Content-Type` diferente dos aceitos; CSV ilegível ou vazio; só cabeçalho; cabeçalho sem as colunas obrigatórias; mais de 5000 linhas. |
+| 401 | `TOKEN_NOT_PROVIDED` | Sem token. |
+| 403 | `ACCESS_DENIED` | Perfil sem permissão para o recurso (`consulta`; ou `manutencao` em `categorias`/`setores`). |
+| 413 | `PAYLOAD_TOO_LARGE` | Arquivo maior que 2 MB. |
+
+**Não implementado:** a conversão de datas `DD/MM/AAAA` prevista na DATA-03. `ferramentas` não tem coluna de data, e o inventário da DATA-01 não traz datas.
+
+### Modelo de CSV (`GET /v1/importacoes/:recurso/modelo`)
+
+Devolve um arquivo para download (`modelo-<recurso>.csv`) com o cabeçalho aceito pelo recurso e uma linha de exemplo. Os perfis exigidos são os mesmos da importação. O arquivo pode ser preenchido e enviado de volta sem ajuste.
+
+### Exportação (`GET /v1/exportacoes/:recurso`)
+
+Devolve um arquivo para download (`<recurso>-AAAA-MM-DD.csv`, com a data de Brasília). Perfis `manutencao` e `admin`.
+
+O formato é o mesmo do `baixarCsv` do front, para o Excel em português abrir direto: UTF-8 com BOM, separador `;`, todas as células entre aspas. Células que o Excel trataria como fórmula (começando com `=`, `+`, `-` ou `@`) ganham um `'` na frente, contra injeção de fórmula.
+
+- **Cadastros** (`ferramentas`, `colaboradores`, `categorias`, `setores`): só os registros ativos, com **o mesmo cabeçalho do modelo de importação**. O arquivo exportado pode ser editado e reenviado em `POST /v1/importacoes/:recurso`: o que já existe volta como `ignoradas` e só as linhas novas entram. Em `ferramentas`, as colunas a mais (`codigo` e `status`) são ignoradas na volta. `valor_aquisicao` não é exportado, porque a listagem de ferramentas também não o expõe.
+- **`emprestimos`:** as mesmas colunas e o mesmo formato do "Exportar CSV" da tela de histórico. Aceita os mesmos filtros de `GET /v1/emprestimos` (`q`, `situacao`, `setorId`), e filtro inválido devolve `400`. Sai numa consulta só, sem paginação, até 50 mil linhas. Acima disso, o arquivo é cortado e ganha uma linha final avisando.
 
 ## Resposta de sucesso
 
