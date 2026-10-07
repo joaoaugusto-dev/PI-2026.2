@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Search, TriangleAlert, Wrench } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { Paginacao } from '@/components/Paginacao'
 import { ChipFiltro } from '@/components/ferramentas/ChipFiltro'
@@ -37,9 +37,28 @@ export function FerramentasPage() {
   const navigate = useNavigate()
   const { usuario } = useAuth()
   const [busca, setBusca] = useState('')
-  const [status, setStatus] = useState<StatusFerramenta | 'todas'>('todas')
+  // o filtro vive na URL: o link do dashboard, voltar/avançar e o compartilhamento refletem o mesmo estado
+  const [params, setParams] = useSearchParams()
+  const statusUrl = STATUS_FILTROS.find((i) => i.valor === params.get('status'))
+  const status = statusUrl?.valor ?? 'todas'
+  const setStatus = (v: StatusFerramenta | 'todas') =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (v === 'todas') next.delete('status')
+        else next.set('status', v)
+        return next
+      },
+      { replace: true },
+    )
   const [grupoId, setGrupoId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
+  // voltar/avançar pode trocar o filtro sem passar pelo chip: volta para a primeira página
+  const [statusVisto, setStatusVisto] = useState(status)
+  if (statusVisto !== status) {
+    setStatusVisto(status)
+    setPage(1)
+  }
   const buscaDebounced = useBuscaComDebounce(busca)
 
   const { data: categorias } = useCategorias()

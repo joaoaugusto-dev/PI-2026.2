@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dataBR, diasEntre, hojeBrasilia, rotuloCondicao } from '@/lib/formatar'
+import { dataBR, dataHoraBR, diasEntre, hojeBrasilia, rotuloCondicao } from '@/lib/formatar'
 
 describe('dataBR', () => {
   it('data sem hora não recua um dia por causa do fuso', () => {
@@ -39,5 +39,23 @@ describe('diasEntre', () => {
     // 30/09 22:00 em Brasília (01:00 UTC do dia 1º) ainda é o dia do prazo
     expect(diasEntre(new Date('2026-10-01T01:00:00Z'), '2026-09-30')).toBe(0)
     expect(diasEntre('2026-09-30T14:00:00Z', '2026-10-02T02:00:00Z')).toBe(-1)
+  })
+})
+
+describe('dataHoraBR', () => {
+  it('formata timestamp no fuso de Brasília', () => {
+    expect(dataHoraBR('2026-10-06T18:54:00.000Z')).toBe('06/10/2026 15:54')
+  })
+
+  it('vira o dia em UTC-3 perto da meia-noite', () => {
+    expect(dataHoraBR('2026-10-07T01:30:00Z')).toBe('06/10/2026 22:30')
+  })
+
+  it('texto só-data fica sem hora e sem deslocar o dia', () => {
+    expect(dataHoraBR('2026-10-07')).toBe('07/10/2026')
+  })
+
+  it('vazio vira travessão', () => {
+    expect(dataHoraBR(null)).toBe('—')
   })
 })

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { Download, History, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -21,7 +22,7 @@ import {
 import { useSetores } from '@/hooks/useSetores'
 import { avisarErro } from '@/lib/avisar-erro'
 import { baixarCsv } from '@/lib/csv'
-import { dataBR } from '@/lib/formatar'
+import { dataBR, dataHoraBR } from '@/lib/formatar'
 import { cn } from '@/lib/utils'
 
 const LIMITE = 20
@@ -62,9 +63,9 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
         e.colaborador_nome,
         e.colaborador_matricula,
         e.setor_nome,
-        dataBR(e.data_retirada),
+        dataHoraBR(e.data_retirada),
         dataBR(e.previsao_devolucao),
-        dataBR(e.data_devolucao),
+        dataHoraBR(e.data_devolucao),
         ROTULO_SITUACAO[e.situacao],
       ])
       .concat(aviso),
@@ -78,9 +79,28 @@ export function EmprestimosPage() {
   const { data: setores } = useSetores()
   const [busca, setBusca] = useState('')
   const [q, setQ] = useState('')
-  const [situacao, setSituacao] = useState('')
+  // a situação vive na URL (link do KPI "Atrasadas", voltar/avançar e compartilhamento)
+  const [params, setParams] = useSearchParams()
+  const situacaoUrl = params.get('situacao') ?? ''
+  const situacao = Object.hasOwn(ROTULO_SITUACAO, situacaoUrl) ? situacaoUrl : ''
+  const setSituacao = (v: string) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (v) next.set('situacao', v)
+        else next.delete('situacao')
+        return next
+      },
+      { replace: true },
+    )
   const [setorId, setSetorId] = useState('')
   const [page, setPage] = useState(1)
+  // voltar/avançar pode trocar a situação sem passar pelo select: volta para a primeira página
+  const [situacaoVista, setSituacaoVista] = useState(situacao)
+  if (situacaoVista !== situacao) {
+    setSituacaoVista(situacao)
+    setPage(1)
+  }
   const [exportando, setExportando] = useState(false)
   const exportacao = useRef<AbortController | null>(null)
 
@@ -196,9 +216,9 @@ export function EmprestimosPage() {
                       <p className="text-rotulo text-muted-foreground">{e.colaborador_matricula}</p>
                     </TableCell>
                     <TableCell>{e.setor_nome}</TableCell>
-                    <TableCell>{dataBR(e.data_retirada)}</TableCell>
+                    <TableCell>{dataHoraBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
-                    <TableCell>{dataBR(e.data_devolucao)}</TableCell>
+                    <TableCell>{dataHoraBR(e.data_devolucao)}</TableCell>
                     <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
