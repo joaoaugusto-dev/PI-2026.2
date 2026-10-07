@@ -41,7 +41,16 @@ export function FerramentasPage() {
   const [params, setParams] = useSearchParams()
   const statusUrl = STATUS_FILTROS.find((i) => i.valor === params.get('status'))
   const status = statusUrl?.valor ?? 'todas'
-  const setStatus = (v: StatusFerramenta | 'todas') => setParams(v === 'todas' ? {} : { status: v }, { replace: true })
+  const setStatus = (v: StatusFerramenta | 'todas') =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (v === 'todas') next.delete('status')
+        else next.set('status', v)
+        return next
+      },
+      { replace: true },
+    )
   const [grupoId, setGrupoId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const buscaDebounced = useBuscaComDebounce(busca)

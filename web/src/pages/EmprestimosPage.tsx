@@ -82,8 +82,17 @@ export function EmprestimosPage() {
   // a situação vive na URL (link do KPI "Atrasadas", voltar/avançar e compartilhamento)
   const [params, setParams] = useSearchParams()
   const situacaoUrl = params.get('situacao') ?? ''
-  const situacao = situacaoUrl in ROTULO_SITUACAO ? situacaoUrl : ''
-  const setSituacao = (v: string) => setParams(v ? { situacao: v } : {}, { replace: true })
+  const situacao = Object.hasOwn(ROTULO_SITUACAO, situacaoUrl) ? situacaoUrl : ''
+  const setSituacao = (v: string) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (v) next.set('situacao', v)
+        else next.delete('situacao')
+        return next
+      },
+      { replace: true },
+    )
   const [setorId, setSetorId] = useState('')
   const [page, setPage] = useState(1)
   const [exportando, setExportando] = useState(false)
