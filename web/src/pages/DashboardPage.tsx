@@ -23,7 +23,7 @@ const KPIS: { chave: keyof NonNullable<ReturnType<typeof useDashboard>['data']>[
   { to: '/ferramentas?status=em_uso', chave: 'em_uso', label: 'Em uso' },
   { to: '/ferramentas?status=indisponivel', chave: 'indisponiveis', label: 'Indisponíveis', tom: 'indisponivel' },
   { to: '/emprestimos?situacao=atrasado', chave: 'atrasadas', label: 'Atrasadas', tom: 'atraso' },
-  { to: '/indisponiveis', dica: 'Conta ocorrências abertas; a lista mostra as ferramentas indisponíveis, que podem ser mais ou menos.', chave: 'ocorrencias', label: 'Ocorrências', tom: 'indisponivel' },
+  { to: '/indisponiveis', dica: 'Abertas · a lista mostra ferramentas', chave: 'ocorrencias', label: 'Ocorrências', tom: 'indisponivel' },
 ]
 
 export function DashboardPage() {

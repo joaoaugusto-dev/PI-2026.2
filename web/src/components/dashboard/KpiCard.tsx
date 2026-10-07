@@ -20,10 +20,11 @@ type KpiCardProps = {
 
 export function KpiCard({ label, valor, tom, to, dica }: KpiCardProps) {
   return (
-    <Link to={to} title={dica} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+    <Link to={to} className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
       <Card className="gap-0 px-4 py-3 transition-colors hover:bg-muted/50">
         <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">{label}</span>
         <span className={cn('text-kpi tabular-nums', tom ? TOM_CLASSE[tom] : 'text-foreground')}>{valor}</span>
+        {dica && <span className="mt-1 text-xs text-muted-foreground">{dica}</span>}
       </Card>
     </Link>
   )
