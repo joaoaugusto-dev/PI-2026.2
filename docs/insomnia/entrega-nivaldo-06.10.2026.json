@@ -1,0 +1,2434 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-06T21:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v13.1.0",
+  "resources": [
+    {
+      "_id": "wrk_entrega_06102026",
+      "_type": "workspace",
+      "parentId": null,
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "SOUFER Tools — Entrega 06.10.2026 (CRUD de todas as entidades)",
+      "description": "# Entrega Prof. Nivaldo — 06.10.2026\nCRUD de todas as entidades do banco da API SOUFER Tools (`/v1`), com validações e tratamento de erros, para teste no Insomnia.\n\n**Como usar:** suba a API (`npm run db:migrate`, `npm run db:seed`, `npm run dev` em `api/`), importe esta coleção e rode as pastas na ordem pelo Collection Runner (ou uma a uma). A pasta 1 faz o login e cria os dados de apoio; a pasta 12 limpa o que foi criado.\n\nCada entidade tem as cinco operações: POST (criar), GET (consultar), PUT (substituir), PATCH (editar) e DELETE (dar baixa). Onde a API não oferece a operação por regra de negócio (por exemplo, empréstimos nunca são apagados), a requisição existe e prova que a rota responde 404, com a razão na descrição.\n\n**Variáveis de ambiente:** começam vazias (exceto `base_url`) e são preenchidas pelos scripts. Não apague nem renomeie.\n\nCada requisição traz na descrição o que faz, por que existe, como está configurada e o resultado esperado. Passo a passo e matriz de cobertura: `docs/entregas-pi/tecnologias-desenvolvimento-web-nivaldo-andrade/entrega-nivaldo-06-10-2026.pdf`.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_entrega_06102026",
+      "_type": "environment",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000/v1",
+        "token": "",
+        "token_manut": "",
+        "sufixo": "",
+        "hoje": "",
+        "matricula_a": "",
+        "matricula_b": "",
+        "setor_apoio_id": "",
+        "grupo_apoio_id": "",
+        "atividade_apoio_id": "",
+        "colaborador_apoio_id": "",
+        "ferramenta_apoio1_id": "",
+        "ferramenta_apoio2_id": "",
+        "setor_id": "",
+        "categoria_id": "",
+        "atividade_id": "",
+        "colaborador_id": "",
+        "ferramenta_id": "",
+        "emprestimo_id": "",
+        "emprestimo2_id": "",
+        "ocorrencia_id": "",
+        "notificacao_id": "",
+        "token_convite": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1791244800000
+    },
+    {
+      "_id": "fld_e1",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "1 · Autenticação e dados de apoio",
+      "description": "Roda primeiro. Faz o login do admin e da manutenção, descobre ids de cadastros que já existem (setor, categoria e atividade) e cria os dados de apoio (um colaborador e duas ferramentas) que as pastas de Empréstimos e Ocorrências consomem. Os dados de apoio são removidos na pasta 12 (Limpeza).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "fld_e2",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "2 · Setores (tabela setores)",
+      "description": "CRUD completo de setores: POST, GET, PUT, PATCH e DELETE (baixa lógica). Só o admin escreve.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "fld_e3",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "3 · Categorias (tabela grupos_ferramentas)",
+      "description": "CRUD completo de categorias (grupos de ferramentas): POST, GET, PUT, PATCH e DELETE (baixa lógica). Só o admin escreve.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000
+    },
+    {
+      "_id": "fld_e4",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "4 · Atividades (tabela atividades)",
+      "description": "CRUD completo de atividades: POST, GET, PUT, PATCH e DELETE (baixa lógica). Só o admin escreve.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000
+    },
+    {
+      "_id": "fld_e5",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "5 · Colaboradores (tabelas colaboradores, usuarios e convites_acesso)",
+      "description": "POST, GET, PATCH e DELETE (inativação) de colaboradores. O PUT não existe na API (a edição é só PATCH) e é testado como rota inexistente. Inclui o fluxo do convite de acesso, que grava em convites_acesso e cria o usuário (tabela usuarios) quando o colaborador define a senha.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000
+    },
+    {
+      "_id": "fld_e6",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "6 · Ferramentas (tabela ferramentas)",
+      "description": "POST, GET, PATCH e DELETE (baixa lógica) de ferramentas. O PUT da ferramenta é o envio da foto (PUT /ferramentas/:id/foto).",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6000
+    },
+    {
+      "_id": "fld_e7",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "7 · Empréstimos (tabela emprestimos)",
+      "description": "Retirada (POST), consulta (GET) e devolução (PATCH). PUT e DELETE não existem por regra de negócio: o empréstimo é histórico e nunca é apagado nem substituído. A devolução é um PATCH em /devolucao.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7000
+    },
+    {
+      "_id": "fld_e8",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "8 · Ocorrências (tabela ocorrencias)",
+      "description": "A ocorrência não é criada por POST: ela nasce sozinha quando uma devolução registra avaria ou perda (Regra 3). A pasta provoca esse caminho e então consulta e atualiza a ocorrência. POST, PUT e DELETE diretos são testados como rotas inexistentes.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 8000
+    },
+    {
+      "_id": "fld_e9",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "9 · Notificações (tabela notificacoes)",
+      "description": "As notificações são geradas pelo sistema (rotina diária das 07:00, seg a sex) para empréstimos atrasados ou que vencem hoje. A API só lista e marca como lida. POST, PUT e DELETE são testados como rotas inexistentes.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 9000
+    },
+    {
+      "_id": "fld_e10",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "10 · Feriados (tabela feriados)",
+      "description": "Os feriados vêm da BrasilAPI e ficam em cache na tabela. A API sincroniza (POST /feriados/sincronizar) e consulta (GET). PUT, PATCH e DELETE são testados como rotas inexistentes.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 10000
+    },
+    {
+      "_id": "fld_e11",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "11 · Validação e tratamento de erros (400, 401, 403, 404, 409)",
+      "description": "Provam que a API recusa o que é inválido com o envelope de erro padrão { error: { code, message, details } }. Nenhuma altera o banco.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 11000
+    },
+    {
+      "_id": "fld_e12",
+      "_type": "request_group",
+      "parentId": "wrk_entrega_06102026",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "12 · Limpeza dos dados de apoio",
+      "description": "Dá baixa nas duas ferramentas de apoio e inativa o colaborador de apoio criados na pasta 1. Fica por último porque as pastas 7 e 8 usam esses dados.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 12000
+    },
+    {
+      "_id": "req_e01",
+      "_type": "request",
+      "parentId": "fld_e1",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "01 · Login do admin",
+      "description": "## O que faz\nAutentica o administrador e devolve um token JWT.\n\n## Por que existe\nO admin pode tudo que a manutenção faz e ainda escreve nos cadastros. Quase toda rota exige token, então esta é a primeira requisição a rodar. O script também prepara três valores usados nas demais pastas: um sufixo único para os nomes de teste, a data de hoje e duas matrículas aleatórias de 4 dígitos.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho Authorization, de propósito.\n- **Corpo (JSON):**\n```json\n{\n  \"matricula\": \"0053\",\n  \"senha\": \"123456\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `token`, `sufixo`, `hoje`, `matricula_a`, `matricula_b` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com data.token e data.usuario (papel admin).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é admin\n\n## Observações\nCredenciais criadas pelo seed (npm run db:seed): matrícula 0053, senha 123456. O token dura 7 dias; se as demais requisições passarem a dar 401, rode esta de novo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0053\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é admin\", () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('admin');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([200].includes(insomnia.response.code)) {\n  insomnia.environment.set('token', String(corpo.data.token));\n  insomnia.environment.set('sufixo', String(Date.now().toString(36)));\n  insomnia.environment.set('hoje', String(new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10)));\n  insomnia.environment.set('matricula_a', String(String(1000 + Math.floor(Math.random() * 8999))));\n  insomnia.environment.set('matricula_b', String(String(1000 + Math.floor(Math.random() * 8999))));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e02",
+      "_type": "request",
+      "parentId": "fld_e1",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "02 · Login da manutenção",
+      "description": "## O que faz\nAutentica um usuário de perfil manutenção.\n\n## Por que existe\nServe para provar, na pasta 11, que a manutenção recebe 403 ao tentar escrever nos cadastros (só o admin escreve).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho Authorization, de propósito.\n- **Corpo (JSON):**\n```json\n{\n  \"matricula\": \"0001\",\n  \"senha\": \"123456\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `token_manut` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com token e papel manutenção.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é manutenção\n\n## Observações\nMatrícula 0001, senha 123456 (seed).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0001\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é manutenção\", () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('manutencao');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([200].includes(insomnia.response.code)) {\n  insomnia.environment.set('token_manut', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e03",
+      "_type": "request",
+      "parentId": "fld_e1",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "03 · Obter ids de setor, categoria e atividade (auxiliar)",
+      "description": "## O que faz\nLê as listas combinadas de setores, categorias e atividades ativos e guarda o primeiro id de cada uma.\n\n## Por que existe\nO cadastro de colaborador exige um setor e o de ferramenta exige uma categoria. Em vez de fixar ids que podem não existir no banco de quem testa, a coleção descobre ids válidos.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/opcoes`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `setor_apoio_id`, `grupo_apoio_id`, `atividade_apoio_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com data.setores, data.categorias e data.atividades.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Trazem setores, categorias e atividades\n\n## Observações\nSó lê; não altera nada.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Trazem setores, categorias e atividades\", () => {\n  insomnia.expect(corpo.data.setores).to.be.an('array').that.is.not.empty; insomnia.expect(corpo.data.categorias).to.be.an('array').that.is.not.empty; insomnia.expect(corpo.data.atividades).to.be.an('array').that.is.not.empty;\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([200].includes(insomnia.response.code)) {\n  insomnia.environment.set('setor_apoio_id', String(corpo.data.setores[0].id));\n  insomnia.environment.set('grupo_apoio_id', String(corpo.data.categorias[0].id));\n  insomnia.environment.set('atividade_apoio_id', String(corpo.data.atividades[0].id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e04",
+      "_type": "request",
+      "parentId": "fld_e1",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "04 · Criar colaborador de apoio (POST)",
+      "description": "## O que faz\nCadastra o colaborador que fará as retiradas das pastas 7 e 8.\n\n## Por que existe\nEmpréstimo exige um colaborador ativo. Criar um próprio evita depender do seed e evita mexer em dados reais.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Apoio Entrega {{ _.sufixo }}\",\n  \"matricula\": \"{{ _.matricula_a }}\",\n  \"setorId\": {{ _.setor_apoio_id }}\n}\n```\n- **Variáveis lidas:** `sufixo`, `matricula_a`, `setor_apoio_id`\n- **Variáveis gravadas:** `colaborador_apoio_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o colaborador criado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Colaborador criado e ativo\n\n## Observações\nA matrícula é aleatória (4 dígitos). Se o banco já tiver essa matrícula a API responde 409; basta rodar de novo a requisição de login (01) para sortear outra.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Apoio Entrega {{ _.sufixo }}\",\n  \"matricula\": \"{{ _.matricula_a }}\",\n  \"setorId\": {{ _.setor_apoio_id }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Colaborador criado e ativo\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.ativo).to.eql(true);\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('colaborador_apoio_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e05",
+      "_type": "request",
+      "parentId": "fld_e1",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "05 · Criar ferramenta de apoio 1 (POST)",
+      "description": "## O que faz\nCadastra a ferramenta usada no empréstimo normal da pasta 7.\n\n## Por que existe\nCada empréstimo precisa de uma ferramenta disponível. Uma ferramenta própria garante que ela esteja livre.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Apoio 1 Entrega {{ _.sufixo }}\",\n  \"grupoId\": {{ _.grupo_apoio_id }},\n  \"setorId\": {{ _.setor_apoio_id }}\n}\n```\n- **Variáveis lidas:** `sufixo`, `grupo_apoio_id`, `setor_apoio_id`\n- **Variáveis gravadas:** `ferramenta_apoio1_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com a ferramenta criada, status disponivel.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Ferramenta criada e disponível\n\n## Observações\nO código de identificação (1 a 9999) é gerado pelo banco.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Apoio 1 Entrega {{ _.sufixo }}\",\n  \"grupoId\": {{ _.grupo_apoio_id }},\n  \"setorId\": {{ _.setor_apoio_id }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Ferramenta criada e disponível\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('ferramenta_apoio1_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e06",
+      "_type": "request",
+      "parentId": "fld_e1",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "06 · Criar ferramenta de apoio 2 (POST)",
+      "description": "## O que faz\nCadastra a ferramenta usada na devolução com avaria da pasta 8.\n\n## Por que existe\nA avaria move a ferramenta para indisponível; por isso ela precisa ser uma ferramenta de teste, separada da primeira.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Apoio 2 Entrega {{ _.sufixo }}\",\n  \"grupoId\": {{ _.grupo_apoio_id }},\n  \"setorId\": {{ _.setor_apoio_id }}\n}\n```\n- **Variáveis lidas:** `sufixo`, `grupo_apoio_id`, `setor_apoio_id`\n- **Variáveis gravadas:** `ferramenta_apoio2_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com a ferramenta criada, status disponivel.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Ferramenta criada e disponível",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Apoio 2 Entrega {{ _.sufixo }}\",\n  \"grupoId\": {{ _.grupo_apoio_id }},\n  \"setorId\": {{ _.setor_apoio_id }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 6000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Ferramenta criada e disponível\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.status).to.eql('disponivel');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('ferramenta_apoio2_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e07",
+      "_type": "request",
+      "parentId": "fld_e2",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "07 · Cadastrar setor (POST)",
+      "description": "## O que faz\nCadastra o setor novo.\n\n## Por que existe\nÉ o \"C\" (Create) do CRUD de setores. Os testes seguintes da pasta usam o registro criado aqui (variável setor_id).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/setores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Setor CRUD {{ _.sufixo }}\"\n}\n```\n- **Variáveis lidas:** `sufixo`\n- **Variáveis gravadas:** `setor_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o registro criado, ativo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Setor criado com os dados enviados\n\n## Observações\nNome repetido é recusado com 409, sem diferenciar maiúsculas de minúsculas (veja a pasta 11).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Setor CRUD {{ _.sufixo }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 7000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Setor criado com os dados enviados\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.ativo).to.eql(true); insomnia.expect(corpo.data.nome).to.include('Setor CRUD');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('setor_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e08",
+      "_type": "request",
+      "parentId": "fld_e2",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "08 · Consultar setor por id (GET)",
+      "description": "## O que faz\nBusca o setor cadastrado pelo id.\n\n## Por que existe\nÉ o \"R\" (Read). Prova que o registro foi gravado e pode ser lido por quem opera o balcão (manutenção e admin).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/setores/{{ _.setor_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o setor.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- É o setor cadastrado",
+      "method": "GET",
+      "url": "{{ _.base_url }}/setores/{{ _.setor_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 8000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"É o setor cadastrado\", () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('setor_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e09",
+      "_type": "request",
+      "parentId": "fld_e2",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "09 · Substituir setor (PUT)",
+      "description": "## O que faz\nEnvia a representação completa do setor (nome e ativo).\n\n## Por que existe\nÉ o PUT do setor: o cliente manda todos os campos editáveis. Na API atual, PUT e PATCH usam o mesmo tratamento (campos enviados são gravados, os ausentes ficam como estão), então o PUT completo e o PATCH parcial convivem.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/setores/{{ _.setor_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Setor CRUD (PUT) {{ _.sufixo }}\",\n  \"ativo\": true\n}\n```\n- **Variáveis lidas:** `setor_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com os campos substituídos.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi substituído\n- Continua ativo\n\n## Observações\nSó o admin escreve. Pela convenção REST estrita o PUT exigiria todos os campos; aqui ele aceita também envio parcial. Fica registrado como observação, sem alterar a API.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/setores/{{ _.setor_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Setor CRUD (PUT) {{ _.sufixo }}\",\n  \"ativo\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 9000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi substituído\", () => {\n  insomnia.expect(corpo.data.nome).to.include('(PUT)');\n});\n\ninsomnia.test(\"Continua ativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e10",
+      "_type": "request",
+      "parentId": "fld_e2",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "10 · Editar setor (PATCH, campo parcial)",
+      "description": "## O que faz\nAltera só o nome do setor.\n\n## Por que existe\nÉ o \"U\" (Update). Mandar um único campo prova que o restante permanece intacto.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/setores/{{ _.setor_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Setor CRUD (PATCH) {{ _.sufixo }}\"\n}\n```\n- **Variáveis lidas:** `setor_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o nome novo e ativo = true.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi alterado\n- Campo não enviado (ativo) permaneceu",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/setores/{{ _.setor_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Setor CRUD (PATCH) {{ _.sufixo }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 10000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi alterado\", () => {\n  insomnia.expect(corpo.data.nome).to.include('(PATCH)');\n});\n\ninsomnia.test(\"Campo não enviado (ativo) permaneceu\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e11",
+      "_type": "request",
+      "parentId": "fld_e2",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "11 · Dar baixa no setor (DELETE, baixa lógica)",
+      "description": "## O que faz\nDá baixa no setor: ativo = false. O registro continua no banco.\n\n## Por que existe\nÉ o \"D\" (Delete). A baixa é lógica para não quebrar o histórico de quem já usou o cadastro.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/setores/{{ _.setor_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `setor_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com ativo = false.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Registro ficou inativo\n\n## Observações\nConvenção REST: DELETE costuma devolver 204 sem corpo. A API devolve 200 com o registro; a coleção segue o comportamento real.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/setores/{{ _.setor_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 11000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Registro ficou inativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e12",
+      "_type": "request",
+      "parentId": "fld_e3",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "12 · Cadastrar categoria (POST)",
+      "description": "## O que faz\nCadastra a categoria nova.\n\n## Por que existe\nÉ o \"C\" (Create) do CRUD de categorias. Os testes seguintes da pasta usam o registro criado aqui (variável categoria_id).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/categorias`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Categoria CRUD {{ _.sufixo }}\"\n}\n```\n- **Variáveis lidas:** `sufixo`\n- **Variáveis gravadas:** `categoria_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o registro criado, ativo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Categoria criada com os dados enviados\n\n## Observações\nNome repetido é recusado com 409, sem diferenciar maiúsculas de minúsculas (veja a pasta 11).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/categorias",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Categoria CRUD {{ _.sufixo }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 12000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Categoria criada com os dados enviados\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.ativo).to.eql(true); insomnia.expect(corpo.data.nome).to.include('Categoria CRUD');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('categoria_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e13",
+      "_type": "request",
+      "parentId": "fld_e3",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "13 · Consultar categoria por id (GET)",
+      "description": "## O que faz\nBusca a categoria cadastrada pelo id.\n\n## Por que existe\nÉ o \"R\" (Read). Prova que o registro foi gravado e pode ser lido por quem opera o balcão (manutenção e admin).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/categorias/{{ _.categoria_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `categoria_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a categoria.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- É a categoria cadastrada",
+      "method": "GET",
+      "url": "{{ _.base_url }}/categorias/{{ _.categoria_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 13000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"É a categoria cadastrada\", () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('categoria_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e14",
+      "_type": "request",
+      "parentId": "fld_e3",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "14 · Substituir categoria (PUT)",
+      "description": "## O que faz\nEnvia a representação completa da categoria (nome e ativo).\n\n## Por que existe\nÉ o PUT da categoria: o cliente manda todos os campos editáveis. Na API atual, PUT e PATCH usam o mesmo tratamento (campos enviados são gravados, os ausentes ficam como estão), então o PUT completo e o PATCH parcial convivem.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/categorias/{{ _.categoria_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Categoria CRUD (PUT) {{ _.sufixo }}\",\n  \"ativo\": true\n}\n```\n- **Variáveis lidas:** `categoria_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com os campos substituídos.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi substituído\n- Continua ativo\n\n## Observações\nSó o admin escreve. Pela convenção REST estrita o PUT exigiria todos os campos; aqui ele aceita também envio parcial. Fica registrado como observação, sem alterar a API.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/categorias/{{ _.categoria_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Categoria CRUD (PUT) {{ _.sufixo }}\",\n  \"ativo\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 14000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi substituído\", () => {\n  insomnia.expect(corpo.data.nome).to.include('(PUT)');\n});\n\ninsomnia.test(\"Continua ativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e15",
+      "_type": "request",
+      "parentId": "fld_e3",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "15 · Editar categoria (PATCH, campo parcial)",
+      "description": "## O que faz\nAltera só o nome da categoria.\n\n## Por que existe\nÉ o \"U\" (Update). Mandar um único campo prova que o restante permanece intacto.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/categorias/{{ _.categoria_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Categoria CRUD (PATCH) {{ _.sufixo }}\"\n}\n```\n- **Variáveis lidas:** `categoria_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o nome novo e ativo = true.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi alterado\n- Campo não enviado (ativo) permaneceu",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/categorias/{{ _.categoria_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Categoria CRUD (PATCH) {{ _.sufixo }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 15000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi alterado\", () => {\n  insomnia.expect(corpo.data.nome).to.include('(PATCH)');\n});\n\ninsomnia.test(\"Campo não enviado (ativo) permaneceu\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e16",
+      "_type": "request",
+      "parentId": "fld_e3",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "16 · Dar baixa na categoria (DELETE, baixa lógica)",
+      "description": "## O que faz\nDá baixa na categoria: ativo = false. O registro continua no banco.\n\n## Por que existe\nÉ o \"D\" (Delete). A baixa é lógica para não quebrar o histórico de quem já usou o cadastro.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/categorias/{{ _.categoria_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `categoria_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com ativo = false.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Registro ficou inativo\n\n## Observações\nConvenção REST: DELETE costuma devolver 204 sem corpo. A API devolve 200 com o registro; a coleção segue o comportamento real.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/categorias/{{ _.categoria_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 16000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Registro ficou inativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e17",
+      "_type": "request",
+      "parentId": "fld_e4",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "17 · Cadastrar atividade (POST)",
+      "description": "## O que faz\nCadastra a atividade nova.\n\n## Por que existe\nÉ o \"C\" (Create) do CRUD de atividades. Os testes seguintes da pasta usam o registro criado aqui (variável atividade_id).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/atividades`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Atividade CRUD {{ _.sufixo }}\",\n  \"descricao\": \"Criada pela coleção da entrega de 06.10.2026\"\n}\n```\n- **Variáveis lidas:** `sufixo`\n- **Variáveis gravadas:** `atividade_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o registro criado, ativo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Atividade criada com os dados enviados\n\n## Observações\nNome repetido é recusado com 409, sem diferenciar maiúsculas de minúsculas (veja a pasta 11).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/atividades",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Atividade CRUD {{ _.sufixo }}\",\n  \"descricao\": \"Criada pela coleção da entrega de 06.10.2026\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 17000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Atividade criada com os dados enviados\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.ativo).to.eql(true); insomnia.expect(corpo.data.nome).to.include('Atividade CRUD');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('atividade_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e18",
+      "_type": "request",
+      "parentId": "fld_e4",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "18 · Consultar atividade por id (GET)",
+      "description": "## O que faz\nBusca a atividade cadastrada pelo id.\n\n## Por que existe\nÉ o \"R\" (Read). Prova que o registro foi gravado e pode ser lido por quem opera o balcão (manutenção e admin).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/atividades/{{ _.atividade_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `atividade_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a atividade.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- É a atividade cadastrada",
+      "method": "GET",
+      "url": "{{ _.base_url }}/atividades/{{ _.atividade_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 18000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"É a atividade cadastrada\", () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('atividade_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e19",
+      "_type": "request",
+      "parentId": "fld_e4",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "19 · Substituir atividade (PUT)",
+      "description": "## O que faz\nEnvia a representação completa da atividade (nome, descrição e ativo).\n\n## Por que existe\nÉ o PUT da atividade: o cliente manda todos os campos editáveis. Na API atual, PUT e PATCH usam o mesmo tratamento (campos enviados são gravados, os ausentes ficam como estão), então o PUT completo e o PATCH parcial convivem.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/atividades/{{ _.atividade_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Atividade CRUD (PUT) {{ _.sufixo }}\",\n  \"descricao\": \"Descrição substituída via PUT\",\n  \"ativo\": true\n}\n```\n- **Variáveis lidas:** `atividade_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com os campos substituídos.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi substituído\n- Continua ativo\n\n## Observações\nSó o admin escreve. Pela convenção REST estrita o PUT exigiria todos os campos; aqui ele aceita também envio parcial. Fica registrado como observação, sem alterar a API.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/atividades/{{ _.atividade_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Atividade CRUD (PUT) {{ _.sufixo }}\",\n  \"descricao\": \"Descrição substituída via PUT\",\n  \"ativo\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 19000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi substituído\", () => {\n  insomnia.expect(corpo.data.nome).to.include('(PUT)');\n});\n\ninsomnia.test(\"Continua ativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e20",
+      "_type": "request",
+      "parentId": "fld_e4",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "20 · Editar atividade (PATCH, campo parcial)",
+      "description": "## O que faz\nAltera só o nome da atividade.\n\n## Por que existe\nÉ o \"U\" (Update). Mandar um único campo prova que o restante permanece intacto.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/atividades/{{ _.atividade_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Atividade CRUD (PATCH) {{ _.sufixo }}\"\n}\n```\n- **Variáveis lidas:** `atividade_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o nome novo e ativo = true.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi alterado\n- Campo não enviado (ativo) permaneceu",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/atividades/{{ _.atividade_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Atividade CRUD (PATCH) {{ _.sufixo }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 20000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi alterado\", () => {\n  insomnia.expect(corpo.data.nome).to.include('(PATCH)');\n});\n\ninsomnia.test(\"Campo não enviado (ativo) permaneceu\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(true);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e21",
+      "_type": "request",
+      "parentId": "fld_e4",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "21 · Dar baixa na atividade (DELETE, baixa lógica)",
+      "description": "## O que faz\nDá baixa na atividade: ativo = false. O registro continua no banco.\n\n## Por que existe\nÉ o \"D\" (Delete). A baixa é lógica para não quebrar o histórico de quem já usou o cadastro.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/atividades/{{ _.atividade_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `atividade_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com ativo = false.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Registro ficou inativo\n\n## Observações\nConvenção REST: DELETE costuma devolver 204 sem corpo. A API devolve 200 com o registro; a coleção segue o comportamento real.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/atividades/{{ _.atividade_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 21000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Registro ficou inativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e22",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "22 · Cadastrar colaborador (POST)",
+      "description": "## O que faz\nCadastra um colaborador com nome, matrícula e setor.\n\n## Por que existe\nÉ o \"C\" (Create) do CRUD de colaboradores. A pasta usa este colaborador nos testes seguintes.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Colaborador CRUD {{ _.sufixo }}\",\n  \"matricula\": \"{{ _.matricula_b }}\",\n  \"setorId\": {{ _.setor_apoio_id }}\n}\n```\n- **Variáveis lidas:** `sufixo`, `matricula_b`, `setor_apoio_id`\n- **Variáveis gravadas:** `colaborador_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o colaborador criado e ativo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Colaborador criado com os dados enviados\n\n## Observações\nMatrícula repetida é recusada (409); veja a pasta 11.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Colaborador CRUD {{ _.sufixo }}\",\n  \"matricula\": \"{{ _.matricula_b }}\",\n  \"setorId\": {{ _.setor_apoio_id }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 22000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Colaborador criado com os dados enviados\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.ativo).to.eql(true);\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('colaborador_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e23",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "23 · Consultar colaborador por id (GET)",
+      "description": "## O que faz\nBusca o colaborador cadastrado pelo id.\n\n## Por que existe\nÉ o \"R\" (Read) do CRUD. Prova que o registro foi gravado e pode ser lido.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/{{ _.colaborador_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- É o colaborador cadastrado",
+      "method": "GET",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 23000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"É o colaborador cadastrado\", () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('colaborador_id'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e24",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "24 · Substituir colaborador (PUT) — rota inexistente",
+      "description": "## O que faz\nTenta substituir o colaborador com PUT.\n\n## Por que existe\nA API não oferece PUT em colaboradores: a edição parcial é o PATCH. Esta requisição documenta isso e prova que a rota realmente não existe, em vez de aceitar a chamada em silêncio.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/colaboradores/{{ _.colaborador_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Nome via PUT\"\n}\n```\n- **Variáveis lidas:** `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe\n\n## Observações\nConvenção REST: PUT substitui o recurso inteiro; PATCH altera campos. O projeto escolheu só PATCH (veja docs/api-07-put-para-patch.md).",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Nome via PUT\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 24000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e25",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "25 · Editar colaborador (PATCH, campo parcial)",
+      "description": "## O que faz\nAltera só o nome do colaborador.\n\n## Por que existe\nÉ o \"U\" (Update) do CRUD. Mandar um único campo prova que os demais (matrícula, setor) ficam intactos.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/colaboradores/{{ _.colaborador_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Colaborador CRUD Editado {{ _.sufixo }}\"\n}\n```\n- **Variáveis lidas:** `colaborador_id`, `sufixo`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o nome novo e a matrícula original.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Nome foi alterado\n- Matrícula permaneceu a mesma\n\n## Observações\nEdição é só do admin; a manutenção recebe 403.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Colaborador CRUD Editado {{ _.sufixo }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 25000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Nome foi alterado\", () => {\n  insomnia.expect(corpo.data.nome).to.include('Editado');\n});\n\ninsomnia.test(\"Matrícula permaneceu a mesma\", () => {\n  insomnia.expect(corpo.data.matricula).to.eql(insomnia.environment.get('matricula_b'));\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e26",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "26 · Gerar convite de acesso (POST)",
+      "description": "## O que faz\nGera o link de acesso do colaborador (grava na tabela convites_acesso).\n\n## Por que existe\nO colaborador cadastrado pelo admin recebe um link para definir a própria senha. O token só aparece nesta resposta (o banco guarda o hash).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores/{{ _.colaborador_id }}/convite`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `colaborador_id`\n- **Variáveis gravadas:** `token_convite` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com token, expiraEm e o colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Resposta traz token de 43 caracteres\n\n## Observações\nO convite vale 7 dias e um único uso.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}/convite",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 26000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Resposta traz token de 43 caracteres\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string'); insomnia.expect(corpo.data.token.length).to.eql(43);\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('token_convite', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e27",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "27 · Consultar convite (GET, rota pública)",
+      "description": "## O que faz\nConsulta o convite sem estar logado, como faz a tela que o colaborador abre pelo link.\n\n## Por que existe\nConfirma que o convite é válido antes de pedir a senha e que a rota pública não vaza dados além do necessário.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/auth/convites/{{ _.token_convite }}`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho Authorization, de propósito.\n- **Variáveis lidas:** `token_convite`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o nome do colaborador.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Convite válido\n\n## Observações\nRota pública, com limite de requisições.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/convites/{{ _.token_convite }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 27000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Convite válido\", () => {\n  insomnia.expect(corpo.data).to.be.an('object');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e28",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "28 · Aceitar convite e definir senha (POST, cria usuário)",
+      "description": "## O que faz\nO colaborador define a própria senha de 6 dígitos. A API cria o usuário (tabela usuarios) e devolve um token de sessão.\n\n## Por que existe\nCobre as tabelas usuarios e convites_acesso: o convite é consumido e passa a existir um usuário com o papel manutenção.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/convites/{{ _.token_convite }}/senha`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho Authorization, de propósito.\n- **Corpo (JSON):**\n```json\n{\n  \"senha\": \"246810\"\n}\n```\n- **Variáveis lidas:** `token_convite`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 ou 201 com token de sessão.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200 ou 201\n- Resposta traz token de sessão\n\n## Observações\nO convite só funciona uma vez; repetir esta requisição devolve erro.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/convites/{{ _.token_convite }}/senha",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"senha\": \"246810\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 28000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200 ou 201', () => {\n  insomnia.expect([200,201]).to.include(insomnia.response.code);\n});\n\ninsomnia.test(\"Resposta traz token de sessão\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e29",
+      "_type": "request",
+      "parentId": "fld_e5",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "29 · Inativar colaborador (DELETE, baixa lógica)",
+      "description": "## O que faz\nInativa o colaborador (ativo = false). O registro continua no banco.\n\n## Por que existe\nÉ o \"D\" (Delete). A exclusão é lógica para preservar o histórico de empréstimos e ocorrências desse colaborador.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/colaboradores/{{ _.colaborador_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador inativo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Colaborador ficou inativo\n\n## Observações\nConvenção REST: DELETE costuma devolver 204 sem corpo. A API devolve 200 com o registro; a coleção segue o comportamento real.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 29000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Colaborador ficou inativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e30",
+      "_type": "request",
+      "parentId": "fld_e6",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "30 · Cadastrar ferramenta (POST)",
+      "description": "## O que faz\nCadastra uma ferramenta nova.\n\n## Por que existe\nÉ o \"C\" (Create) do CRUD de ferramentas.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Furadeira CRUD {{ _.sufixo }}\",\n  \"marca\": \"Bosch\",\n  \"grupoId\": {{ _.grupo_apoio_id }},\n  \"setorId\": {{ _.setor_apoio_id }},\n  \"localizacao\": \"Prateleira A\"\n}\n```\n- **Variáveis lidas:** `sufixo`, `grupo_apoio_id`, `setor_apoio_id`\n- **Variáveis gravadas:** `ferramenta_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com a ferramenta criada, status disponivel e código de identificação gerado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Ferramenta criada e disponível\n\n## Observações\nO codigo_identificacao (1 a 9999) é gerado pelo banco, não é enviado.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Furadeira CRUD {{ _.sufixo }}\",\n  \"marca\": \"Bosch\",\n  \"grupoId\": {{ _.grupo_apoio_id }},\n  \"setorId\": {{ _.setor_apoio_id }},\n  \"localizacao\": \"Prateleira A\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 30000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Ferramenta criada e disponível\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.status).to.eql('disponivel'); insomnia.expect(corpo.data.codigo_identificacao).to.be.a('number');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('ferramenta_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e31",
+      "_type": "request",
+      "parentId": "fld_e6",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "31 · Consultar ferramenta por id (GET)",
+      "description": "## O que faz\nBusca a ferramenta cadastrada pelo id.\n\n## Por que existe\nÉ o \"R\" (Read). Prova que o registro foi gravado com os dados enviados.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/{{ _.ferramenta_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Marca e localização conferem",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 31000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Marca e localização conferem\", () => {\n  insomnia.expect(corpo.data.marca).to.eql('Bosch'); insomnia.expect(corpo.data.localizacao).to.eql('Prateleira A');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e32",
+      "_type": "request",
+      "parentId": "fld_e6",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "32 · Enviar foto da ferramenta (PUT /foto)",
+      "description": "## O que faz\nEnvia a imagem da ferramenta. O PUT grava (ou substitui) a foto e guarda o endereço em foto_url.\n\n## Por que existe\nÉ o PUT da ferramenta: o recurso /foto é substituído por inteiro a cada envio, que é o uso correto do PUT.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/ferramentas/{{ _.ferramenta_id }}/foto`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (image/webp):** `RIFF0000WEBPVP8 CRUD-06-10-2026`\n- **Variáveis lidas:** `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com foto_url preenchido.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- foto_url foi preenchido\n\n## Observações\nPara não depender de um arquivo no seu computador, o corpo é um texto mínimo com o cabeçalho de um arquivo WebP (RIFF....WEBP), que é o que a API confere. Para testar com uma imagem de verdade, abra a aba Body, escolha \"Binary File\" e selecione um JPEG, PNG ou WebP de até 5 MB.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}/foto",
+      "body": {
+        "mimeType": "image/webp",
+        "text": "RIFF0000WEBPVP8 CRUD-06-10-2026"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "image/webp"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 32000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"foto_url foi preenchido\", () => {\n  insomnia.expect(corpo.data.foto_url).to.be.a('string').and.not.empty;\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e33",
+      "_type": "request",
+      "parentId": "fld_e6",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "33 · Editar ferramenta (PATCH, campos parciais)",
+      "description": "## O que faz\nAltera só a marca e a localização da ferramenta.\n\n## Por que existe\nÉ o \"U\" (Update). Poucos campos de propósito: o nome e os demais devem ficar intactos.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ferramentas/{{ _.ferramenta_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"marca\": \"Makita\",\n  \"localizacao\": \"Prateleira B\"\n}\n```\n- **Variáveis lidas:** `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com marca e localização novas e o nome original.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Campos enviados foram alterados\n- Nome permaneceu igual\n\n## Observações\nEdição é só do admin.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"marca\": \"Makita\",\n  \"localizacao\": \"Prateleira B\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 33000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Campos enviados foram alterados\", () => {\n  insomnia.expect(corpo.data.marca).to.eql('Makita'); insomnia.expect(corpo.data.localizacao).to.eql('Prateleira B');\n});\n\ninsomnia.test(\"Nome permaneceu igual\", () => {\n  insomnia.expect(corpo.data.nome).to.include('Furadeira CRUD');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e34",
+      "_type": "request",
+      "parentId": "fld_e6",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "34 · Dar baixa na ferramenta (DELETE, baixa lógica)",
+      "description": "## O que faz\nDá baixa na ferramenta: ativo = false, status indisponivel e motivo baixada.\n\n## Por que existe\nÉ o \"D\" (Delete). A baixa é lógica para preservar o histórico de empréstimos.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/{{ _.ferramenta_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `ferramenta_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta baixada.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Ferramenta ficou inativa e baixada\n\n## Observações\nFerramenta com empréstimo em aberto não pode ser baixada (409). Convenção REST: a API devolve 200 com o registro, não 204.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 34000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Ferramenta ficou inativa e baixada\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false); insomnia.expect(corpo.data.status).to.eql('indisponivel'); insomnia.expect(corpo.data.motivo_indisponivel).to.eql('baixada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e35",
+      "_type": "request",
+      "parentId": "fld_e7",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "35 · Registrar retirada (POST)",
+      "description": "## O que faz\nRegistra a retirada da ferramenta de apoio 1 pelo colaborador de apoio. A previsão de devolução é hoje (até 23:59, horário de Brasília).\n\n## Por que existe\nÉ o \"C\" (Create) do empréstimo. A ferramenta passa a em_uso e o responsável pelo registro vem do usuário logado (JWT), nunca do corpo (Regra 6).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"ferramentaId\": {{ _.ferramenta_apoio1_id }},\n  \"colaboradorId\": {{ _.colaborador_apoio_id }},\n  \"setorDestinoId\": {{ _.setor_apoio_id }},\n  \"atividadeId\": {{ _.atividade_apoio_id }},\n  \"previsaoDevolucao\": \"{{ _.hoje }}\"\n}\n```\n- **Variáveis lidas:** `ferramenta_apoio1_id`, `colaborador_apoio_id`, `setor_apoio_id`, `atividade_apoio_id`, `hoje`\n- **Variáveis gravadas:** `emprestimo_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o empréstimo aberto.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Empréstimo criado e aberto\n\n## Observações\nO banco permite um único empréstimo aberto por ferramenta (índice único parcial, Regra 1). Se rodar depois das 23:59 a previsão cai no passado e a API responde 400.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": {{ _.ferramenta_apoio1_id }},\n  \"colaboradorId\": {{ _.colaborador_apoio_id }},\n  \"setorDestinoId\": {{ _.setor_apoio_id }},\n  \"atividadeId\": {{ _.atividade_apoio_id }},\n  \"previsaoDevolucao\": \"{{ _.hoje }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 35000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Empréstimo criado e aberto\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number'); insomnia.expect(corpo.data.data_devolucao).to.eql(null);\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('emprestimo_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e36",
+      "_type": "request",
+      "parentId": "fld_e7",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "36 · Listar empréstimos em aberto (GET)",
+      "description": "## O que faz\nLista os empréstimos em aberto, com paginação.\n\n## Por que existe\nÉ o \"R\" (Read). O empréstimo criado na requisição anterior precisa aparecer na lista.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/emprestimos?situacao=em_aberto&limit=100`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com data (lista) e meta (paginação), incluindo o empréstimo criado.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Lista contém o empréstimo criado\n\n## Observações\nA API não tem GET por id para empréstimo; a consulta é a lista com filtros.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/emprestimos?situacao=em_aberto&limit=100",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 36000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Lista contém o empréstimo criado\", () => {\n  insomnia.expect(corpo.data.map((e) => String(e.id))).to.include(insomnia.environment.get('emprestimo_id')); insomnia.expect(corpo.meta).to.be.an('object');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e37",
+      "_type": "request",
+      "parentId": "fld_e7",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "37 · Substituir empréstimo (PUT) — rota inexistente",
+      "description": "## O que faz\nTenta substituir o empréstimo com PUT.\n\n## Por que existe\nO empréstimo é um registro histórico: a única mudança permitida é a devolução, que tem rota própria. Substituí-lo por inteiro apagaria o que aconteceu.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/emprestimos/{{ _.emprestimo_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{}\n```\n- **Variáveis lidas:** `emprestimo_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 37000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e38",
+      "_type": "request",
+      "parentId": "fld_e7",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "38 · Registrar devolução (PATCH /devolucao)",
+      "description": "## O que faz\nRegistra a devolução da ferramenta em perfeito estado.\n\n## Por que existe\nÉ o \"U\" (Update) do empréstimo: fecha o registro gravando data_devolucao e condicao_devolucao e libera a ferramenta (volta a disponivel).\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo_id }}/devolucao`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"condicaoDevolucao\": \"ok\",\n  \"observacaoDevolucao\": \"Devolvida sem problemas (teste)\"\n}\n```\n- **Variáveis lidas:** `emprestimo_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com data_devolucao preenchida e condição ok.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Devolução registrada\n\n## Observações\nAvaria ou perda na devolução abrem uma ocorrência automaticamente (pasta 8).",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"ok\",\n  \"observacaoDevolucao\": \"Devolvida sem problemas (teste)\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 38000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Devolução registrada\", () => {\n  insomnia.expect(corpo.data.data_devolucao).to.be.a('string'); insomnia.expect(corpo.data.condicao_devolucao).to.eql('ok');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e39",
+      "_type": "request",
+      "parentId": "fld_e7",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "39 · Apagar empréstimo (DELETE) — rota inexistente",
+      "description": "## O que faz\nTenta apagar o empréstimo.\n\n## Por que existe\nEmpréstimo nunca é apagado: o histórico de retiradas e devoluções é a base das ocorrências, notificações e relatórios.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/emprestimos/{{ _.emprestimo_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `emprestimo_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 39000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e40",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "40 · Criar ocorrência direto (POST) — rota inexistente",
+      "description": "## O que faz\nTenta criar uma ocorrência por POST.\n\n## Por que existe\nA ocorrência só nasce de uma devolução com avaria ou perda (Regra 3), herdando o colaborador responsável. Se existisse POST direto, daria para criar ocorrência sem empréstimo.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ocorrencias`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"tipo\": \"AVARIA\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe\n\n## Observações\nAs próximas duas requisições provocam o caminho correto.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ocorrencias",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"AVARIA\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 40000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e41",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "41 · Retirar a ferramenta de apoio 2 (auxiliar)",
+      "description": "## O que faz\nRegistra um segundo empréstimo, com a ferramenta de apoio 2.\n\n## Por que existe\nÉ o passo preparatório: para gerar uma ocorrência é preciso ter um empréstimo aberto para devolver com avaria.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"ferramentaId\": {{ _.ferramenta_apoio2_id }},\n  \"colaboradorId\": {{ _.colaborador_apoio_id }},\n  \"setorDestinoId\": {{ _.setor_apoio_id }},\n  \"previsaoDevolucao\": \"{{ _.hoje }}\"\n}\n```\n- **Variáveis lidas:** `ferramenta_apoio2_id`, `colaborador_apoio_id`, `setor_apoio_id`, `hoje`\n- **Variáveis gravadas:** `emprestimo2_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 201 com o empréstimo aberto.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 201\n- Empréstimo criado\n\n## Observações\nRequisição auxiliar.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ferramentaId\": {{ _.ferramenta_apoio2_id }},\n  \"colaboradorId\": {{ _.colaborador_apoio_id }},\n  \"setorDestinoId\": {{ _.setor_apoio_id }},\n  \"previsaoDevolucao\": \"{{ _.hoje }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 41000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test(\"Empréstimo criado\", () => {\n  insomnia.expect(corpo.data.id).to.be.a('number');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([201].includes(insomnia.response.code)) {\n  insomnia.environment.set('emprestimo2_id', String(corpo.data.id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e42",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "42 · Devolver com avaria — abre a ocorrência (PATCH)",
+      "description": "## O que faz\nDevolve a ferramenta de apoio 2 com avaria.\n\n## Por que existe\nProva a Regra 3: a avaria abre sozinha uma ocorrência (tabela ocorrencias) herdando o colaborador e move a ferramenta para indisponivel.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/emprestimos/{{ _.emprestimo2_id }}/devolucao`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"condicaoDevolucao\": \"avaria\",\n  \"observacaoDevolucao\": \"Cabo danificado (teste)\",\n  \"custoEstimado\": 80\n}\n```\n- **Variáveis lidas:** `emprestimo2_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com condição avaria.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Devolução com avaria registrada\n\n## Observações\nO \"POST\" da ocorrência acontece aqui, por dentro da API.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/emprestimos/{{ _.emprestimo2_id }}/devolucao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"condicaoDevolucao\": \"avaria\",\n  \"observacaoDevolucao\": \"Cabo danificado (teste)\",\n  \"custoEstimado\": 80\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 42000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Devolução com avaria registrada\", () => {\n  insomnia.expect(corpo.data.condicao_devolucao).to.eql('avaria');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e43",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "43 · Listar ocorrências abertas (GET)",
+      "description": "## O que faz\nLista as ocorrências abertas do colaborador de apoio e guarda o id da que acabou de nascer.\n\n## Por que existe\nÉ o \"R\" (Read). Confirma que a avaria virou uma ocorrência aberta, ligada ao empréstimo e ao colaborador.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ocorrencias?status=aberta&colaboradorId={{ _.colaborador_apoio_id }}&limit=100`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `colaborador_apoio_id`\n- **Variáveis gravadas:** `ocorrencia_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com a ocorrência do empréstimo de apoio 2, tipo AVARIA, status aberta.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Existe a ocorrência do empréstimo devolvido com avaria",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ocorrencias?status=aberta&colaboradorId={{ _.colaborador_apoio_id }}&limit=100",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 43000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Existe a ocorrência do empréstimo devolvido com avaria\", () => {\n  const o = corpo.data.find((x) => String(x.emprestimo_id) === insomnia.environment.get('emprestimo2_id')); insomnia.expect(o, 'ocorrência do empréstimo').to.be.an('object'); insomnia.expect(o.tipo).to.eql('AVARIA'); insomnia.expect(o.status).to.eql('aberta');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([200].includes(insomnia.response.code)) {\n  insomnia.environment.set('ocorrencia_id', String(corpo.data.find((x) => String(x.emprestimo_id) === insomnia.environment.get('emprestimo2_id')).id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e44",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "44 · Substituir ocorrência (PUT) — rota inexistente",
+      "description": "## O que faz\nTenta substituir a ocorrência com PUT.\n\n## Por que existe\nA ocorrência avança por etapas (aberta, em reparo, cobrada, resolvida, baixada) e só tem PATCH, para que ninguém reescreva o histórico de uma vez.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/ocorrencias/{{ _.ocorrencia_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{}\n```\n- **Variáveis lidas:** `ocorrencia_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 44000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e45",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "45 · Atualizar ocorrência (PATCH)",
+      "description": "## O que faz\nMove a ocorrência para em_reparo e registra o custo estimado.\n\n## Por que existe\nÉ o \"U\" (Update) da ocorrência.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/ocorrencias/{{ _.ocorrencia_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"status\": \"em_reparo\",\n  \"custoEstimado\": 120.5,\n  \"observacoesResolucao\": \"Enviada para reparo (teste)\"\n}\n```\n- **Variáveis lidas:** `ocorrencia_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com status em_reparo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Status mudou para em_reparo",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"em_reparo\",\n  \"custoEstimado\": 120.5,\n  \"observacoesResolucao\": \"Enviada para reparo (teste)\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 45000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Status mudou para em_reparo\", () => {\n  insomnia.expect(corpo.data.status).to.eql('em_reparo');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e46",
+      "_type": "request",
+      "parentId": "fld_e8",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "46 · Apagar ocorrência (DELETE) — rota inexistente",
+      "description": "## O que faz\nTenta apagar a ocorrência.\n\n## Por que existe\nOcorrência é registro de prejuízo e responsabilidade; encerra-se (resolvida ou baixada), nunca é apagada.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ocorrencias/{{ _.ocorrencia_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `ocorrencia_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/ocorrencias/{{ _.ocorrencia_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 46000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e47",
+      "_type": "request",
+      "parentId": "fld_e9",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "47 · Criar notificação (POST) — rota inexistente",
+      "description": "## O que faz\nTenta criar uma notificação por POST.\n\n## Por que existe\nNotificação é gerada pelo sistema a partir dos empréstimos atrasados ou que vencem hoje; ninguém a cria à mão.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/notificacoes`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"titulo\": \"x\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "POST",
+      "url": "{{ _.base_url }}/notificacoes",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"titulo\": \"x\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 47000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e48",
+      "_type": "request",
+      "parentId": "fld_e9",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "48 · Listar notificações (GET)",
+      "description": "## O que faz\nLista as notificações e guarda o id de uma ainda não lida (ou 999999 se não houver nenhuma).\n\n## Por que existe\nÉ o \"R\" (Read). O resultado depende do dia: pode vir vazia, e isso também é uma resposta correta.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/notificacoes?limit=100`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** `notificacao_id` (pelo script da aba Scripts → After-response)\n\n## Resultado esperado\nHTTP 200 com data (lista) e meta (paginação).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta é uma lista com paginação\n\n## Observações\nA rotina que gera as notificações roda de segunda a sexta às 07:00 (Brasília).",
+      "method": "GET",
+      "url": "{{ _.base_url }}/notificacoes?limit=100",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 48000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta é uma lista com paginação\", () => {\n  insomnia.expect(corpo.data).to.be.an('array'); insomnia.expect(corpo.meta).to.be.an('object');\n});\n\n// Grava no ambiente só se a resposta foi a esperada.\nif ([200].includes(insomnia.response.code)) {\n  insomnia.environment.set('notificacao_id', String((corpo.data.find((n) => !n.lida) || { id: 999999 }).id));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e49",
+      "_type": "request",
+      "parentId": "fld_e9",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "49 · Substituir notificação (PUT) — rota inexistente",
+      "description": "## O que faz\nTenta substituir uma notificação com PUT.\n\n## Por que existe\nA única mudança permitida numa notificação é marcá-la como lida.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/notificacoes/{{ _.notificacao_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{}\n```\n- **Variáveis lidas:** `notificacao_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/notificacoes/{{ _.notificacao_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 49000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e50",
+      "_type": "request",
+      "parentId": "fld_e9",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "50 · Marcar notificação como lida (PATCH)",
+      "description": "## O que faz\nMarca como lida a notificação escolhida na listagem.\n\n## Por que existe\nÉ o \"U\" (Update). Se a listagem trouxe uma notificação não lida, ela é marcada (200); se veio vazia, o id usado é 999999 e a API responde 404, o que prova o tratamento de id inexistente.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/notificacoes/{{ _.notificacao_id }}/lida`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `notificacao_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 (notificação existente) ou 404 (id 999999).\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200 ou 404\n- Status confere com o id usado\n\n## Observações\nO teste aceita os dois resultados e confere que o status bate com o id usado.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/notificacoes/{{ _.notificacao_id }}/lida",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 50000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200 ou 404', () => {\n  insomnia.expect([200,404]).to.include(insomnia.response.code);\n});\n\ninsomnia.test(\"Status confere com o id usado\", () => {\n  const usouIdReal = insomnia.environment.get('notificacao_id') !== '999999'; insomnia.expect(insomnia.response.code).to.eql(usouIdReal ? 200 : 404);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e51",
+      "_type": "request",
+      "parentId": "fld_e9",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "51 · Apagar notificação (DELETE) — rota inexistente",
+      "description": "## O que faz\nTenta apagar uma notificação.\n\n## Por que existe\nNotificações lidas são limpas pela própria rotina do sistema; a API não expõe exclusão.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/notificacoes/{{ _.notificacao_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `notificacao_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/notificacoes/{{ _.notificacao_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 51000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e52",
+      "_type": "request",
+      "parentId": "fld_e10",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "52 · Sincronizar feriados com a BrasilAPI (POST)",
+      "description": "## O que faz\nBusca os feriados nacionais do ano atual na BrasilAPI e grava (ou atualiza) na tabela feriados.\n\n## Por que existe\nÉ o \"C\" (Create) dos feriados. Cobre a integração com a fonte externa. Se a BrasilAPI estiver fora, a API usa o fallback de sábado e domingo (Regra 9).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/feriados/sincronizar`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a lista de feriados do ano.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Resposta traz dados\n\n## Observações\nPrecisa de internet para a BrasilAPI; sem ela a API cai no fallback e o teste tolera isso.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/feriados/sincronizar",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 52000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz dados\", () => {\n  insomnia.expect(corpo.data).to.exist;\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e53",
+      "_type": "request",
+      "parentId": "fld_e10",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "53 · Consultar feriados do ano (GET)",
+      "description": "## O que faz\nLista os feriados do ano atual a partir do cache em tabela.\n\n## Por que existe\nÉ o \"R\" (Read). Rota pública: o calendário do front consulta sem login.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/feriados`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho Authorization, de propósito.\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com data.feriados.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Traz a lista de feriados do ano",
+      "method": "GET",
+      "url": "{{ _.base_url }}/feriados",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 53000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Traz a lista de feriados do ano\", () => {\n  insomnia.expect(corpo.data.feriados).to.be.an('array'); insomnia.expect(corpo.data.ano).to.be.a('number');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e54",
+      "_type": "request",
+      "parentId": "fld_e10",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "54 · Substituir feriado (PUT) — rota inexistente",
+      "description": "## O que faz\nTenta substituir um feriado com PUT.\n\n## Por que existe\nFeriado vem da fonte oficial (BrasilAPI) e não é editado à mão.\n\n## Como está configurada\n- **Método e rota:** `PUT /v1/feriados/1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"x\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/feriados/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"x\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 54000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e55",
+      "_type": "request",
+      "parentId": "fld_e10",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "55 · Editar feriado (PATCH) — rota inexistente",
+      "description": "## O que faz\nTenta editar um feriado com PATCH.\n\n## Por que existe\nMesma razão do PUT: o dado é da fonte oficial. A única forma de atualizá-lo é sincronizar de novo.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/feriados/1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"x\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/feriados/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"x\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 55000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e56",
+      "_type": "request",
+      "parentId": "fld_e10",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "56 · Apagar feriado (DELETE) — rota inexistente",
+      "description": "## O que faz\nTenta apagar um feriado.\n\n## Por que existe\nApagar um feriado mudaria o cálculo de dias úteis das previsões de devolução.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/feriados/1`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND (\"Rota não encontrada\").\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Mensagem diz que a rota não existe",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/feriados/1",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 56000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Mensagem diz que a rota não existe\", () => {\n  insomnia.expect(corpo.error.message).to.include('Rota não encontrada');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e57",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "57 · Criar setor sem token — 401",
+      "description": "## O que faz\nTenta criar um setor sem enviar o token.\n\n## Por que existe\nProva que a rota é protegida.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/setores`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho Authorization, de propósito.\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Sem Token\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 TOKEN_NOT_PROVIDED no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Código de erro TOKEN_NOT_PROVIDED\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Sem Token\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 57000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro TOKEN_NOT_PROVIDED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e58",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "58 · Criar setor com token inválido — 401",
+      "description": "## O que faz\nTenta criar um setor com um token adulterado.\n\n## Por que existe\nProva que a API valida a assinatura do JWT, não só a presença.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/setores`\n- **Autenticação:** Bearer Token com um valor adulterado, de propósito.\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Token Invalido\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 401 TOKEN_INVALID no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 401\n- Código de erro TOKEN_INVALID\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Token Invalido\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "token.invalido.adulterado"
+      },
+      "metaSortKey": 58000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro TOKEN_INVALID\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e59",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "59 · Criar setor como manutenção — 403",
+      "description": "## O que faz\nA manutenção tenta criar um setor.\n\n## Por que existe\nCadastros auxiliares só são escritos pelo admin (Regra 8); a manutenção só consulta.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/setores`\n- **Autenticação:** Bearer Token = variável de ambiente `token_manut` (login da manutenção, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Sem Permissao\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 ACCESS_DENIED no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 403\n- Código de erro ACCESS_DENIED\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Sem Permissao\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_manut }}"
+      },
+      "metaSortKey": 59000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e60",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "60 · Editar colaborador como manutenção — 403",
+      "description": "## O que faz\nA manutenção tenta editar um colaborador.\n\n## Por que existe\nEdição e inativação de colaborador são só do admin.\n\n## Como está configurada\n- **Método e rota:** `PATCH /v1/colaboradores/{{ _.colaborador_apoio_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token_manut` (login da manutenção, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Sem Permissao\"\n}\n```\n- **Variáveis lidas:** `colaborador_apoio_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 403 ACCESS_DENIED no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 403\n- Código de erro ACCESS_DENIED\n- Resposta no envelope de erro padrão",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_apoio_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Sem Permissao\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_manut }}"
+      },
+      "metaSortKey": 60000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 403', () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e61",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "61 · Criar setor com nome vazio — 400",
+      "description": "## O que faz\nCria um setor com nome vazio.\n\n## Por que existe\nA validação (Zod) recusa antes de chegar ao banco.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/setores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 VALIDATION_ERROR no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 61000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test(\"Código de erro VALIDATION_ERROR\", () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e62",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "62 · Criar ferramenta sem grupoId — 400",
+      "description": "## O que faz\nCadastra uma ferramenta sem a categoria (grupoId), que é obrigatória.\n\n## Por que existe\nCampo obrigatório ausente.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/ferramentas`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Sem Grupo\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 VALIDATION_ERROR no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Sem Grupo\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 62000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test(\"Código de erro VALIDATION_ERROR\", () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e63",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "63 · Criar colaborador com matrícula inválida — 400",
+      "description": "## O que faz\nCadastra colaborador com matrícula que não tem 4 dígitos numéricos.\n\n## Por que existe\nA matrícula tem formato fixo (0001 a 9999).\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Matricula Ruim\",\n  \"matricula\": \"ABCD\",\n  \"setorId\": 1\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 VALIDATION_ERROR no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Matricula Ruim\",\n  \"matricula\": \"ABCD\",\n  \"setorId\": 1\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 63000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test(\"Código de erro VALIDATION_ERROR\", () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e64",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "64 · Buscar setor com id não numérico — 400",
+      "description": "## O que faz\nBusca um setor com id \"abc\".\n\n## Por que existe\nO parâmetro de rota também é validado.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/setores/abc`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 400 VALIDATION_ERROR no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 400\n- Código de erro VALIDATION_ERROR\n- Resposta no envelope de erro padrão",
+      "method": "GET",
+      "url": "{{ _.base_url }}/setores/abc",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 64000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});\n\ninsomnia.test(\"Código de erro VALIDATION_ERROR\", () => {\n  insomnia.expect(corpo.error.code).to.eql('VALIDATION_ERROR');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e65",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "65 · Buscar setor inexistente — 404",
+      "description": "## O que faz\nBusca um setor que não existe.\n\n## Por que existe\nA API responde 404 em vez de 200 vazio ou erro 500.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/setores/999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 NOT_FOUND no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro NOT_FOUND\n- Resposta no envelope de erro padrão",
+      "method": "GET",
+      "url": "{{ _.base_url }}/setores/999999",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 65000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('NOT_FOUND');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e66",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "66 · Buscar ferramenta inexistente — 404",
+      "description": "## O que faz\nBusca uma ferramenta que não existe.\n\n## Por que existe\nCódigo de erro específico da entidade.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas/999999`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 404 FERRAMENTA_NOT_FOUND no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 404\n- Código de erro FERRAMENTA_NOT_FOUND\n- Resposta no envelope de erro padrão",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas/999999",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 66000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test(\"Código de erro FERRAMENTA_NOT_FOUND\", () => {\n  insomnia.expect(corpo.error.code).to.eql('FERRAMENTA_NOT_FOUND');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e67",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "67 · Criar setor com nome repetido — 409",
+      "description": "## O que faz\nCria um setor com um nome que já existe (Usinagem CNC, do seed).\n\n## Por que existe\nO índice único do banco recusa nomes repetidos, sem diferenciar maiúsculas de minúsculas, e a API traduz o erro do PostgreSQL para 409.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/setores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Usinagem CNC\"\n}\n```\n- **Variáveis lidas:** nenhuma (além de `base_url`)\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 DUPLICATE_ENTRY no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 409\n- Código de erro DUPLICATE_ENTRY\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/setores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Usinagem CNC\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 67000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test(\"Código de erro DUPLICATE_ENTRY\", () => {\n  insomnia.expect(corpo.error.code).to.eql('DUPLICATE_ENTRY');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e68",
+      "_type": "request",
+      "parentId": "fld_e11",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "68 · Criar colaborador com matrícula repetida — 409",
+      "description": "## O que faz\nCadastra um colaborador com a matrícula do colaborador de apoio (já em uso).\n\n## Por que existe\nMatrícula é única.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/colaboradores`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Corpo (JSON):**\n```json\n{\n  \"nome\": \"Matricula Repetida\",\n  \"matricula\": \"{{ _.matricula_a }}\",\n  \"setorId\": {{ _.setor_apoio_id }}\n}\n```\n- **Variáveis lidas:** `matricula_a`, `setor_apoio_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 409 DUPLICATE_ENTRY no envelope { error: { code, message, details } }.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 409\n- Código de erro DUPLICATE_ENTRY\n- Resposta no envelope de erro padrão",
+      "method": "POST",
+      "url": "{{ _.base_url }}/colaboradores",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Matricula Repetida\",\n  \"matricula\": \"{{ _.matricula_a }}\",\n  \"setorId\": {{ _.setor_apoio_id }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 68000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 409', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});\n\ninsomnia.test(\"Código de erro DUPLICATE_ENTRY\", () => {\n  insomnia.expect(corpo.error.code).to.eql('DUPLICATE_ENTRY');\n});\n\ninsomnia.test(\"Resposta no envelope de erro padrão\", () => {\n  insomnia.expect(corpo.error).to.be.an('object'); insomnia.expect(corpo.error.message).to.be.a('string');\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e69",
+      "_type": "request",
+      "parentId": "fld_e12",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "69 · Dar baixa na ferramenta de apoio 1",
+      "description": "## O que faz\nDá baixa na ferramenta de apoio 1.\n\n## Por que existe\nRemove da operação os dados de teste criados na pasta 1.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/{{ _.ferramenta_apoio1_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `ferramenta_apoio1_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta baixada.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Ferramenta baixada\n\n## Observações\nSó funciona porque a ferramenta foi devolvida na pasta 7 (sem empréstimo aberto).",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_apoio1_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 69000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Ferramenta baixada\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e70",
+      "_type": "request",
+      "parentId": "fld_e12",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "70 · Dar baixa na ferramenta de apoio 2",
+      "description": "## O que faz\nDá baixa na ferramenta de apoio 2.\n\n## Por que existe\nIdem. Ela já estava indisponível por causa da avaria; a baixa registra o motivo baixada.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/ferramentas/{{ _.ferramenta_apoio2_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `ferramenta_apoio2_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com a ferramenta baixada.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Ferramenta baixada",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/ferramentas/{{ _.ferramenta_apoio2_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 70000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Ferramenta baixada\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_e71",
+      "_type": "request",
+      "parentId": "fld_e12",
+      "modified": 1791244800000,
+      "created": 1791244800000,
+      "name": "71 · Inativar o colaborador de apoio",
+      "description": "## O que faz\nInativa o colaborador de apoio.\n\n## Por que existe\nRemove da operação o colaborador de teste. O histórico dos empréstimos dele é preservado.\n\n## Como está configurada\n- **Método e rota:** `DELETE /v1/colaboradores/{{ _.colaborador_apoio_id }}`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login do admin, pasta 1).\n- **Variáveis lidas:** `colaborador_apoio_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador inativo.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Colaborador inativo",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/colaboradores/{{ _.colaborador_apoio_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 71000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Colaborador inativo\", () => {\n  insomnia.expect(corpo.data.ativo).to.eql(false);\n});",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    }
+  ]
+}
