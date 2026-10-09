@@ -3,7 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
-import { query } from '../config/database.js';
+import { getClient, query } from '../config/database.js';
 
 // Código de patrimônio na busca: zeros à esquerda e o prefixo SF das etiquetas antigas não importam.
 const PREFIXO = 'ZZTESTE_CODIGO_';
@@ -57,5 +57,28 @@ describe('busca de ferramenta por código', () => {
     const res = await get('/v1/ferramentas?q=12345&limit=100');
     expect(res.status).toBe(200);
     expect(res.body.data.some((f: { id: number }) => f.id === id)).toBe(false);
+  });
+});
+
+// Carga em lote (POST /v1/importacoes roda tudo numa transação): cada linha precisa de um código próprio.
+// O ganho de desempenho da 0011 só aparece com a estatística de banco recém-criado, que a suíte não
+// reproduz; a medição antes x depois está em docs/testes/ (auditoria de prontidão).
+describe('geração do código na carga em lote', () => {
+  it('300 ferramentas numa transação ganham códigos distintos', async () => {
+    const client = await getClient();
+    try {
+      await client.query('BEGIN');
+      const grupoId = (await client.query<{ id: number }>('SELECT id FROM grupos_ferramentas LIMIT 1')).rows[0].id;
+      const r = await client.query<{ codigo_identificacao: number }>(
+        `INSERT INTO ferramentas (nome, grupo_id)
+         SELECT '${PREFIXO}lote ' || g, $1 FROM generate_series(1, 300) g
+         RETURNING codigo_identificacao`,
+        [grupoId]
+      );
+      expect(new Set(r.rows.map((x) => x.codigo_identificacao)).size).toBe(300);
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
   });
 });
