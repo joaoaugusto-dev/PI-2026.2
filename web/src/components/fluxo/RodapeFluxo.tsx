@@ -15,9 +15,10 @@ type RodapeFluxoProps = {
 export function RodapeFluxo({ rotuloUsuario, usuario, faltando, textoBotao, comIcones, enviando }: RodapeFluxoProps) {
   const pendente = faltando.length > 0
   return (
-    <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background/95 px-6 py-3 backdrop-blur">
-      <div>
-        <p className="text-corpo">
+    <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="min-w-0">
+        {/* no celular o rodapé come a tela: o responsável vem do login, a linha só aparece de sm para cima */}
+        <p className="hidden text-corpo sm:block">
           {rotuloUsuario}: <span className="font-medium">{usuario}</span>
         </p>
         <p

@@ -30,13 +30,13 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
 
   return (
     <header className="flex h-16 items-center gap-2 border-b px-4 justify-between">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <SidebarTrigger />
-        <h1 className="text-secao font-semibold">{titulo}</h1>
+        <h1 className="truncate text-secao font-semibold">{titulo}</h1>
       </div>
 
-      <div className="flex items-center gap-4">
-        <span className="text-corpo text-muted-foreground hidden md:inline">
+      <div className="flex shrink-0 items-center gap-4">
+        <span className="text-corpo text-muted-foreground hidden xl:inline">
           {dataFormatada} · {horaFormatada}
         </span>
         {usuario?.papel === 'admin' && (
