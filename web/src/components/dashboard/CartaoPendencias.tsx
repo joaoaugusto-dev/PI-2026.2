@@ -22,6 +22,7 @@ export function CartaoPendencias<T>({
   tom,
   vazio,
   carregando,
+  acao,
 }: {
   lista: NomeLista
   titulo: string
@@ -32,6 +33,8 @@ export function CartaoPendencias<T>({
   tom: string
   vazio: string
   carregando: boolean
+  /** Botão extra no topo do cartão (ex.: imprimir a lista). */
+  acao?: ReactNode
 }) {
   const [aberto, setAberto] = useState(false)
   const [page, setPage] = useState(1)
@@ -51,6 +54,7 @@ export function CartaoPendencias<T>({
           <p className="text-rotulo text-muted-foreground">{descricao}</p>
         </div>
         <div className="flex items-center gap-3">
+          {acao}
           {temMais && (
             <Button variant="outline" size="sm" onClick={() => alternar(true)}>
               Mostrar tudo

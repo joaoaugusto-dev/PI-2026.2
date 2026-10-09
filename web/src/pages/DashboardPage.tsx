@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { AtalhoAcao } from '@/components/dashboard/AtalhoAcao'
 import { CartaoPendencias } from '@/components/dashboard/CartaoPendencias'
 import { EmprestimoPendenteItem } from '@/components/dashboard/EmprestimoPendenteItem'
+import { ImprimirPendencias } from '@/components/dashboard/ImprimirPendencias'
 import { KpiCard, type TomKpi } from '@/components/dashboard/KpiCard'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -83,6 +84,7 @@ export function DashboardPage() {
           tom="text-status-atraso"
           vazio="Nenhuma devolução prevista para hoje."
           carregando={isLoading}
+          acao={<ImprimirPendencias />}
         />
 
         <CartaoPendencias<EmprestimoPendente>
