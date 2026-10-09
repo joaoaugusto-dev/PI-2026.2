@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -136,6 +136,16 @@ describe('POST /v1/auth/login (matrícula + senha)', () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('INVALID_CREDENTIALS');
+  });
+
+  it('matrícula sem conta também roda o bcrypt (o tempo não revela quem tem acesso)', async () => {
+    const compare = vi.spyOn(bcrypt, 'compare');
+    try {
+      await login({ matricula: '9998', senha: '123456' });
+      expect(compare).toHaveBeenCalledTimes(1);
+    } finally {
+      compare.mockRestore();
+    }
   });
 
   it('retorna 401 USER_INACTIVE quando o colaborador dono da conta está inativo', async () => {
