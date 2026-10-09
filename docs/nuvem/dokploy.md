@@ -61,12 +61,20 @@ No Dokploy, a melhor prática para monorepos é criar **dois aplicativos separad
    DB_USER=postgres
    DB_PASSWORD=sua_senha_do_postgres
    DB_SSL=false
+   # openssl rand -base64 48 — a API não sobe com menos de 32 caracteres
    JWT_SECRET=gere_uma_chave_jwt_secreta_longa_e_aleatoria_aqui
    JWT_EXPIRES_IN=7d
    JWT_CONSULTA_EXPIRES_IN=15m
    CORS_ORIGIN=https://app.seudominio.com
+   # obrigatório atrás do Traefik: sem ele todos os usuários aparecem com o IP do proxy
+   # e o limite de 10 logins/min passa a valer para a fábrica inteira
    TRUST_PROXY_HOPS=1
+   # fotos das ferramentas: aponte para um volume persistente (aba Advanced → Volumes)
+   UPLOADS_DIR=/app/data/ferramentas
    ```
+   > **Não publique a porta 3000 da API diretamente.** Com `TRUST_PROXY_HOPS=1` a API confia no
+   > `X-Forwarded-For`; acessada sem o proxy na frente, qualquer cliente forja o próprio IP e escapa
+   > dos limites de tentativa. O único caminho até a API deve ser o domínio do Traefik.
 4. Na aba **Domains**:
    - Clique em **Add Domain**.
    - **Host:** `api.seudominio.com`
@@ -77,20 +85,45 @@ No Dokploy, a melhor prática para monorepos é criar **dois aplicativos separad
 
 ---
 
-## 4. Passo 3: Executar as Migrations e o Seed no Banco
+## 4. Passo 3: Executar as Migrations e criar o primeiro admin
 
 Após o primeiro deploy da API com o banco conectado:
 
 1. No Dokploy, abra a aplicação `soufer-tools-api` e vá na aba **Terminal / Exec** (ou Console do container).
-2. Execute os comandos de inicialização das tabelas e dados:
+2. Execute:
    ```bash
-   # Executa a migration inicial (11 tabelas, enums, triggers, views e índices)
+   # cria/atualiza tabelas, gatilhos, views e índices (inclui a 0011 de desempenho)
    npm run db:migrate
 
-   # Executa a carga inicial de setores, categorias, atividades e colaboradores
-   npm run db:seed
+   # primeiro admin real: imprime um link de uso único para a pessoa definir o próprio PIN
+   npm run db:admin -- 0042 "Nome do Responsável" "Manutenção"
+
+   # feriados nacionais (sugestão de previsão de devolução)
+   npm run db:feriados
    ```
-3. Verifique se a saída indica sucesso (`✅ Migrations executadas com sucesso!`).
+3. Abra o link impresso pelo `db:admin`, defina o PIN e entre. Pela tela de Cadastros, o admin cria
+   setores, categorias e colaboradores (ou importa por CSV) e gera o link de acesso de cada operador.
+
+> **Não rode `npm run db:seed` em produção.** Ele cria as contas 0001, 0002 e 0053 com a senha
+> `123456` e setores/categorias fictícios; com `NODE_ENV=production` o script se recusa a rodar.
+> Se o container não tiver o `tsx` (devDependency), use as versões compiladas:
+> `node dist/scripts/migrate.js` e `node dist/scripts/criar-admin.js <matrícula> "<nome>" "<setor>"`.
+
+### Carga inicial do inventário
+
+Importe primeiro os colaboradores e depois as ferramentas, pela tela de Cadastros ou por
+`POST /v1/importacoes/:recurso` (modelo em `GET /v1/importacoes/:recurso/modelo`). Com a migration
+0011 aplicada, 1.000 ferramentas entram em poucos segundos mesmo com o banco vazio; sem ela a
+importação fica quadrática e passa do timeout do proxy (auditoria de 09/10/2026).
+
+### Backup
+
+Agende um `pg_dump` diário (Dokploy → banco → **Backups**, ou cron no host) e teste a restauração
+uma vez antes de liberar o uso:
+```bash
+pg_dump -Fc -h <host> -U <usuario> soufer_prod > soufer_$(date +%F).dump
+pg_restore -d soufer_restaurado soufer_AAAA-MM-DD.dump
+```
 
 ---
 
@@ -108,6 +141,10 @@ Após o primeiro deploy da API com o banco conectado:
    ```env
    VITE_API_URL=https://api.seudominio.com/v1
    ```
+   > `VITE_API_URL` é lida no **build** (não em tempo de execução): mudou o domínio da API, faça novo deploy.
+   > O front sobe com `serve` (dependência fixa, sem download na subida) e os cabeçalhos de segurança
+   > (CSP, `X-Frame-Options`, `nosniff`) vêm de `web/public/serve.json`. No S3 + CloudFront, replique-os
+   > numa *Response headers policy*.
 4. Na aba **Domains**:
    - Clique em **Add Domain**.
    - **Host:** `app.seudominio.com`
@@ -124,10 +161,11 @@ Com os três serviços no ar, teste os seguintes endpoints pelo navegador ou Ins
 
 | Teste | URL | Resultado Esperado |
 |---|---|---|
-| **Healthcheck da API** | `https://api.seudominio.com/v1/health` | `{"status":"ok","db":"ok", ...}` (HTTP 200) |
+| **Healthcheck da API** | `https://api.seudominio.com/v1/health` | `"status":"ok"` (HTTP 200); em produção sem nome do banco |
 | **Documentação Swagger** | `https://api.seudominio.com/docs` | Interface interativa do Swagger UI |
 | **Aplicação Front-end** | `https://app.seudominio.com` | Tela de Login do SOUFER Tools |
-| **Login da Manutenção** | Via tela de Login | Matrícula `0001` / Senha `123456` |
+| **Login do admin** | Link impresso pelo `db:admin` | Define o PIN e entra no Dashboard |
+| **Seed bloqueado** | `NODE_ENV=production npm run db:seed` | Recusado, sem criar contas |
 
 ---
 
