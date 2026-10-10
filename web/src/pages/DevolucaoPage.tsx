@@ -169,9 +169,9 @@ export function DevolucaoPage() {
               <CampoIdentificacao
                 {...register('ferramentaCodigo')}
                 icone={Barcode}
-                mono
+                mono={!ferramentaCodigo || /^(sf)?\d+$/i.test(ferramentaCodigo.trim())}
                 autoFocus
-                placeholder="Código de patrimônio ou nome da ferramenta"
+                placeholder="Código, ferramenta ou colaborador"
                 estadoClassName={cn(
                   'border-2',
                   (emprestimoNaoEncontrado || (erroBusca && termoAtual)) && 'animate-erro border-destructive',
