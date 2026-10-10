@@ -27,7 +27,7 @@ import { RotuloCampo } from '@/components/fluxo/RotuloCampo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 
 const schema = z.object({
-  ferramentaCodigo: z.string().trim().min(1, 'Bipe o leitor ou digite o código de patrimônio'),
+  ferramentaCodigo: z.string().trim().min(1, 'Bipe a etiqueta ou digite o nome da ferramenta'),
   colaborador: z.string().trim().min(1, 'Informe matrícula, crachá ou nome'),
   atividade: z.string().trim().optional(),
   setor: z.string().min(1, 'Selecione o setor de destino'), // id do setor
@@ -185,22 +185,21 @@ export function RetiradaPage() {
     )
   }
 
+  const pareceCodigo = !ferramentaCodigo || parseCodigoPatrimonio(ferramentaCodigo) !== null
+
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
       {concluida && <TelaSucessoAnimada contida mensagem="Retirada registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
-      <div className="animate-entrada flex-1 space-y-6 p-6 pb-4">
+      <div className="animate-entrada flex-1 space-y-6 p-4 pb-4 sm:p-6">
         <div className="grid gap-6 lg:grid-cols-2">
-          <SecaoFluxo
-            titulo="1. Ferramenta"
-            descricao="Dispare o leitor no código de patrimônio ou digite o código / nome"
-          >
+          <SecaoFluxo titulo="1. Ferramenta" descricao="Bipe a etiqueta ou digite o nome">
             <div className="space-y-2">
               <CampoIdentificacao
                 {...register('ferramentaCodigo')}
                 icone={Barcode}
-                mono
+                mono={pareceCodigo}
                 autoFocus
-                placeholder="Código de patrimônio ou nome da ferramenta"
+                placeholder="Código ou nome da ferramenta"
                 estadoClassName={cn(
                   'border-2',
                   ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
@@ -222,7 +221,7 @@ export function RetiradaPage() {
                 <div className="animate-entrada flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
                   <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-20 shrink-0" />
                   <div className="min-w-0 space-y-1.5">
-                    <p className="truncate font-medium">{ferramenta.nome}</p>
+                    <p className="font-medium">{ferramenta.nome}</p>
                     <StatusBadge status={statusParaBadge(ferramenta.status)} />
                   </div>
                 </div>
@@ -259,7 +258,7 @@ export function RetiradaPage() {
                 </div>
               )}
               {ferramentaNaoEncontrada && (
-                <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
+                <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}". Confira o código ou tente outro nome.</p>
               )}
               {ferramentasAmbiguas.length > 0 && (
                 <OpcoesAmbiguas
@@ -277,17 +276,16 @@ export function RetiradaPage() {
                 />
               )}
               {erroFerramenta && ferramentaAtual && (
-                <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
+                <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão.</p>
               )}
             </div>
-
           </SecaoFluxo>
 
-          <SecaoFluxo titulo="2. Colaborador" descricao="Matrícula, crachá ou nome">
+          <SecaoFluxo titulo="2. Colaborador" descricao="Bipe o crachá ou digite matrícula / nome">
             <CampoIdentificacao
               {...register('colaborador')}
               icone={IdCard}
-              placeholder="Matrícula ou nome do colaborador"
+              placeholder="Matrícula ou nome"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
@@ -301,7 +299,7 @@ export function RetiradaPage() {
 
             {colaboradorEncontrado && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">{colaboradorEncontrado.nome}</span>
+                <span className="text-corpo font-medium">{colaboradorEncontrado.nome}</span>
                 <span className="text-sm text-muted-foreground">
                   Matrícula {colaboradorEncontrado.matricula} ·{' '}
                   {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
@@ -318,7 +316,7 @@ export function RetiradaPage() {
             )}
 
             {erroColaborador && termoColaborador === colaborador.trim() && (
-              <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
+              <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão.</p>
             )}
 
             {colaboradorNaoEncontrado && (
