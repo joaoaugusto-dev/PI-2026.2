@@ -362,7 +362,7 @@ export function StatusPage() {
                 variant="outline"
                 size="sm"
                 onClick={copyJson}
-                className="h-8 gap-1.5 text-rotulo"
+                className="gap-1.5 text-rotulo"
               >
                 {copied ? <Check className="size-3 text-status-disponivel" /> : <Copy className="size-3" />}
                 {copied ? 'Copiado!' : 'Copiar'}
