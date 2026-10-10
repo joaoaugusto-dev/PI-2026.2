@@ -17,7 +17,8 @@ async function buscarTudo(lista: NomeLista): Promise<EmprestimoPendente[]> {
       params: { page, limit: 50 },
     })
     itens.push(...data.data)
-    if (page >= data.meta.totalPages) return itens
+    // teto de 40 páginas (2000 itens): protege de um totalPages inesperado
+    if (page >= data.meta.totalPages || page >= 40) return itens
   }
 }
 

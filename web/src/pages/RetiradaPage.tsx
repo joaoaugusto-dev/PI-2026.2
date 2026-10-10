@@ -146,7 +146,7 @@ export function RetiradaPage() {
   }
 
   function onConfirmar(data: FormValues) {
-    if (!ferramenta || !colaboradorEncontrado) return
+    if (faltando.length > 0 || !ferramenta || !colaboradorEncontrado) return
     const resumo = `${ferramenta.nome} com ${colaboradorEncontrado.nome}`
     const prazo = prazoBR(`${data.previsaoDevolucao}T23:59:59-03:00`)
     retirar.mutate(
