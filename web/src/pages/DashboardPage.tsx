@@ -24,8 +24,10 @@ const KPIS: { chave: keyof NonNullable<ReturnType<typeof useDashboard>['data']>[
   { to: '/ferramentas?status=em_uso', chave: 'em_uso', label: 'Em uso' },
   { to: '/ferramentas?status=indisponivel', chave: 'indisponiveis', label: 'Indisponíveis', tom: 'indisponivel' },
   { to: '/emprestimos?situacao=atrasado', chave: 'atrasadas', label: 'Atrasadas', tom: 'atraso' },
-  { to: '/indisponiveis', dica: 'Abertas · a lista mostra ferramentas', chave: 'ocorrencias', label: 'Ocorrências', tom: 'indisponivel' },
+  { to: '/indisponiveis', chave: 'ocorrencias', label: 'Ocorrências abertas', tom: 'indisponivel' },
 ]
+
+const plural = (dias: number) => `${dias} ${dias === 1 ? 'dia' : 'dias'}`
 
 export function DashboardPage() {
   const { data, isLoading, isError } = useDashboard()
@@ -54,18 +56,19 @@ export function DashboardPage() {
           : data && KPIS.map((k) => <KpiCard key={k.chave} label={k.label} valor={data.kpis[k.chave]} tom={k.tom} to={k.to} dica={k.dica} />)}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      {/* no celular as duas ações vêm antes dos números: é para isso que o operador abre o app */}
+      <div className="grid gap-3 max-sm:order-first sm:grid-cols-2">
         <AtalhoAcao
           to="/retiradas/nova"
           titulo="Registrar retirada"
-          descricao="Ferramenta → colaborador · leitor de código"
+          descricao="Bipe a ferramenta e o crachá"
           icone={ArrowUpRight}
           variante="primario"
         />
         <AtalhoAcao
           to="/devolucoes"
           titulo="Registrar devolução"
-          descricao="Busca por código ou colaborador"
+          descricao="Bipe a ferramenta que voltou"
           icone={ArrowDownLeft}
           variante="escuro"
         />
@@ -97,7 +100,7 @@ export function DashboardPage() {
             <EmprestimoPendenteItem
               key={item.id}
               item={item}
-              prazo={`${item.dias}d`}
+              prazo={plural(item.dias)}
               tomPrazo="text-status-indisponivel"
             />
           )}
@@ -116,7 +119,7 @@ export function DashboardPage() {
             <EmprestimoPendenteItem
               key={item.id}
               item={item}
-              prazo={`Em ${item.dias}d`}
+              prazo={`em ${plural(item.dias)}`}
               tomPrazo="text-muted-foreground"
             />
           )}
@@ -137,7 +140,7 @@ export function DashboardPage() {
                 <p className="truncate text-corpo font-medium">{item.ferramenta_nome}</p>
                 <p className="truncate text-rotulo text-muted-foreground">
                   {formatarPatrimonio(item.codigo_identificacao)} · {item.etapa ? ETAPA[item.etapa] : 'Sem ocorrência'}
-                  {item.tipo ? ` (${item.tipo.toLowerCase()})` : ''} · parada há {item.dias_parada}d
+                  {item.tipo ? ` (${item.tipo.toLowerCase()})` : ''} · {item.dias_parada > 0 ? `parada há ${plural(item.dias_parada)}` : 'parada desde hoje'}
                 </p>
               </div>
               <Button asChild size="sm" variant="outline">
