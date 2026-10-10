@@ -16,7 +16,7 @@ import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPor
 import { useAuth } from '@/lib/auth'
 import { parseCodigoPatrimonio } from '@/lib/patrimonio'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
-import { hojeBrasilia } from '@/lib/formatar'
+import { hojeBrasilia, prazoBR } from '@/lib/formatar'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { OpcoesAmbiguas } from '@/components/fluxo/OpcoesAmbiguas'
@@ -141,6 +141,8 @@ export function RetiradaPage() {
 
   function onConfirmar(data: FormValues) {
     if (!ferramenta || !colaboradorEncontrado) return
+    const resumo = `${ferramenta.nome} com ${colaboradorEncontrado.nome}`
+    const prazo = prazoBR(`${data.previsaoDevolucao}T23:59:59-03:00`)
     retirar.mutate(
       {
         ferramentaId: ferramenta.id,
@@ -154,6 +156,8 @@ export function RetiradaPage() {
           playSomConfirmacao()
           limpar()
           setConcluida(true)
+          // resumo do que foi registrado (FE-14): fica no canto enquanto o operador já bipa a próxima
+          toast.success(resumo, { description: `Devolver ${prazo} · destino ${nomeSetor ?? '—'}` })
         },
         onError: (e) =>
           avisarErro(mensagemDeErro(e, 'Não foi possível registrar a retirada.')),
