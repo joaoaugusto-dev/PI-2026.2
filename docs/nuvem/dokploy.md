@@ -103,6 +103,9 @@ Após o primeiro deploy da API com o banco conectado:
    ```
 3. Abra o link impresso pelo `db:admin`, defina o PIN e entre. Pela tela de Cadastros, o admin cria
    setores, categorias e colaboradores (ou importa por CSV) e gera o link de acesso de cada operador.
+   Rodar o `db:admin` de novo para uma matrícula que já é admin é **intencional** e serve como reset
+   de senha: gera um link novo e invalida o anterior ainda não usado; o PIN atual continua valendo
+   até a pessoa usar o link.
 
 > **Não rode `npm run db:seed` em produção.** Ele cria as contas 0001, 0002 e 0053 com a senha
 > `123456` e setores/categorias fictícios; com `NODE_ENV=production` o script se recusa a rodar.
