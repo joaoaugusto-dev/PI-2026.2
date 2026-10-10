@@ -204,7 +204,7 @@ export function RetiradaPage() {
                 estadoClassName={cn(
                   'border-2',
                   ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
-                  (ferramentaBloqueada || ferramentaNaoEncontrada || ferramentasAmbiguas.length > 0 || erroFerramenta) && 'animate-erro border-destructive',
+                  (ferramentaBloqueada || ferramentaNaoEncontrada || erroFerramenta) && 'animate-erro border-destructive',
                   !ferramentaCodigo && 'border-brand-red',
                 )}
                 onKeyDown={(e) => {
@@ -263,12 +263,16 @@ export function RetiradaPage() {
               )}
               {ferramentasAmbiguas.length > 0 && (
                 <OpcoesAmbiguas
-                  titulo={`Vários resultados para "${ferramentaCodigo}" — escolha a ferramenta:`}
-                  opcoes={ferramentasAmbiguas.map((f) => ({
-                    chave: f.id,
-                    identificador: formatarPatrimonio(f.codigo_identificacao),
-                    rotulo: f.nome,
-                  }))}
+                  titulo={`Encontrei ${ferramentasAmbiguas.length} para "${ferramentaCodigo}". Toque na que vai sair:`}
+                  // disponíveis primeiro: são as únicas que podem sair agora
+                  opcoes={[...ferramentasAmbiguas]
+                    .sort((a, b) => Number(b.status === 'disponivel') - Number(a.status === 'disponivel'))
+                    .map((f) => ({
+                      chave: f.id,
+                      identificador: formatarPatrimonio(f.codigo_identificacao),
+                      rotulo: f.nome,
+                      extra: <StatusBadge status={statusParaBadge(f.status)} />,
+                    }))}
                   aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
                 />
               )}
@@ -307,7 +311,7 @@ export function RetiradaPage() {
 
             {colaboradoresAmbiguos.length > 0 && (
               <OpcoesAmbiguas
-                titulo={`Vários colaboradores para "${colaborador}" — escolha o colaborador:`}
+                titulo={`Encontrei ${colaboradoresAmbiguos.length} pessoas para "${colaborador}". Toque em quem está retirando:`}
                 opcoes={colaboradoresAmbiguos.map((c) => ({ chave: c.id, identificador: c.matricula, rotulo: c.nome }))}
                 aoEscolher={(matricula) => setValue('colaborador', matricula, { shouldValidate: true })}
               />
