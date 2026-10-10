@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Controller, useForm, type FieldErrors } from 'react-hook-form'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { CampoComErro } from '@/components/CampoComErro'
 import { CampoPin } from '@/components/CampoPin'
@@ -161,6 +161,12 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
+      <Button asChild variant="outline" className="fixed right-4 bottom-4">
+        <Link to="/consulta">
+          <Search className="size-4" />
+          Consultar ferramentas
+        </Link>
+      </Button>
     </main>
   )
 }
