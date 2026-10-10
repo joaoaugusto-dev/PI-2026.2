@@ -39,6 +39,7 @@ export function RetiradaPage() {
   const retirar = useRetirarFerramenta()
   const cadastrarRapido = useCadastrarColaboradorRapido()
   const [concluida, setConcluida] = useState(false)
+  const [trocandoSetor, setTrocandoSetor] = useState(false)
 
   const {
     register,
@@ -117,6 +118,9 @@ export function RetiradaPage() {
     !setor ? 'setor de destino' : null,
     !previsaoDevolucao ? 'previsão de devolução' : null,
   ].filter(Boolean) as string[]
+
+  const nomeSetor = setores?.find((s) => String(s.id) === setor)?.nome
+  const mostrarSetores = trocandoSetor || !nomeSetor
 
   function limpar() {
     reset({ ferramentaCodigo: '', colaborador: '', atividade: '', setor: '', previsaoDevolucao: '' })
@@ -294,21 +298,46 @@ export function RetiradaPage() {
 
             <div className="space-y-2">
               <RotuloCampo>Setor de destino</RotuloCampo>
-              <div className="flex flex-wrap gap-2">
-                {setores?.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setValue('setor', String(s.id), { shouldValidate: true })}
-                    className={cn(
-                      'h-(--control-h) rounded-lg border px-4 text-corpo font-medium transition-colors hover:bg-muted',
-                      setor === String(s.id) && 'border-transparent bg-foreground text-white hover:bg-foreground',
-                    )}
-                  >
-                    {s.nome}
+              {!setor && !trocandoSetor && !colaboradorEncontrado ? (
+                <p className="flex h-(--control-h) items-center text-corpo text-muted-foreground">
+                  Vem do setor do colaborador.
+                  <button type="button" onClick={() => setTrocandoSetor(true)} className="ml-2 font-medium text-foreground underline underline-offset-4">
+                    Escolher agora
                   </button>
-                ))}
-              </div>
+                </p>
+              ) : !mostrarSetores ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex h-(--control-h) items-center rounded-lg bg-foreground px-4 text-corpo font-medium text-white">
+                    {nomeSetor}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTrocandoSetor(true)}
+                    className="h-(--control-h) rounded-lg border px-4 text-corpo font-medium hover:bg-muted"
+                  >
+                    Trocar setor
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {setores?.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setValue('setor', String(s.id), { shouldValidate: true })
+                        setTrocandoSetor(false)
+                      }}
+                      className={cn(
+                        'h-(--control-h) rounded-lg border px-4 text-corpo font-medium transition-colors hover:bg-muted',
+                        setor === String(s.id) && 'border-transparent bg-foreground text-white hover:bg-foreground',
+                      )}
+                    >
+                      {s.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
               {errors.setor && <p className="text-sm text-destructive">{errors.setor.message}</p>}
             </div>
 
