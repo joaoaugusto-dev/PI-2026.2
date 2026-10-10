@@ -30,11 +30,18 @@ const configuredOrigins = env.corsOrigin === '*'
   ? ['*']
   : env.corsOrigin.split(',').map((o) => o.trim());
 
+// `*` dentro de uma origem (ex.: https://app-*-time.vercel.app) casa só um rótulo de DNS
+// [a-z0-9-]+ — serve aos previews da Vercel sem abrir para qualquer origem.
+const originPatterns = configuredOrigins
+  .filter((o) => o !== '*' && o.includes('*'))
+  .map((o) => new RegExp(`^${o.split('*').map((parte) => parte.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[a-z0-9-]+')}$`));
+
 const isOriginAllowed = (origin?: string): boolean => {
   // Permite requisições sem header Origin (Postman, Insomnia, curl direto, CLI, etc.)
   if (!origin) return true;
   if (configuredOrigins.includes('*')) return true;
   if (configuredOrigins.includes(origin)) return true;
+  if (originPatterns.some((padrao) => padrao.test(origin))) return true;
   // Em desenvolvimento, garante que o Swagger UI (porta 3000) e o Vite (5173) funcionem sem bloqueio
   if (env.nodeEnv !== 'production' && defaultDevOrigins.includes(origin)) return true;
   return false;
