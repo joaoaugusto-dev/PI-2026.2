@@ -46,7 +46,8 @@ async function main() {
     ).rows[0].id;
     await client.query('COMMIT');
   } catch (error) {
-    await client.query('ROLLBACK');
+    // com a conexão caída o ROLLBACK também falha: não deixa ele esconder a causa real
+    await client.query('ROLLBACK').catch(() => {});
     throw error;
   } finally {
     client.release();
