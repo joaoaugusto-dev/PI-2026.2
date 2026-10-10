@@ -29,9 +29,10 @@ const STATUS_OCORRENCIA: Record<string, string> = {
   baixada: 'Baixada',
 }
 
-function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+function Campo({ rotulo, children, className }: { rotulo: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    // a <div> do par dt/dd é filha direta da <dl> (HTML válido); classe extra em vez de outra <div> por fora
+    <div className={cn('flex flex-col gap-0.5', className)}>
       <dt className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">{rotulo}</dt>
       <dd className="text-corpo">{children || '—'}</dd>
     </div>
@@ -118,9 +119,9 @@ export function FerramentaDetalhePage() {
               <Campo rotulo="Setor">{setor}</Campo>
               <Campo rotulo="Localização">{ferramenta.localizacao}</Campo>
               <Campo rotulo="Cadastrada em">{dataHoraBR(ferramenta.created_at)}</Campo>
-              <div className="sm:col-span-2 lg:col-span-3">
-                <Campo rotulo="Descrição">{ferramenta.descricao}</Campo>
-              </div>
+              <Campo rotulo="Descrição" className="sm:col-span-2 lg:col-span-3">
+                {ferramenta.descricao}
+              </Campo>
             </dl>
           </CardContent>
         </Card>
