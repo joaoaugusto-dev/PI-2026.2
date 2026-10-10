@@ -73,12 +73,11 @@ export function IndisponiveisPage() {
   }
 
   return (
-    <div className="flex lista-stagger flex-col gap-4 p-6">
+    <div className="flex lista-stagger flex-col gap-4 p-4 sm:p-6">
       <Card className="border-l-4 border-l-status-indisponivel">
         <CardContent className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-corpo text-muted-foreground">
-            Ferramentas fora de operação por avaria ou perda. Nada aqui está com um colaborador em uso — é estoque
-            parado com tratativa aberta.
+            Ferramentas paradas por avaria ou perda. Acompanhe cada uma até ela voltar a ser usada.
           </p>
           <div className="flex shrink-0 gap-8">
             <div className="flex flex-col items-center gap-0.5">
