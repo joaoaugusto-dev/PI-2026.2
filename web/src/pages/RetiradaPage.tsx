@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Barcode, CheckCircle2, IdCard, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -12,11 +12,12 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { useSetores } from '@/hooks/useSetores'
 import { formatarPatrimonio, statusParaBadge } from '@/hooks/useFerramentas'
+import { useEmprestimoAberto } from '@/hooks/useDevolucao'
 import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPorTermo, useRetirarFerramenta } from '@/hooks/useRetirada'
 import { useAuth } from '@/lib/auth'
 import { parseCodigoPatrimonio } from '@/lib/patrimonio'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
-import { hojeBrasilia, prazoBR } from '@/lib/formatar'
+import { hojeBrasilia, prazoBR, quandoBR } from '@/lib/formatar'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { OpcoesAmbiguas } from '@/components/fluxo/OpcoesAmbiguas'
@@ -92,6 +93,11 @@ export function RetiradaPage() {
   const ferramentasAmbiguas = ferramentaAtual ? (escolhaFerramenta?.ambiguos ?? []) : []
   const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
   const ferramentaNaoEncontrada = termoFerramenta.length > 0 && termoFerramenta === ferramentaCodigo.trim() && !buscandoFerramenta && !erroFerramenta && !ferramentaAchada && ferramentasAmbiguas.length === 0
+
+  // ferramenta já emprestada: o operador quer saber com quem está, não a regra do sistema
+  const emUso = ferramenta?.status === 'em_uso' && ferramenta.codigo_identificacao ? String(ferramenta.codigo_identificacao) : ''
+  const { data: emprestimoDaFerramenta } = useEmprestimoAberto(emUso)
+  const comQuem = emUso ? emprestimoDaFerramenta?.item : null
 
   const { data: escolhaColaborador, isFetching: buscandoColaborador, isError: erroColaborador } = useColaboradorPorTermo(termoColaborador)
   const colaboradorAtual = termoColaborador === colaborador.trim()
@@ -221,10 +227,36 @@ export function RetiradaPage() {
                   </div>
                 </div>
               )}
-              {ferramenta && ferramentaBloqueada && (
-                <p className="text-sm text-destructive">
-                  Só um empréstimo aberto por ferramenta — não é possível retirar.
-                </p>
+              {ferramenta?.status === 'em_uso' && (
+                <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <p>
+                    {comQuem ? (
+                      <>
+                        Esta ferramenta está com <strong>{comQuem.colaborador_nome}</strong> desde {quandoBR(comQuem.data_retirada)} (
+                        {comQuem.setor_nome}). Ela precisa ser devolvida antes de sair de novo.
+                      </>
+                    ) : (
+                      'Esta ferramenta já está emprestada. Ela precisa ser devolvida antes de sair de novo.'
+                    )}
+                  </p>
+                  <Link
+                    to={`/devolucoes?codigo=${formatarPatrimonio(ferramenta.codigo_identificacao)}`}
+                    className="inline-flex h-11 items-center rounded-lg border bg-background px-4 font-medium hover:bg-muted"
+                  >
+                    Registrar a devolução dela
+                  </Link>
+                </div>
+              )}
+              {ferramenta?.status === 'indisponivel' && (
+                <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <p>
+                    Esta ferramenta está <strong>indisponível</strong>
+                    {ferramenta.motivo_indisponivel ? ` (${ferramenta.motivo_indisponivel})` : ''} e não pode ser retirada.
+                  </p>
+                  <Link to="/indisponiveis" className="inline-flex h-11 items-center rounded-lg border bg-background px-4 font-medium hover:bg-muted">
+                    Ver em Indisponíveis
+                  </Link>
+                </div>
               )}
               {ferramentaNaoEncontrada && (
                 <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
