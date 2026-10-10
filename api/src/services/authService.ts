@@ -77,6 +77,10 @@ export class AuthService {
       throw new UnauthorizedError('Matrícula ou senha inválidos', 'INVALID_CREDENTIALS');
     }
 
+    // compara antes de qualquer retorno: conta inativa ou bloqueada também gasta o tempo do bcrypt,
+    // senão a resposta rápida revelaria que a matrícula existe
+    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
+
     if (!usuario.ativo || !usuario.colaborador_ativo) {
       throw new UnauthorizedError('Usuário inativo. Contate o administrador.', 'USER_INACTIVE');
     }
@@ -91,7 +95,6 @@ export class AuthService {
       );
     }
 
-    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
     if (!senhaValida) {
       // atômico: incrementa e, ao atingir o limite, bloqueia e zera o contador
       if (contaProtegida) {

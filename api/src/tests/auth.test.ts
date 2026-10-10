@@ -167,10 +167,14 @@ describe('POST /v1/auth/login (matrícula + senha)', () => {
         senhaHash,
       ]);
 
+      const compare = vi.spyOn(bcrypt, 'compare');
       const res = await login({ matricula, senha: '123456' });
 
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('USER_INACTIVE');
+      // conta inativa também roda o bcrypt: a resposta não pode sair mais rápida que a de uma conta ativa
+      expect(compare).toHaveBeenCalledTimes(1);
+      compare.mockRestore();
     } finally {
       await query('DELETE FROM usuarios WHERE colaborador_id = $1', [colaborador.id]);
       await query('DELETE FROM colaboradores WHERE id = $1', [colaborador.id]);
