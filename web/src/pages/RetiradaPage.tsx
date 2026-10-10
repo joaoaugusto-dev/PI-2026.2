@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useSearchParams } from 'react-router-dom'
 import { Barcode, CheckCircle2, IdCard, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -15,6 +16,7 @@ import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPor
 import { useAuth } from '@/lib/auth'
 import { parseCodigoPatrimonio } from '@/lib/patrimonio'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
+import { hojeBrasilia } from '@/lib/formatar'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { OpcoesAmbiguas } from '@/components/fluxo/OpcoesAmbiguas'
@@ -33,7 +35,18 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+// a maioria das ferramentas volta no mesmo turno: o prazo já nasce "hoje" e o operador só mexe se for diferente
+const valoresIniciais = (ferramentaCodigo = ''): FormValues => ({
+  ferramentaCodigo,
+  colaborador: '',
+  atividade: '',
+  setor: '',
+  previsaoDevolucao: hojeBrasilia().iso,
+})
+
 export function RetiradaPage() {
+  // o detalhe da ferramenta abre a retirada já com o código preenchido
+  const [params] = useSearchParams()
   const { usuario } = useAuth()
   const { data: setores } = useSetores()
   const retirar = useRetirarFerramenta()
@@ -52,13 +65,7 @@ export function RetiradaPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: 'onChange',
-    defaultValues: {
-      ferramentaCodigo: '',
-      colaborador: '',
-      atividade: '',
-      setor: '',
-      previsaoDevolucao: '',
-    },
+    defaultValues: valoresIniciais(params.get('codigo') ?? ''),
   })
 
   const ferramentaCodigo = watch('ferramentaCodigo')
@@ -123,8 +130,13 @@ export function RetiradaPage() {
   const mostrarSetores = trocandoSetor || !nomeSetor
 
   function limpar() {
-    reset({ ferramentaCodigo: '', colaborador: '', atividade: '', setor: '', previsaoDevolucao: '' })
-    setFocus('ferramentaCodigo')
+    reset(valoresIniciais())
+    setTrocandoSetor(false)
+    // depois do re-render do reset: chamado direto, o foco não pega e a próxima bipada do leitor se perde
+    setTimeout(() => {
+      setFocus('ferramentaCodigo')
+      window.scrollTo({ top: 0 })
+    })
   }
 
   function onConfirmar(data: FormValues) {
@@ -281,21 +293,8 @@ export function RetiradaPage() {
           </SecaoFluxo>
         </div>
 
-        <SecaoFluxo
-          titulo="3. Detalhes da retirada"
-          descricao="Setor de destino é obrigatório; atividade é opcional"
-        >
+        <SecaoFluxo titulo="3. Destino e prazo" descricao="Já vem preenchido — confira e confirme">
           <div className="space-y-4 rounded-lg border p-4">
-            <div className="space-y-2">
-              <RotuloCampo>Atividade / motivo</RotuloCampo>
-              <textarea
-                {...register('atividade')}
-                rows={2}
-                placeholder="Descreva o motivo da retirada (opcional)"
-                className="w-full resize-none rounded-lg border px-3 py-2 text-corpo outline-none focus-visible:border-brand-red focus-visible:ring-2 focus-visible:ring-brand-red/20"
-              />
-            </div>
-
             <div className="space-y-2">
               <RotuloCampo>Setor de destino</RotuloCampo>
               {!setor && !trocandoSetor && !colaboradorEncontrado ? (
@@ -346,6 +345,17 @@ export function RetiradaPage() {
               <SeletorDataCalendario
                 value={previsaoDevolucao}
                 onChange={(iso) => setValue('previsaoDevolucao', iso, { shouldValidate: true })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <RotuloCampo>Atividade / motivo (opcional)</RotuloCampo>
+              {/* uma linha só: Enter aqui confirma a retirada (envio nativo do formulário) em vez de quebrar linha */}
+              <input
+                {...register('atividade')}
+                placeholder="Ex.: troca de rolamento da prensa 3"
+                enterKeyHint="send"
+                className="h-(--control-h) w-full rounded-lg border px-3 text-corpo outline-none focus-visible:border-brand-red focus-visible:ring-2 focus-visible:ring-brand-red/20"
               />
             </div>
           </div>
