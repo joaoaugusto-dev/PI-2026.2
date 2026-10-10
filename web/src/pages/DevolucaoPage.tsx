@@ -15,6 +15,7 @@ import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { DetalhesEmprestimo } from '@/components/fluxo/DetalhesEmprestimo'
 import { FormularioOcorrencia } from '@/components/fluxo/FormularioOcorrencia'
+import { OpcoesAmbiguas } from '@/components/fluxo/OpcoesAmbiguas'
 import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
@@ -169,7 +170,7 @@ export function DevolucaoPage() {
                 placeholder="Código de patrimônio ou nome da ferramenta"
                 estadoClassName={cn(
                   'border-2',
-                  (emprestimoNaoEncontrado || ambiguos.length > 0 || (erroBusca && termoAtual)) && 'animate-erro border-destructive',
+                  (emprestimoNaoEncontrado || (erroBusca && termoAtual)) && 'animate-erro border-destructive',
                   !ferramentaCodigo && 'border-brand-red',
                 )}
               >
@@ -182,10 +183,16 @@ export function DevolucaoPage() {
                 </p>
               )}
               {ambiguos.length > 0 && (
-                <p className="text-sm text-destructive">
-                  Vários empréstimos abertos para "{ferramentaCodigo}" — digite ou bipe o código:{' '}
-                  {ambiguos.map((e) => `${formatarPatrimonio(e.codigo_identificacao)} ${e.ferramenta_nome}`).join(' · ')}
-                </p>
+                <OpcoesAmbiguas
+                  titulo={`Encontrei ${ambiguos.length} empréstimos para "${ferramentaCodigo}". Toque no que está voltando:`}
+                  opcoes={ambiguos.map((e) => ({
+                    chave: e.id,
+                    identificador: formatarPatrimonio(e.codigo_identificacao),
+                    rotulo: e.ferramenta_nome,
+                    extra: <span className="hidden text-sm text-muted-foreground sm:inline">{e.colaborador_nome}</span>,
+                  }))}
+                  aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
+                />
               )}
               {erroBusca && termoAtual && (
                 <p className="text-sm text-destructive">Não foi possível consultar os empréstimos. Verifique a conexão com a API.</p>
