@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dataBR, dataHoraBR, diasEntre, hojeBrasilia, rotuloCondicao } from '@/lib/formatar'
+import { dataBR, dataHoraBR, diasEntre, hojeBrasilia, prazoBR, quandoBR, rotuloCondicao } from '@/lib/formatar'
 
 describe('dataBR', () => {
   it('data sem hora não recua um dia por causa do fuso', () => {
@@ -57,5 +57,24 @@ describe('dataHoraBR', () => {
 
   it('vazio vira travessão', () => {
     expect(dataHoraBR(null)).toBe('—')
+  })
+})
+
+describe('quandoBR / prazoBR', () => {
+  // 09/10/2026 21:55 em Brasília
+  const agora = new Date('2026-10-10T00:55:00.000Z')
+
+  it('saída de hoje e de ontem vira texto curto com hora; mais antiga vira dias', () => {
+    expect(quandoBR('2026-10-10T00:53:00.000Z', agora)).toBe('hoje às 21:53')
+    expect(quandoBR('2026-10-08T11:10:00.000Z', agora)).toBe('ontem às 08:10')
+    expect(quandoBR('2026-10-07T12:00:00.000Z', agora)).toBe('07/10 · há 2 dias')
+  })
+
+  it('prazo relativo, inclusive no fim do dia de Brasília (02:59 UTC ainda é hoje)', () => {
+    expect(prazoBR('2026-10-10T02:59:59.000Z', agora)).toBe('hoje')
+    expect(prazoBR('2026-10-11T02:59:59.000Z', agora)).toBe('amanhã')
+    expect(prazoBR('2026-10-13T02:59:59.000Z', agora)).toBe('em 3 dias')
+    expect(prazoBR('2026-10-08T02:59:59.000Z', agora)).toBe('atrasada 2 dias')
+    expect(prazoBR('2026-10-09T02:59:59.000Z', agora)).toBe('atrasada 1 dia')
   })
 })
