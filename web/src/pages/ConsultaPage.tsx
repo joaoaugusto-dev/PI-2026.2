@@ -392,8 +392,8 @@ export function ConsultaPage() {
           grupos.map((grupo) => {
             const unica = grupo.itens.length === 1 ? grupo.itens[0] : null
             const locais = [...new Set(grupo.itens.map((f) => f.localizacao).filter(Boolean))]
-            // grupo: mostra "disponível" se sobrou pelo menos uma; senão o status das unidades
-            const statusGrupo = unica?.status ?? (grupo.disponiveis > 0 ? 'disponivel' : grupo.itens[0].status)
+            // grupo: mostra "disponível" se sobrou pelo menos uma; senão em_uso se alguma estiver em uso, senão indisponivel
+            const statusGrupo = unica?.status ?? (grupo.disponiveis > 0 ? 'disponivel' : grupo.itens.some((f) => f.status === 'em_uso') ? 'em_uso' : 'indisponivel')
             return (
               <Card key={grupo.itens[0].id} className="shadow-xs">
                 <CardContent className="flex items-center gap-4">
