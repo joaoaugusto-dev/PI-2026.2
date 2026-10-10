@@ -13,6 +13,8 @@ export interface Campo {
   opcoes?: { value: string; label: string }[]
   placeholder?: string
   inputMode?: 'numeric'
+  /** No layout em duas colunas (com `extra`), ocupa a linha inteira. */
+  larga?: boolean
 }
 
 type Valores = Record<string, string>
@@ -32,7 +34,7 @@ export function FormularioCadastro({
   salvando: boolean
   onSubmit: (valores: Valores) => void
   onCancelar: () => void
-  /** Conteúdo adicional (ex.: seletor de foto) entre os campos e os botões. */
+  /** Conteúdo lateral (ex.: seletor de foto): com ele os campos se dividem em duas colunas ao lado dele. */
   extra?: ReactNode
 }) {
   const {
@@ -43,8 +45,10 @@ export function FormularioCadastro({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+      <div className={extra ? 'grid gap-4 md:grid-cols-[1fr_13rem]' : 'contents'}>
+      <div className={extra ? 'grid content-start gap-x-4 gap-y-3 sm:grid-cols-2' : 'contents'}>
       {campos.map((c) => (
-        <div key={c.name} className="flex flex-col gap-1.5">
+        <div key={c.name} className={`flex flex-col gap-1.5 ${extra && c.larga ? 'sm:col-span-2' : ''}`}>
           <Label htmlFor={c.name}>{c.label}</Label>
           {c.opcoes ? (
             <select
@@ -78,7 +82,9 @@ export function FormularioCadastro({
           )}
         </div>
       ))}
-      {extra}
+      </div>
+      {extra && <div className="md:order-last">{extra}</div>}
+      </div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" disabled={salvando} onClick={onCancelar}>
           Cancelar

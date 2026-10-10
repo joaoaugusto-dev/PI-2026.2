@@ -32,32 +32,36 @@ export function CadastroFerramentasPage() {
       nomeCsv="modelo-ferramentas.csv"
       buscaPlaceholder="Buscar por nome, marca ou modelo"
       foto
+      agrupar={{
+        chave: (f) => `${chaveFerramenta(f.nome, f.marca, f.modelo)}|${f.grupo_id}`,
+        resumo: (itens) => `${itens.length} unidades`,
+      }}
       acoesLinha={(f) => <BotaoImprimirEtiqueta ferramenta={f} compacto />}
       colunas={[
-        {
-          cabecalho: 'Patrimônio',
-          render: (f) => <span className="font-mono">{formatarPatrimonio(f.codigo_identificacao)}</span>,
-        },
         { cabecalho: 'Nome', render: (f) => f.nome },
         { cabecalho: 'Categoria', render: (f) => nomeDe(categorias, f.grupo_id) },
         { cabecalho: 'Marca / modelo', render: (f) => [f.marca, f.modelo].filter(Boolean).join(' ') || '—' },
         { cabecalho: 'Setor', render: (f) => nomeDe(setores, f.setor_id) },
+        {
+          cabecalho: 'Patrimônio',
+          render: (f) => <span className="font-mono">{formatarPatrimonio(f.codigo_identificacao)}</span>,
+        },
       ]}
       campos={[
-        { name: 'nome', label: 'Nome da ferramenta' },
+        { name: 'nome', label: 'Nome da ferramenta', larga: true },
         {
           name: 'grupoId',
           label: 'Categoria',
           opcoes: categorias.map((c) => ({ value: String(c.id), label: c.nome })),
         },
-        { name: 'marca', label: 'Marca (opcional)' },
-        { name: 'modelo', label: 'Modelo (opcional)' },
         {
           name: 'setorId',
           label: 'Setor (opcional)',
           opcoes: setores.map((s) => ({ value: String(s.id), label: s.nome })),
         },
-        { name: 'localizacao', label: 'Localização (opcional)' },
+        { name: 'marca', label: 'Marca (opcional)' },
+        { name: 'modelo', label: 'Modelo (opcional)' },
+        { name: 'localizacao', label: 'Localização (opcional)', larga: true },
       ]}
       schema={schema}
       valoresVazios={{ nome: '', grupoId: '', marca: '', modelo: '', setorId: '', localizacao: '' }}

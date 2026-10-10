@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileUp, Inbox } from 'lucide-react'
+import { FileUp, Inbox, Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
@@ -21,8 +21,11 @@ import { comprimirImagem, urlDaFoto } from '@/lib/imagem'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { FormularioCadastro, type Campo } from './FormularioCadastro'
 import { ImportarCsvDialog, type ConfigCsv } from './ImportarCsvDialog'
+import { ListaAgrupada } from './ListaAgrupada'
 
 const LIMITE = 20
+// agrupado, 20 unidades viram 4 linhas: página de 100 (máximo da API) mostra ~20 grupos
+const LIMITE_AGRUPADO = 100
 
 export interface Coluna<T> {
   cabecalho: string
@@ -51,6 +54,7 @@ export function CadastroCrud<T extends { id: number }>({
   buscaPlaceholder,
   foto = false,
   acoesLinha,
+  agrupar,
 }: {
   recurso: Recurso
   singular: string
@@ -68,6 +72,12 @@ export function CadastroCrud<T extends { id: number }>({
   foto?: boolean
   /** Botões extras por linha, antes de Editar/Inativar (ex.: copiar link de acesso). */
   acoesLinha?: (item: T) => ReactNode
+  /**
+   * Junta unidades iguais (mesma `chave`, dentro da página) numa linha expansível com "+ Unidade".
+   * A última coluna é a que muda por unidade: no grupo mostra `resumo` (ex.: "5 unidades"); na unidade, o próprio valor.
+   * ponytail: agrupa só dentro da página, como a consulta pública; a API ordena por nome.
+   */
+  agrupar?: { chave: (item: T) => string; resumo: (itens: T[]) => ReactNode }
 }) {
   const queryClient = useQueryClient()
   const [busca, setBusca] = useState('')
@@ -89,6 +99,7 @@ export function CadastroCrud<T extends { id: number }>({
   const [importando, setImportando] = useState(false)
   useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
   const [inativando, setInativando] = useState<T | null>(null)
+  const [duplicando, setDuplicando] = useState<number | null>(null)
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -98,7 +109,7 @@ export function CadastroCrud<T extends { id: number }>({
     return () => clearTimeout(id)
   }, [busca])
 
-  const { data, isLoading, isError } = useListaCadastro<T>(recurso, { q: q || undefined, page, limit: LIMITE })
+  const { data, isLoading, isError } = useListaCadastro<T>(recurso, { q: q || undefined, page, limit: agrupar ? LIMITE_AGRUPADO : LIMITE })
   const salvar = useSalvarCadastro(recurso)
   const inativar = useInativarCadastro(recurso)
   // ferramenta é baixa lógica (o histórico fica), mas para o usuário é "excluir"
@@ -144,6 +155,56 @@ export function CadastroCrud<T extends { id: number }>({
     return url ? { tipo: 'url', url: urlDaFoto(url) } : null
   }
 
+  // "+ Unidade": cria outra igual (mesmos dados, e a foto se houver) sem passar pelo formulário
+  function adicionarUnidade(item: T) {
+    setDuplicando(item.id)
+    salvar.mutate(
+      { dados: paraPayload(deItem(item), false) },
+      {
+        onSuccess: async (resposta) => {
+          playSomConfirmacao()
+          const nova = (resposta.data as { data: Ferramenta }).data
+          const fotoUrl = (item as { foto_url?: string | null }).foto_url
+          if (fotoUrl) {
+            try {
+              const imagem = await (await fetch(urlDaFoto(fotoUrl))).blob()
+              await enviarFoto.mutateAsync({ id: nova.id, imagem })
+            } catch {
+              avisarErro('Unidade criada, mas a foto não foi copiada. Edite para enviar a foto.')
+            }
+          }
+          toast.success('Unidade adicionada.')
+          if (nova.codigo_identificacao) setCriada(nova) // já abre a etiqueta da nova unidade
+        },
+        onError: (e) => avisarErro(erroDaApi(e) ?? 'Não foi possível adicionar a unidade.'),
+        onSettled: () => setDuplicando(null),
+      },
+    )
+  }
+
+  const botaoUnidade = (item: T, rotulo = 'Unidade') => (
+    <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
+      <Plus /> {rotulo}
+    </Button>
+  )
+
+  const porChave = new Map<string, T[]>()
+  if (agrupar) for (const i of linhas) porChave.set(agrupar.chave(i), [...(porChave.get(agrupar.chave(i)) ?? []), i])
+  const grupos: T[][] = [...porChave.values()]
+
+  const botoesUnidade = (item: T, comUnidade: boolean) => (
+    <>
+      {comUnidade && botaoUnidade(item)}
+      {acoesLinha?.(item)}
+      <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
+        Editar
+      </Button>
+      <Button size="sm" variant="ghost" onClick={() => setInativando(item)}>
+        {rotuloInativar}
+      </Button>
+    </>
+  )
+
   function confirmarInativacao() {
     if (!inativando) return
     const ultimoDaPagina = linhas.length === 1 && page > 1
@@ -188,6 +249,15 @@ export function CadastroCrud<T extends { id: number }>({
               titulo="Nenhum registro encontrado"
               descricao="Ajuste a busca ou cadastre um novo."
             />
+          ) : agrupar ? (
+            <ListaAgrupada
+              colunas={colunas}
+              grupos={grupos}
+              chave={agrupar.chave}
+              resumo={agrupar.resumo}
+              acoesGrupo={botaoUnidade}
+              acoesUnidade={(item, avulsa) => botoesUnidade(item, avulsa)}
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -204,15 +274,7 @@ export function CadastroCrud<T extends { id: number }>({
                     {colunas.map((c) => (
                       <TableCell key={c.cabecalho}>{c.render(item)}</TableCell>
                     ))}
-                    <TableCell className="flex justify-end gap-2">
-                      {acoesLinha?.(item)}
-                      <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
-                        Editar
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setInativando(item)}>
-                        {rotuloInativar}
-                      </Button>
-                    </TableCell>
+                    <TableCell className="flex justify-end gap-2">{botoesUnidade(item, false)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -224,7 +286,7 @@ export function CadastroCrud<T extends { id: number }>({
       <Paginacao meta={meta} page={page} onPage={setPage} itens="registros" />
 
       <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvar.isPending && setEditando(null)}>
-        <DialogContent>
+        <DialogContent className={foto ? 'sm:max-w-2xl' : undefined}>
           <DialogHeader>
             <DialogTitle>
               {editando === 'novo' ? `Novo ${singular.toLowerCase()}` : `Editar ${singular.toLowerCase()}`}
