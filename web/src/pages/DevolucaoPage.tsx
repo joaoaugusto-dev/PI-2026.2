@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Barcode, XCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useCategorias } from '@/hooks/useCategorias'
 import { useDevolverEmprestimo, useEmprestimoAberto } from '@/hooks/useDevolucao'
@@ -29,53 +30,41 @@ function formatarMoeda(digitos: string) {
 
 const schema = z
   .object({
-    ferramentaCodigo: z.string().trim().min(1, 'Bipe o leitor ou digite o código de patrimônio'),
-    condicao: z.enum(['ok', 'avaria', 'perda']).nullable(),
+    ferramentaCodigo: z.string().trim().min(1, 'Bipe a etiqueta ou digite o código da ferramenta'),
+    condicao: z.enum(['ok', 'avaria', 'perda']),
     descricaoOcorrencia: z.string().trim().optional(),
     custoEstimado: z.string().optional(),
-    confirmacaoOcorrencia: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.condicao && data.condicao !== 'ok') {
-      if (!data.descricaoOcorrencia?.trim()) {
-        ctx.addIssue({ code: 'custom', path: ['descricaoOcorrencia'], message: 'Descreva o que aconteceu com a ferramenta' })
-      }
-      if (!data.confirmacaoOcorrencia) {
-        ctx.addIssue({ code: 'custom', path: ['confirmacaoOcorrencia'], message: 'Confirme a abertura da ocorrência' })
-      }
+    if (data.condicao !== 'ok' && !data.descricaoOcorrencia?.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['descricaoOcorrencia'], message: 'Descreva o que aconteceu com a ferramenta' })
     }
   })
 
 type FormValues = z.infer<typeof schema>
 
+// quase toda devolução é "OK": já vem marcada, e avaria/perda continuam a um toque
+const valoresIniciais = (codigo = ''): FormValues => ({
+  ferramentaCodigo: codigo,
+  condicao: 'ok',
+  descricaoOcorrencia: '',
+  custoEstimado: '',
+})
+
 export function DevolucaoPage() {
   // o dashboard abre a devolução já com o código da ferramenta atrasada
   const [params] = useSearchParams()
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    setFocus,
-    reset,
-  } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue, setFocus, reset } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: 'onChange',
-    defaultValues: {
-      ferramentaCodigo: params.get('codigo') ?? '',
-      condicao: null,
-      descricaoOcorrencia: '',
-      custoEstimado: '',
-      confirmacaoOcorrencia: false,
-    },
+    defaultValues: valoresIniciais(params.get('codigo') ?? ''),
   })
 
   const ferramentaCodigo = watch('ferramentaCodigo')
   const condicao = watch('condicao')
   const descricaoOcorrencia = watch('descricaoOcorrencia') ?? ''
   const custoEstimado = watch('custoEstimado') ?? ''
-  const confirmacaoOcorrencia = watch('confirmacaoOcorrencia') ?? false
 
   // espera o usuário parar de digitar (ou o leitor terminar de bipar) antes de consultar a API
   const [termo, setTermo] = useState('')
@@ -86,7 +75,8 @@ export function DevolucaoPage() {
 
   const { usuario } = useAuth()
   const devolver = useDevolverEmprestimo()
-  const [concluida, setConcluida] = useState(false)
+  const [concluida, setConcluida] = useState<string | null>(null)
+  const botaoRef = useRef<HTMLButtonElement>(null)
   const { data: escolha, isFetching: buscando, isError: erroBusca } = useEmprestimoAberto(termo)
   const termoAtual = termo === ferramentaCodigo.trim()
   const encontrado = escolha?.item ?? null
@@ -108,31 +98,33 @@ export function DevolucaoPage() {
       }
     : null
   const emprestimoNaoEncontrado = termo.length >= 1 && termoAtual && !buscando && !erroBusca && !encontrado && ambiguos.length === 0
+  // achou o empréstimo: foco no botão de confirmar, aí bipa → Enter fecha a devolução
+  useEffect(() => {
+    if (encontrado) botaoRef.current?.focus()
+    // só quando um empréstimo novo é achado
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [encontrado?.id])
 
   const precisaOcorrencia = condicao === 'avaria' || condicao === 'perda'
   const diasAtraso = encontrado ? Math.max(0, diasEntre(new Date(), encontrado.previsao_devolucao)) : 0
 
   const faltando = [
     !emprestimo ? 'ferramenta' : null,
-    emprestimo && !condicao ? 'condição da ferramenta' : null,
-    precisaOcorrencia && !descricaoOcorrencia.trim() ? 'descrição da ocorrência' : null,
-    precisaOcorrencia && !confirmacaoOcorrencia ? 'confirmação da ocorrência' : null,
+    precisaOcorrencia && !descricaoOcorrencia.trim() ? 'o que aconteceu' : null,
   ].filter(Boolean) as string[]
 
   function buscarOutra() {
-    reset({
-      ferramentaCodigo: '',
-      condicao: null,
-      descricaoOcorrencia: '',
-      custoEstimado: '',
-      confirmacaoOcorrencia: false,
+    reset(valoresIniciais())
+    setTimeout(() => {
+      setFocus('ferramentaCodigo')
+      window.scrollTo({ top: 0 })
     })
-    setFocus('ferramentaCodigo')
   }
 
   function onConfirmar(data: FormValues) {
-    if (!encontrado || !data.condicao) return
+    if (!encontrado) return
     const centavos = Number.parseInt((data.custoEstimado ?? '').replace(/\D/g, ''), 10)
+    const nome = encontrado.ferramenta_nome
     devolver.mutate(
       {
         emprestimo: encontrado,
@@ -144,7 +136,16 @@ export function DevolucaoPage() {
         onSuccess: () => {
           playSomConfirmacao()
           buscarOutra()
-          setConcluida(true)
+          if (data.condicao === 'ok') {
+            setConcluida('Devolução registrada!')
+            toast.success(`${nome} voltou para o estoque.`)
+          } else {
+            // FE-15: depois de confirmar, avisa que foi para Indisponíveis e que a ocorrência foi aberta
+            setConcluida('Ocorrência aberta!')
+            toast.success(`${nome} foi para Indisponíveis.`, {
+              description: `Ocorrência de ${data.condicao} aberta em nome de ${encontrado.colaborador_nome}.`,
+            })
+          }
         },
         onError: (e) =>
           avisarErro(mensagemDeErro(e, 'Não foi possível registrar a devolução.')),
@@ -154,12 +155,9 @@ export function DevolucaoPage() {
 
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
-      {concluida && <TelaSucessoAnimada contida mensagem="Devolução registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
-      <div className="animate-entrada flex-1 space-y-8 p-6 pb-28">
-        <SecaoFluxo
-          titulo="1. Ferramenta em empréstimo"
-          descricao="Bipe o leitor ou digite o código de patrimônio a devolver"
-        >
+      {concluida && <TelaSucessoAnimada contida mensagem={concluida} aoTerminarAnimacao={() => setConcluida(null)} />}
+      <div className="animate-entrada flex-1 space-y-8 p-4 pb-28 sm:p-6">
+        <SecaoFluxo titulo="1. Ferramenta que está voltando" descricao="Bipe a etiqueta, digite o código ou o nome de quem devolve">
           {!emprestimo ? (
             <div className="space-y-2">
               <CampoIdentificacao
@@ -173,6 +171,9 @@ export function DevolucaoPage() {
                   (emprestimoNaoEncontrado || (erroBusca && termoAtual)) && 'animate-erro border-destructive',
                   !ferramentaCodigo && 'border-brand-red',
                 )}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.preventDefault() // o leitor manda Enter: a busca já roda sozinha
+                }}
               >
                 {emprestimoNaoEncontrado && <XCircle className="size-5 shrink-0 text-destructive" />}
                 {!ferramentaCodigo && <DicaEnter />}
@@ -210,23 +211,21 @@ export function DevolucaoPage() {
         </SecaoFluxo>
 
         {emprestimo && (
-          <SecaoFluxo titulo="2. Condição da ferramenta na devolução">
+          <SecaoFluxo titulo="2. Como a ferramenta voltou?">
             <SeletorCondicao
               value={condicao}
               onChange={(valor) => setValue('condicao', valor, { shouldValidate: true })}
             />
 
-            {(condicao === 'avaria' || condicao === 'perda') && (
+            {precisaOcorrencia && (
               <FormularioOcorrencia
                 tipo={condicao}
                 ferramenta={emprestimo.ferramenta}
                 retiradoPor={emprestimo.retiradoPor}
                 matricula={emprestimo.matricula}
                 descricaoProps={register('descricaoOcorrencia')}
-                confirmacaoProps={register('confirmacaoOcorrencia')}
                 custoEstimado={custoEstimado}
                 onCustoChange={(digitos) => setValue('custoEstimado', digitos ? formatarMoeda(digitos) : '')}
-                confirmado={confirmacaoOcorrencia}
               />
             )}
           </SecaoFluxo>
@@ -240,6 +239,7 @@ export function DevolucaoPage() {
         textoBotao={precisaOcorrencia ? 'Confirmar e abrir ocorrência' : 'Confirmar devolução'}
         comIcones
         enviando={devolver.isPending}
+        botaoRef={botaoRef}
       />
     </form>
   )
