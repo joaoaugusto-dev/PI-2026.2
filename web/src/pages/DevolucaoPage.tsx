@@ -101,7 +101,8 @@ export function DevolucaoPage() {
         retiradoPor: encontrado.colaborador_nome,
         matricula: encontrado.colaborador_matricula,
         setor: encontrado.setor_nome,
-        atividade: encontrado.atividade_nome ?? undefined,
+        // a retirada grava texto livre em `atividade_observacao`; `atividade_nome` é a do catálogo
+        atividade: encontrado.atividade_nome ?? encontrado.atividade_observacao ?? undefined,
         registradoPor: encontrado.usuario_retirada_nome ?? '—',
       }
     : null
