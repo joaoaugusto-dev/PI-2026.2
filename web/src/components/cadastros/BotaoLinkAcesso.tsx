@@ -40,9 +40,18 @@ export function BotaoLinkAcesso({ colaboradorId, nome }: { colaboradorId: number
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={gerar} disabled={gerando} className="gap-1.5">
-        {gerando ? <Loader2 className="size-3.5 animate-spin" /> : <Link2 className="size-3.5" />}
-        Link de acesso e troca de senha
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={gerar}
+        disabled={gerando}
+        className="gap-1.5"
+        title="Link de acesso: gera e copia o link para a pessoa criar ou trocar a senha (vale 7 dias, uso único)"
+        aria-label="Link de acesso"
+      >
+        {gerando ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+        {/* só ícone abaixo de 2xl: com botões de 44px os quatro rótulos não cabem na linha */}
+        <span className="hidden 2xl:inline">Link de acesso</span>
       </Button>
       <Dialog open={linkManual !== null} onOpenChange={(a) => !a && setLinkManual(null)}>
         <DialogContent>
