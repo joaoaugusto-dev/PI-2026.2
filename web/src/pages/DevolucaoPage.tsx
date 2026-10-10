@@ -10,7 +10,7 @@ import { useDevolverEmprestimo, useEmprestimoAberto } from '@/hooks/useDevolucao
 import { formatarPatrimonio, useFerramenta } from '@/hooks/useFerramentas'
 import { useAuth } from '@/lib/auth'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
-import { dataBR, diasEntre } from '@/lib/formatar'
+import { diasEntre, prazoBR, quandoBR } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { DetalhesEmprestimo } from '@/components/fluxo/DetalhesEmprestimo'
@@ -109,10 +109,7 @@ export function DevolucaoPage() {
   const emprestimoNaoEncontrado = termo.length >= 1 && termoAtual && !buscando && !erroBusca && !encontrado && ambiguos.length === 0
 
   const precisaOcorrencia = condicao === 'avaria' || condicao === 'perda'
-
-  const hoje = new Date() // a cada render: o balcão deixa a tela aberta de um dia para o outro
-  const diasAtraso = encontrado ? Math.max(0, diasEntre(hoje, encontrado.previsao_devolucao)) : 0
-  const diasDesdeSaida = encontrado ? diasEntre(hoje, encontrado.data_retirada) : 0
+  const diasAtraso = encontrado ? Math.max(0, diasEntre(new Date(), encontrado.previsao_devolucao)) : 0
 
   const faltando = [
     !emprestimo ? 'ferramenta' : null,
@@ -197,8 +194,8 @@ export function DevolucaoPage() {
           ) : (
             <DetalhesEmprestimo
               emprestimo={emprestimo}
-              saida={dataBR(encontrado?.data_retirada)}
-              diasDesdeSaida={diasDesdeSaida}
+              saida={quandoBR(encontrado?.data_retirada)}
+              prazo={prazoBR(encontrado?.previsao_devolucao)}
               diasAtraso={diasAtraso}
               onBuscarOutra={buscarOutra}
             />
