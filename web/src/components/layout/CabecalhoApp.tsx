@@ -40,7 +40,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
           {dataFormatada} · {horaFormatada}
         </span>
         {usuario?.papel === 'admin' && (
-          <Link to="/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <Link to="/status" aria-label="Status da API" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <Activity className="size-3 text-muted-foreground" />
@@ -51,7 +51,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
         {(usuario?.papel === 'manutencao' || usuario?.papel === 'admin') && <SinoNotificacoes />}
         <div className="flex items-center gap-2 border-l pl-4">
           <Avatar className="size-8">
-            <AvatarFallback className="text-xs font-medium">
+            <AvatarFallback className="text-xs font-medium text-foreground">
               {usuario ? iniciaisDoNome(usuario.nome) : '—'}
             </AvatarFallback>
           </Avatar>

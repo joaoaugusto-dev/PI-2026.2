@@ -16,6 +16,7 @@ export function RodapeSidebar() {
       <div className="flex items-center justify-between px-2">
         <span className="text-corpo text-sidebar-foreground/80">Som de confirmação</span>
         <Switch
+          aria-label="Som de confirmação"
           checked={somConfirmacao}
           onCheckedChange={(ativo) => {
             setSomConfirmacaoAtivo(ativo)
@@ -43,7 +44,7 @@ export function RodapeSidebar() {
         <LogOut className="size-3.5" />
         Sair
       </button>
-      <span className="px-2 font-mono text-rotulo text-sidebar-foreground/30">v0.0.2-beta</span>
+      <span className="px-2 font-mono text-rotulo text-sidebar-foreground/60">v0.0.2-beta</span>
     </SidebarFooter>
   )
 }

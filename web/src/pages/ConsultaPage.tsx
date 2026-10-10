@@ -244,7 +244,7 @@ export function ConsultaPage() {
 
   if (!sessao) {
     return (
-      <div className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
+      <main className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
         <TexturaFerramentas />
         <div className="w-full max-w-md">
           <Card className="w-full animate-entrada shadow-2xl ring-foreground/15">
@@ -252,7 +252,9 @@ export function ConsultaPage() {
               <img src="/brand/soufer-industrial.png" alt="SOUFER Tools" className="h-12 w-auto" />
             </div>
             <CardHeader>
-              <CardTitle className="text-titulo">Consulta de ferramentas</CardTitle>
+              <CardTitle className="text-titulo">
+                <h1>Consulta de ferramentas</h1>
+              </CardTitle>
               <CardDescription>Informe sua matrícula para ver o que está disponível ou emprestado</CardDescription>
             </CardHeader>
             <CardContent>
@@ -290,7 +292,7 @@ export function ConsultaPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     )
   }
 

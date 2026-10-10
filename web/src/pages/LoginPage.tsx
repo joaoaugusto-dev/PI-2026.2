@@ -72,7 +72,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
+    <main className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
       <TexturaFerramentas />
       <div className="w-full max-w-md">
         <Card className="w-full animate-entrada shadow-2xl ring-foreground/15">
@@ -80,7 +80,9 @@ export function LoginPage() {
             <img src="/brand/soufer-negativo.png" alt="SOUFER Tools" className="h-12 w-auto" />
           </div>
           <CardHeader>
-            <CardTitle className="text-titulo">Entrar</CardTitle>
+            <CardTitle className="text-titulo">
+              <h1>Entrar</h1>
+            </CardTitle>
             <CardDescription>Acesso ao controle de ferramentas</CardDescription>
           </CardHeader>
           <CardContent>
@@ -141,6 +143,6 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   )
 }

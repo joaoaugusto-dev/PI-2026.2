@@ -175,7 +175,7 @@ export function AppLayout() {
                 })}
 
                 {usuario?.papel === 'admin' && (
-                  <Collapsible.Root defaultOpen={cadastrosAtivo} onOpenChange={setCadastrosOpen}>
+                  <Collapsible.Root asChild defaultOpen={cadastrosAtivo} onOpenChange={setCadastrosOpen}>
                     <SidebarMenuItem>
                       <Collapsible.Trigger asChild>
                         <SidebarMenuButton className="group/cadastros h-(--control-h) justify-between px-3 text-corpo">
