@@ -43,8 +43,8 @@ export function DashboardPage() {
   }
 
   return (
-    // no desktop o painel ocupa exatamente a altura da tela (73px = cabeçalho), sem rolagem da página
-    <div className="flex flex-col gap-3 p-4 lg:h-[calc(100svh-73px)]">
+    // no desktop o painel ocupa exatamente a altura da tela (64px = cabeçalho), sem rolagem da página
+    <div className="flex flex-col gap-3 p-4 lg:h-[calc(100svh-64px)]">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {isLoading
           ? KPIS.map((k) => (
