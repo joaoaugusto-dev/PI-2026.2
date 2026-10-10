@@ -200,7 +200,8 @@ export function DevolucaoPage() {
                     chave: e.id,
                     identificador: formatarPatrimonio(e.codigo_identificacao),
                     rotulo: e.ferramenta_nome,
-                    extra: <span className="hidden text-sm text-muted-foreground sm:inline">{e.colaborador_nome}</span>,
+                    // quem está com cada uma é o que diferencia unidades de mesmo nome: visível também no celular
+                    detalhe: e.colaborador_nome,
                   }))}
                   aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
                 />

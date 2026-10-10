@@ -7,8 +7,8 @@ export function OpcoesAmbiguas({
   aoEscolher,
 }: {
   titulo: string
-  /** `extra` vai à direita da linha (ex.: status da ferramenta, quem está com ela). */
-  opcoes: { chave: string | number; identificador: string; rotulo: string; extra?: ReactNode }[]
+  /** `detalhe` vai embaixo do rótulo, em todas as larguras (ex.: quem está com a ferramenta); `extra` vai à direita da linha (ex.: status). */
+  opcoes: { chave: string | number; identificador: string; rotulo: string; detalhe?: ReactNode; extra?: ReactNode }[]
   aoEscolher: (identificador: string) => void
 }) {
   return (
@@ -24,7 +24,10 @@ export function OpcoesAmbiguas({
               className="flex min-h-12 w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-corpo hover:bg-muted focus-visible:border-brand-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/20"
             >
               <span className="shrink-0 font-mono text-muted-foreground">{o.identificador}</span>
-              <span className="min-w-0 flex-1">{o.rotulo}</span>
+              <span className="min-w-0 flex-1">
+                {o.rotulo}
+                {o.detalhe && <span className="block text-sm text-muted-foreground">{o.detalhe}</span>}
+              </span>
               {o.extra}
             </button>
           </li>
