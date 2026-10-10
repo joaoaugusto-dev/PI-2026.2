@@ -7,7 +7,7 @@ import { Barcode, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useCategorias } from '@/hooks/useCategorias'
-import { useDevolverEmprestimo, useEmprestimoAberto } from '@/hooks/useDevolucao'
+import { useDevolverEmprestimo, useEmprestimoAberto, useEmprestimosAbertos } from '@/hooks/useDevolucao'
 import { formatarPatrimonio, useFerramenta } from '@/hooks/useFerramentas'
 import { useAuth } from '@/lib/auth'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
@@ -83,6 +83,7 @@ export function DevolucaoPage() {
   const ambiguos = termoAtual ? (escolha?.ambiguos ?? []) : []
   const { data: ferramentaDoEmprestimo } = useFerramenta(encontrado?.ferramenta_id ?? 0)
   const { data: categorias } = useCategorias()
+  const { data: abertos } = useEmprestimosAbertos()
   const emprestimo = encontrado
     ? {
         codigo: formatarPatrimonio(encontrado.codigo_identificacao),
@@ -196,7 +197,39 @@ export function DevolucaoPage() {
                 />
               )}
               {erroBusca && termoAtual && (
-                <p className="text-sm text-destructive">Não foi possível consultar os empréstimos. Verifique a conexão com a API.</p>
+                <p className="text-sm text-destructive">Não foi possível consultar os empréstimos. Verifique a conexão.</p>
+              )}
+              {/* etiqueta gasta ou sem leitor: o que está fora fica à vista para tocar */}
+              {!ferramentaCodigo && abertos && abertos.length > 0 && (
+                <div className="space-y-2 pt-4">
+                  <h3 className="text-rotulo tracking-[0.08em] text-muted-foreground uppercase">Em uso agora · {abertos.length}</h3>
+                  <ul className="divide-y rounded-lg border">
+                    {abertos.map((e) => (
+                      <li key={e.id}>
+                        <button
+                          type="button"
+                          onClick={() => setValue('ferramentaCodigo', formatarPatrimonio(e.codigo_identificacao), { shouldValidate: true })}
+                          className="flex min-h-14 w-full flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-2 text-left hover:bg-muted"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">{e.ferramenta_nome}</span>
+                            <span className="block text-sm text-muted-foreground">
+                              {formatarPatrimonio(e.codigo_identificacao)} · {e.colaborador_nome}
+                            </span>
+                          </span>
+                          <span
+                            className={cn(
+                              'text-sm font-medium',
+                              e.situacao === 'atrasado' ? 'text-status-atraso' : 'text-muted-foreground',
+                            )}
+                          >
+                            {prazoBR(e.previsao_devolucao)}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           ) : (
