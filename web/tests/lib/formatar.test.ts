@@ -70,6 +70,10 @@ describe('quandoBR / prazoBR', () => {
     expect(quandoBR('2026-10-07T12:00:00.000Z', agora)).toBe('07/10 · há 2 dias')
   })
 
+  it('data no futuro (relógio do navegador atrás do servidor) vira "hoje", nunca "há -1 dias"', () => {
+    expect(quandoBR('2026-10-10T03:30:00.000Z', agora)).toBe('hoje às 00:30')
+  })
+
   it('prazo relativo, inclusive no fim do dia de Brasília (02:59 UTC ainda é hoje)', () => {
     expect(prazoBR('2026-10-10T02:59:59.000Z', agora)).toBe('hoje')
     expect(prazoBR('2026-10-11T02:59:59.000Z', agora)).toBe('amanhã')

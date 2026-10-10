@@ -48,7 +48,8 @@ export function quandoBR(valor: string | null | undefined, agora = new Date()) {
   if (!valor) return '—'
   const dias = diasEntre(agora, valor)
   const hora = new Date(valor).toLocaleTimeString('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' })
-  if (dias === 0) return `hoje às ${hora}`
+  // dias < 0: data no futuro por relógio adiantado/atrasado entre navegador e servidor — não mostrar "há -1 dias"
+  if (dias <= 0) return `hoje às ${hora}`
   if (dias === 1) return `ontem às ${hora}`
   return `${dataBR(valor).slice(0, 5)} · há ${dias} dias`
 }
