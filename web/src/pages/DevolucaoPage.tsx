@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { useCategorias } from '@/hooks/useCategorias'
 import { useDevolverEmprestimo, useEmprestimoAberto, useEmprestimosAbertos } from '@/hooks/useDevolucao'
 import { formatarPatrimonio, useFerramenta } from '@/hooks/useFerramentas'
+import { useFerramentaPorTermo } from '@/hooks/useRetirada'
 import { useAuth } from '@/lib/auth'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { diasEntre, prazoBR, quandoBR } from '@/lib/formatar'
@@ -99,6 +100,10 @@ export function DevolucaoPage() {
       }
     : null
   const emprestimoNaoEncontrado = termo.length >= 1 && termoAtual && !buscando && !erroBusca && !encontrado && ambiguos.length === 0
+  // sem empréstimo aberto: diz se a ferramenta existe e onde ela está, em vez de só "não encontrado"
+  const { data: ferramentaSemEmprestimo } = useFerramentaPorTermo(emprestimoNaoEncontrado ? termo : '')
+  const ferramentaParada = emprestimoNaoEncontrado ? ferramentaSemEmprestimo?.item : null
+
   // achou o empréstimo: foco no botão de confirmar, aí bipa → Enter fecha a devolução
   useEffect(() => {
     if (encontrado) botaoRef.current?.focus()
@@ -181,7 +186,11 @@ export function DevolucaoPage() {
               </CampoIdentificacao>
               {emprestimoNaoEncontrado && (
                 <p className="text-sm text-destructive">
-                  Nenhum empréstimo aberto encontrado para "{ferramentaCodigo}".
+                  {ferramentaParada?.status === 'disponivel'
+                    ? `${ferramentaParada.nome} já está no estoque — não há nada a devolver.`
+                    : ferramentaParada?.status === 'indisponivel'
+                      ? `${ferramentaParada.nome} está em Indisponíveis — não há empréstimo aberto.`
+                      : `Nenhum empréstimo aberto para "${ferramentaCodigo}". Confira o código ou busque pelo nome.`}
                 </p>
               )}
               {ambiguos.length > 0 && (
