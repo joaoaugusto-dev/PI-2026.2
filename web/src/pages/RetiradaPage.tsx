@@ -265,11 +265,15 @@ export function RetiradaPage() {
               <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
             )}
 
-            {colaboradorNaoEncontrado && <CadastroRapidoColaborador
+            {colaboradorNaoEncontrado && (
+              <CadastroRapidoColaborador
+                key={termoColaborador}
+                termo={termoColaborador}
                 setores={setores ?? []}
                 enviando={cadastrarRapido.isPending}
                 onUsar={usarCadastroRapido}
-              />}
+              />
+            )}
           </SecaoFluxo>
         </div>
 
