@@ -47,7 +47,10 @@ export function OcorrenciaCard({
   const [confirmandoBaixa, setConfirmandoBaixa] = useState(false)
   function aoBaixar() {
     baixar.mutate(ferramenta.id, {
-      onSuccess: () => toast.success(`${ferramenta.nome} desativada.`),
+      onSuccess: () => {
+        setConfirmandoBaixa(false)
+        toast.success(`${ferramenta.nome} desativada.`)
+      },
       onError: (e) => avisarErro(mensagemDeErro(e, 'Não foi possível desativar a ferramenta.')),
     })
   }
