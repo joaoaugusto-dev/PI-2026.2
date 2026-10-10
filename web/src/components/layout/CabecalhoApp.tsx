@@ -55,7 +55,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
               {usuario ? iniciaisDoNome(usuario.nome) : '—'}
             </AvatarFallback>
           </Avatar>
-          <div className="hidden sm:flex flex-col leading-tight">
+          <div className="hidden lg:flex flex-col leading-tight">
             <span className="text-corpo font-medium">{usuario?.nome ?? 'Não logado'}</span>
             <span className="text-rotulo text-muted-foreground">
               {usuario ? `${ROTULO_PAPEL[usuario.papel] ?? usuario.papel} · Matrícula ${usuario.matricula}` : ''}

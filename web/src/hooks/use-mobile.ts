@@ -1,6 +1,7 @@
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
+// ponytail: 1024 e não 768 — no tablet do balcão a sidebar fixa comia 1/3 da tela; abaixo disso ela vira gaveta
+const MOBILE_BREAKPOINT = 1024
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
