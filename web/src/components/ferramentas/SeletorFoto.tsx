@@ -90,7 +90,7 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
       {!preview && !semUrl && (
         <div className="flex w-full items-center gap-1.5">
           <div className="relative flex-1">
-            <Link2 className="absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Link2 className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
@@ -101,10 +101,10 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
                 }
               }}
               placeholder="ou cole uma URL"
-              className="h-7 pl-7 text-rotulo"
+              className="pl-8"
             />
           </div>
-          <Button type="button" size="icon-sm" variant="outline" onClick={aplicarUrl} disabled={!urlInput.trim()}>
+          <Button type="button" size="icon-lg" variant="outline" aria-label="Usar esta URL" onClick={aplicarUrl} disabled={!urlInput.trim()}>
             <Link2 className="size-3.5" />
           </Button>
         </div>

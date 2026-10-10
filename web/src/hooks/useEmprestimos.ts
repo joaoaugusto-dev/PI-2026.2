@@ -8,6 +8,8 @@ export interface Emprestimo {
   id: number
   ferramenta_id?: number
   atividade_nome?: string | null
+  /** Texto livre digitado na retirada (o que a tela de retirada grava); `atividade_nome` é a do catálogo. */
+  atividade_observacao?: string | null
   usuario_retirada_nome?: string
   ferramenta_nome: string
   codigo_identificacao: number | null

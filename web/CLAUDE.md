@@ -123,9 +123,14 @@ não filhas do layout autenticado.
   `text-rotulo` (11px) é exceção só para label caixa-alta.
   Altura mínima de controle: `--control-h` (56px, qualquer ação principal —
   operador de luva) e `--control-h-fluxo` (60px, botões fixos de retirada/
-  devolução). Os primitivos do shadcn vêm com alturas menores (`h-8`); os
-  wrappers dimensionados são responsabilidade da **FE-08**, até lá aplicar
-  `h-(--control-h)` na chamada.
+  devolução). Os primitivos (`ui/Button`, `ui/Input`, `ui/Select`,
+  `ui/Textarea`) **já nascem nessas alturas** (FE-08, ajustado no teste de uso de
+  09/10/2026 — o admin também pode estar de luva, no meio da manutenção): botão e
+  campo padrão = `--control-h` (56px); `size="sm"` = 44px (mínimo de toque, para
+  ação em linha de tabela); ícones `icon`/`icon-sm` = 44px, `icon-lg` = 56px. Não
+  repassar `h-8`/`h-9` na chamada; controle nativo solto (`<select>`, `<label>`
+  de upload) usa `h-(--control-h)`. Linha com muitas ações mostra só o ícone
+  abaixo de `2xl` (com `title` + `aria-label`), como em Colaboradores.
 - **Movimento e animação (FE-01)** ficam centralizados em `src/index.css`:
   - **Regra de 60fps:** animação só toca `transform` e `opacity` — as duas
     propriedades que o compositor resolve sem layout nem repaint. Nunca
@@ -297,15 +302,42 @@ não filhas do layout autenticado.
   aberto pela API,
   mostra o cartão de detalhes (quem retirou, matrícula/setor, atividade,
   saída, registrado por) com uma faixa `status-atraso` no topo quando a
-  previsão de devolução já passou, e só exibe descrição da ocorrência/custo
-  estimado/checkbox de confirmação quando a condição selecionada é "Avaria"
-  ou "Perda" — "OK" confirma direto, sem exigir ocorrência (regra de negócio
-  3 do guia raiz).
+  previsão de devolução já passou, e só exibe descrição da ocorrência e custo
+  estimado quando a condição selecionada é "Avaria" ou "Perda" — "OK" confirma
+  direto, sem exigir ocorrência (regra de negócio 3 do guia raiz).
+  **Fluxo de balcão "bipa, bipa, Enter" (teste de uso de 09/10/2026,
+  `docs/testes/ux-2026-10-09/`):** a retirada nasce com previsão "Hoje" e o
+  setor vem do colaborador; a atividade é um `input` de uma linha no fim do
+  formulário, então o Enter nela confirma (envio nativo). A devolução nasce
+  com "OK" marcado e põe o foco no botão de confirmar quando acha o
+  empréstimo (bipa → Enter). Avaria/perda **não** têm checkbox de
+  confirmação: o aviso do que vai acontecer fica visível e o botão "Confirmar
+  e abrir ocorrência" é a confirmação; depois de confirmar, toast avisa que a
+  ferramenta foi para Indisponíveis (FE-15, passo 4). Após o sucesso, o foco
+  volta ao campo de código com `setTimeout` (chamado direto após o `reset`
+  do RHF, o foco não pega e a bipada seguinte se perde). A tela de sucesso
+  `contida` é curta (~0,7 s visível, sem digitação letra a letra) e libera
+  cliques enquanto a tinta recolhe — com fila no balcão ela não pode segurar
+  a próxima operação; login e convite seguem com a animação completa. A
+  devolução lista "Em uso agora" (atrasados primeiro) quando o campo está
+  vazio, para etiqueta ilegível. A atividade exibida vem de
+  `atividade_nome ?? atividade_observacao` (a retirada grava texto livre em
+  `atividade_observacao`).
 
 ## Responsividade
 
 Toda tela precisa ser validada em 360px, 768px e 1280px antes de marcar como
 concluída (regra do guia raiz, Seção 5).
+
+- **Sidebar vira gaveta abaixo de 1024px** (`MOBILE_BREAKPOINT` em
+  `hooks/use-mobile.ts` + `lg:` no `Sidebar.tsx`), não 768 como no shadcn: no
+  tablet do balcão a sidebar fixa comia 1/3 da tela.
+- **`SidebarInset` tem `min-w-0`** (no `AppLayout`): sem isso, item flex não encolhe e
+  qualquer tabela larga empurrava a página inteira para o lado (Histórico em
+  1280, cadastros em 768) em vez de rolar dentro do próprio card.
+- **Nome de ferramenta nunca é truncado** em lista: a medida ("10 mm",
+  "1 3/4\"") é a informação. No celular o código vai embaixo do nome e o
+  Histórico vira lista de cartões (`md:hidden`/`hidden md:table`).
 
 ---
 

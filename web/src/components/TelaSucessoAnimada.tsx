@@ -10,6 +10,8 @@ const DURACAO_ICONE_VISIVEL_MS = 700
 const DURACAO_TINTA_SAI_MS = 800
 const DIGITACAO_MS_POR_LETRA = 30
 const PAUSA_APOS_DIGITAR_MS = 500
+const ATRASO_ICONE_BALCAO_MS = 150
+const DURACAO_ICONE_VISIVEL_BALCAO_MS = 550
 
 function medirAreaConteudo(contida?: boolean) {
   if (!contida || typeof document === 'undefined') return null
@@ -71,27 +73,30 @@ export function TelaSucessoAnimada({
   const [digitado, setDigitado] = useState('')
   // reduced-motion: a frase aparece inteira, sem digitar
   const semMovimento = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const tempoDigitando = mensagem && !semMovimento ? mensagem.length * DIGITACAO_MS_POR_LETRA + PAUSA_APOS_DIGITAR_MS : 0
-  const duracaoVisivel = Math.max(DURACAO_ICONE_VISIVEL_MS, tempoDigitando)
+  // contida = confirmação do balcão (retirada/devolução): com fila, a frase sai inteira e a tinta não segura a próxima operação
+  const digitar = !!mensagem && !semMovimento && !contida
+  const tempoDigitando = digitar ? mensagem.length * DIGITACAO_MS_POR_LETRA + PAUSA_APOS_DIGITAR_MS : 0
+  const duracaoVisivel = contida ? DURACAO_ICONE_VISIVEL_BALCAO_MS : Math.max(DURACAO_ICONE_VISIVEL_MS, tempoDigitando)
+  const atrasoIcone = contida ? ATRASO_ICONE_BALCAO_MS : ATRASO_ICONE_MS
 
   useEffect(() => {
-    const t1 = window.setTimeout(() => setIconeVisivel(true), ATRASO_ICONE_MS)
-    const t2 = window.setTimeout(() => setFase('tinta-sai'), ATRASO_ICONE_MS + duracaoVisivel)
+    const t1 = window.setTimeout(() => setIconeVisivel(true), atrasoIcone)
+    const t2 = window.setTimeout(() => setFase('tinta-sai'), atrasoIcone + duracaoVisivel)
     const t3 = window.setTimeout(
       () => setFase('conteudo'),
-      ATRASO_ICONE_MS + duracaoVisivel + DURACAO_TINTA_SAI_MS,
+      atrasoIcone + duracaoVisivel + DURACAO_TINTA_SAI_MS,
     )
     return () => {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
       window.clearTimeout(t3)
     }
-  }, [duracaoVisivel])
+  }, [atrasoIcone, duracaoVisivel])
 
   // efeito de digitação: começa junto com o check
   useEffect(() => {
     if (!iconeVisivel || !mensagem) return
-    if (semMovimento) {
+    if (!digitar) {
       setDigitado(mensagem)
       return
     }
@@ -102,7 +107,7 @@ export function TelaSucessoAnimada({
       if (n >= mensagem.length) window.clearInterval(id)
     }, DIGITACAO_MS_POR_LETRA)
     return () => window.clearInterval(id)
-  }, [iconeVisivel, mensagem, semMovimento])
+  }, [iconeVisivel, mensagem, digitar])
 
   useEffect(() => {
     if (fase === 'conteudo') aoTerminarAnimacao?.()
@@ -115,6 +120,7 @@ export function TelaSucessoAnimada({
       className={cn(
         'fixed z-50 flex items-center justify-center overflow-hidden',
         caixa ? 'rounded-xl' : 'inset-0 bg-background p-4',
+        contida && fase === 'tinta-sai' && 'pointer-events-none',
       )}
       style={caixa ?? undefined}
     >

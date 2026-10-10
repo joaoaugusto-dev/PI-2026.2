@@ -15,7 +15,7 @@ type AtalhoAcaoProps = {
 const VARIANTES = {
   primario: {
     card: 'border-transparent bg-primary text-primary-foreground hover:bg-brand-red-dark',
-    descricao: 'text-primary-foreground/80',
+    descricao: 'text-primary-foreground',
   },
   escuro: {
     card: 'bg-foreground text-background hover:bg-foreground/90',

@@ -13,7 +13,7 @@ import { useCategorias } from '@/hooks/useCategorias'
 import { formatarPatrimonio, statusParaBadge, useFerramenta } from '@/hooks/useFerramentas'
 import { useHistoricoFerramenta } from '@/hooks/useOcorrencias'
 import { useSetores } from '@/hooks/useSetores'
-import { dataBR, dataHoraBR, rotuloCondicao } from '@/lib/formatar'
+import { dataBR, dataHoraBR, prazoBR, quandoBR, rotuloCondicao } from '@/lib/formatar'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
@@ -29,9 +29,10 @@ const STATUS_OCORRENCIA: Record<string, string> = {
   baixada: 'Baixada',
 }
 
-function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+function Campo({ rotulo, children, className }: { rotulo: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    // a <div> do par dt/dd é filha direta da <dl> (HTML válido); classe extra em vez de outra <div> por fora
+    <div className={cn('flex flex-col gap-0.5', className)}>
       <dt className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">{rotulo}</dt>
       <dd className="text-corpo">{children || '—'}</dd>
     </div>
@@ -79,9 +80,11 @@ export function FerramentaDetalhePage() {
   const emprestimos = historico?.emprestimos ?? []
   const ocorrencias = historico?.ocorrencias ?? []
   const emUso = ferramenta.status === 'em_uso'
+  const aberto = emUso ? emprestimos.find((e) => !e.data_devolucao) : undefined
+  const balcao = usuario?.papel === 'manutencao' || usuario?.papel === 'admin'
 
   return (
-    <div className="flex animate-entrada flex-col gap-4 p-6">
+    <div className="flex animate-entrada flex-col gap-4 p-4 sm:p-6">
       <Link
         to="/ferramentas"
         className="flex w-fit items-center gap-1.5 text-corpo text-muted-foreground hover:text-foreground"
@@ -105,6 +108,35 @@ export function FerramentaDetalhePage() {
         </div>
       </div>
 
+      {/* o que dá para fazer com ela agora, sem voltar ao menu */}
+      {balcao && ferramenta.status !== 'indisponivel' && (
+        <div
+          className={cn(
+            'flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4',
+            aberto?.situacao === 'atrasado' && 'border-status-atraso/50 bg-status-atraso/5',
+          )}
+        >
+          <p className="text-corpo">
+            {aberto ? (
+              <>
+                Com <strong>{aberto.colaborador_nome}</strong> ({aberto.setor_nome}) desde {quandoBR(aberto.data_retirada)} ·{' '}
+                <span className={cn(aberto.situacao === 'atrasado' && 'font-medium text-status-atraso')}>
+                  devolver {prazoBR(aberto.previsao_devolucao)}
+                </span>
+              </>
+            ) : (
+              'Está no estoque e pode sair agora.'
+            )}
+          </p>
+          <Link
+            to={aberto ? `/devolucoes?codigo=${patrimonio}` : `/retiradas/nova?codigo=${patrimonio}`}
+            className="inline-flex h-(--control-h) items-center rounded-lg bg-brand-red px-5 text-corpo font-medium text-white hover:bg-brand-red-dark"
+          >
+            {aberto ? 'Registrar devolução' : 'Registrar retirada'}
+          </Link>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
         <Card>
           <CardHeader>
@@ -118,9 +150,9 @@ export function FerramentaDetalhePage() {
               <Campo rotulo="Setor">{setor}</Campo>
               <Campo rotulo="Localização">{ferramenta.localizacao}</Campo>
               <Campo rotulo="Cadastrada em">{dataHoraBR(ferramenta.created_at)}</Campo>
-              <div className="sm:col-span-2 lg:col-span-3">
-                <Campo rotulo="Descrição">{ferramenta.descricao}</Campo>
-              </div>
+              <Campo rotulo="Descrição" className="sm:col-span-2 lg:col-span-3">
+                {ferramenta.descricao}
+              </Campo>
             </dl>
           </CardContent>
         </Card>

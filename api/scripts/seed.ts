@@ -8,6 +8,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function runSeed() {
+  // o seed cria contas com a senha 123456 e setores/categorias fictícios: em produção é porta aberta.
+  // O primeiro admin de produção sai do `npm run db:admin` (link de convite, sem senha padrão).
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ db:seed recusado com NODE_ENV=production (cria contas com senha 123456). Use npm run db:admin.');
+    await pool.end();
+    process.exit(1);
+  }
+
   console.log('🌱 Populando banco com dados de teste...');
 
   const seedPath = path.resolve(__dirname, '../db/seed.sql');

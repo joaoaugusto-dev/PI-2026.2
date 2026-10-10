@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
-import { ETAPAS, EtapasTratativa } from '@/components/ferramentas/EtapasTratativa'
+import { ArrowRight, Ban, CheckCircle2, Loader2 } from 'lucide-react'
+import { ETAPAS, EtapasTratativa, rotuloEtapa } from '@/components/ferramentas/EtapasTratativa'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatarPatrimonio, type Ferramenta } from '@/hooks/useFerramentas'
-import { useAvancarTratativa, type Colaborador, type Ocorrencia } from '@/hooks/useOcorrencias'
+import { useAuth } from '@/lib/auth'
+import { useAvancarTratativa, useBaixarFerramenta, type Colaborador, type Ocorrencia } from '@/hooks/useOcorrencias'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { dataHoraBR } from '@/lib/formatar'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
@@ -39,17 +42,30 @@ export function OcorrenciaCard({
   saindo = false,
 }: OcorrenciaCardProps) {
   const avancar = useAvancarTratativa(ferramenta.id)
+  const baixar = useBaixarFerramenta()
+  const { usuario } = useAuth()
+  const [confirmandoBaixa, setConfirmandoBaixa] = useState(false)
+  function aoBaixar() {
+    baixar.mutate(ferramenta.id, {
+      onSuccess: () => {
+        setConfirmandoBaixa(false)
+        toast.success(`${ferramenta.nome} desativada.`)
+      },
+      onError: (e) => avisarErro(mensagemDeErro(e, 'Não foi possível desativar a ferramenta.')),
+    })
+  }
   function aoAvancar() {
     if (!ocorrencia) return
     avancar.mutate(ocorrencia.id, {
       onSuccess: (nova) => {
         playSomConfirmacao()
-        toast.success(`Tratativa avançada para ${ETAPAS.find((e) => e.valor === nova.status)?.label ?? nova.status}.`)
+        toast.success(`Tratativa avançada para ${rotuloEtapa(nova.status, perda)}.`)
       },
       onError: (e) =>
         avisarErro(mensagemDeErro(e, 'Não foi possível avançar a tratativa.')),
     })
   }
+  const perda = (ocorrencia?.tipo ?? ferramenta.motivo_indisponivel)?.toLowerCase() === 'perda'
   const etapaAtualIndex = ocorrencia ? ETAPAS.findIndex((e) => e.valor === ocorrencia.status) : -1
   const resolvida = ocorrencia?.status === 'resolvida'
   const tipoTag = ocorrencia?.tipo?.toUpperCase() ?? ferramenta.motivo_indisponivel?.toUpperCase()
@@ -118,9 +134,15 @@ export function OcorrenciaCard({
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-3.5">
-              <EtapasTratativa etapaAtual={etapaAtualIndex} resolvida={resolvida} />
+              <EtapasTratativa etapaAtual={etapaAtualIndex} resolvida={resolvida} perda={perda} />
 
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
+                {usuario?.papel === 'admin' && (
+                  <Button variant="outline" onClick={() => setConfirmandoBaixa(true)}>
+                    <Ban className="size-4" />
+                    Desativar ferramenta
+                  </Button>
+                )}
                 {resolvida ? (
                   <Button
                     className="animate-entrada bg-status-disponivel text-white hover:bg-status-disponivel/90"
@@ -128,7 +150,7 @@ export function OcorrenciaCard({
                     disabled={disponibilizando}
                   >
                     {disponibilizando ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                    Disponibilizar ferramenta
+                    {perda ? 'Ferramenta encontrada' : 'Disponibilizar ferramenta'}
                   </Button>
                 ) : (
                   <>
@@ -143,11 +165,12 @@ export function OcorrenciaCard({
                       ) : (
                         <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                       )}
-                      Avançar tratativa
+                      {/* diz qual é o próximo passo em vez de "avançar tratativa" */}
+                      {ETAPAS[etapaAtualIndex + 1] ? `Marcar ${rotuloEtapa(ETAPAS[etapaAtualIndex + 1].valor, perda).toLowerCase()}` : 'Avançar'}
                     </Button>
                     <Button onClick={onDisponibilizar} disabled={disponibilizando}>
                       {disponibilizando ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                      Disponibilizar ferramenta
+                      {perda ? 'Ferramenta encontrada' : 'Disponibilizar ferramenta'}
                     </Button>
                   </>
                 )}
@@ -156,6 +179,24 @@ export function OcorrenciaCard({
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={confirmandoBaixa} onOpenChange={(a) => !a && !baixar.isPending && setConfirmandoBaixa(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Desativar {ferramenta.nome}?</DialogTitle>
+            <DialogDescription>A ferramenta sai de circulação e das listas, mas o histórico é mantido.</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setConfirmandoBaixa(false)} disabled={baixar.isPending}>
+              Cancelar
+            </Button>
+            <Button onClick={aoBaixar} disabled={baixar.isPending}>
+              {baixar.isPending && <Loader2 className="size-4 animate-spin" />}
+              Desativar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

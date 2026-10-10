@@ -10,6 +10,10 @@ export const ETAPAS: { valor: StatusOcorrencia; label: string }[] = [
   { valor: 'resolvida', label: 'Resolvida' },
 ]
 
+// perda não tem conserto: a 2ª etapa vira apuração
+export const rotuloEtapa = (valor: StatusOcorrencia, perda: boolean) =>
+  perda && valor === 'em_reparo' ? 'Em apuração' : ETAPAS.find((e) => e.valor === valor)?.label ?? valor
+
 // o trilho enche em PROGRESSO_MS; cada marcador acende quando a ponta do trilho chega nele
 const PROGRESSO_MS = 560
 
@@ -20,7 +24,7 @@ const PROGRESSO_MS = 560
  * (regra de 60fps do design system); o primeiro render já nasce no estado
  * final, sem animar.
  */
-export function EtapasTratativa({ etapaAtual, resolvida }: { etapaAtual: number; resolvida: boolean }) {
+export function EtapasTratativa({ etapaAtual, resolvida, perda = false }: { etapaAtual: number; resolvida: boolean; perda?: boolean }) {
   const [de, setDe] = useState(etapaAtual)
   const anterior = useRef(etapaAtual)
   const [alcancada, setAlcancada] = useState<number | null>(null)
@@ -105,7 +109,7 @@ export function EtapasTratativa({ etapaAtual, resolvida }: { etapaAtual: number;
               )}
               style={{ transitionDelay: delay, animationDelay: delay }}
             >
-              {etapa.label}
+              {rotuloEtapa(etapa.valor, perda)}
             </span>
           </div>
         )

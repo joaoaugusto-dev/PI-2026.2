@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Barcode, CheckCircle2, IdCard, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -11,10 +12,12 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { useSetores } from '@/hooks/useSetores'
 import { formatarPatrimonio, statusParaBadge } from '@/hooks/useFerramentas'
+import { useEmprestimoAberto } from '@/hooks/useDevolucao'
 import { useCadastrarColaboradorRapido, useColaboradorPorTermo, useFerramentaPorTermo, useRetirarFerramenta } from '@/hooks/useRetirada'
 import { useAuth } from '@/lib/auth'
 import { parseCodigoPatrimonio } from '@/lib/patrimonio'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
+import { hojeBrasilia, prazoBR, quandoBR } from '@/lib/formatar'
 import { CadastroRapidoColaborador } from '@/components/fluxo/CadastroRapidoColaborador'
 import { CampoIdentificacao, DicaEnter } from '@/components/fluxo/CampoIdentificacao'
 import { OpcoesAmbiguas } from '@/components/fluxo/OpcoesAmbiguas'
@@ -24,7 +27,7 @@ import { RotuloCampo } from '@/components/fluxo/RotuloCampo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 
 const schema = z.object({
-  ferramentaCodigo: z.string().trim().min(1, 'Bipe o leitor ou digite o código de patrimônio'),
+  ferramentaCodigo: z.string().trim().min(1, 'Bipe a etiqueta ou digite o nome da ferramenta'),
   colaborador: z.string().trim().min(1, 'Informe matrícula, crachá ou nome'),
   atividade: z.string().trim().optional(),
   setor: z.string().min(1, 'Selecione o setor de destino'), // id do setor
@@ -33,12 +36,24 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+// a maioria das ferramentas volta no mesmo turno: o prazo já nasce "hoje" e o operador só mexe se for diferente
+const valoresIniciais = (ferramentaCodigo = ''): FormValues => ({
+  ferramentaCodigo,
+  colaborador: '',
+  atividade: '',
+  setor: '',
+  previsaoDevolucao: hojeBrasilia().iso,
+})
+
 export function RetiradaPage() {
+  // o detalhe da ferramenta abre a retirada já com o código preenchido
+  const [params] = useSearchParams()
   const { usuario } = useAuth()
   const { data: setores } = useSetores()
   const retirar = useRetirarFerramenta()
   const cadastrarRapido = useCadastrarColaboradorRapido()
   const [concluida, setConcluida] = useState(false)
+  const [trocandoSetor, setTrocandoSetor] = useState(false)
 
   const {
     register,
@@ -51,13 +66,7 @@ export function RetiradaPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: 'onChange',
-    defaultValues: {
-      ferramentaCodigo: '',
-      colaborador: '',
-      atividade: '',
-      setor: '',
-      previsaoDevolucao: '',
-    },
+    defaultValues: valoresIniciais(params.get('codigo') ?? ''),
   })
 
   const ferramentaCodigo = watch('ferramentaCodigo')
@@ -84,6 +93,11 @@ export function RetiradaPage() {
   const ferramentasAmbiguas = ferramentaAtual ? (escolhaFerramenta?.ambiguos ?? []) : []
   const ferramentaBloqueada = ferramenta !== null && ferramenta.status !== 'disponivel'
   const ferramentaNaoEncontrada = termoFerramenta.length > 0 && termoFerramenta === ferramentaCodigo.trim() && !buscandoFerramenta && !erroFerramenta && !ferramentaAchada && ferramentasAmbiguas.length === 0
+
+  // ferramenta já emprestada: o operador quer saber com quem está, não a regra do sistema
+  const emUso = ferramenta?.status === 'em_uso' && ferramenta.codigo_identificacao ? String(ferramenta.codigo_identificacao) : ''
+  const { data: emprestimoDaFerramenta } = useEmprestimoAberto(emUso)
+  const comQuem = emUso ? emprestimoDaFerramenta?.item : null
 
   const { data: escolhaColaborador, isFetching: buscandoColaborador, isError: erroColaborador } = useColaboradorPorTermo(termoColaborador)
   const colaboradorAtual = termoColaborador === colaborador.trim()
@@ -118,13 +132,23 @@ export function RetiradaPage() {
     !previsaoDevolucao ? 'previsão de devolução' : null,
   ].filter(Boolean) as string[]
 
+  const nomeSetor = setores?.find((s) => String(s.id) === setor)?.nome
+  const mostrarSetores = trocandoSetor || !nomeSetor
+
   function limpar() {
-    reset({ ferramentaCodigo: '', colaborador: '', atividade: '', setor: '', previsaoDevolucao: '' })
-    setFocus('ferramentaCodigo')
+    reset(valoresIniciais())
+    setTrocandoSetor(false)
+    // depois do re-render do reset: chamado direto, o foco não pega e a próxima bipada do leitor se perde
+    setTimeout(() => {
+      setFocus('ferramentaCodigo')
+      window.scrollTo({ top: 0 })
+    })
   }
 
   function onConfirmar(data: FormValues) {
-    if (!ferramenta || !colaboradorEncontrado) return
+    if (faltando.length > 0 || !ferramenta || !colaboradorEncontrado) return
+    const resumo = `${ferramenta.nome} com ${colaboradorEncontrado.nome}`
+    const prazo = prazoBR(`${data.previsaoDevolucao}T23:59:59-03:00`)
     retirar.mutate(
       {
         ferramentaId: ferramenta.id,
@@ -138,6 +162,8 @@ export function RetiradaPage() {
           playSomConfirmacao()
           limpar()
           setConcluida(true)
+          // resumo do que foi registrado (FE-14): fica no canto enquanto o operador já bipa a próxima
+          toast.success(resumo, { description: `Devolver ${prazo} · destino ${nomeSetor ?? '—'}` })
         },
         onError: (e) =>
           avisarErro(mensagemDeErro(e, 'Não foi possível registrar a retirada.')),
@@ -159,26 +185,25 @@ export function RetiradaPage() {
     )
   }
 
+  const pareceCodigo = !ferramentaCodigo || parseCodigoPatrimonio(ferramentaCodigo) !== null
+
   return (
     <form onSubmit={handleSubmit(onConfirmar)} className="flex min-h-full flex-col">
       {concluida && <TelaSucessoAnimada contida mensagem="Retirada registrada!" aoTerminarAnimacao={() => setConcluida(false)} />}
-      <div className="animate-entrada flex-1 space-y-6 p-6 pb-4">
+      <div className="animate-entrada flex-1 space-y-6 p-4 pb-4 sm:p-6">
         <div className="grid gap-6 lg:grid-cols-2">
-          <SecaoFluxo
-            titulo="1. Ferramenta"
-            descricao="Dispare o leitor no código de patrimônio ou digite o código / nome"
-          >
+          <SecaoFluxo titulo="1. Ferramenta" descricao="Bipe a etiqueta ou digite o nome">
             <div className="space-y-2">
               <CampoIdentificacao
                 {...register('ferramentaCodigo')}
                 icone={Barcode}
-                mono
+                mono={pareceCodigo}
                 autoFocus
-                placeholder="Código de patrimônio ou nome da ferramenta"
+                placeholder="Código ou nome da ferramenta"
                 estadoClassName={cn(
                   'border-2',
                   ferramenta && !ferramentaBloqueada && 'animate-reconhecido border-status-disponivel/50 bg-status-disponivel/5',
-                  (ferramentaBloqueada || ferramentaNaoEncontrada || ferramentasAmbiguas.length > 0 || erroFerramenta) && 'animate-erro border-destructive',
+                  (ferramentaBloqueada || ferramentaNaoEncontrada || erroFerramenta) && 'animate-erro border-destructive',
                   !ferramentaCodigo && 'border-brand-red',
                 )}
                 onKeyDown={(e) => {
@@ -196,42 +221,71 @@ export function RetiradaPage() {
                 <div className="animate-entrada flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
                   <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-20 shrink-0" />
                   <div className="min-w-0 space-y-1.5">
-                    <p className="truncate font-medium">{ferramenta.nome}</p>
+                    <p className="font-medium">{ferramenta.nome}</p>
                     <StatusBadge status={statusParaBadge(ferramenta.status)} />
                   </div>
                 </div>
               )}
-              {ferramenta && ferramentaBloqueada && (
-                <p className="text-sm text-destructive">
-                  Só um empréstimo aberto por ferramenta — não é possível retirar.
-                </p>
+              {ferramenta?.status === 'em_uso' && (
+                <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <p>
+                    {comQuem ? (
+                      <>
+                        Esta ferramenta está com <strong>{comQuem.colaborador_nome}</strong> desde {quandoBR(comQuem.data_retirada)} (
+                        {comQuem.setor_nome}). Ela precisa ser devolvida antes de sair de novo.
+                      </>
+                    ) : (
+                      'Esta ferramenta já está emprestada. Ela precisa ser devolvida antes de sair de novo.'
+                    )}
+                  </p>
+                  <Link
+                    to={`/devolucoes?codigo=${formatarPatrimonio(ferramenta.codigo_identificacao)}`}
+                    className="inline-flex h-11 items-center rounded-lg border bg-background px-4 font-medium hover:bg-muted"
+                  >
+                    Registrar a devolução dela
+                  </Link>
+                </div>
+              )}
+              {ferramenta?.status === 'indisponivel' && (
+                <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <p>
+                    Esta ferramenta está <strong>indisponível</strong>
+                    {ferramenta.motivo_indisponivel ? ` (${ferramenta.motivo_indisponivel})` : ''} e não pode ser retirada.
+                  </p>
+                  <Link to="/indisponiveis" className="inline-flex h-11 items-center rounded-lg border bg-background px-4 font-medium hover:bg-muted">
+                    Ver em Indisponíveis
+                  </Link>
+                </div>
               )}
               {ferramentaNaoEncontrada && (
-                <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}".</p>
+                <p className="text-sm text-destructive">Nenhuma ferramenta encontrada para "{ferramentaCodigo}". Confira o código ou tente outro nome.</p>
               )}
               {ferramentasAmbiguas.length > 0 && (
                 <OpcoesAmbiguas
-                  titulo={`Vários resultados para "${ferramentaCodigo}" — escolha a ferramenta:`}
-                  opcoes={ferramentasAmbiguas.map((f) => ({
-                    chave: f.id,
-                    identificador: formatarPatrimonio(f.codigo_identificacao),
-                    rotulo: f.nome,
-                  }))}
+                  titulo={`Encontrei ${ferramentasAmbiguas.length} para "${ferramentaCodigo}". Toque na que vai sair:`}
+                  // disponíveis primeiro: são as únicas que podem sair agora
+                  opcoes={[...ferramentasAmbiguas]
+                    .sort((a, b) => Number(b.status === 'disponivel') - Number(a.status === 'disponivel'))
+                    .map((f) => ({
+                      chave: f.id,
+                      identificador: formatarPatrimonio(f.codigo_identificacao),
+                      rotulo: f.nome,
+                      extra: <StatusBadge status={statusParaBadge(f.status)} />,
+                    }))}
                   aoEscolher={(codigo) => setValue('ferramentaCodigo', codigo, { shouldValidate: true })}
                 />
               )}
               {erroFerramenta && ferramentaAtual && (
-                <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão com a API.</p>
+                <p className="text-sm text-destructive">Não foi possível consultar as ferramentas. Verifique a conexão.</p>
               )}
             </div>
-
           </SecaoFluxo>
 
-          <SecaoFluxo titulo="2. Colaborador" descricao="Matrícula, crachá ou nome">
+          <SecaoFluxo titulo="2. Colaborador" descricao="Bipe o crachá ou digite matrícula / nome">
             <CampoIdentificacao
               {...register('colaborador')}
               icone={IdCard}
-              placeholder="Matrícula ou nome do colaborador"
+              placeholder="Matrícula ou nome"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
@@ -245,7 +299,7 @@ export function RetiradaPage() {
 
             {colaboradorEncontrado && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">{colaboradorEncontrado.nome}</span>
+                <span className="text-corpo font-medium">{colaboradorEncontrado.nome}</span>
                 <span className="text-sm text-muted-foreground">
                   Matrícula {colaboradorEncontrado.matricula} ·{' '}
                   {setores?.find((s) => s.id === colaboradorEncontrado.setor_id)?.nome ?? 'sem setor'}
@@ -255,56 +309,72 @@ export function RetiradaPage() {
 
             {colaboradoresAmbiguos.length > 0 && (
               <OpcoesAmbiguas
-                titulo={`Vários colaboradores para "${colaborador}" — escolha o colaborador:`}
+                titulo={`Encontrei ${colaboradoresAmbiguos.length} pessoas para "${colaborador}". Toque em quem está retirando:`}
                 opcoes={colaboradoresAmbiguos.map((c) => ({ chave: c.id, identificador: c.matricula, rotulo: c.nome }))}
                 aoEscolher={(matricula) => setValue('colaborador', matricula, { shouldValidate: true })}
               />
             )}
 
             {erroColaborador && termoColaborador === colaborador.trim() && (
-              <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão com a API.</p>
+              <p className="text-sm text-destructive">Não foi possível consultar os colaboradores. Verifique a conexão.</p>
             )}
 
-            {colaboradorNaoEncontrado && <CadastroRapidoColaborador
+            {colaboradorNaoEncontrado && (
+              <CadastroRapidoColaborador
+                key={termoColaborador}
+                termo={termoColaborador}
                 setores={setores ?? []}
                 enviando={cadastrarRapido.isPending}
                 onUsar={usarCadastroRapido}
-              />}
+              />
+            )}
           </SecaoFluxo>
         </div>
 
-        <SecaoFluxo
-          titulo="3. Detalhes da retirada"
-          descricao="Setor de destino é obrigatório; atividade é opcional"
-        >
+        <SecaoFluxo titulo="3. Destino e prazo" descricao="Já vem preenchido — confira e confirme">
           <div className="space-y-4 rounded-lg border p-4">
             <div className="space-y-2">
-              <RotuloCampo>Atividade / motivo</RotuloCampo>
-              <textarea
-                {...register('atividade')}
-                rows={2}
-                placeholder="Descreva o motivo da retirada (opcional)"
-                className="w-full resize-none rounded-lg border px-3 py-2 text-corpo outline-none focus-visible:border-brand-red focus-visible:ring-2 focus-visible:ring-brand-red/20"
-              />
-            </div>
-
-            <div className="space-y-2">
               <RotuloCampo>Setor de destino</RotuloCampo>
-              <div className="flex flex-wrap gap-2">
-                {setores?.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setValue('setor', String(s.id), { shouldValidate: true })}
-                    className={cn(
-                      'h-(--control-h) rounded-lg border px-4 text-corpo font-medium transition-colors hover:bg-muted',
-                      setor === String(s.id) && 'border-transparent bg-foreground text-white hover:bg-foreground',
-                    )}
-                  >
-                    {s.nome}
+              {!setor && !trocandoSetor && !colaboradorEncontrado ? (
+                <p className="flex h-(--control-h) items-center text-corpo text-muted-foreground">
+                  Vem do setor do colaborador.
+                  <button type="button" onClick={() => setTrocandoSetor(true)} className="ml-2 font-medium text-foreground underline underline-offset-4">
+                    Escolher agora
                   </button>
-                ))}
-              </div>
+                </p>
+              ) : !mostrarSetores ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex h-(--control-h) items-center rounded-lg bg-foreground px-4 text-corpo font-medium text-white">
+                    {nomeSetor}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTrocandoSetor(true)}
+                    className="h-(--control-h) rounded-lg border px-4 text-corpo font-medium hover:bg-muted"
+                  >
+                    Trocar setor
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {setores?.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setValue('setor', String(s.id), { shouldValidate: true })
+                        setTrocandoSetor(false)
+                      }}
+                      className={cn(
+                        'h-(--control-h) rounded-lg border px-4 text-corpo font-medium transition-colors hover:bg-muted',
+                        setor === String(s.id) && 'border-transparent bg-foreground text-white hover:bg-foreground',
+                      )}
+                    >
+                      {s.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
               {errors.setor && <p className="text-sm text-destructive">{errors.setor.message}</p>}
             </div>
 
@@ -313,6 +383,17 @@ export function RetiradaPage() {
               <SeletorDataCalendario
                 value={previsaoDevolucao}
                 onChange={(iso) => setValue('previsaoDevolucao', iso, { shouldValidate: true })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <RotuloCampo>Atividade / motivo (opcional)</RotuloCampo>
+              {/* uma linha só: Enter aqui confirma a retirada (envio nativo do formulário) em vez de quebrar linha */}
+              <input
+                {...register('atividade')}
+                placeholder="Ex.: troca de rolamento da prensa 3"
+                enterKeyHint="send"
+                className="h-(--control-h) w-full rounded-lg border px-3 text-corpo outline-none focus-visible:border-brand-red focus-visible:ring-2 focus-visible:ring-brand-red/20"
               />
             </div>
           </div>

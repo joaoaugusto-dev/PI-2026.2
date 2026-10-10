@@ -9,33 +9,11 @@ import type { RecursoExportavel } from '../validators/exportacaoValidator.js';
 // passo é streaming (pg-cursor) direto para a resposta.
 export const MAX_LINHAS_EXPORTACAO = 50000;
 
-// Partes numéricas no fuso de Brasília, montadas à mão: não depende da
-// pontuação que cada versão do ICU põe entre data e hora em toLocaleString.
-const partesBR = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/Sao_Paulo',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-});
+// Datas formatadas no Postgres (to_char no fuso de Brasília, mesmo dd/mm/aaaa [HH:mm] da tela): com o
+// Intl.formatToParts no Node, 50 mil linhas custavam ~0,4 s de CPU síncrona por exportação, e o event loop
+// parado congelava a API inteira (10 exportações simultâneas = leitura de código esperando 7 s).
+const BR = "AT TIME ZONE 'America/Sao_Paulo'";
 
-function partes(d: Date): Record<string, string> {
-  return Object.fromEntries(partesBR.formatToParts(d).map((p) => [p.type, p.value]));
-}
-
-/** Mesmo formato da tela (lib/formatar.ts no front): dd/mm/aaaa [HH:mm] em Brasília, "—" quando vazio. */
-const dataBR = (d: Date | null) => {
-  if (!d) return '—';
-  const p = partes(d);
-  return `${p.day}/${p.month}/${p.year}`;
-};
-const dataHoraBR = (d: Date | null) => {
-  if (!d) return '—';
-  const p = partes(d);
-  return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`;
-};
 /** Mesmo formato de formatarPatrimonio no front. */
 const patrimonio = (codigo: number | null) => (codigo ? String(codigo).padStart(6, '0') : '—');
 
@@ -108,7 +86,10 @@ const EXPORTADORES: Record<RecursoExportavel, (filtros: FiltrosEmprestimos) => P
     const { where, params } = filtroEmprestimos(filtros);
     const { rows } = await query(
       `SELECT ferramenta_nome, codigo_identificacao, colaborador_nome, colaborador_matricula, setor_nome,
-              data_retirada, previsao_devolucao, data_devolucao, situacao
+              to_char(data_retirada ${BR}, 'DD/MM/YYYY HH24:MI') AS retirada,
+              to_char(previsao_devolucao ${BR}, 'DD/MM/YYYY') AS previsao,
+              COALESCE(to_char(data_devolucao ${BR}, 'DD/MM/YYYY HH24:MI'), '—') AS devolucao,
+              situacao
        FROM vw_emprestimos_detalhe ${where}
        ORDER BY data_retirada DESC, id DESC
        LIMIT $${params.length + 1}`,
@@ -121,9 +102,9 @@ const EXPORTADORES: Record<RecursoExportavel, (filtros: FiltrosEmprestimos) => P
       e.colaborador_nome,
       e.colaborador_matricula,
       e.setor_nome,
-      dataHoraBR(e.data_retirada),
-      dataBR(e.previsao_devolucao),
-      dataHoraBR(e.data_devolucao),
+      e.retirada,
+      e.previsao,
+      e.devolucao,
       ROTULO_SITUACAO[e.situacao] ?? e.situacao,
     ]);
     if (truncou) {

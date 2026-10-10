@@ -19,6 +19,11 @@ export function errorHandler(
     return sendError(res, 'PAYLOAD_TOO_LARGE', 'O arquivo enviado é maior que o limite permitido.', [], 413);
   }
 
+  // JSON malformado no corpo (o express.json() lança antes de chegar à rota): erro do cliente, não 500
+  if (err.type === 'entity.parse.failed') {
+    return sendError(res, 'INVALID_JSON', 'O corpo da requisição não é um JSON válido.', [], 400);
+  }
+
   // Tratamento de erros específicos do PostgreSQL (pg)
   if (err.code) {
     if (err.code === '23505') {

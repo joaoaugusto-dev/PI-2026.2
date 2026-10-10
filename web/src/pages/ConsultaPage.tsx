@@ -17,12 +17,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { useConsultaFerramentas, useIniciarSessaoConsulta, type SessaoConsulta } from '@/hooks/useConsulta'
+import { agruparPorNome, useConsultaFerramentas, useIniciarSessaoConsulta, type SessaoConsulta } from '@/hooks/useConsulta'
 import { formatarPatrimonio, statusParaBadge, type StatusFerramenta } from '@/hooks/useFerramentas'
 import { expiracaoDoToken } from '@/lib/auth'
 import { avisarErro } from '@/lib/avisar-erro'
 
-const LIMITE_POR_PAGINA = 20
+// página grande: as unidades iguais se agrupam num cartão só (ver agruparPorNome), então 100 itens viram poucos cartões
+const LIMITE_POR_PAGINA = 100
 
 const STATUS_FILTROS: { label: string; valor: StatusFerramenta | 'todas' }[] = [
   { label: 'Todas', valor: 'todas' },
@@ -240,11 +241,14 @@ export function ConsultaPage() {
     page < totalPaginas ? LIMITE_POR_PAGINA : Math.max(0, total - (totalPaginas - 1) * LIMITE_POR_PAGINA)
   const ferramentasBrutas = data?.data ?? []
   const ferramentas = isPlaceholderData ? ferramentasBrutas.slice(0, itensNaPaginaAlvo) : ferramentasBrutas
-  const esqueletosExtras = isPlaceholderData ? Math.max(0, itensNaPaginaAlvo - ferramentas.length) : 0
+  const esqueletosExtras = isPlaceholderData ? Math.min(4, Math.max(0, itensNaPaginaAlvo - ferramentas.length)) : 0
+  const grupos = agruparPorNome(ferramentas)
+  const contagemDoGrupo = (n: number) =>
+    ({ todas: `${n} unidades`, disponivel: `${n} disponíveis agora`, em_uso: `${n} em uso`, indisponivel: `${n} indisponíveis` })[status]
 
   if (!sessao) {
     return (
-      <div className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
+      <main className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
         <TexturaFerramentas />
         <div className="w-full max-w-md">
           <Card className="w-full animate-entrada shadow-2xl ring-foreground/15">
@@ -252,7 +256,9 @@ export function ConsultaPage() {
               <img src="/brand/soufer-industrial.png" alt="SOUFER Tools" className="h-12 w-auto" />
             </div>
             <CardHeader>
-              <CardTitle className="text-titulo">Consulta de ferramentas</CardTitle>
+              <CardTitle className="text-titulo">
+                <h1>Consulta de ferramentas</h1>
+              </CardTitle>
               <CardDescription>Informe sua matrícula para ver o que está disponível ou emprestado</CardDescription>
             </CardHeader>
             <CardContent>
@@ -290,7 +296,7 @@ export function ConsultaPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     )
   }
 
@@ -318,16 +324,17 @@ export function ConsultaPage() {
         </CardContent>
       </Card>
 
-      <div className="relative max-w-md">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative max-w-xl">
+        <Search className="absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={busca}
           onChange={(e) => {
             setBusca(e.target.value)
             setPage(1)
           }}
-          placeholder="Buscar por nome, marca ou modelo"
-          className="h-10 bg-card pl-9 text-corpo"
+          placeholder="Qual ferramenta você procura?"
+          autoFocus
+          className="h-(--control-h) bg-card pl-10 text-secao md:text-secao"
         />
       </div>
 
@@ -382,21 +389,38 @@ export function ConsultaPage() {
 
         {!isLoading &&
           !isError &&
-          ferramentas.map((ferramenta) => (
-            <Card key={ferramenta.id} className="shadow-xs">
-              <CardContent className="flex items-center gap-4">
-                <IconeFerramenta nome={ferramenta.nome} className="size-12 shrink-0 bg-muted text-muted-foreground" />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <p className="truncate text-corpo font-semibold">{ferramenta.nome}</p>
-                  <p className="truncate font-mono text-rotulo text-muted-foreground">
-                    {formatarPatrimonio(ferramenta.codigo_identificacao)} · {ferramenta.categoria}
-                    {ferramenta.localizacao ? ` · ${ferramenta.localizacao}` : ''}
-                  </p>
-                </div>
-                <StatusBadge status={statusParaBadge(ferramenta.status)} className="shrink-0" />
-              </CardContent>
-            </Card>
-          ))}
+          grupos.map((grupo) => {
+            const unica = grupo.itens.length === 1 ? grupo.itens[0] : null
+            const locais = [...new Set(grupo.itens.map((f) => f.localizacao).filter(Boolean))]
+            // grupo: mostra "disponível" se sobrou pelo menos uma; senão em_uso se alguma estiver em uso, senão indisponivel
+            const statusGrupo = unica?.status ?? (grupo.disponiveis > 0 ? 'disponivel' : grupo.itens.some((f) => f.status === 'em_uso') ? 'em_uso' : 'indisponivel')
+            return (
+              <Card key={grupo.itens[0].id} className="shadow-xs">
+                <CardContent className="flex items-center gap-4">
+                  <IconeFerramenta nome={grupo.nome} className="size-12 shrink-0 bg-muted text-muted-foreground" />
+                  {/* nome nunca cortado: a medida é a informação que a pessoa veio buscar */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <p className="text-secao font-semibold">{grupo.nome}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {unica ? <span className="font-mono">{formatarPatrimonio(unica.codigo_identificacao)}</span> : contagemDoGrupo(grupo.itens.length)}
+                      {' · '}
+                      {grupo.categoria}
+                      {locais.length > 0 ? ` · ${locais.join(', ')}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <StatusBadge status={statusParaBadge(statusGrupo)} />
+                    {/* "x de y" só sem filtro: com filtro, o total da página não é o total de unidades */}
+                    {!unica && status === 'todas' && (
+                      <span className="text-sm font-medium tabular-nums">
+                        {grupo.disponiveis} de {grupo.itens.length} livres
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
 
         {!isLoading &&
           !isError &&

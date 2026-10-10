@@ -43,20 +43,25 @@ const navCadastros = [
 
 const titulosExtras: Record<string, string> = {
   '/status': 'Status da API',
+  '/health': 'Status da API',
   '/design-system': 'Design system',
 }
 
-function tituloDaPagina(pathname: string) {
-  const todasRotas = [...navPrincipal, ...navCadastros]
-  const rota = todasRotas.find((item) => (item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)))
-  return (rota && 'titulo' in rota ? rota.titulo : rota?.label) ?? titulosExtras[pathname] ?? 'Dashboard'
+const NAO_ENCONTRADA = 'Página não encontrada'
+
+// cadastro aberto pela URL por quem não é admin mostra o 404 (RotaAdmin): o título não pode
+// entregar que a rota existe; URL desconhecida também não é "Dashboard"
+function tituloDaPagina(pathname: string, ehAdmin: boolean) {
+  const cadastro = navCadastros.find((item) => pathname.startsWith(item.to))
+  if (cadastro) return ehAdmin ? cadastro.titulo : NAO_ENCONTRADA
+  const rota = navPrincipal.find((item) => (item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)))
+  return rota?.label ?? titulosExtras[pathname] ?? NAO_ENCONTRADA
 }
 
-function useTituloDaAba(pathname: string) {
+function useTituloDaAba(titulo: string) {
   useEffect(() => {
-    const titulo = tituloDaPagina(pathname)
     document.title = titulo === 'Dashboard' ? 'SOUFER Tools' : `${titulo} - SOUFER Tools`
-  }, [pathname])
+  }, [titulo])
 }
 
 /**
@@ -123,7 +128,8 @@ export function AppLayout() {
   const { containerRef: indicadorRef, posicao: indicadorPos } = useIndicadorSidebar(
     `${location.pathname}-${cadastrosOpen}`,
   )
-  useTituloDaAba(location.pathname)
+  const titulo = tituloDaPagina(location.pathname, usuario?.papel === 'admin')
+  useTituloDaAba(titulo)
   const agora = useRelogio()
   const dataFormatada = agora
     .toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
@@ -169,7 +175,7 @@ export function AppLayout() {
                 })}
 
                 {usuario?.papel === 'admin' && (
-                  <Collapsible.Root defaultOpen={cadastrosAtivo} onOpenChange={setCadastrosOpen}>
+                  <Collapsible.Root asChild defaultOpen={cadastrosAtivo} onOpenChange={setCadastrosOpen}>
                     <SidebarMenuItem>
                       <Collapsible.Trigger asChild>
                         <SidebarMenuButton className="group/cadastros h-(--control-h) justify-between px-3 text-corpo">
@@ -213,9 +219,9 @@ export function AppLayout() {
         </SidebarContent>
         <RodapeSidebar />
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <CabecalhoApp
-          titulo={tituloDaPagina(location.pathname)}
+          titulo={titulo}
           dataFormatada={dataFormatada}
           horaFormatada={horaFormatada}
         />

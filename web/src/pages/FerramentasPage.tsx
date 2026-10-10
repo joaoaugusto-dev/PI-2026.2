@@ -72,9 +72,11 @@ export function FerramentasPage() {
 
   const ferramentas = data?.data ?? []
   const nomeCategoria = (id: number) => categorias?.find((c) => c.id === id)?.nome ?? '—'
+  // coluna toda com "—" é ruído: só aparece quando alguma ferramenta da página tem localização
+  const temLocalizacao = ferramentas.some((f) => f.localizacao)
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative max-w-md flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -85,7 +87,8 @@ export function FerramentasPage() {
               setPage(1)
             }}
             placeholder="Buscar por nome, marca ou modelo"
-            className="h-10 pl-9 text-corpo"
+            autoFocus
+            className="pl-9"
           />
         </div>
         {/* o cadastro mora em Cadastros > Ferramentas, que é só do admin: abre o pop-up de criar direto */}
@@ -101,7 +104,7 @@ export function FerramentasPage() {
           <span className="shrink-0 text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
             Status
           </span>
-          <div className="-mx-6 flex gap-1.5 overflow-x-auto px-6 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
             {STATUS_FILTROS.map((item) => (
               <ChipFiltro
                 key={item.valor}
@@ -119,7 +122,7 @@ export function FerramentasPage() {
           <span className="shrink-0 text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
             Categoria
           </span>
-          <div className="-mx-6 flex gap-1.5 overflow-x-auto px-6 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
             <ChipFiltro
               label="Todas"
               ativo={grupoId === null}
@@ -146,7 +149,7 @@ export function FerramentasPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="px-1.5 text-rotulo font-medium tracking-wide text-muted-foreground uppercase sm:px-2">
+            <TableHead className="hidden px-2 text-rotulo font-medium tracking-wide text-muted-foreground uppercase sm:table-cell">
               Patrimônio
             </TableHead>
             <TableHead className="px-1.5 text-rotulo font-medium tracking-wide text-muted-foreground uppercase sm:px-2">
@@ -158,16 +161,18 @@ export function FerramentasPage() {
             <TableHead className="px-1.5 text-rotulo font-medium tracking-wide text-muted-foreground uppercase sm:px-2">
               Status
             </TableHead>
-            <TableHead className="hidden text-rotulo font-medium tracking-wide text-muted-foreground uppercase sm:table-cell">
-              Localização
-            </TableHead>
+            {temLocalizacao && (
+              <TableHead className="hidden text-rotulo font-medium tracking-wide text-muted-foreground uppercase lg:table-cell">
+                Localização
+              </TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading
             ? Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell className="px-1.5 sm:px-2">
+                  <TableCell className="hidden px-2 sm:table-cell">
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                   <TableCell className="px-1.5 sm:px-2">
@@ -177,9 +182,6 @@ export function FerramentasPage() {
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                   <TableCell className="px-1.5 sm:px-2">
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                 </TableRow>
@@ -190,14 +192,18 @@ export function FerramentasPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/ferramentas/${ferramenta.id}`)}
                 >
-                  <TableCell className="px-1.5 font-mono text-sm sm:px-2 sm:text-corpo">
+                  <TableCell className="hidden px-2 font-mono text-corpo sm:table-cell">
                     {formatarPatrimonio(ferramenta.codigo_identificacao)}
                   </TableCell>
-                  <TableCell className="px-1.5 sm:px-2">
+                  <TableCell className="px-1.5 whitespace-normal sm:px-2">
                     <div className="flex items-center gap-2.5">
                       <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} className="size-10 shrink-0" />
-                      <span className="max-w-[72px] truncate text-sm font-medium sm:max-w-none sm:text-corpo">
-                        {ferramenta.nome}
+                      {/* o nome nunca é cortado: a medida ("10 mm", "1 3/4\"") é a informação */}
+                      <span className="min-w-0">
+                        <span className="block text-corpo font-medium">{ferramenta.nome}</span>
+                        <span className="block font-mono text-sm text-muted-foreground sm:hidden">
+                          {formatarPatrimonio(ferramenta.codigo_identificacao)}
+                        </span>
                       </span>
                     </div>
                   </TableCell>
@@ -207,9 +213,11 @@ export function FerramentasPage() {
                   <TableCell className="px-1.5 sm:px-2">
                     <StatusBadge status={statusParaBadge(ferramenta.status)} />
                   </TableCell>
-                  <TableCell className="hidden text-corpo text-muted-foreground sm:table-cell">
-                    {ferramenta.localizacao ?? '—'}
-                  </TableCell>
+                  {temLocalizacao && (
+                    <TableCell className="hidden text-corpo text-muted-foreground lg:table-cell">
+                      {ferramenta.localizacao ?? '—'}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
         </TableBody>

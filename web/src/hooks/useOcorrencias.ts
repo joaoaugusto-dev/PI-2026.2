@@ -126,3 +126,14 @@ export function useDisponibilizarFerramenta() {
     // sem invalidar aqui: a tela refaz as listas só depois da animação de saída do card
   })
 }
+
+/** `DELETE /ferramentas/:id` (admin): baixa lógica — a ferramenta sai de circulação (ativo = false). */
+export function useBaixarFerramenta() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (ferramentaId: number) => {
+      await api.delete(`/ferramentas/${ferramentaId}`)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ferramentas'] }),
+  })
+}

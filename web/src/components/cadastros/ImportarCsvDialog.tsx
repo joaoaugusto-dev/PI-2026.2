@@ -171,7 +171,7 @@ export function ImportarCsvDialog({
         </DialogHeader>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input px-3 text-corpo hover:bg-muted">
+          <label className="inline-flex h-(--control-h) cursor-pointer items-center gap-2 rounded-lg border border-input px-4 text-corpo hover:bg-muted">
             <Upload className="size-4" /> Escolher arquivo
             <input
               type="file"

@@ -24,6 +24,20 @@ export function useEmprestimoAberto(termo: string) {
   })
 }
 
+/** Todos os empréstimos abertos (atrasados primeiro): a devolução lista para tocar quando a etiqueta não lê. */
+export function useEmprestimosAbertos() {
+  return useQuery({
+    queryKey: ['emprestimos', 'abertos'],
+    queryFn: async ({ signal }) => {
+      // ponytail: até 100 de cada situação; acima disso o balcão busca pelo campo
+      const [atrasados, noPrazo] = await Promise.all(
+        (['atrasado', 'em_aberto'] as const).map((situacao) => buscarEmprestimos({ situacao, limit: 100 }, signal)),
+      )
+      return [...atrasados.data, ...noPrazo.data]
+    },
+  })
+}
+
 interface Devolucao {
   emprestimo: Emprestimo
   condicao: CondicaoDevolucao

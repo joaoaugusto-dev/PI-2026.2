@@ -76,3 +76,27 @@ export function useConsultaFerramentas(filtros: FiltrosFerramentas, token: strin
     retry: 1,
   })
 }
+
+export interface GrupoConsulta {
+  nome: string
+  categoria: string
+  itens: FerramentaConsulta[]
+  disponiveis: number
+}
+
+/**
+ * Junta unidades iguais (mesmo nome e categoria, vizinhas — a API ordena por nome) num cartão só: quem vai ao
+ * quiosque pergunta "tem chave allen 10?", não quer ler a mesma linha 5 vezes.
+ * ponytail: agrupa só dentro da página; um grupo pode partir na virada de página (página de 100 deixa isso raro).
+ * Se incomodar, a API passa a devolver o agregado por nome.
+ */
+export function agruparPorNome(ferramentas: FerramentaConsulta[]): GrupoConsulta[] {
+  const grupos: GrupoConsulta[] = []
+  for (const f of ferramentas) {
+    const ultimo = grupos.at(-1)
+    if (ultimo && ultimo.nome === f.nome && ultimo.categoria === f.categoria) ultimo.itens.push(f)
+    else grupos.push({ nome: f.nome, categoria: f.categoria, itens: [f], disponiveis: 0 })
+  }
+  for (const g of grupos) g.disponiveis = g.itens.filter((f) => f.status === 'disponivel').length
+  return grupos
+}

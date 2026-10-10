@@ -626,8 +626,15 @@
 
 /* Etiqueta térmica 90 x 60 mm (EtiquetaTermica) — só existe na impressão */
 .etiqueta-impressao,
-.cracha-impressao {
+.cracha-impressao,
+.lista-impressao {
   display: none;
+}
+
+/* Lista de cobrança (ImprimirPendencias) em A4: página nomeada, a térmica continua 90 x 60 */
+@page lista {
+  size: A4;
+  margin: 12mm;
 }
 
 @media print {
@@ -636,7 +643,7 @@
     margin: 0;
   }
 
-  body > *:not(.etiqueta-impressao):not(.cracha-impressao) {
+  body > *:not(.etiqueta-impressao):not(.cracha-impressao):not(.lista-impressao) {
     display: none !important;
   }
 
@@ -656,6 +663,59 @@
     color: #000;
     background: #fff;
     break-after: avoid;
+  }
+
+  .lista-impressao {
+    display: block;
+    page: lista;
+    color: #000;
+    background: #fff;
+    font-size: 10pt;
+  }
+
+  .lista-impressao header {
+    display: flex;
+    align-items: center;
+    gap: 6mm;
+    margin-bottom: 4mm;
+  }
+
+  .lista-impressao header img {
+    height: 12mm;
+    width: auto;
+  }
+
+  .lista-impressao h1 {
+    font-size: 14pt;
+    font-weight: 700;
+  }
+
+  .lista-impressao h2 {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 4mm 0 1.5mm;
+  }
+
+  .lista-impressao table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .lista-impressao th,
+  .lista-impressao td {
+    border: 0.25mm solid #999;
+    padding: 1.2mm 1.5mm;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .lista-impressao tr {
+    break-inside: avoid;
+  }
+
+  .lista-impressao .lista-check {
+    text-align: center;
+    font-size: 13pt;
   }
 
   /* térmica é 1 bit: o vermelho vira cinza escuro, contraste evita sumir no papel */

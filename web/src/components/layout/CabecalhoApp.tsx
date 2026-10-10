@@ -30,17 +30,17 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
 
   return (
     <header className="flex h-16 items-center gap-2 border-b px-4 justify-between">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <SidebarTrigger />
-        <h1 className="text-secao font-semibold">{titulo}</h1>
+        <h1 className="truncate text-secao font-semibold">{titulo}</h1>
       </div>
 
-      <div className="flex items-center gap-4">
-        <span className="text-corpo text-muted-foreground hidden md:inline">
+      <div className="flex shrink-0 items-center gap-4">
+        <span className="text-corpo text-muted-foreground hidden xl:inline">
           {dataFormatada} · {horaFormatada}
         </span>
         {usuario?.papel === 'admin' && (
-          <Link to="/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <Link to="/status" aria-label="Status da API" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <Activity className="size-3 text-muted-foreground" />
@@ -51,11 +51,11 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
         {(usuario?.papel === 'manutencao' || usuario?.papel === 'admin') && <SinoNotificacoes />}
         <div className="flex items-center gap-2 border-l pl-4">
           <Avatar className="size-8">
-            <AvatarFallback className="text-xs font-medium">
+            <AvatarFallback className="text-xs font-medium text-foreground">
               {usuario ? iniciaisDoNome(usuario.nome) : '—'}
             </AvatarFallback>
           </Avatar>
-          <div className="hidden sm:flex flex-col leading-tight">
+          <div className="hidden lg:flex flex-col leading-tight">
             <span className="text-corpo font-medium">{usuario?.nome ?? 'Não logado'}</span>
             <span className="text-rotulo text-muted-foreground">
               {usuario ? `${ROTULO_PAPEL[usuario.papel] ?? usuario.papel} · Matrícula ${usuario.matricula}` : ''}

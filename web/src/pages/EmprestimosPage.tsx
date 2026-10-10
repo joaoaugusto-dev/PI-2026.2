@@ -27,6 +27,9 @@ import { cn } from '@/lib/utils'
 
 const LIMITE = 20
 
+/** A retirada grava texto livre (`atividade_observacao`); `atividade_nome` é a do catálogo. */
+const atividade = (e: Emprestimo) => e.atividade_nome || e.atividade_observacao || null
+
 // 100 por página (limite da API) × 100 páginas = 10 mil linhas por exportação
 const MAX_PAGINAS_EXPORTACAO = 100
 
@@ -73,7 +76,7 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
   return truncou
 }
 
-const selectClasse = 'h-9 rounded-md border border-input bg-background px-3 text-corpo'
+const selectClasse = 'h-(--control-h) rounded-lg border border-input bg-background px-3 text-corpo'
 
 export function EmprestimosPage() {
   const { data: setores } = useSetores()
@@ -144,14 +147,14 @@ export function EmprestimosPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-3">
         <Input
           aria-label="Buscar empréstimo"
           placeholder="Ferramenta, código, colaborador ou matrícula"
           value={busca}
           onChange={filtrar(setBusca)}
-          className="max-w-sm"
+          className="w-full sm:max-w-sm"
         />
         <select
           aria-label="Filtrar por situação"
@@ -189,16 +192,37 @@ export function EmprestimosPage() {
           ) : linhas.length === 0 ? (
             <EmptyState icone={History} titulo="Nenhum empréstimo encontrado" descricao="Ajuste os filtros da busca." />
           ) : (
-            <Table>
+            <>
+            {/* celular: cartão com o essencial (tabela de 7 colunas não cabe em 360px) */}
+            <ul className="divide-y md:hidden">
+              {linhas.map((e) => (
+                <li key={e.id} className="space-y-1 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-medium">{e.ferramenta_nome}</p>
+                    <span className={cn('shrink-0 text-sm font-medium', corDaSituacao(e))}>{textoSituacao(e)}</span>
+                  </div>
+                  <p className="text-sm">
+                    {e.colaborador_nome} <span className="text-muted-foreground">· {e.setor_nome}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-mono">{formatarPatrimonio(e.codigo_identificacao)}</span> · saiu {dataHoraBR(e.data_retirada)}
+                    {e.data_devolucao ? ` · voltou ${dataHoraBR(e.data_devolucao)}` : ` · prazo ${dataBR(e.previsao_devolucao)}`}
+                  </p>
+                  {atividade(e) && <p className="text-sm text-muted-foreground">Atividade: {atividade(e)}</p>}
+                </li>
+              ))}
+            </ul>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Ferramenta</TableHead>
+                  {/* situação logo depois da ferramenta: é o que se procura aqui, e fica visível sem rolar */}
+                  <TableHead>Situação</TableHead>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Setor</TableHead>
                   <TableHead>Retirada</TableHead>
                   <TableHead>Previsão</TableHead>
                   <TableHead>Devolução</TableHead>
-                  <TableHead>Situação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -210,7 +234,9 @@ export function EmprestimosPage() {
                         {formatarPatrimonio(e.codigo_identificacao)}
                         {!e.ferramenta_ativa && ' (baixada)'}
                       </p>
+                      {atividade(e) && <p className="max-w-64 truncate text-rotulo text-muted-foreground" title={atividade(e)!}>{atividade(e)}</p>}
                     </TableCell>
+                    <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
                     <TableCell>
                       <p>{e.colaborador_nome}</p>
                       <p className="text-rotulo text-muted-foreground">{e.colaborador_matricula}</p>
@@ -219,11 +245,11 @@ export function EmprestimosPage() {
                     <TableCell>{dataHoraBR(e.data_retirada)}</TableCell>
                     <TableCell>{dataBR(e.previsao_devolucao)}</TableCell>
                     <TableCell>{dataHoraBR(e.data_devolucao)}</TableCell>
-                    <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            </>
           )}
         </CardContent>
       </Card>

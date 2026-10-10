@@ -42,3 +42,24 @@ export function diasEntre(a: string | Date, b: string | Date) {
     typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : new Date(v).toLocaleDateString('en-CA', { timeZone: FUSO })
   return Math.round((Date.parse(dia(a)) - Date.parse(dia(b))) / 86_400_000)
 }
+
+/** "hoje às 21:53", "ontem às 08:10", "07/10 · há 2 dias" — o balcão lê isso de relance; "09/10/2026 · 0 dias" não. */
+export function quandoBR(valor: string | null | undefined, agora = new Date()) {
+  if (!valor) return '—'
+  const dias = diasEntre(agora, valor)
+  const hora = new Date(valor).toLocaleTimeString('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' })
+  // dias < 0: data no futuro por relógio adiantado/atrasado entre navegador e servidor — não mostrar "há -1 dias"
+  if (dias <= 0) return `hoje às ${hora}`
+  if (dias === 1) return `ontem às ${hora}`
+  return `${dataBR(valor).slice(0, 5)} · há ${dias} dias`
+}
+
+/** Prazo relativo a hoje: "hoje", "amanhã", "em 3 dias", "atrasada 2 dias". */
+export function prazoBR(valor: string | null | undefined, agora = new Date()) {
+  if (!valor) return '—'
+  const dias = diasEntre(valor, agora)
+  if (dias === 0) return 'hoje'
+  if (dias === 1) return 'amanhã'
+  if (dias > 1) return `em ${dias} dias`
+  return `atrasada ${-dias} ${dias === -1 ? 'dia' : 'dias'}`
+}

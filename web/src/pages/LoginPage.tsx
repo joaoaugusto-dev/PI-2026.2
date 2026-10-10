@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Controller, useForm, type FieldErrors } from 'react-hook-form'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
-import { avisarErro } from '@/lib/avisar-erro'
 import { useAuth } from '@/lib/auth'
 
 // Regra do time (issue #150): só dígitos, de 0001 a 9999 — `z.string().length(4)`
@@ -28,7 +27,8 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [erro, setErro] = useState(false)
+  // erro mostrado embaixo do PIN: é onde o olho está (o toast no canto passava despercebido)
+  const [erro, setErro] = useState<string | null>(null)
   const [tentativaErro, setTentativaErro] = useState(0)
   const [entrou, setEntrou] = useState(false)
   const senhaRef = useRef<HTMLInputElement>(null)
@@ -36,11 +36,17 @@ export function LoginPage() {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { matricula: '', senha: '' } })
 
+  // a cada tentativa errada o cursor volta ao 1º dígito do PIN (que acabou de ser limpo)
+  useEffect(() => {
+    if (tentativaErro) senhaRef.current?.focus()
+  }, [tentativaErro])
+
   async function onSubmit(dados: LoginForm) {
-    setErro(false)
+    setErro(null)
     try {
       await login(dados.matricula, dados.senha)
       setEntrou(true) // toca a animação de entrada; ao fim dela vai para o destino
@@ -55,15 +61,16 @@ export function LoginPage() {
       } else if (codigo === 'TOO_MANY_REQUESTS') {
         mensagem = 'Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.'
       }
-      setErro(true)
+      setErro(mensagem)
       setTentativaErro((tentativa) => tentativa + 1)
-      avisarErro(mensagem)
+      // senha errada não fica na tela: limpa e devolve o cursor ao 1º dígito para tentar de novo
+      setValue('senha', '')
     }
   }
 
   function onErroValidacao(errosForm: FieldErrors<LoginForm>) {
     const primeiraMensagem = Object.values(errosForm)[0]?.message
-    if (primeiraMensagem) avisarErro(primeiraMensagem)
+    if (primeiraMensagem) setErro(primeiraMensagem)
   }
 
   if (entrou) {
@@ -72,7 +79,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
+    <main className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-secondary p-4">
       <TexturaFerramentas />
       <div className="w-full max-w-md">
         <Card className="w-full animate-entrada shadow-2xl ring-foreground/15">
@@ -80,14 +87,16 @@ export function LoginPage() {
             <img src="/brand/soufer-negativo.png" alt="SOUFER Tools" className="h-12 w-auto" />
           </div>
           <CardHeader>
-            <CardTitle className="text-titulo">Entrar</CardTitle>
+            <CardTitle className="text-titulo">
+              <h1>Entrar</h1>
+            </CardTitle>
             <CardDescription>Acesso ao controle de ferramentas</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit, onErroValidacao)} noValidate>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="matricula">Matrícula</Label>
-                <CampoComErro erro={!!errors.matricula || erro} tentativa={tentativaErro}>
+                <CampoComErro erro={!!errors.matricula || !!erro} tentativa={tentativaErro}>
                   <Controller
                     name="matricula"
                     control={control}
@@ -98,12 +107,13 @@ export function LoginPage() {
                         maxLength={4}
                         autoComplete="username"
                         autoFocus
-                        aria-invalid={!!errors.matricula || erro}
+                        aria-invalid={!!errors.matricula || !!erro}
                         className="h-(--control-h) text-center text-titulo md:text-titulo"
                         {...field}
                         onChange={(e) => {
                           const novo = e.target.value.replace(/\D/g, '').slice(0, 4)
                           field.onChange(novo)
+                          setErro(null)
                           if (novo.length === 4) senhaRef.current?.focus()
                         }}
                       />
@@ -114,7 +124,7 @@ export function LoginPage() {
 
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="senha">Senha</Label>
-                <CampoComErro erro={!!errors.senha || erro} tentativa={tentativaErro}>
+                <CampoComErro erro={!!errors.senha || !!erro} tentativa={tentativaErro}>
                   <Controller
                     name="senha"
                     control={control}
@@ -123,14 +133,24 @@ export function LoginPage() {
                         ref={senhaRef}
                         id="senha"
                         autoComplete="current-password"
-                        erro={!!errors.senha || erro}
+                        erro={!!errors.senha || !!erro}
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(valor) => {
+                          field.onChange(valor)
+                          if (valor) setErro(null)
+                          // 6º dígito envia sozinho, como o desbloqueio do celular
+                          if (valor.length === 6) handleSubmit(onSubmit, onErroValidacao)()
+                        }}
                         onBlur={field.onBlur}
                       />
                     )}
                   />
                 </CampoComErro>
+                {erro && (
+                  <p role="alert" className="text-center text-sm font-medium text-destructive">
+                    {erro}
+                  </p>
+                )}
               </div>
 
               <Button type="submit" className="h-(--control-h)" disabled={isSubmitting}>
@@ -141,6 +161,6 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   )
 }

@@ -20,7 +20,7 @@ export function BotaoImprimirEtiqueta({ ferramenta, compacto }: { ferramenta: Fe
   return (
     <>
       <Button size={compacto ? 'sm' : 'default'} variant={compacto ? 'outline' : 'default'} onClick={imprimir}>
-        <Printer /> {compacto ? 'Etiqueta' : 'Imprimir etiqueta (90×60 mm)'}
+        <Printer /> {compacto ? 'Etiqueta' : 'Imprimir etiqueta'}
       </Button>
       {imprimindo && (
         <EtiquetaTermica

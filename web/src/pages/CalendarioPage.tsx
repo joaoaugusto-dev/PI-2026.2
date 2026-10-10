@@ -81,7 +81,7 @@ export function CalendarioPage() {
             aria-label="Filtrar por setor"
             value={setorId}
             onChange={(e) => setSetorId(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-corpo"
+            className="h-(--control-h) rounded-lg border border-input bg-background px-3 text-corpo"
           >
             <option value="">Todos os setores</option>
             {setores?.map((s) => (

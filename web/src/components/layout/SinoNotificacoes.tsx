@@ -182,12 +182,12 @@ export function SinoNotificacoes() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="relative cursor-pointer"
+          className="relative flex size-11 cursor-pointer items-center justify-center rounded-lg hover:bg-muted"
           aria-label={total > 0 ? `Notificações: ${total} não lidas` : 'Notificações'}
         >
           <BellIcon className={cn('size-4 text-muted-foreground hover:text-foreground transition-colors', tocando && 'sino-tocando')} />
           {total > 0 && (
-            <Badge className="absolute -top-2 -right-2 min-w-4 h-4 justify-center rounded-full px-1 text-[10px] bg-[var(--brand-red)] text-white">
+            <Badge className="absolute top-1 right-0.5 min-w-4 h-4 justify-center rounded-full px-1 text-[10px] bg-[var(--brand-red)] text-white">
               {total > 99 ? '99+' : total}
             </Badge>
           )}

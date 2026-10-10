@@ -25,6 +25,10 @@ const VALIDADE_CONVITE_DIAS = 7;
 const MAX_FALHAS_LOGIN = 5;
 const BLOQUEIO_LOGIN_MIN = 15;
 
+// matrícula sem conta também paga um bcrypt.compare: sem isso a resposta sai em ~3 ms contra ~60 ms
+// de quem tem conta, e o tempo entrega quais matrículas têm acesso (custo 10, o mesmo do seed/convite)
+const HASH_FICTICIO = bcrypt.hashSync('soufer-matricula-sem-conta', 10);
+
 const hashDoToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
 // mesma resposta para inexistente ou expirado: o link não revela o motivo
@@ -69,8 +73,13 @@ export class AuthService {
     const usuario = result.rows[0];
 
     if (!usuario) {
+      await bcrypt.compare(senha, HASH_FICTICIO);
       throw new UnauthorizedError('Matrícula ou senha inválidos', 'INVALID_CREDENTIALS');
     }
+
+    // compara antes de qualquer retorno: conta inativa ou bloqueada também gasta o tempo do bcrypt,
+    // senão a resposta rápida revelaria que a matrícula existe
+    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
 
     if (!usuario.ativo || !usuario.colaborador_ativo) {
       throw new UnauthorizedError('Usuário inativo. Contate o administrador.', 'USER_INACTIVE');
@@ -86,7 +95,6 @@ export class AuthService {
       );
     }
 
-    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
     if (!senhaValida) {
       // atômico: incrementa e, ao atingir o limite, bloqueia e zera o contador
       if (contaProtegida) {

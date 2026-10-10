@@ -13,8 +13,8 @@ export function BotaoImprimirCracha({ nome, matricula, setor }: { nome: string; 
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={imprimir}>
-        <IdCard /> Crachá
+      <Button size="sm" variant="outline" onClick={imprimir} title="Imprimir crachá" aria-label="Imprimir crachá">
+        <IdCard className="size-4" /> <span className="hidden 2xl:inline">Crachá</span>
       </Button>
       {imprimindo && <CrachaTermico nome={nome} matricula={matricula} setor={setor} />}
     </>
