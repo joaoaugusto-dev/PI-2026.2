@@ -19,7 +19,7 @@ export function CadastroRapidoColaborador({ setores, termo = '', enviando, onUsa
   const ehNumero = /^\d+$/.test(termo.trim())
   const [rascunho, setRascunho] = useState(() => ({
     nome: ehNumero ? '' : termo.trim().toUpperCase(),
-    matricula: ehNumero ? termo.trim().slice(0, 4) : '',
+    matricula: ehNumero && termo.trim().length <= 4 ? termo.trim() : '',
     setorId: '',
   }))
   const completo = rascunho.nome.trim() && rascunho.matricula.trim() && rascunho.setorId
