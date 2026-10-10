@@ -73,7 +73,7 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
   return truncou
 }
 
-const selectClasse = 'h-9 rounded-md border border-input bg-background px-3 text-corpo'
+const selectClasse = 'h-(--control-h) rounded-lg border border-input bg-background px-3 text-corpo'
 
 export function EmprestimosPage() {
   const { data: setores } = useSetores()

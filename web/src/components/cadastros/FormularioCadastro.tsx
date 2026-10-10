@@ -52,7 +52,7 @@ export function FormularioCadastro({
               aria-invalid={!!errors[c.name]}
               aria-describedby={errors[c.name] ? `${c.name}-erro` : undefined}
               {...register(c.name)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-corpo"
+              className="h-(--control-h) rounded-lg border border-input bg-background px-3 text-corpo"
             >
               <option value="">Selecione…</option>
               {c.opcoes.map((o) => (
