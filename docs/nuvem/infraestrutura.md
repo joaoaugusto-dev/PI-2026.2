@@ -15,6 +15,8 @@ A API será executada com Node 20, PM2 e Nginx.
 
 O Nginx funciona como reverse proxy e será configurado com HTTPS.
 
+O PM2 deve subir a API em **fork mode, com 1 instância** (não usar `-i max` nem `exec_mode: cluster`). Os limites de requisição (rate limit) guardam os contadores na memória do processo; em modo cluster o limite efetivo vira o limite × número de instâncias. Com mais de uma instância, trocar por um store compartilhado (ex.: Redis). Atrás do Nginx, definir também `TRUST_PROXY_HOPS=1`.
+
 ## Disponibilidade
 
 - `pm2 startup`

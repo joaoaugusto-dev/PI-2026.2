@@ -109,7 +109,7 @@ router.get('/dias-uteis', validate({ query: calcularDiasUteisQuerySchema }), Fer
 router.post(
   '/sincronizar',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: listarFeriadosQuerySchema }),
   FeriadoController.sincronizar
 );

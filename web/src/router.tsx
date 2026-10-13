@@ -1,56 +1,88 @@
+import type { ComponentType } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { RotaAdmin, RotaProtegida } from '@/lib/auth'
-import { AprovacoesPage } from '@/pages/AprovacoesPage'
-import { CadastroPage } from '@/pages/CadastroPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { DesignSystemPage } from '@/pages/DesignSystemPage'
-import { DevolucaoPage } from '@/pages/DevolucaoPage'
+import { ErroInesperadoPage } from '@/pages/ErroInesperadoPage'
 import { LoginPage } from '@/pages/LoginPage'
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
-import { RetiradaPage } from '@/pages/RetiradaPage'
-import { StatusPage } from '@/pages/StatusPage'
 
-const placeholder = (title: string) => <PlaceholderPage title={title} />
+// Code splitting por tela: o bundle inicial leva só login, layout e dashboard; cada tela baixa na primeira
+// visita (antes ia tudo num JS de ~970 KB). O router espera o módulo antes de trocar de tela.
+function pagina<M>(carregar: () => Promise<M>, nome: keyof M, soAdmin = false) {
+  return async () => {
+    const Pagina = (await carregar())[nome] as ComponentType
+    return { element: soAdmin ? <RotaAdmin><Pagina /></RotaAdmin> : <Pagina /> }
+  }
+}
 
 export const router = createBrowserRouter([
   {
     path: '/',
+    errorElement: <ErroInesperadoPage />,
     element: (
       <RotaProtegida>
         <AppLayout />
       </RotaProtegida>
     ),
+    // pai sem path: um erro numa página renderiza a tela de erro dentro do layout (sidebar continua)
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'status', element: <StatusPage /> },
-      { path: 'health', element: <StatusPage /> },
-      { path: 'ferramentas', element: placeholder('Ferramentas') },
-      { path: 'ferramentas/nova', element: placeholder('Nova ferramenta') },
-      { path: 'ferramentas/:id', element: placeholder('Detalhe da ferramenta') },
-      { path: 'retiradas/nova', element: <RetiradaPage /> },
-      { path: 'devolucoes', element: <DevolucaoPage /> },
-      { path: 'indisponiveis', element: placeholder('Indisponíveis') },
-      { path: 'calendario', element: placeholder('Calendário') },
-      { path: 'emprestimos', element: placeholder('Histórico de empréstimos') },
-      { path: 'colaboradores', element: placeholder('Colaboradores') },
-      { path: 'cadastros/setores', element: placeholder('Setores') },
-      { path: 'cadastros/categorias', element: placeholder('Categorias') },
-      { path: 'cadastros/atividades', element: placeholder('Atividades') },
-      { path: 'importar', element: placeholder('Importar CSV') },
       {
-        path: 'aprovacoes',
-        element: (
-          <RotaAdmin>
-            <AprovacoesPage />
-          </RotaAdmin>
-        ),
+        errorElement: <ErroInesperadoPage />,
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: 'status', lazy: pagina(() => import('@/pages/StatusPage'), 'StatusPage') },
+          { path: 'health', lazy: pagina(() => import('@/pages/StatusPage'), 'StatusPage') },
+          { path: 'ferramentas', lazy: pagina(() => import('@/pages/FerramentasPage'), 'FerramentasPage') },
+          { path: 'ferramentas/nova', lazy: pagina(() => import('@/pages/NovaFerramentaPage'), 'NovaFerramentaPage') },
+          { path: 'ferramentas/:id', lazy: pagina(() => import('@/pages/FerramentaDetalhePage'), 'FerramentaDetalhePage') },
+          { path: 'retiradas/nova', lazy: pagina(() => import('@/pages/RetiradaPage'), 'RetiradaPage') },
+          { path: 'devolucoes', lazy: pagina(() => import('@/pages/DevolucaoPage'), 'DevolucaoPage') },
+          { path: 'indisponiveis', lazy: pagina(() => import('@/pages/IndisponiveisPage'), 'IndisponiveisPage') },
+          { path: 'calendario', lazy: pagina(() => import('@/pages/CalendarioPage'), 'CalendarioPage') },
+          { path: 'emprestimos', lazy: pagina(() => import('@/pages/EmprestimosPage'), 'EmprestimosPage') },
+          {
+            path: 'cadastros/colaboradores',
+            lazy: pagina(() => import('@/pages/ColaboradoresPage'), 'ColaboradoresPage', true),
+          },
+          {
+            path: 'cadastros/setores',
+            lazy: pagina(() => import('@/pages/SetoresPage'), 'SetoresPage', true),
+          },
+          {
+            path: 'cadastros/categorias',
+            lazy: pagina(() => import('@/pages/CategoriasPage'), 'CategoriasPage', true),
+          },
+          {
+            path: 'cadastros/ferramentas',
+            lazy: pagina(() => import('@/pages/CadastroFerramentasPage'), 'CadastroFerramentasPage', true),
+          },
+          // só em dev (import.meta.env.DEV) e para admin; em produção a rota não existe e cai no 404
+          ...(import.meta.env.DEV
+            ? [
+                {
+                  path: 'design-system',
+                  // import dinâmico dentro do ramo DEV: o build de produção elimina o ramo e a página sai do bundle
+                  lazy: async () => {
+                    const { DesignSystemPage } = await import('@/pages/DesignSystemPage')
+                    return {
+                      element: (
+                        <RotaAdmin>
+                          <DesignSystemPage />
+                        </RotaAdmin>
+                      ),
+                    }
+                  },
+                },
+              ]
+            : []),
+          // 404 dentro do layout: quem está logado não perde a sidebar (deslogado cai no login)
+          { path: '*', lazy: pagina(() => import('@/pages/NaoEncontradaPage'), 'NaoEncontradaPage') },
+        ],
       },
-      { path: 'design-system', element: <DesignSystemPage /> },
     ],
   },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/cadastro', element: <CadastroPage /> },
-  { path: '/consulta', element: placeholder('Consulta') },
-  { path: '*', element: placeholder('404') },
+  { path: '/login', errorElement: <ErroInesperadoPage />, element: <LoginPage /> },
+  // link de convite: caminho curto e sem palavra que sugira o que é (o token é o segredo)
+  { path: '/c/:token', errorElement: <ErroInesperadoPage />, lazy: pagina(() => import('@/pages/ConviteAcessoPage'), 'ConviteAcessoPage') },
+  { path: '/consulta', errorElement: <ErroInesperadoPage />, lazy: pagina(() => import('@/pages/ConsultaPage'), 'ConsultaPage') },
 ])

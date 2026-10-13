@@ -87,13 +87,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarColaboradoresQuerySchema }),
     ColaboradorController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ body: criarColaboradorSchema }),
     ColaboradorController.criar
   );
@@ -127,11 +127,15 @@ router
  *         description: Token inválido ou não fornecido
  *       404:
  *         description: Nenhum colaborador encontrado para o termo informado
+ *       409:
+ *         description: >
+ *           COLABORADOR_AMBIGUO — vários nomes correspondem; `error.details`
+ *           traz id, nome e matrícula de cada candidato (a matrícula resolve).
  */
 router.get(
   '/identificar',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: identificarColaboradorQuerySchema }),
   ColaboradorController.identificar
 );
@@ -160,7 +164,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: colaboradorIdParamSchema }),
   ColaboradorController.buscarPorId
 );
@@ -208,7 +212,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: colaboradorIdParamSchema, body: editarColaboradorSchema }),
   ColaboradorController.atualizar
 );
@@ -239,9 +243,49 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: colaboradorIdParamSchema }),
   ColaboradorController.inativar
+);
+
+/**
+ * @openapi
+ * /colaboradores/{id}/convite:
+ *   post:
+ *     summary: Gera o link de acesso (convite) para o colaborador definir a própria senha
+ *     description: >
+ *       Só admin. O token aparece apenas nesta resposta (o banco guarda o hash)
+ *       e vale 7 dias, uma única vez; gerar outro invalida o anterior ainda não
+ *       usado. Serve também para quem esqueceu a senha. O front monta o link
+ *       como /c/{token}.
+ *     tags:
+ *       - Colaboradores
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       201:
+ *         description: Convite criado (token, expiraEm e colaborador)
+ *       400:
+ *         description: id inválido
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ *       404:
+ *         description: Colaborador não encontrado ou inativo
+ */
+router.post(
+  '/:id/convite',
+  authenticate,
+  authorize('admin'),
+  validate({ params: colaboradorIdParamSchema }),
+  ColaboradorController.criarConvite
 );
 
 export default router;

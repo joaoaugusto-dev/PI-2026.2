@@ -17,13 +17,25 @@ export class AuthController {
   }
 
   /**
-   * POST /v1/auth/registro
+   * GET /v1/auth/convites/:token
    */
-  static async registrar(req: Request, res: Response, next: NextFunction): Promise<any> {
+  static async consultarConvite(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      const { matricula, senha } = req.body;
-      const data = await AuthService.registrar(matricula, senha);
-      return sendSuccess(res, data, null, 201);
+      const { token } = req.params;
+      return sendSuccess(res, await AuthService.consultarConvite(token), null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * POST /v1/auth/convites/:token/senha
+   */
+  static async aceitarConvite(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { token } = req.params;
+      const { senha } = req.body;
+      return sendSuccess(res, await AuthService.aceitarConvite(token, senha), null, 200);
     } catch (error) {
       return next(error);
     }

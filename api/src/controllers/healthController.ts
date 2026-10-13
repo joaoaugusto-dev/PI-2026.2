@@ -9,6 +9,8 @@ export class HealthController {
   static async check(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const dbStatus = await testConnection();
+      // rota pública: em produção não entrega o nome do banco nem a mensagem crua do driver (pode ter host/IP interno)
+      const producao = process.env.NODE_ENV === 'production';
 
       const healthData = {
         status: dbStatus.ok ? 'ok' : 'degraded',
@@ -17,9 +19,9 @@ export class HealthController {
         environment: process.env.NODE_ENV || 'development',
         database: {
           status: dbStatus.ok ? 'connected' : 'disconnected',
-          name: dbStatus.database || null,
+          name: producao ? null : dbStatus.database || null,
           serverTime: dbStatus.timestamp || null,
-          error: dbStatus.error || null,
+          error: dbStatus.error ? (producao ? 'Falha ao conectar ao banco de dados' : dbStatus.error) : null,
         },
       };
 

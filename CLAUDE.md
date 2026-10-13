@@ -120,12 +120,26 @@ precisa. Não redesenhar no meio do desenvolvimento sem atualizar este arquivo:
    código de barras (Code128). A visita técnica à Soufer levantou um código
    curto de 4 dígitos gravado a lápis elétrico como alternativa — decisão
    pendente de ata.
-8. **Três perfis:** `manutencao` (acesso completo, login normal), `admin`
-   (só a aprovação de auto-cadastros pendentes, via
-   `PATCH /v1/usuarios/:id/ativar` e `GET /v1/usuarios?ativo=false` — sem os
-   demais acessos de `manutencao` nesta primeira versão; decisão do time em
-   22/09/2026, issue API-149/#149) e `consulta` (sessão de 15 minutos por
-   matrícula, só leitura de disponibilidade, sem senha).
+8. **Três perfis:** `manutencao` (operação de balcão: retirada, devolução,
+   consulta de ferramentas, indisponíveis, calendário e histórico; também faz
+   o cadastro rápido de colaborador no meio do fluxo), `admin` (cria os colaboradores e
+   gera o **link de acesso** de cada um — `POST /v1/colaboradores/:id/convite`;
+   quem recebe define a própria senha e já entra logado; **mais os cadastros
+   auxiliares** —
+   Colaboradores, Ferramentas, Categorias e Setores: edição e inativação são
+   só do `admin`, com 403 na API para `manutencao`; leitura e criação de
+   ferramenta/colaborador seguem abertas à manutenção porque o fluxo de
+   retirada as consome. **O admin é a manutenção com recursos a mais:** tudo
+   que a manutenção faz (rotas de balcão, etiqueta impressa, atividades,
+   retirada/devolução) o admin também faz — a manutenção nunca tem permissão
+   que o admin não tenha (decisão de 01/10/2026, revisa a de 30/09/2026, que
+   barrava o admin no balcão). Decisão de 01/10/2026 também: acabou o auto-cadastro com aprovação, o colaborador cadastrado pelo admin já é o
+   funcionário, e o admin também recebe as notificações) e `consulta` (sessão de 15 minutos por matrícula, só
+   leitura de disponibilidade, sem senha; vê apenas nome, categoria, status e
+   localização da ferramenta, nunca quem está com ela, histórico ou valores; o
+   token de consulta e o da manutenção/admin são isolados nos dois sentidos, e a
+   entrada tem limite de tentativas por IP e por matrícula). No front, as telas de cadastro não aparecem no menu para quem não é `admin` e, pela URL direta,
+   respondem 404.
 9. **Feriados vêm da BrasilAPI**, com cache em tabela própria e fallback de
    sábado/domingo se a API estiver fora.
 10. **Entrega fora do prazo ou impressa = nota zero.** Sem exceção institucional.

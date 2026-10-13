@@ -6,6 +6,8 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
+      // rolagem lateral no celular também pelo teclado (axe: scrollable-region-focusable)
+      tabIndex={0}
       className="relative w-full overflow-x-auto"
     >
       <table

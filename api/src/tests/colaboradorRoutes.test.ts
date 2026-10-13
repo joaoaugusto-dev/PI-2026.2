@@ -11,7 +11,7 @@ import { query } from '../config/database.js';
 // motivo do ferramentaService.test.ts); matrícula não aceita mais texto livre
 // (regra de 4 dígitos, issue #150), então a faixa 9301-9309 é reservada só
 // para este arquivo — não colide com o seed (0001-0052), auth.test.ts (9101),
-// authRegistro.test.ts (9201-9210) nem testes-manuais.sql (9005-9006).
+// o antigo authRegistro (9201-9210, removido), conviteAcesso.test.ts (9401-9404) nem testes-manuais.sql (9005-9006).
 const PREFIXO = 'ZZTESTE_API09_';
 
 function gerarToken(payload: Record<string, unknown>) {
@@ -22,6 +22,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
   let setorId: number;
   let usuarioId: number;
   let manutencaoToken: string;
+  let adminToken: string;
   let consultaToken: string;
 
   let colaboradorMatriculaId: number;
@@ -44,6 +45,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
       .id;
 
     manutencaoToken = gerarToken({ id: usuarioId, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' });
+    adminToken = gerarToken({ id: usuarioId, nome: 'Admin Teste', papel: 'admin', matricula: '0053' });
     // authenticate só decodifica o JWT — não precisa existir colaborador real
     // com essa matrícula para testar autorização (mesmo padrão do authorize.test.ts).
     consultaToken = gerarToken({ id: usuarioId, nome: 'Consulta Teste', papel: 'consulta', matricula: '9309' });
@@ -74,6 +76,12 @@ describe('Rotas de Colaboradores (API-09)', () => {
       [`${PREFIXO}Colaborador Para Inativar`, matriculaParaInativar, setorId]
     );
     colaboradorParaInativarId = paraInativar.rows[0].id;
+
+    // dois nomes parecidos, nenhum igual ao termo buscado nos testes de ambiguidade
+    await query(
+      `INSERT INTO colaboradores (nome, matricula, setor_id) VALUES ($1, '9310', $3), ($2, '9311', $3)`,
+      [`${PREFIXO}Zeferino Quintanilha Alves`, `${PREFIXO}Zeferino Quintanilha Alvim`, setorId]
+    );
   });
 
   afterAll(async () => {
@@ -98,6 +106,43 @@ describe('Rotas de Colaboradores (API-09)', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe(colaboradorNomeId);
       expect(res.body.data.nome).toBe('João Augusto');
+    });
+
+    it('retorna 409 COLABORADOR_AMBIGUO com os candidatos quando vários nomes servem', async () => {
+      const res = await request(app)
+        .get(`/v1/colaboradores/identificar?termo=${encodeURIComponent(`${PREFIXO}Zeferino Quintanilha Alv`)}`)
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('COLABORADOR_AMBIGUO');
+      expect(res.body.error.details.map((c: { matricula: string }) => c.matricula).sort()).toEqual(['9310', '9311']);
+    });
+
+    it('acha por trecho do nome mesmo em nome longo ("zeferino" perde na similaridade, ganha no contém)', async () => {
+      const res = await request(app)
+        .get('/v1/colaboradores/identificar?termo=zeferino')
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('COLABORADOR_AMBIGUO');
+      expect(res.body.error.details.map((c: { matricula: string }) => c.matricula).sort()).toEqual(['9310', '9311']);
+    });
+
+    it('termo com menos de 3 caracteres não entra pelo "contém" (não devolve candidatos arbitrários)', async () => {
+      const res = await request(app)
+        .get('/v1/colaboradores/identificar?termo=zz')
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('a matrícula resolve a ambiguidade', async () => {
+      const res = await request(app)
+        .get('/v1/colaboradores/identificar?termo=9311')
+        .set('Authorization', `Bearer ${manutencaoToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.matricula).toBe('9311');
     });
 
     it('retorna 404 quando não encontra nenhum colaborador para o termo', async () => {
@@ -176,6 +221,10 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.details[0]).toMatchObject({
+        field: 'nome',
+        message: 'Nome é obrigatório',
+      });
     });
 
     it('retorna 401 quando nenhum token é enviado', async () => {
@@ -210,7 +259,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('atualiza somente os campos informados', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ nome: `${PREFIXO}Colaborador Editado` });
 
       expect(res.status).toBe(200);
@@ -221,21 +270,41 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('retorna 404 quando o colaborador não existe', async () => {
       const res = await request(app)
         .patch('/v1/colaboradores/999999999')
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ nome: 'x' });
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('COLABORADOR_NOT_FOUND');
     });
 
+    it('ignora criado_por vindo do corpo, sem sobrescrever o autor original (Regra 6)', async () => {
+      const res = await request(app)
+        .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nome: `${PREFIXO}Colaborador Editado Sem Forjar Autor`,
+          criadoPor: 999999, // tentativa de forjar o autor — schema descarta chaves desconhecidas
+          criado_por: 999999,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.nome).toBe(`${PREFIXO}Colaborador Editado Sem Forjar Autor`);
+      // colaboradorParaEditarId foi criado no beforeAll sem criado_por (coluna
+      // nullable) — se o valor forjado tivesse vazado, deixaria de ser null.
+      expect(res.body.data.criado_por).toBeNull();
+    });
+
     it('retorna 400 quando nenhum campo é informado', async () => {
       const res = await request(app)
         .patch(`/v1/colaboradores/${colaboradorParaEditarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({});
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.details[0]).toMatchObject({
+        message: 'Pelo menos um campo deve ser fornecido para edição',
+      });
     });
   });
 
@@ -243,21 +312,21 @@ describe('Rotas de Colaboradores (API-09)', () => {
     it('inativa (ativo = false) em vez de apagar, e some da consulta por ID em seguida', async () => {
       const res = await request(app)
         .delete(`/v1/colaboradores/${colaboradorParaInativarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`);
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.data.ativo).toBe(false);
 
       const depois = await request(app)
         .get(`/v1/colaboradores/${colaboradorParaInativarId}`)
-        .set('Authorization', `Bearer ${manutencaoToken}`);
+        .set('Authorization', `Bearer ${adminToken}`);
       expect(depois.status).toBe(404);
     });
 
     it('retorna 404 quando o colaborador não existe', async () => {
       const res = await request(app)
         .delete('/v1/colaboradores/999999999')
-        .set('Authorization', `Bearer ${manutencaoToken}`);
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('COLABORADOR_NOT_FOUND');
@@ -282,6 +351,18 @@ describe('Rotas de Colaboradores (API-09)', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('TOKEN_NOT_PROVIDED');
+    });
+  });
+
+  describe('Edição e inativação são só do admin', () => {
+    it('manutenção leva 403 em PATCH e DELETE', async () => {
+      const patch = await request(app)
+        .patch('/v1/colaboradores/1')
+        .set('Authorization', `Bearer ${manutencaoToken}`)
+        .send({ nome: 'Outro Nome' });
+      const del = await request(app).delete('/v1/colaboradores/1').set('Authorization', `Bearer ${manutencaoToken}`);
+      expect(patch.status).toBe(403);
+      expect(del.status).toBe(403);
     });
   });
 });

@@ -24,6 +24,7 @@
       "data": {
         "base_url": "http://localhost:3000/v1",
         "token": "",
+        "token_admin": "",
         "token_consulta": "",
         "grupo_id": "",
         "ferramenta_id": "",
@@ -404,7 +405,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 10000,
       "isPrivate": false,
@@ -512,7 +513,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 14000,
       "isPrivate": false,
@@ -819,7 +820,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 24000,
       "isPrivate": false,
@@ -1097,7 +1098,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 34000,
       "isPrivate": false,
@@ -1178,7 +1179,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 37000,
       "isPrivate": false,
@@ -1232,7 +1233,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 39000,
       "isPrivate": false,
@@ -1259,7 +1260,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 40000,
       "isPrivate": false,
@@ -1433,7 +1434,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 9120
     },
@@ -1456,7 +1457,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 9130
     },
@@ -1470,7 +1471,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 9140
     },
@@ -1531,7 +1532,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 9220
     },
@@ -1554,7 +1555,7 @@
       ],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 9230
     },
@@ -1568,7 +1569,7 @@
       "headers": [],
       "authentication": {
         "type": "bearer",
-        "token": "{{ _.token }}"
+        "token": "{{ _.token_admin }}"
       },
       "metaSortKey": 9240
     },

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { TelaAguardandoAprovacao } from '@/components/TelaAguardandoAprovacao'
+import { NaoEncontradaPage } from '@/pages/NaoEncontradaPage'
+import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { api, setAuthToken, setHandler401 } from '@/lib/api'
 
 interface Usuario {
@@ -16,20 +17,9 @@ interface Usuario {
 interface AuthContextValue {
   usuario: Usuario | null
   login: (matricula: string, senha: string) => Promise<void>
-  entrarComoDemo: () => void
+  /** Abre a sessão com um token já emitido pela API (ex.: definição de senha pelo link de convite). */
+  entrarComSessao: (token: string, usuario: Usuario) => void
   logout: () => void
-}
-
-// Entrega P1 (02/10): a interface é avaliada sem a API REST no ar, então o
-// modo demonstração destrava as telas com os dados simulados de cada página.
-// ponytail: sessão demo não persiste (não tem JWT) — dar refresh volta pro
-// login; quando a API estiver integrada, esse atalho sai junto.
-const usuarioDemo: Usuario = {
-  id: 0,
-  nome: 'Visitante (demonstração)',
-  matricula: '0001',
-  papel: 'manutencao',
-  ativo: true,
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -48,7 +38,7 @@ interface SessaoPersistida {
 // validar assinatura aqui, quem valida de verdade é a API a cada requisição;
 // isso só evita restaurar uma sessão que a gente já sabe que vai ser
 // rejeitada.
-function expiracaoDoToken(token: string): number | null {
+export function expiracaoDoToken(token: string): number | null {
   try {
     const payload = token.split('.')[1]
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
@@ -106,12 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     definirSessao(token, usuarioLogado)
   }
 
-  const entrarComoDemo = () => {
-    setAuthToken(null)
-    setUsuario(usuarioDemo)
-  }
-
-  const value = useMemo(() => ({ usuario, login, entrarComoDemo, logout }), [usuario])
+  const value = useMemo(() => ({ usuario, login, entrarComSessao: definirSessao, logout }), [usuario])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
@@ -131,7 +116,7 @@ export function RotaProtegida({ children }: { children: ReactNode }) {
   }
 
   if (usuario.ativo === false) {
-    return <TelaAguardandoAprovacao aoSair={logout} />
+    return <TelaSucessoAnimada aoSair={logout} />
   }
 
   return <>{children}</>
@@ -142,8 +127,9 @@ export function RotaProtegida({ children }: { children: ReactNode }) {
 export function RotaAdmin({ children }: { children: ReactNode }) {
   const { usuario } = useAuth()
 
+  // 404 (não redirect): quem não é admin não deve nem saber que a rota existe
   if (usuario?.papel !== 'admin') {
-    return <Navigate to="/" replace />
+    return <NaoEncontradaPage />
   }
 
   return <>{children}</>

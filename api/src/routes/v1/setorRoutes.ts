@@ -85,13 +85,13 @@ router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarAuxiliaresQuerySchema }),
     SetorController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ body: criarSetorSchema }),
     SetorController.criar
   );
@@ -196,25 +196,25 @@ router
   .route('/:id')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ params: auxiliarIdParamSchema }),
     SetorController.buscarPorId
   )
   .put(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ params: auxiliarIdParamSchema, body: atualizarSetorSchema }),
     SetorController.atualizar
   )
   .patch(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ params: auxiliarIdParamSchema, body: atualizarSetorSchema }),
     SetorController.atualizar
   )
   .delete(
     authenticate,
-    authorize('manutencao'),
+    authorize('admin'),
     validate({ params: auxiliarIdParamSchema }),
     SetorController.excluir
   );

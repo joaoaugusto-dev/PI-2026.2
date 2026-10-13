@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { FerramentaController } from '../../controllers/ferramentaController.js';
 import { validate } from '../../middlewares/validate.js';
 import { authenticate } from '../../middlewares/auth.js';
@@ -56,57 +56,22 @@ const router = Router();
  *         description: Lista paginada de ferramentas
  *       401:
  *         description: Token inválido ou não fornecido
- *   post:
- *     summary: Cadastra uma nova ferramenta
- *     tags:
- *       - Ferramentas
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nome
- *               - grupoId
- *             properties:
- *               nome:
- *                 type: string
- *               descricao:
- *                 type: string
- *               marca:
- *                 type: string
- *               modelo:
- *                 type: string
- *               grupoId:
- *                 type: integer
- *               subgrupoId:
- *                 type: integer
- *               setorId:
- *                 type: integer
- *               localizacao:
- *                 type: string
- *     responses:
- *       201:
- *         description: Ferramenta criada com sucesso
- *       400:
- *         description: Erro de validação nos campos
- *       401:
- *         description: Token inválido ou não fornecido
  */
+// POST /ferramentas não tem comentário @openapi: a documentação dessa
+// operação é gerada a partir de criarFerramentaSchema (zod-to-openapi, ver
+// config/openapiFromZod.ts e o merge em config/swagger.ts), prova de
+// conceito da issue API-14 para não duplicar a lista de campos à mão.
 router
   .route('/')
   .get(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ query: listarFerramentasQuerySchema }),
     FerramentaController.listar
   )
   .post(
     authenticate,
-    authorize('manutencao'),
+    authorize('manutencao', 'admin'),
     validate({ body: criarFerramentaSchema }),
     FerramentaController.criar
   );
@@ -137,7 +102,7 @@ router
 router.get(
   '/por-codigo/:codigo',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaCodigoParamSchema }),
   FerramentaController.buscarPorCodigo
 );
@@ -166,7 +131,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.buscarPorId
 );
@@ -195,63 +160,17 @@ router.get(
 router.get(
   '/:id/historico',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.historico
 );
 
-/**
- * @openapi
- * /ferramentas/{id}:
- *   patch:
- *     summary: Atualiza os campos editáveis de uma ferramenta
- *     tags:
- *       - Ferramentas
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nome:
- *                 type: string
- *               descricao:
- *                 type: string
- *               marca:
- *                 type: string
- *               modelo:
- *                 type: string
- *               grupoId:
- *                 type: integer
- *               subgrupoId:
- *                 type: integer
- *               setorId:
- *                 type: integer
- *               localizacao:
- *                 type: string
- *     responses:
- *       200:
- *         description: Ferramenta atualizada com sucesso
- *       400:
- *         description: Erro de validação nos campos
- *       401:
- *         description: Token inválido ou não fornecido
- *       404:
- *         description: Ferramenta não encontrada
- */
+// PATCH /ferramentas/{id} também não tem comentário @openapi: gerado a
+// partir de atualizarFerramentaSchema (ver nota acima, no POST /ferramentas).
 router.patch(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: ferramentaIdParamSchema, body: atualizarFerramentaSchema }),
   FerramentaController.atualizar
 );
@@ -282,7 +201,7 @@ router.patch(
 router.patch(
   '/:id/etiqueta-impressa',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.marcarEtiquetaImpressa
 );
@@ -315,7 +234,7 @@ router.patch(
 router.patch(
   '/:id/disponibilizar',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.disponibilizar
 );
@@ -348,9 +267,87 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  authorize('manutencao'),
+  authorize('admin'),
   validate({ params: ferramentaIdParamSchema }),
   FerramentaController.baixar
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}/foto:
+ *   put:
+ *     summary: Envia (ou troca) a foto da ferramenta
+ *     description: >
+ *       Corpo é a imagem crua (Content-Type image/jpeg, image/png ou
+ *       image/webp, até 5 MB; o tipo é conferido pelo conteúdo). Guarda o
+ *       arquivo em disco e grava o caminho em foto_url (servido em /v1/uploads).
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         image/jpeg:
+ *           schema:
+ *             type: string
+ *             format: binary
+ *     responses:
+ *       200:
+ *         description: Ferramenta com foto_url atualizado
+ *       400:
+ *         description: Corpo ausente ou não é uma imagem válida
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ *       413:
+ *         description: Imagem maior que 5 MB
+ */
+router.put(
+  '/:id/foto',
+  authenticate,
+  authorize('admin'),
+  validate({ params: ferramentaIdParamSchema }),
+  express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' }),
+  FerramentaController.salvarFoto
+);
+
+/**
+ * @openapi
+ * /ferramentas/{id}/foto:
+ *   delete:
+ *     summary: Remove a foto da ferramenta (apaga o arquivo do disco)
+ *     tags:
+ *       - Ferramentas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Ferramenta com foto_url nulo
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ferramenta não encontrada
+ */
+router.delete(
+  '/:id/foto',
+  authenticate,
+  authorize('admin'),
+  validate({ params: ferramentaIdParamSchema }),
+  FerramentaController.removerFoto
 );
 
 export default router;

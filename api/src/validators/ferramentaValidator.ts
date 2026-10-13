@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const listarFerramentasQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
+  page: z.coerce.number().int().min(1).max(100000).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().trim().min(1).max(150).optional(),
   status: z.enum(['disponivel', 'em_uso', 'indisponivel']).optional(),
@@ -22,13 +22,25 @@ export const ferramentaIdParamSchema = z.object({
 
 // codigo_identificacao é SMALLINT entre 1 e 9999 (ver migration 0001).
 export const ferramentaCodigoParamSchema = z.object({
-  codigo: z.coerce
-    .number({ invalid_type_error: 'Código deve ser um número' })
-    .int('Código deve ser um número inteiro')
-    .min(1, 'Código deve estar entre 1 e 9999')
-    .max(9999, 'Código deve estar entre 1 e 9999'),
+  // "000053" e "53" valem o mesmo código; o prefixo "SF" das etiquetas antigas ainda é aceito.
+  // Texto em branco vira NaN (z.coerce faria "" ser 0 e cair na mensagem de faixa, menos clara).
+  codigo: z.preprocess(
+    (v) => (typeof v === 'string' ? (v.trim() === '' ? NaN : v.replace(/^sf/i, '')) : v),
+    z.coerce
+      .number({ invalid_type_error: 'Código deve ser um número' })
+      .int('Código deve ser um número inteiro')
+      .min(1, 'Código deve estar entre 1 e 9999')
+      .max(9999, 'Código deve estar entre 1 e 9999')
+  ),
 });
 
+// Decisão de escopo (API-14): a tabela ferramentas (0001_init.sql) não tem
+// coluna do tipo criado_por/atualizado_por vinda do usuário logado — só
+// emprestimos.registrada_por segue a Regra 6 do CLAUDE.md. Por isso não há
+// campo desse tipo para stripar aqui; os campos que essa rota realmente
+// protege contra o corpo da requisição são os controlados pelo servidor
+// (status, codigo_identificacao, ativo — ver comentário abaixo, em
+// atualizarFerramentaSchema), cobertos pelos testes de ferramentaValidation.test.ts.
 export const criarFerramentaSchema = z.object({
   nome: z
     .string({ required_error: 'Nome é obrigatório', invalid_type_error: 'Nome deve ser um texto' })
@@ -68,9 +80,19 @@ export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
 // status, codigo_identificacao e ativo têm rotas/ações próprias (disponibilizar,
 // DELETE) e não são editados por aqui. valorAquisicao e ehKit também ficam
 // fora: chaves desconhecidas são descartadas silenciosamente pelo Zod.
+// Na edição, os campos opcionais aceitam null para serem limpos (o serviço grava
+// NULL); omitir a chave mantém o valor. grupoId e nome seguem obrigatórios no banco.
 export const atualizarFerramentaSchema = criarFerramentaSchema
   .omit({ valorAquisicao: true, ehKit: true })
   .partial()
+  .extend({
+    descricao: criarFerramentaSchema.shape.descricao.nullable(),
+    marca: criarFerramentaSchema.shape.marca.nullable(),
+    modelo: criarFerramentaSchema.shape.modelo.nullable(),
+    subgrupoId: criarFerramentaSchema.shape.subgrupoId.nullable(),
+    setorId: criarFerramentaSchema.shape.setorId.nullable(),
+    localizacao: criarFerramentaSchema.shape.localizacao.nullable(),
+  })
   .refine((dados) => Object.keys(dados).length > 0, {
     message: 'Informe ao menos um campo para atualizar',
   });

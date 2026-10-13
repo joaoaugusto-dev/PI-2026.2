@@ -97,7 +97,7 @@ esse índice sozinho não consegue expressar — é resolvida pela trigger
 
 | Trigger | Evento | O que garante |
 |---|---|---|
-| `fn_gera_codigo_identificacao` | `BEFORE INSERT` em `ferramentas` | Atribui o menor código de 4 dígitos disponível entre as ferramentas ativas |
+| `fn_gera_codigo_identificacao` | `BEFORE INSERT` em `ferramentas` | Atribui o menor código de 4 dígitos disponível entre as ferramentas ativas. Serializado com `pg_advisory_xact_lock` (migration 0005) para dois cadastros concorrentes não calcularem o mesmo código. |
 | `fn_valida_subgrupo` | `BEFORE INSERT/UPDATE` em `ferramentas` | Impede informar um `subgrupo_id` que não pertença ao `grupo_id` da mesma linha |
 | `fn_valida_item_kit` | `BEFORE INSERT` em `itens_kit` | Só permite item se a ferramenta tiver `eh_kit = true` |
 | `fn_valida_retirada` | `BEFORE INSERT` em `emprestimos` | Impede retirada de ferramenta simples que não esteja `disponivel` (kits são validados à parte, peça a peça) |
@@ -115,7 +115,12 @@ atividade e os usuários de retirada/devolução — além da `situacao` calcula
 
 ### `vw_dashboard_kpis`
 Fornece: total cadastradas, disponíveis, em uso, indisponíveis, atrasadas e
-ocorrências abertas.
+ocorrências abertas. `total_atrasadas` conta quem já passou do **horário** da
+previsão (`NOW() > previsao_devolucao`); `GET /v1/dashboard` usa os outros cinco
+números da view e calcula `atrasadas` pelo **dia** (previsão em dia anterior), igual
+ao cartão de atrasados, para a barra e o cartão mostrarem o mesmo número. Quem
+consultar a view direto (relatório, outra tela) vê a definição por horário. Hoje o
+único consumidor da view é o `dashboardService`.
 
 ### `vw_ocorrencias_por_colaborador`
 Agrupa avarias, perdas e custo (real ou estimado) por colaborador e setor.

@@ -212,6 +212,11 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
       [id, input.condicaoDevolucao, input.observacaoDevolucao ?? null, usuarioId]
     );
 
+    // a ocorrência acabou de ser aberta pelo trigger, na mesma transação
+    if (input.custoEstimado !== undefined) {
+      await client.query('UPDATE ocorrencias SET custo_estimado = $2 WHERE emprestimo_id = $1', [id, input.custoEstimado]);
+    }
+
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -236,4 +241,127 @@ export async function sugerirPrevisao(dias: number): Promise<{ previsaoDevolucao
   const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
   const data = await adicionarDiasUteis(hoje, dias);
   return { previsaoDevolucao: data.toISOString().slice(0, 10), diasUteis: dias };
+}
+
+export interface ListarEmprestimosParams {
+  offset: number;
+  limit: number;
+  q?: string;
+  situacao?: Emprestimo['situacao'];
+  setorId?: number;
+}
+
+export type FiltrosEmprestimos = Pick<ListarEmprestimosParams, 'q' | 'situacao' | 'setorId'>;
+
+/**
+ * WHERE sobre a vw_emprestimos_detalhe, compartilhado pela listagem e pela
+ * exportação em CSV (GET /v1/exportacoes/emprestimos) para as duas filtrarem igual.
+ */
+export function filtroEmprestimos({ q, situacao, setorId }: FiltrosEmprestimos): { where: string; params: any[] } {
+  const condicoes: string[] = [];
+  const params: any[] = [];
+
+  if (q) {
+    params.push(`%${q.replace(/[\\%_]/g, '\\$&')}%`);
+    const i = params.length;
+    const buscas = [
+      `ferramenta_nome ILIKE $${i}`,
+      `colaborador_nome ILIKE $${i}`,
+      `colaborador_matricula ILIKE $${i}`,
+    ];
+    // "000045", "000045" (etiqueta antiga) ou "45": patrimônio é busca por igualdade no código numérico
+    const patrimonio = /^(?:sf)?0*(\d{1,4})$/i.exec(q);
+    if (patrimonio) {
+      params.push(Number(patrimonio[1]));
+      buscas.push(`codigo_identificacao = $${params.length}`);
+    }
+    condicoes.push(`(${buscas.join(' OR ')})`);
+  }
+  if (situacao) {
+    params.push(situacao);
+    condicoes.push(`situacao = $${params.length}`);
+  }
+  if (setorId) {
+    params.push(setorId);
+    condicoes.push(`setor_id = $${params.length}`);
+  }
+
+  return { where: condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '', params };
+}
+
+/**
+ * GET /v1/emprestimos — histórico paginado (mais recentes primeiro), lido da
+ * vw_emprestimos_detalhe para já vir com os nomes resolvidos e a `situacao`.
+ */
+export async function listar({
+  offset,
+  limit,
+  ...filtros
+}: ListarEmprestimosParams): Promise<{ rows: Emprestimo[]; total: number }> {
+  const { where, params } = filtroEmprestimos(filtros);
+  const paramsPagina = [...params, limit, offset];
+  // total e página são independentes: rodam juntos (a latência é a da mais lenta)
+  const [totalResult, rowsResult] = await Promise.all([
+    query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe ${where}`, params),
+    query<Emprestimo>(
+      `SELECT * FROM vw_emprestimos_detalhe ${where}
+       ORDER BY data_retirada DESC, id DESC
+       LIMIT $${paramsPagina.length - 1} OFFSET $${paramsPagina.length}`,
+      paramsPagina
+    ),
+  ]);
+
+  return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}
+
+export interface DiaCalendario {
+  dia: string;
+  emprestimos: {
+    id: number;
+    ferramenta_nome: string;
+    ferramenta_codigo: string;
+    colaborador_nome: string;
+    setor_id: number;
+    setor_nome: string;
+    ramal: string | null;
+  }[];
+}
+
+// Devoluções previstas do mês (empréstimos ainda abertos), agrupadas por dia de
+// Brasília. A tabela de colaboradores não tem ramal, então ele vai sempre null.
+export async function calendario(mes: string): Promise<DiaCalendario[]> {
+  const result = await query<{
+    id: number;
+    dia: string;
+    ferramenta_nome: string;
+    codigo_identificacao: number | null;
+    colaborador_nome: string;
+    setor_id: number;
+    setor_nome: string;
+  }>(
+    `SELECT id,
+            TO_CHAR(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') AS dia,
+            ferramenta_nome, codigo_identificacao, colaborador_nome, setor_id, setor_nome
+     FROM vw_emprestimos_detalhe
+     WHERE data_devolucao IS NULL
+       AND TO_CHAR(previsao_devolucao AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') = $1
+     ORDER BY previsao_devolucao, id`,
+    [mes]
+  );
+
+  const dias = new Map<string, DiaCalendario>();
+  for (const r of result.rows) {
+    const dia = dias.get(r.dia) ?? { dia: r.dia, emprestimos: [] };
+    dia.emprestimos.push({
+      id: r.id,
+      ferramenta_nome: r.ferramenta_nome,
+      ferramenta_codigo: r.codigo_identificacao ? String(r.codigo_identificacao).padStart(6, '0') : '—',
+      colaborador_nome: r.colaborador_nome,
+      setor_id: r.setor_id,
+      setor_nome: r.setor_nome,
+      ramal: null,
+    });
+    dias.set(r.dia, dia);
+  }
+  return [...dias.values()];
 }

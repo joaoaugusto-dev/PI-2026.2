@@ -7,10 +7,66 @@ import {
   criarEmprestimoSchema,
   devolverEmprestimoSchema,
   emprestimoIdParamSchema,
+  calendarioQuerySchema,
+  listarEmprestimosQuerySchema,
   previsaoSugeridaQuerySchema,
 } from '../../validators/emprestimoValidator.js';
 
 const router = Router();
+
+/**
+ * @openapi
+ * /emprestimos:
+ *   get:
+ *     summary: Histórico de empréstimos (paginado)
+ *     description: >
+ *       Lista os empréstimos do mais recente para o mais antigo, já com nomes
+ *       resolvidos e a situação (em_aberto, atrasado ou devolvido). Filtros:
+ *       q (ferramenta, código, colaborador ou matrícula), situacao e setorId.
+ *     tags:
+ *       - Empréstimos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         description: Máximo de 100
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: situacao
+ *         schema:
+ *           type: string
+ *           enum: [em_aberto, atrasado, devolvido]
+ *       - in: query
+ *         name: setorId
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Página de empréstimos com meta de paginação
+ *       400:
+ *         description: Filtro inválido
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get(
+  '/',
+  authenticate,
+  authorize('manutencao', 'admin'),
+  validate({ query: listarEmprestimosQuerySchema }),
+  EmprestimoController.listar
+);
 
 /**
  * @openapi
@@ -78,9 +134,46 @@ const router = Router();
 router.post(
   '/',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ body: criarEmprestimoSchema }),
   EmprestimoController.criar
+);
+
+/**
+ * @openapi
+ * /emprestimos/calendario:
+ *   get:
+ *     summary: Devoluções previstas do mês, agrupadas por dia
+ *     description: >
+ *       Só empréstimos ainda abertos, com o dia da previsão no fuso de
+ *       Brasília. Alimenta a tela de Calendário (FE-18).
+ *     tags:
+ *       - Empréstimos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: mes
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "2026-10"
+ *     responses:
+ *       200:
+ *         description: Lista de dias com os empréstimos que vencem neles
+ *       400:
+ *         description: mes ausente ou fora do formato AAAA-MM
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get(
+  '/calendario',
+  authenticate,
+  authorize('manutencao', 'admin'),
+  validate({ query: calendarioQuerySchema }),
+  EmprestimoController.calendario
 );
 
 /**
@@ -115,7 +208,7 @@ router.post(
 router.get(
   '/previsao-sugerida',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ query: previsaoSugeridaQuerySchema }),
   EmprestimoController.previsaoSugerida
 );
@@ -156,6 +249,9 @@ router.get(
  *                 enum: [ok, avaria, perda]
  *               observacaoDevolucao:
  *                 type: string
+ *               custoEstimado:
+ *                 type: number
+ *                 description: Só com avaria/perda; grava o custo estimado da ocorrência aberta pela devolução.
  *     responses:
  *       200:
  *         description: >
@@ -176,7 +272,7 @@ router.get(
 router.patch(
   '/:id/devolucao',
   authenticate,
-  authorize('manutencao'),
+  authorize('manutencao', 'admin'),
   validate({ params: emprestimoIdParamSchema, body: devolverEmprestimoSchema }),
   EmprestimoController.devolver
 );

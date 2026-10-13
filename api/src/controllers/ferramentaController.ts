@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as ferramentaService from '../services/ferramentaService.js';
 import { sendSuccess } from '../utils/response.js';
 import { getPaginationParams, buildPaginationMeta } from '../utils/pagination.js';
+import { logger } from '../middlewares/logger.js';
 
 export class FerramentaController {
   /**
@@ -16,6 +17,29 @@ export class FerramentaController {
       const sort = req.query.sort as 'nome' | 'status' | undefined;
 
       const { rows, total } = await ferramentaService.listar({ offset, limit, q, status, grupoId, sort });
+      return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * GET /v1/consulta/ferramentas — quiosque: só nome, categoria, status e localização.
+   */
+  static async listarParaConsulta(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { page, limit, offset } = getPaginationParams(req.query);
+      const q = req.query.q as string | undefined;
+      const status = req.query.status as string | undefined;
+      const grupoId = req.query.grupoId ? Number(req.query.grupoId) : undefined;
+      const sort = req.query.sort as 'nome' | 'status' | undefined;
+
+      const { rows, total } = await ferramentaService.listarParaConsulta({ offset, limit, q, status, grupoId, sort });
+      // Auditoria simples (só log, sem tabela de negócio): quem consultou e com quais filtros.
+      logger.info(
+        { evento: 'consulta_ferramentas', colaboradorId: req.usuario?.id, matricula: req.usuario?.matricula, q: q?.slice(0, 100), status, grupoId, page, total },
+        'Consulta pública de ferramentas'
+      );
       return sendSuccess(res, rows, buildPaginationMeta(page, limit, total), 200);
     } catch (error) {
       return next(error);
@@ -119,6 +143,30 @@ export class FerramentaController {
       const { id } = req.params as unknown as { id: number };
       const ferramenta = await ferramentaService.baixar(id);
       return sendSuccess(res, ferramenta, null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * PUT /v1/ferramentas/:id/foto
+   */
+  static async salvarFoto(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      return sendSuccess(res, await ferramentaService.salvarFoto(id, req.body), null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * DELETE /v1/ferramentas/:id/foto
+   */
+  static async removerFoto(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      return sendSuccess(res, await ferramentaService.removerFoto(id), null, 200);
     } catch (error) {
       return next(error);
     }

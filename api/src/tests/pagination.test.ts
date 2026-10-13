@@ -33,6 +33,14 @@ describe('Helper de Paginação e Envelope de Sucesso', () => {
       expect(params.limit).toBe(20);
       expect(params.offset).toBe(0);
     });
+
+    it('page não numérico cai na página 1 (offset nunca é NaN)', () => {
+      for (const page of ['abc', 'NaN', '1e', '']) {
+        const params = getPaginationParams({ page });
+        expect(params.page, page).toBe(1);
+        expect(params.offset, page).toBe(0);
+      }
+    });
   });
 
   describe('buildPaginationMeta', () => {

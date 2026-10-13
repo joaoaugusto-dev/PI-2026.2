@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { AuthController } from '../../controllers/authController.js';
+import { FerramentaController } from '../../controllers/ferramentaController.js';
 import { validate } from '../../middlewares/validate.js';
-import { consultaSessaoLimiter } from '../../middlewares/rateLimit.js';
+import { authenticate } from '../../middlewares/auth.js';
+import { authorize } from '../../middlewares/authorize.js';
+import { consultaMatriculaLimiter, consultaSessaoLimiter } from '../../middlewares/rateLimit.js';
 import { consultaSessaoSchema } from '../../validators/authValidator.js';
+import { listarFerramentasQuerySchema } from '../../validators/ferramentaValidator.js';
 
 const router = Router();
 
@@ -34,8 +38,70 @@ const router = Router();
  *       404:
  *         description: Colaborador não localizado ou inativo
  *       429:
- *         description: Limite de 30 tentativas por minuto por IP excedido
+ *         description: Limite excedido (30 tentativas por minuto por IP ou 5 falhas por minuto na mesma matrícula)
  */
-router.post('/sessao', consultaSessaoLimiter, validate({ body: consultaSessaoSchema }), AuthController.criarSessaoConsulta);
+router.post(
+  '/sessao',
+  consultaSessaoLimiter,
+  validate({ body: consultaSessaoSchema }),
+  consultaMatriculaLimiter,
+  AuthController.criarSessaoConsulta
+);
+
+/**
+ * @openapi
+ * /consulta/ferramentas:
+ *   get:
+ *     summary: Busca somente leitura de ferramentas para o modo quiosque (disponibilidade)
+ *     description: >
+ *       Mesma busca e filtros de `/v1/ferramentas`, restrita ao papel `consulta`
+ *       (token de 15 min emitido por `/v1/consulta/sessao`). Cada item traz só
+ *       `id`, `nome`, `categoria` (nome do grupo), `status`, `localizacao` e
+ *       `codigo_identificacao`. Nunca traz quem está com a ferramenta,
+ *       histórico, motivo da indisponibilidade nem valores — esses dados vivem
+ *       em `/v1/ferramentas/:id/historico`, exclusivo da manutenção. Cada
+ *       consulta é registrada no log (matrícula e filtros), sem tabela de negócio.
+ *     tags:
+ *       - Modo Consulta
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [disponivel, em_uso, indisponivel]
+ *       - in: query
+ *         name: q
+ *         description: Busca textual por nome, descrição, marca ou modelo
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: grupoId
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista paginada de ferramentas
+ *       401:
+ *         description: Token inválido, não fornecido ou expirado (sessão de 15 min)
+ *       403:
+ *         description: Papel diferente de `consulta`
+ */
+router.get(
+  '/ferramentas',
+  authenticate,
+  authorize('consulta'),
+  validate({ query: listarFerramentasQuerySchema }),
+  FerramentaController.listarParaConsulta
+);
 
 export default router;

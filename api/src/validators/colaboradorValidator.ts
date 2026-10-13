@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { matriculaSchema } from './matricula.js';
 
 export const listarColaboradoresQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
+  page: z.coerce.number().int().min(1).max(100000).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().trim().min(1).max(150).optional(),
   setorId: z.coerce.number().int().positive().optional(),
@@ -39,7 +39,11 @@ export const criarColaboradorSchema = z.object({
     .trim()
     .min(1, 'Nome não pode ser vazio')
     .max(150, 'Nome deve ter no máximo 150 caracteres'),
-  matricula: matriculaSchema,
+  // Cadastro completa com zeros à esquerda: "36" vira "0036" (login segue exigindo 4 dígitos).
+  matricula: z.preprocess(
+    (v) => (typeof v === 'string' && /^\d{1,3}$/.test(v.trim()) ? v.trim().padStart(4, '0') : v),
+    matriculaSchema
+  ),
   setorId: z.coerce
     .number({ required_error: 'setorId é obrigatório', invalid_type_error: 'setorId deve ser um número' })
     .int('setorId deve ser um número inteiro')

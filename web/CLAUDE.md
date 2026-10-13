@@ -123,15 +123,27 @@ não filhas do layout autenticado.
   `text-rotulo` (11px) é exceção só para label caixa-alta.
   Altura mínima de controle: `--control-h` (56px, qualquer ação principal —
   operador de luva) e `--control-h-fluxo` (60px, botões fixos de retirada/
-  devolução). Os primitivos do shadcn vêm com alturas menores (`h-8`); os
-  wrappers dimensionados são responsabilidade da **FE-08**, até lá aplicar
-  `h-(--control-h)` na chamada.
+  devolução). Os primitivos (`ui/Button`, `ui/Input`, `ui/Select`,
+  `ui/Textarea`) **já nascem nessas alturas** (FE-08, ajustado no teste de uso de
+  09/10/2026 — o admin também pode estar de luva, no meio da manutenção): botão e
+  campo padrão = `--control-h` (56px); `size="sm"` = 44px (mínimo de toque, para
+  ação em linha de tabela); ícones `icon`/`icon-sm` = 44px, `icon-lg` = 56px. Não
+  repassar `h-8`/`h-9` na chamada; controle nativo solto (`<select>`, `<label>`
+  de upload) usa `h-(--control-h)`. Linha com muitas ações mostra só o ícone
+  abaixo de `2xl` (com `title` + `aria-label`), como em Colaboradores.
 - **Movimento e animação (FE-01)** ficam centralizados em `src/index.css`:
   - **Regra de 60fps:** animação só toca `transform` e `opacity` — as duas
     propriedades que o compositor resolve sem layout nem repaint. Nunca
     animar `width`/`height`/`top`/`left`/`margin`/`box-shadow`.
     `npm run check:motion` (depois do `build`) falha se algum keyframe do CSS
     gerado animar propriedade de layout.
+    **Exceção registrada:** a saída de item do `SinoNotificacoes` anima
+    `grid-template-rows` (1fr→0fr) para o item colapsar suavemente; o
+    `check:motion` não cobre `transition` utilitária, só `@keyframes`, então
+    esse caso não é validado por ele. Não replicar fora de listas curtas.
+    Segunda ocorrência: a abertura de grupo em `ListaAgrupada` (cadastro de
+    ferramentas, unidades iguais agrupadas) — `grid-template-rows` 0fr→1fr,
+    com `inert` quando fechado.
   - **Durações:** `--motion-state` 140ms (hover/foco/pressionado),
     `--motion-screen` 240ms (tela e modal, nunca acima de 300ms),
     `--motion-stagger` 20ms, `--motion-reduced` 80ms. Easing único:
@@ -162,6 +174,14 @@ não filhas do layout autenticado.
   - **`.transicao-status`** faz a mudança de status (disponível → em uso)
     atravessar a cor em `--motion-screen` em vez de saltar. É transição
     disparada por mudança de dado, não loop — o `StatusBadge` já a aplica.
+  - **Linha do tempo da tratativa (`EtapasTratativa`, tela Indisponíveis):**
+    ao avançar, o trilho enche por `scaleX` em 560ms (exceção registrada à
+    regra de 240ms de tela: é o momento principal da tela e o compositor
+    resolve sozinho), os marcadores acendem em sequência conforme a ponta do
+    trilho chega neles e o da etapa alcançada "estala" (`animate-etapa-pop`)
+    com um anel que se dissolve (`animate-etapa-pulso`) — disparo único, sem
+    loop (o design system só permite loop em elemento singular). O primeiro
+    render nasce no estado final, sem animar.
   - Animação nova não entra direto na tela: entra como token/keyframe aqui e
     é demonstrada na página de estilos (seções "Animações · demonstração" e
     "Movimento contínuo").
@@ -196,6 +216,23 @@ não filhas do layout autenticado.
   parecer válido no cliente mas ter sido invalidado no servidor (usuário
   desativado, segredo rotacionado). Consulta (quiosque) continua sem
   persistência nenhuma — sessão de 15 min é descartável por design.
+  **Telas com sessão própria (fora do `AuthProvider`) não usam `setAuthToken`
+  global** — `src/lib/api.ts` (`authToken`) é a mesma variável de módulo que
+  o almoxarife usa, e outra tela setando esse token nela sobrescreve/derruba
+  a sessão dele se estiverem ativos na mesma aba. Em vez disso, cada chamada
+  dessa tela manda o próprio token via `headers: { Authorization }` (que
+  vence o token global — `anexarTokenSeNecessario` só usa o global quando a
+  chamada não define o próprio) e marca `skipAuthHandler401: true` (pra um
+  401 dela não disparar o `handler401`/logout do almoxarife) e, se a rota for
+  pública, `skipAuthToken: true` (pra nem carregar o token global à toa). O
+  quiosque de consulta (`ConsultaPage`/`useConsulta.ts`) é o primeiro exemplo
+  — a próxima tela nesse molde (ex. outro modo quiosque) deve seguir o mesmo
+  padrão. Coberto por teste em `tests/lib/api.test.ts` (primeiro teste do
+  `/web` — `npm test`, Vitest puro, sem jsdom/testing-library porque testa só
+  a lógica dos interceptors, não componente). `vite.config.ts` já aceita
+  `*.test.tsx` no `include`, mas o `environment` continua `'node'` — o
+  primeiro teste de componente precisa trocar pra `'jsdom'` (e instalar
+  `@testing-library/react` junto), os dois na mesma mudança.
 - **Login e cadastro de almoxarife usam matrícula (4 dígitos) + senha
   numérica de 6 dígitos, nunca e-mail** — e-mail não existe no ambiente
   fabril. A senha é digitada num PIN estilo lock screen de celular
@@ -204,16 +241,34 @@ não filhas do layout autenticado.
   ficam mascarados — substitui o `CampoSenha` (input com olho) da FE-07
   nas telas de auth. Integrado ao React Hook Form via `Controller` (não dá
   pra usar `register` direto porque o componente não é um `<input>` nativo).
-  Contrato do back (`/v1/auth/login` e `/v1/auth/registro`) ainda usa e-mail
-  — troca pendente na issue #150 (urgente).
-- **Modo demonstração no login (entrega P1, 02/10)** — `entrarComoDemo()` no
-  `AuthProvider` (`src/lib/auth.tsx`) coloca um usuário fixo em memória, sem
-  token e sem persistir em `localStorage`, e o botão "Entrar sem a API
-  (demonstração)" na `LoginPage` leva direto ao dashboard. Existe porque a P1
-  avalia a interface **sem exigir integração com a API REST** e as telas já
-  rodam com dado simulado — sem isso, quem clona o repositório só vê o login.
-  Remover quando o fluxo real estiver integrado (não é atalho de
-  desenvolvimento, é requisito da entrega parcial).
+  O acesso nasce do **link de convite** que o admin gera na tela de
+  Colaboradores (`/c/:token`, `ConviteAcessoPage`): a pessoa define a senha, toca a
+  animação de `TelaSucessoAnimada` (prop `aoTerminarAnimacao`, a mesma do login) e a sessão abre
+  sozinha. Não há mais auto-cadastro nem tela de aprovação.
+- **Sem dado mockado:** nenhuma tela usa lista local, fixture ou modo
+  demonstração — tudo vem da API (`@/lib/api.ts` + TanStack Query). Se a API
+  estiver fora ou faltar um endpoint, a tela mostra o erro: é assim que o
+  problema aparece e é corrigido. Não reintroduzir adaptador/fixtures.
+- **Cadastros auxiliares são só do `admin`** (Colaboradores, Ferramentas,
+  Categorias, Setores): o grupo some do menu e as rotas usam `RotaAdmin`, que
+  responde com a tela de 404 (não redireciona — quem não é admin não deve
+  saber que a rota existe). As quatro telas são configurações de
+  `src/components/cadastros/CadastroCrud.tsx` (busca, paginação, novo, editar,
+  inativar com confirmação em Dialog, importar CSV por linha via POST do
+  recurso). A importação de CSV aceita até 500
+  linhas por arquivo (uma requisição por linha), valida as colunas esperadas e
+  pode ser cancelada — fechar o diálogo interrompe o envio. Recurso sem chave
+  única no banco (ferramentas) declara `chave` + `conferirDuplicadas` no
+  `ConfigCsv`: a conferência roda ao escolher o arquivo (com cache) e ignora,
+  por padrão, linhas já cadastradas ou repetidas no próprio arquivo. Datas de
+  tela passam por `lib/formatar.ts` (`dataBR`, `hojeBrasilia`): fuso de Brasília.
+- **Telas de 404 e de erro inesperado** usam `TelaDeFeedback` (textura de
+  ferramentas + card discreto) e `IlustracaoErro` (engrenagem girando,
+  `.engrenagem` — única peça em loop, some em reduced motion).
+  `ErroInesperadoPage` é o `errorElement` do router. O 404 (`path: '*'`) é
+  filho do `AppLayout`: quem está logado mantém a sidebar, tanto numa URL
+  inexistente quanto numa rota de admin (`RotaAdmin`); quem não está logado cai
+  no login antes de ver o 404.
 - **Som de confirmação** (`src/lib/som-confirmacao.ts`): preferência ligada por
   padrão e persistida em `localStorage` (`soufer:som-confirmacao`), tocada via
   `playSomConfirmacao()` a cada ação de confirmação bem-sucedida (retirada,
@@ -223,6 +278,17 @@ não filhas do layout autenticado.
   `localStorage` sozinho não notifica outros componentes já montados na
   mesma aba. O arquivo de áudio fica em `src/assets/sfx/` (importado via
   Vite, resolve para URL).
+- **Notificações (toast, FE-01)**: **toda** notificação — erro ou sucesso —
+  entra por cima da tela, nunca por baixo — regra do design system, sem
+  exceção de tela. `<Toaster position="top-right" />` (`src/App.tsx`) é o
+  padrão global, então `toast.success()` já nasce no canto superior direito
+  sem precisar de configuração por chamada. Notificação de erro usa
+  `avisarErro()` (`src/lib/avisar-erro.ts`), nunca `toast.error()` direto:
+  reforça `top-right`, 5s de duração, fundo sólido em `--brand-red` (não o
+  `--destructive` padrão, que é um vinho escuro que não se destacava no fundo
+  do toast) — essa cor é o que distingue erro de sucesso agora, não mais a
+  posição. Demonstração ao vivo na seção "Notificações" da página de estilos
+  (`DesignSystemPage.tsx`).
 - **Calendário próprio do sistema** (`src/components/SeletorDataCalendario.tsx`)
   em vez do shadcn/`react-day-picker`: grade de mês construída com `Date`
   nativo, sem dependência nova, com atalhos "Hoje"/"Amanhã" ao lado da grade.
@@ -232,20 +298,49 @@ não filhas do layout autenticado.
   nenhum `z-index` resolve isso de fora) e desconectado visualmente do
   restante do formulário. Empilha em coluna única abaixo de `sm` (grade de 7
   colunas fica ilegível/difícil de tocar na largura de um celular).
-- **Tela de devolução (`src/pages/DevolucaoPage.tsx`, FE-15)** segue o mesmo
-  padrão mockado da retirada (API-12 e a extração do campo de identificação
-  em FE-09 ainda não existem): busca o empréstimo aberto por código local,
+- **Telas de retirada e devolução** (`RetiradaPage`, `DevolucaoPage`) falam
+  com a API real (`hooks/useRetirada.ts`, `hooks/useDevolucao.ts`): a busca de
+  ferramenta/colaborador/empréstimo espera 300ms depois da digitação ou do
+  leitor e ignora zeros à esquerda no código. A devolução busca o empréstimo
+  aberto pela API,
   mostra o cartão de detalhes (quem retirou, matrícula/setor, atividade,
   saída, registrado por) com uma faixa `status-atraso` no topo quando a
-  previsão de devolução já passou, e só exibe descrição da ocorrência/custo
-  estimado/checkbox de confirmação quando a condição selecionada é "Avaria"
-  ou "Perda" — "OK" confirma direto, sem exigir ocorrência (regra de negócio
-  3 do guia raiz).
+  previsão de devolução já passou, e só exibe descrição da ocorrência e custo
+  estimado quando a condição selecionada é "Avaria" ou "Perda" — "OK" confirma
+  direto, sem exigir ocorrência (regra de negócio 3 do guia raiz).
+  **Fluxo de balcão "bipa, bipa, Enter" (teste de uso de 09/10/2026,
+  `docs/testes/ux-2026-10-09/`):** a retirada nasce com previsão "Hoje" e o
+  setor vem do colaborador; a atividade é um `input` de uma linha no fim do
+  formulário, então o Enter nela confirma (envio nativo). A devolução nasce
+  com "OK" marcado e põe o foco no botão de confirmar quando acha o
+  empréstimo (bipa → Enter). Avaria/perda **não** têm checkbox de
+  confirmação: o aviso do que vai acontecer fica visível e o botão "Confirmar
+  e abrir ocorrência" é a confirmação; depois de confirmar, toast avisa que a
+  ferramenta foi para Indisponíveis (FE-15, passo 4). Após o sucesso, o foco
+  volta ao campo de código com `setTimeout` (chamado direto após o `reset`
+  do RHF, o foco não pega e a bipada seguinte se perde). A tela de sucesso
+  `contida` é curta (~0,7 s visível, sem digitação letra a letra) e libera
+  cliques enquanto a tinta recolhe — com fila no balcão ela não pode segurar
+  a próxima operação; login e convite seguem com a animação completa. A
+  devolução lista "Em uso agora" (atrasados primeiro) quando o campo está
+  vazio, para etiqueta ilegível. A atividade exibida vem de
+  `atividade_nome ?? atividade_observacao` (a retirada grava texto livre em
+  `atividade_observacao`).
 
 ## Responsividade
 
 Toda tela precisa ser validada em 360px, 768px e 1280px antes de marcar como
 concluída (regra do guia raiz, Seção 5).
+
+- **Sidebar vira gaveta abaixo de 1024px** (`MOBILE_BREAKPOINT` em
+  `hooks/use-mobile.ts` + `lg:` no `Sidebar.tsx`), não 768 como no shadcn: no
+  tablet do balcão a sidebar fixa comia 1/3 da tela.
+- **`SidebarInset` tem `min-w-0`** (no `AppLayout`): sem isso, item flex não encolhe e
+  qualquer tabela larga empurrava a página inteira para o lado (Histórico em
+  1280, cadastros em 768) em vez de rolar dentro do próprio card.
+- **Nome de ferramenta nunca é truncado** em lista: a medida ("10 mm",
+  "1 3/4\"") é a informação. No celular o código vai embaixo do nome e o
+  Histórico vira lista de cartões (`md:hidden`/`hidden md:table`).
 
 ---
 

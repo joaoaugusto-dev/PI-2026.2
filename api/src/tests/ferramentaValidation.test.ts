@@ -20,7 +20,7 @@ import {
 // exercitado. Auth e service são mockados: aqui só interessa a validação.
 vi.mock('../middlewares/auth.js', () => ({
   authenticate: (req: Request, _res: Response, next: () => void) => {
-    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'manutencao' };
+    (req as any).usuario = { id: 1, nome: 'Manutenção', papel: 'admin' };
     next();
   },
 }));
@@ -80,6 +80,24 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.body.data.valorAquisicao).toBe(450.90);
     });
 
+    it('ignora status, ativo e codigoIdentificacao vindos do corpo no cadastro (campos controlados pelo servidor)', async () => {
+      const payload = {
+        nome: 'Chave de Fenda Phillips',
+        grupoId: 1,
+        status: 'indisponivel',
+        ativo: false,
+        codigoIdentificacao: 1234,
+      };
+
+      const res = await request(app).post('/test/ferramentas').send(payload);
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.nome).toBe('Chave de Fenda Phillips');
+      expect(res.body.data).not.toHaveProperty('status');
+      expect(res.body.data).not.toHaveProperty('ativo');
+      expect(res.body.data).not.toHaveProperty('codigoIdentificacao');
+    });
+
     it('aceita edição parcial de ferramenta com nome e grupo válidos', async () => {
       const res = await request(app).patch('/v1/ferramentas/10').send({ nome: 'Furadeira', grupoId: 3 });
 
@@ -91,6 +109,31 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       const res = await request(app)
         .patch('/v1/ferramentas/10')
         .send({ nome: 'Furadeira', valorAquisicao: 10, ehKit: true, status: 'indisponivel' });
+
+      expect(res.status).toBe(200);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
+    });
+
+    it('aceita null na edição para limpar marca, modelo, descrição, localização, setor e subgrupo', async () => {
+      const limpar = { marca: null, modelo: null, descricao: null, localizacao: null, setorId: null, subgrupoId: null };
+      const res = await request(app).patch('/v1/ferramentas/10').send(limpar);
+
+      expect(res.status).toBe(200);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, limpar);
+    });
+
+    it('não aceita null em nome nem grupoId (continuam obrigatórios)', async () => {
+      const semNome = await request(app).patch('/v1/ferramentas/10').send({ nome: null });
+      const semGrupo = await request(app).patch('/v1/ferramentas/10').send({ grupoId: null });
+
+      expect(semNome.status).toBe(400);
+      expect(semGrupo.status).toBe(400);
+    });
+
+    it('descarta ativo e codigoIdentificacao na edição (campos controlados pelo servidor)', async () => {
+      const res = await request(app)
+        .patch('/v1/ferramentas/10')
+        .send({ nome: 'Furadeira', ativo: false, codigoIdentificacao: 4321 });
 
       expect(res.status).toBe(200);
       expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
@@ -315,6 +358,19 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       expect(res.status).toBe(201);
       expect(res.body.data.nome).toBe('Carlos Silva');
       expect(res.body.data.matricula).toBe('0123');
+    });
+
+    it.each([['36', '0036'], ['5', '0005']])('completa matrícula curta com zeros à esquerda (%s -> %s)', async (entrada, esperada) => {
+      const res = await request(app).post('/test/colaboradores').send({ nome: 'Ana', matricula: entrada, setorId: 1 });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.matricula).toBe(esperada);
+    });
+
+    it.each(['0', '0000', '12345', 'ab'])('continua recusando matrícula inválida (%s)', async (entrada) => {
+      const res = await request(app).post('/test/colaboradores').send({ nome: 'Ana', matricula: entrada, setorId: 1 });
+
+      expect(res.status).toBe(400);
     });
   });
 });

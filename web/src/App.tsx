@@ -12,7 +12,7 @@ function App() {
       <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>
-      <Toaster richColors />
+      <Toaster richColors position="top-right" offset={{ top: '80px' }} />
     </QueryClientProvider>
   )
 }

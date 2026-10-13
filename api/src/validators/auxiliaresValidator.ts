@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const listarAuxiliaresQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
+  page: z.coerce.number().int().min(1).max(100000).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().trim().min(1).max(150).optional(),
   incluirInativos: z

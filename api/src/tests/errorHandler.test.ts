@@ -139,6 +139,15 @@ describe('Middleware errorHandler e Envelope Padrão de Erro', () => {
     expect(res.body.error.message).toContain('Ferramenta 1 não está disponível');
   });
 
+  it('retorna 400 INVALID_JSON para corpo JSON malformado (não 500)', async () => {
+    const res = await request(app)
+      .post('/test/valida-zod')
+      .set('Content-Type', 'application/json')
+      .send('{"email": "a@b.com",');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('INVALID_JSON');
+  });
+
   it('retorna 500 INTERNAL_SERVER_ERROR para erros não tratados', async () => {
     const res = await request(app).get('/test/erro-desconhecido');
     expect(res.status).toBe(500);

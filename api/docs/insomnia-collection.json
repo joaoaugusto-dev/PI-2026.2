@@ -122,6 +122,21 @@
       ]
     },
     {
+      "_id": "req_consulta_sessao_matricula_inexistente",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "POST /v1/consulta/sessao (matricula bem formada inexistente, 404; na 6ª vez em 1 min, 429)",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/v1/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"9997\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
       "_id": "req_ferramentas_listar",
       "_type": "request",
       "parentId": "wrk_soufer_tools",
@@ -136,6 +151,28 @@
         { "name": "grupoId", "value": "1", "disabled": true },
         { "name": "sort", "value": "nome", "disabled": true }
       ],
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ]
+    },
+    {
+      "_id": "req_consulta_ferramentas",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/consulta/ferramentas (token de consulta, 200)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/consulta/ferramentas?status=disponivel&limit=20",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.tokenConsulta }}" }
+      ]
+    },
+    {
+      "_id": "req_consulta_ferramentas_token_manutencao",
+      "_type": "request",
+      "parentId": "wrk_soufer_tools",
+      "name": "GET /v1/consulta/ferramentas (token da manutencao, 403)",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/v1/consulta/ferramentas",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ]

@@ -95,6 +95,7 @@
     --motion-stagger: 20ms;
     --motion-reduced: 80ms;
     --motion-ambiente: 3.2s;
+    --motion-engrenagem: 18s;
 
     --background: oklch(1 0 0);
     --foreground: #1D1D1B;
@@ -195,14 +196,19 @@
     --default-transition-timing-function: var(--ease-soufer);
 
     --animate-entrada: entrada var(--motion-screen) var(--ease-soufer) both;
+    --animate-saida: saida var(--motion-state) var(--ease-soufer) both;
     --animate-reconhecido: reconhecido 420ms var(--ease-soufer);
     --animate-erro: erro 260ms var(--ease-soufer);
     --animate-atraso: atraso 2s var(--ease-soufer) infinite;
+    --animate-girar: girar var(--motion-engrenagem) linear infinite;
     --animate-respiro: respiro var(--motion-ambiente) var(--ease-soufer) infinite;
     --animate-brilho: brilho 1.4s linear infinite;
     --animate-check-entra: check-entra 550ms var(--ease-soufer) both;
     --animate-tinta-entra: tinta-entra 1000ms var(--ease-soufer) both;
     --animate-tinta-sai: tinta-sai 800ms var(--ease-soufer) both;
+    --animate-etapa-pop: etapa-pop 560ms var(--ease-soufer) both;
+    --animate-etapa-pulso: etapa-pulso 800ms var(--ease-soufer) both;
+    --animate-etapa-label: etapa-label 320ms var(--ease-soufer) both;
 
     /* Entrada de tela, card e linha de lista. */
     @keyframes entrada {
@@ -213,6 +219,18 @@
         to {
             opacity: 1;
             transform: none;
+        }
+    }
+
+    /* Saída de submenu/painel: o Radix segura o desmonte até o fim da animação. */
+    @keyframes saida {
+        from {
+            opacity: 1;
+            transform: none;
+        }
+        to {
+            opacity: 0;
+            transform: translate3d(0, -6px, 0);
         }
     }
 
@@ -240,6 +258,14 @@
         }
         65% {
             transform: translate3d(3px, 0, 0);
+        }
+    }
+
+    /* Engrenagem da tela 404: rotação lenta e linear — só `transform`. Loop de
+       elemento singular (uma peça por tela), nunca repetido em lista. */
+    @keyframes girar {
+        to {
+            transform: rotate(360deg);
         }
     }
 
@@ -295,6 +321,42 @@
         }
     }
 
+    /* Etapa da tratativa que acabou de ser alcançada: o marcador "estala" com
+       overshoot e emite um anel que se dissolve (um disparo só, nunca loop). */
+    @keyframes etapa-pop {
+        from {
+            transform: scale3d(0.7, 0.7, 1);
+        }
+        55% {
+            transform: scale3d(1.18, 1.18, 1);
+        }
+        to {
+            transform: scale3d(1, 1, 1);
+        }
+    }
+
+    @keyframes etapa-pulso {
+        from {
+            opacity: 0.55;
+            transform: scale3d(1, 1, 1);
+        }
+        to {
+            opacity: 0;
+            transform: scale3d(2.4, 2.4, 1);
+        }
+    }
+
+    @keyframes etapa-label {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 4px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
     /* Tinta escura se espalhando por cima da tela até cobrir tudo (círculo
        gigante, só escala — o compositor nunca recalcula layout de um
        elemento do tamanho da viewport inteira). */
@@ -325,6 +387,13 @@
        Só em elemento singular — cabeçalho de detalhe, KPI, chip de filtro.
        NUNCA dentro de linha de tabela: 400 linhas respirando são 400 camadas
        compostas por quadro. */
+    /* Engrenagem da tela 404 (loop de peça singular, ver keyframe `girar`). */
+    .engrenagem {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: var(--animate-girar);
+    }
+
     .status-vivo {
         position: relative;
     }
@@ -416,6 +485,15 @@
         }
     }
 
+    @keyframes saida {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
     @keyframes reconhecido {
         from,
         to {
@@ -431,6 +509,31 @@
     }
 
     @keyframes check-entra {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes etapa-pop {
+        from,
+        to {
+            transform: none;
+        }
+    }
+
+    @keyframes etapa-pulso {
+        from {
+            opacity: 0.3;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes etapa-label {
         from {
             opacity: 0;
         }
@@ -467,6 +570,10 @@
     .brilho::after {
         display: none;
     }
+
+    .engrenagem {
+        animation: none;
+    }
 }
 
 @layer base {
@@ -479,4 +586,287 @@
   html {
     @apply font-sans;
     }
+}
+/* Barra de rolagem discreta para listas curtas (ex.: sino de notificações):
+   fina, sem trilho, e o polegar só ganha cor ao passar o mouse. */
+@utility scrollbar-fino {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  &:hover {
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent) transparent;
+  }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: transparent;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+  }
+}
+
+/* Sino balançando a partir do topo quando chega notificação nova. */
+@keyframes sino-tocar {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(18deg); }
+  30% { transform: rotate(-16deg); }
+  45% { transform: rotate(12deg); }
+  60% { transform: rotate(-9deg); }
+  75% { transform: rotate(5deg); }
+  90% { transform: rotate(-2deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sino-tocando {
+    transform-origin: 50% 0;
+    animation: sino-tocar 0.9s ease-in-out;
+  }
+}
+
+/* Etiqueta térmica 90 x 60 mm (EtiquetaTermica) — só existe na impressão */
+.etiqueta-impressao,
+.cracha-impressao,
+.lista-impressao {
+  display: none;
+}
+
+/* Lista de cobrança (ImprimirPendencias) em A4: página nomeada, a térmica continua 90 x 60 */
+@page lista {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  @page {
+    size: 90mm 60mm;
+    margin: 0;
+  }
+
+  body > *:not(.etiqueta-impressao):not(.cracha-impressao):not(.lista-impressao) {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .etiqueta-impressao {
+    display: flex;
+    flex-direction: column;
+    width: 90mm;
+    height: 60mm;
+    padding: 3mm 4mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    break-after: avoid;
+  }
+
+  .lista-impressao {
+    display: block;
+    page: lista;
+    color: #000;
+    background: #fff;
+    font-size: 10pt;
+  }
+
+  .lista-impressao header {
+    display: flex;
+    align-items: center;
+    gap: 6mm;
+    margin-bottom: 4mm;
+  }
+
+  .lista-impressao header img {
+    height: 12mm;
+    width: auto;
+  }
+
+  .lista-impressao h1 {
+    font-size: 14pt;
+    font-weight: 700;
+  }
+
+  .lista-impressao h2 {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 4mm 0 1.5mm;
+  }
+
+  .lista-impressao table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .lista-impressao th,
+  .lista-impressao td {
+    border: 0.25mm solid #999;
+    padding: 1.2mm 1.5mm;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .lista-impressao tr {
+    break-inside: avoid;
+  }
+
+  .lista-impressao .lista-check {
+    text-align: center;
+    font-size: 13pt;
+  }
+
+  /* térmica é 1 bit: o vermelho vira cinza escuro, contraste evita sumir no papel */
+  .etiqueta-logo {
+    height: 10mm;
+    width: auto;
+    align-self: flex-start;
+    filter: grayscale(1) contrast(1.8);
+  }
+
+  .etiqueta-nome {
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 1mm;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .etiqueta-meta {
+    font-size: 8pt;
+    margin-bottom: 0.5mm;
+  }
+
+  .etiqueta-impressao svg {
+    width: 100%;
+    height: 26mm;
+  }
+
+  .etiqueta-codigo {
+    margin-top: auto;
+    padding-top: 2.5mm;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+
+  /* Crachá de colaborador: cartão com borda arredondada, faixa preta no topo (a térmica imprime
+     preto cheio; print-color-adjust força o fundo, que o navegador descartaria por padrão). */
+  .cracha-impressao {
+    display: block;
+    width: 90mm;
+    height: 60mm;
+    padding: 1.5mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: #000;
+    background: #fff;
+    break-after: avoid;
+  }
+
+  .cracha-cartao {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 0.5mm solid #000;
+    border-radius: 3mm;
+    overflow: hidden;
+  }
+
+  .cracha-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 13mm;
+    padding: 0 4mm;
+    background: #000;
+    color: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cracha-topo img {
+    height: 7mm;
+    width: auto;
+  }
+
+  .cracha-topo span {
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .cracha-corpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2.5mm 4mm 3mm;
+    min-height: 0;
+  }
+
+  .cracha-nome {
+    font-size: 15pt;
+    font-weight: 800;
+    line-height: 1.05;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cracha-setor {
+    margin-top: 0.8mm;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .cracha-rodape {
+    display: flex;
+    align-items: flex-end;
+    gap: 4mm;
+  }
+
+  .cracha-barras {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cracha-barras svg {
+    display: block;
+    width: 100%;
+    height: 14mm;
+  }
+
+  .cracha-matricula {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+  }
+
+  .cracha-matricula small {
+    font-size: 6pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .cracha-matricula strong {
+    margin-top: 1mm;
+    font-family: var(--font-mono);
+    font-size: 24pt;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
 }

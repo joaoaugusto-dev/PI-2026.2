@@ -19,6 +19,16 @@ pool.on('error', (err: Error) => {
   console.error('[DATABASE ERROR] Erro inesperado no pool de conexões do PostgreSQL:', err);
 });
 
+// pool.on('error') só cobre cliente ocioso: o pg-pool tira o ouvinte enquanto o cliente está emprestado
+// (getClient nas transações). Se a conexão cai nessa hora (Postgres reiniciou, rede piscou), o 'error' sem
+// ouvinte derrubava o processo inteiro. Com este, a query em voo falha (500), o release descarta o cliente
+// quebrado e a API segue atendendo.
+pool.on('connect', (client) => {
+  client.on('error', (err: Error) => {
+    console.error('[DATABASE ERROR] Conexão em uso caiu:', err.message);
+  });
+});
+
 /**
  * Executa uma query SQL com pool de conexão
  * @param text Consulta SQL parametrizada

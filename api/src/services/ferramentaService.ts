@@ -1,5 +1,12 @@
+import { randomUUID } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+import sharp from 'sharp';
+import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
-import { NotFoundError, ConflictError } from '../utils/errors.js';
+import { uploadsDir } from '../config/uploads.js';
+import { logger } from '../middlewares/logger.js';
+import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
@@ -16,8 +23,18 @@ export interface Ferramenta {
   status: 'disponivel' | 'em_uso' | 'indisponivel';
   motivo_indisponivel: 'avaria' | 'perda' | 'manutencao_preventiva' | 'baixada' | null;
   etiqueta_impressa_em: string | null;
+  foto_url: string | null;
   ativo: boolean;
   created_at: string;
+}
+
+export interface FerramentaConsulta {
+  id: number;
+  nome: string;
+  categoria: string;
+  status: 'disponivel' | 'em_uso' | 'indisponivel';
+  localizacao: string | null;
+  codigo_identificacao: number | null;
 }
 
 export interface ListarFerramentasParams {
@@ -36,7 +53,7 @@ const COLUNAS_ORDENACAO: Record<string, string> = {
 
 const COLUNAS_FERRAMENTA = `id, nome, descricao, marca, modelo, codigo_identificacao, grupo_id,
             subgrupo_id, setor_id, localizacao, status, motivo_indisponivel,
-            etiqueta_impressa_em, ativo, created_at`;
+            etiqueta_impressa_em, foto_url, ativo, created_at`;
 
 // Escapa os coringas do ILIKE (%, _ e a própria barra invertida) para que
 // caracteres digitados pelo usuário em "q" sejam tratados como texto literal,
@@ -45,58 +62,91 @@ function escaparCoringasLike(valor: string): string {
   return valor.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
-/**
- * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
- * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
- * nunca aparecem misturadas com ferramentas baixadas).
- */
-export async function listar({
-  offset,
-  limit,
-  q,
-  status,
-  grupoId,
-  sort,
-}: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
-  const condicoes = ['ativo = true'];
+// WHERE compartilhado por listar e listarParaConsulta (sempre só ferramentas ativas).
+function montarFiltro({ q, status, grupoId }: Pick<ListarFerramentasParams, 'q' | 'status' | 'grupoId'>) {
+  const condicoes = ['f.ativo = true'];
   const params: any[] = [];
 
   if (q) {
     params.push(`%${escaparCoringasLike(q)}%`);
-    condicoes.push(
-      `(nome ILIKE $${params.length} OR descricao ILIKE $${params.length} OR marca ILIKE $${params.length} OR modelo ILIKE $${params.length})`
-    );
+    const buscas = [
+      `f.nome ILIKE $${params.length}`,
+      `f.descricao ILIKE $${params.length}`,
+      `f.marca ILIKE $${params.length}`,
+      `f.modelo ILIKE $${params.length}`,
+    ];
+    // "000053", "000053" ou "53": o código é busca por igualdade, ignorando zeros à esquerda
+    const codigo = /^(?:sf)?0*(\d{1,4})$/i.exec(q.trim());
+    if (codigo) {
+      params.push(Number(codigo[1]));
+      buscas.push(`f.codigo_identificacao = $${params.length}`);
+    }
+    condicoes.push(`(${buscas.join(' OR ')})`);
   }
 
   if (status) {
     params.push(status);
-    condicoes.push(`status = $${params.length}`);
+    condicoes.push(`f.status = $${params.length}`);
   }
 
   if (grupoId) {
     params.push(grupoId);
-    condicoes.push(`grupo_id = $${params.length}`);
+    condicoes.push(`f.grupo_id = $${params.length}`);
   }
 
-  const where = `WHERE ${condicoes.join(' AND ')}`;
+  return { where: `WHERE ${condicoes.join(' AND ')}`, params };
+}
+
+// COUNT, ordenação e paginação comuns às duas listagens; só o SELECT/JOIN muda.
+async function listarPaginado<T extends QueryResultRow>(
+  selectFrom: string,
+  { offset, limit, q, status, grupoId, sort }: ListarFerramentasParams
+): Promise<{ rows: T[]; total: number }> {
+  const { where, params } = montarFiltro({ q, status, grupoId });
   const ordenacao = COLUNAS_ORDENACAO[sort ?? 'nome'] ?? 'nome';
 
   const totalResult = await query<{ total: string }>(
-    `SELECT COUNT(*)::text AS total FROM ferramentas ${where}`,
+    `SELECT COUNT(*)::text AS total FROM ferramentas f ${where}`,
     params
   );
 
   params.push(limit, offset);
-  const rowsResult = await query<Ferramenta>(
-    `SELECT ${COLUNAS_FERRAMENTA}
-     FROM ferramentas
+  const rowsResult = await query<T>(
+    `${selectFrom}
      ${where}
-     ORDER BY ${ordenacao}, id
+     ORDER BY f.${ordenacao}, f.id
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );
 
   return { rows: rowsResult.rows, total: parseInt(totalResult.rows[0].total, 10) };
+}
+
+/**
+ * Consulta com paginação e filtros opcionais (busca textual, status, grupo) —
+ * só lista ferramentas ativas (Regra 2 do CLAUDE.md: disponível/em_uso/indisponível
+ * nunca aparecem misturadas com ferramentas baixadas).
+ */
+export function listar(params: ListarFerramentasParams): Promise<{ rows: Ferramenta[]; total: number }> {
+  return listarPaginado<Ferramenta>(`SELECT ${COLUNAS_FERRAMENTA} FROM ferramentas f`, params);
+}
+
+/**
+ * Listagem do quiosque (GET /v1/consulta/ferramentas): mesma busca e filtros de
+ * `listar`, mas devolve só o que a consulta pública pode mostrar — nome,
+ * categoria, status e localização (mais id e código de patrimônio, que a tela
+ * usa para identificar a ferramenta). Projeção própria, e não "listar sem
+ * alguns campos": coluna nova em `ferramentas` não vaza para o quiosque por
+ * acidente. Nunca traz colaborador, histórico, motivo da indisponibilidade
+ * nem valores.
+ */
+export function listarParaConsulta(params: ListarFerramentasParams): Promise<{ rows: FerramentaConsulta[]; total: number }> {
+  return listarPaginado<FerramentaConsulta>(
+    `SELECT f.id, f.nome, g.nome AS categoria, f.status, f.localizacao, f.codigo_identificacao
+     FROM ferramentas f
+     JOIN grupos_ferramentas g ON g.id = f.grupo_id`,
+    params
+  );
 }
 
 export async function buscarPorId(id: number): Promise<Ferramenta> {
@@ -309,7 +359,7 @@ export async function disponibilizar(id: number, usuarioId: number): Promise<Fer
  * uma ferramenta baixada.
  */
 export async function baixar(id: number): Promise<Ferramenta> {
-  await buscarPorId(id);
+  const atual = await buscarPorId(id);
 
   const emprestimoAberto = await query(
     `SELECT 1 FROM emprestimos WHERE ferramenta_id = $1 AND data_devolucao IS NULL LIMIT 1`,
@@ -324,11 +374,78 @@ export async function baixar(id: number): Promise<Ferramenta> {
 
   const result = await query<Ferramenta>(
     `UPDATE ferramentas
-     SET ativo = false, status = 'indisponivel', motivo_indisponivel = 'baixada', updated_at = NOW()
+     SET ativo = false, status = 'indisponivel', motivo_indisponivel = 'baixada', foto_url = NULL, updated_at = NOW()
      WHERE id = $1 AND ativo = true
      RETURNING ${COLUNAS_FERRAMENTA}`,
     [id]
   );
 
+  // ferramenta baixada não mostra foto: apaga o arquivo para não sobrar órfão
+  if ((result.rowCount ?? 0) > 0) await apagarArquivoFoto(atual.foto_url);
+  return result.rows[0];
+}
+
+// Tipo real pelo conteúdo (não pelo Content-Type, que o cliente controla).
+function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
+  if (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg';
+  if (b.length > 12 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
+  if (b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'webp';
+  return null;
+}
+
+// foto de celular chega a ~40 MP; acima disso o sharp recusa (limita a memória por requisição)
+const LIMITE_PIXELS_FOTO = 40_000_000;
+
+// basename evita sair do diretório. Falha ao apagar não derruba a requisição:
+// o banco já foi atualizado e o pior caso é um arquivo sobrando.
+async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
+  if (fotoUrl?.startsWith('/uploads/')) {
+    await fs
+      .rm(path.join(uploadsDir, path.basename(fotoUrl)), { force: true })
+      .catch((erro) => logger.warn({ erro, fotoUrl }, 'não foi possível apagar o arquivo da foto (arquivo órfão)'));
+  }
+}
+
+export async function salvarFoto(id: number, imagem: unknown): Promise<Ferramenta> {
+  const anterior = await buscarPorId(id);
+  if (!Buffer.isBuffer(imagem) || imagem.length === 0) {
+    throw new ValidationError('Envie a imagem (jpeg, png ou webp) no corpo da requisição');
+  }
+  if (!extensaoDaImagem(imagem)) throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
+
+  // máx. 1280 px, webp, sem EXIF (o sharp descarta metadados por padrão; rotate() aplica a orientação antes)
+  let processada: Buffer;
+  try {
+    processada = await sharp(imagem, { limitInputPixels: LIMITE_PIXELS_FOTO }).rotate().resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+  } catch {
+    throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
+  }
+
+  await fs.mkdir(uploadsDir, { recursive: true });
+  const arquivo = `${id}-${randomUUID()}.webp`;
+  const destino = path.join(uploadsDir, arquivo);
+  await fs.writeFile(destino, processada);
+
+  let result;
+  try {
+    result = await query<Ferramenta>(
+      `UPDATE ferramentas SET foto_url = $1, updated_at = NOW() WHERE id = $2 RETURNING ${COLUNAS_FERRAMENTA}`,
+      [`/uploads/${arquivo}`, id]
+    );
+  } catch (error) {
+    await fs.rm(destino, { force: true }).catch(() => {}); // não deixa arquivo órfão
+    throw error;
+  }
+  await apagarArquivoFoto(anterior.foto_url); // a antiga deixa de ser referenciada
+  return result.rows[0];
+}
+
+export async function removerFoto(id: number): Promise<Ferramenta> {
+  const anterior = await buscarPorId(id);
+  const result = await query<Ferramenta>(
+    `UPDATE ferramentas SET foto_url = NULL, updated_at = NOW() WHERE id = $1 RETURNING ${COLUNAS_FERRAMENTA}`,
+    [id]
+  );
+  await apagarArquivoFoto(anterior.foto_url);
   return result.rows[0];
 }

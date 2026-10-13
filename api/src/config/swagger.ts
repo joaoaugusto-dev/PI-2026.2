@@ -1,5 +1,7 @@
 import swaggerJSDoc from 'swagger-jsdoc';
+import type { OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
 import { env } from './env.js';
+import { gerarPathsFerramentasViaZod } from './openapiFromZod.js';
 
 const swaggerOptions: swaggerJSDoc.Options = {
   definition: {
@@ -74,4 +76,16 @@ const swaggerOptions: swaggerJSDoc.Options = {
   ],
 };
 
-export const swaggerSpec = swaggerJSDoc(swaggerOptions);
+const spec = swaggerJSDoc(swaggerOptions) as ReturnType<OpenApiGeneratorV3['generateDocument']>;
+
+// Prova de conceito da issue API-14 ("se sobrar tempo"): o POST e o PATCH de
+// /ferramentas vêm de zod-to-openapi (gerados a partir dos schemas Zod reais,
+// em openapiFromZod.ts) em vez do comentário @openapi manual. Faz merge por
+// método HTTP para não perder o GET (que continua documentado via JSDoc).
+const pathsGeradosViaZod = gerarPathsFerramentasViaZod();
+spec.paths = spec.paths ?? {};
+for (const [caminho, metodos] of Object.entries(pathsGeradosViaZod)) {
+  spec.paths[caminho] = { ...spec.paths[caminho], ...metodos };
+}
+
+export const swaggerSpec = spec;
