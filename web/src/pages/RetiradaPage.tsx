@@ -285,6 +285,11 @@ export function RetiradaPage() {
           <SecaoFluxo titulo="2. Colaborador" descricao="Bipe o crachá ou digite matrícula / nome">
             <CampoIdentificacao
               {...register('colaborador')}
+              onChange={(e) => {
+                // só número = matrícula, no máximo 4 dígitos (nome não tem limite)
+                if (/^\d+$/.test(e.target.value)) e.target.value = e.target.value.slice(0, 4)
+                return register('colaborador').onChange(e)
+              }}
               icone={IdCard}
               placeholder="Matrícula ou nome"
               onKeyDown={(e) => {
