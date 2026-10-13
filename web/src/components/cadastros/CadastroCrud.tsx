@@ -158,28 +158,25 @@ export function CadastroCrud<T extends { id: number }>({
   // "+ Unidade": cria outra igual (mesmos dados, e a foto se houver) sem passar pelo formulário
   function adicionarUnidade(item: T) {
     setDuplicando(item.id)
-    salvar.mutate(
-      { dados: paraPayload(deItem(item), false) },
-      {
-        onSuccess: async (resposta) => {
-          playSomConfirmacao()
-          const nova = (resposta.data as { data: Ferramenta }).data
-          const fotoUrl = (item as { foto_url?: string | null }).foto_url
-          if (fotoUrl) {
-            try {
-              const imagem = await (await fetch(urlDaFoto(fotoUrl))).blob()
-              await enviarFoto.mutateAsync({ id: nova.id, imagem })
-            } catch {
-              avisarErro('Unidade criada, mas a foto não foi copiada. Edite para enviar a foto.')
-            }
+    salvar
+      .mutateAsync({ dados: paraPayload(deItem(item), false) })
+      .then(async (resposta) => {
+        playSomConfirmacao()
+        const nova = (resposta.data as { data: Ferramenta }).data
+        const fotoUrl = (item as { foto_url?: string | null }).foto_url
+        if (fotoUrl) {
+          try {
+            const imagem = await (await fetch(urlDaFoto(fotoUrl))).blob()
+            await enviarFoto.mutateAsync({ id: nova.id, imagem })
+          } catch {
+            avisarErro('Unidade criada, mas a foto não foi copiada. Edite para enviar a foto.')
           }
-          toast.success('Unidade adicionada.')
-          if (nova.codigo_identificacao) setCriada(nova) // já abre a etiqueta da nova unidade
-        },
-        onError: (e) => avisarErro(erroDaApi(e) ?? 'Não foi possível adicionar a unidade.'),
-        onSettled: () => setDuplicando(null),
-      },
-    )
+        }
+        toast.success('Unidade adicionada.')
+        if (nova.codigo_identificacao) setCriada(nova) // já abre a etiqueta da nova unidade
+      })
+      .catch((e) => avisarErro(erroDaApi(e) ?? 'Não foi possível adicionar a unidade.'))
+      .finally(() => setDuplicando(null)) // só libera o botão depois da foto
   }
 
   const botaoUnidade = (item: T, rotulo = 'Unidade') => (

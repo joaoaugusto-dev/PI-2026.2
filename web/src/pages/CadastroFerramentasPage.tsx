@@ -33,7 +33,7 @@ export function CadastroFerramentasPage() {
       buscaPlaceholder="Buscar por nome, marca ou modelo"
       foto
       agrupar={{
-        chave: (f) => `${chaveFerramenta(f.nome, f.marca, f.modelo)}|${f.grupo_id}`,
+        chave: (f) => `${chaveFerramenta(f.nome, f.marca, f.modelo)}|${f.grupo_id}|${f.setor_id ?? ''}`,
         resumo: (itens) => `${itens.length} unidades`,
       }}
       acoesLinha={(f) => <BotaoImprimirEtiqueta ferramenta={f} compacto />}
