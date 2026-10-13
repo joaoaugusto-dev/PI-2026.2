@@ -44,7 +44,7 @@ export function RodapeSidebar() {
         <LogOut className="size-3.5" />
         Sair
       </button>
-      <span className="px-2 font-mono text-rotulo text-sidebar-foreground/60">v0.0.2-beta</span>
+      <span className="px-2 font-mono text-rotulo text-sidebar-foreground/60">v0.0.673-beta</span>
     </SidebarFooter>
   )
 }
