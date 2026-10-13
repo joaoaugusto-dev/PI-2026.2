@@ -34,7 +34,7 @@ export function ColaboradoresPage() {
         { cabecalho: 'Setor', render: (c) => nomeDoSetor(c.setor_id) },
       ]}
       campos={[
-        { name: 'matricula', label: 'Matrícula (1 a 4 dígitos)', inputMode: 'numeric', placeholder: '0000' },
+        { name: 'matricula', label: 'Matrícula (1 a 4 dígitos)', inputMode: 'numeric', maxLength: 4, placeholder: '0000' },
         { name: 'nome', label: 'Nome completo' },
         { name: 'setorId', label: 'Setor', opcoes: setores.map((s) => ({ value: String(s.id), label: s.nome })) },
       ]}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { Download, History, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -104,6 +104,7 @@ export function EmprestimosPage() {
     setSituacaoVista(situacao)
     setPage(1)
   }
+  const navigate = useNavigate()
   const [exportando, setExportando] = useState(false)
   const exportacao = useRef<AbortController | null>(null)
 
@@ -145,6 +146,13 @@ export function EmprestimosPage() {
       setPage(1)
     }
   }
+
+  // linha clicável (e por teclado) abre a página da ferramenta
+  const abrir = (e: Emprestimo) => ({
+    onClick: () => e.ferramenta_id && navigate(`/ferramentas/${e.ferramenta_id}`),
+    tabIndex: 0,
+    onKeyDown: (ev: React.KeyboardEvent) => ev.key === 'Enter' && e.ferramenta_id && navigate(`/ferramentas/${e.ferramenta_id}`),
+  })
 
   return (
     <div className="flex flex-col gap-4 p-4 sm:p-6">
@@ -196,7 +204,7 @@ export function EmprestimosPage() {
             {/* celular: cartão com o essencial (tabela de 7 colunas não cabe em 360px) */}
             <ul className="divide-y md:hidden">
               {linhas.map((e) => (
-                <li key={e.id} className="space-y-1 py-3">
+                <li key={e.id} {...abrir(e)} className="cursor-pointer space-y-1 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-medium">{e.ferramenta_nome}</p>
                     <span className={cn('shrink-0 text-sm font-medium', corDaSituacao(e))}>{textoSituacao(e)}</span>
@@ -227,7 +235,7 @@ export function EmprestimosPage() {
               </TableHeader>
               <TableBody>
                 {linhas.map((e) => (
-                  <TableRow key={e.id}>
+                  <TableRow key={e.id} {...abrir(e)} className="cursor-pointer">
                     <TableCell>
                       <p className="font-medium">{e.ferramenta_nome}</p>
                       <p className="font-mono text-rotulo text-muted-foreground">
@@ -255,6 +263,7 @@ export function EmprestimosPage() {
       </Card>
 
       <Paginacao meta={meta} page={page} onPage={setPage} itens="empréstimos" />
+
     </div>
   )
 }
