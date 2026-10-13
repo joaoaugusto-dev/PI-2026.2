@@ -141,6 +141,9 @@ não filhas do layout autenticado.
     `grid-template-rows` (1fr→0fr) para o item colapsar suavemente; o
     `check:motion` não cobre `transition` utilitária, só `@keyframes`, então
     esse caso não é validado por ele. Não replicar fora de listas curtas.
+    Segunda ocorrência: a abertura de grupo em `ListaAgrupada` (cadastro de
+    ferramentas, unidades iguais agrupadas) — `grid-template-rows` 0fr→1fr,
+    com `inert` quando fechado.
   - **Durações:** `--motion-state` 140ms (hover/foco/pressionado),
     `--motion-screen` 240ms (tela e modal, nunca acima de 300ms),
     `--motion-stagger` 20ms, `--motion-reduced` 80ms. Easing único:

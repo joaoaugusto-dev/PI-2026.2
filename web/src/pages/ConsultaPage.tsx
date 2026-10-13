@@ -367,7 +367,7 @@ export function ConsultaPage() {
           ))}
 
         {!isLoading && isError && !erroDeAutenticacao && (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card px-6 pb-8 shadow-xs">
             <EmptyState
               icone={TriangleAlert}
               titulo="Não foi possível carregar as ferramentas"
@@ -380,11 +380,13 @@ export function ConsultaPage() {
         )}
 
         {!isLoading && !isError && ferramentas.length === 0 && (
-          <EmptyState
-            icone={PackageSearch}
-            titulo="Nenhuma ferramenta encontrada"
-            descricao="Ajuste a busca ou o filtro de status."
-          />
+          <div className="rounded-2xl border bg-card px-6 shadow-xs">
+            <EmptyState
+              icone={PackageSearch}
+              titulo="Nenhuma ferramenta encontrada"
+              descricao="Ajuste a busca ou o filtro de status."
+            />
+          </div>
         )}
 
         {!isLoading &&
