@@ -47,7 +47,6 @@ export function CadastroRapidoColaborador({ setores, termo = '', enviando, onUsa
         onChange={(e) => setRascunho((r) => ({ ...r, nome: e.target.value }))}
         placeholder="Nome completo"
         aria-label="Nome completo"
-        autoFocus={ehNumero}
         className={CLASSE_INPUT}
       />
       <div className="grid grid-cols-[7rem_1fr] gap-2">
