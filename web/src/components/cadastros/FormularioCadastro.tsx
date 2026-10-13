@@ -13,6 +13,7 @@ export interface Campo {
   opcoes?: { value: string; label: string }[]
   placeholder?: string
   inputMode?: 'numeric'
+  maxLength?: number
   /** No layout em duas colunas (com `extra`), ocupa a linha inteira. */
   larga?: boolean
 }
@@ -69,6 +70,7 @@ export function FormularioCadastro({
                 <Input
                   id={c.name}
                   inputMode={c.inputMode}
+                  maxLength={c.maxLength}
                   placeholder={c.placeholder}
                   aria-invalid={!!errors[c.name]}
                   aria-describedby={errors[c.name] ? `${c.name}-erro` : undefined}
