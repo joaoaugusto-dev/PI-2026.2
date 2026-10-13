@@ -115,7 +115,8 @@ export function RetiradaPage() {
   // código bipado/digitado reconhecido: pula para o próximo campo sem precisar do Enter.
   // Busca por nome não avança sozinha (o usuário ainda pode estar digitando).
   useEffect(() => {
-    if (ferramenta && !ferramentaBloqueada && parseCodigoPatrimonio(termoFerramenta)) setFocus('colaborador')
+    // só o código completo (SF + 6 dígitos): digitando devagar, um prefixo não pode casar com outra ferramenta
+    if (ferramenta && !ferramentaBloqueada && /^(sf)?\d{6}$/i.test(termoFerramenta)) setFocus('colaborador')
     // só quando uma ferramenta nova é reconhecida
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ferramenta?.id])
