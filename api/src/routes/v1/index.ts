@@ -13,6 +13,7 @@ import emprestimoRoutes from './emprestimoRoutes.js';
 import ocorrenciaRoutes from './ocorrenciaRoutes.js';
 import notificacaoRoutes from './notificacaoRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
+import kpiRoutes from './kpiRoutes.js';
 import importacaoRoutes from './importacaoRoutes.js';
 import exportacaoRoutes from './exportacaoRoutes.js';
 
@@ -33,6 +34,7 @@ router.use('/emprestimos', emprestimoRoutes);
 router.use('/ocorrencias', ocorrenciaRoutes);
 router.use('/notificacoes', notificacaoRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/kpis', kpiRoutes);
 router.use('/importacoes', importacaoRoutes);
 router.use('/exportacoes', exportacaoRoutes);
 

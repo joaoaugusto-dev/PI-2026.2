@@ -54,6 +54,7 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências (ver [Ocorrências](#ocorrências-get-e-patch-v1ocorrencias)) |
 | GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
 | GET | `/v1/dashboard` | Manutenção/Admin | Tela inicial: contadores e listas de pendências (ver [Dashboard](#dashboard-get-v1dashboard)) |
+| GET | `/v1/kpis/*` | Manutenção/Admin (colaboradores: Admin) | Onze KPIs de uso, avaria e perda, filtrados por `de`/`ate` (ver [KPIs de gestão](#kpis-de-gestão-get-v1kpis)) |
 | POST | `/v1/importacoes/:recurso` | Manutenção/Admin (categorias e setores: Admin) | Importação CSV de ferramentas, colaboradores, categorias e setores (ver [Importação e exportação CSV](#importação-e-exportação-csv)) |
 | GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
 | GET | `/v1/exportacoes/:recurso` | Manutenção/Admin | Exportação CSV de cadastros e do histórico de empréstimos |
@@ -146,6 +147,44 @@ Tudo que a tela inicial mostra, numa chamada só. Perfis `manutencao` e `admin`.
 | `indisponiveis` | Ferramentas indisponíveis com a ocorrência em andamento (`etapa`, `tipo`) e `dias_parada`. |
 
 Cada lista é `{ "total": n, "itens": [...] }` e traz só as 4 primeiras linhas (as do cartão). O "Mostrar tudo" pagina por `GET /v1/dashboard/:lista` (`cobrar_hoje`, `atrasados`, `proximos_do_prazo` ou `indisponiveis`), com `page` e `limit` (padrão 15, máximo 50) e o `meta` padrão de paginação; lista desconhecida é `400`. `dias_parada` conta desde a abertura da ocorrência em andamento; para ferramenta marcada indisponível à mão, sem ocorrência, cai na última alteração da ferramenta (`updated_at`), que muda a cada edição dela. `page` (1 a 100000) e `limit` (1 a 50) fora do intervalo ou não numéricos devolvem `400`. Contadores e as quatro listas saem de uma conexão só e do mesmo snapshot do banco (transação `REPEATABLE READ` somente leitura), então o painel é coerente entre si e a requisição ocupa 1 conexão do pool; cada página de `GET /v1/dashboard/:lista` também é um snapshot próprio, com total e linhas batendo. `kpis.atrasadas` usa a mesma definição da lista de atrasados (previsão em dia anterior), e não a da view de contadores (já passou do horário), para a barra e o cartão mostrarem o mesmo número.
+
+## KPIs de gestão (`GET /v1/kpis/*`)
+
+Issue #208. Perfis `manutencao` e `admin` (`401` sem token, `403` para `consulta`), exceto `colaboradores-que-mais-retiram`, que expõe pessoa (nome e matrícula) e é só do `admin` (`403` para `manutencao`). Fora esse, nenhum KPI devolve colaborador; nenhum devolve valores. O de setores é agregado e fica aberto à manutenção. "Categoria" é o grupo da ferramenta (`grupos_ferramentas`).
+
+**Filtros dos KPIs de período (todos menos os dois "agora"):** `de` e `ate` são obrigatórios, no formato `AAAA-MM-DD`, inclusivos e no calendário de Brasília (uma retirada às 23:30 de 31/03 conta em março). Não existe atalho de semana/mês/trimestre/ano: o front calcula o intervalo. Respondem `400 VALIDATION_ERROR` (com `details` por campo): `de` ou `ate` ausente, fora do formato, data inexistente (`2001-02-30`), `de` depois de `ate` e período acima de 366 dias. `de = ate` vale (um dia). A resposta sempre devolve o `periodo` aplicado.
+
+| Endpoint | Parâmetros além de `de`/`ate` | O que devolve |
+|---|---|---|
+| `GET /v1/kpis/ferramentas-mais-retiradas` | `limit` (padrão 10, máx. 50) | `itens`: `ferramenta_id`, `ferramenta_nome`, `codigo_identificacao`, `categoria_nome`, `total_retiradas`; da mais para a menos retirada |
+| `GET /v1/kpis/categorias-mais-utilizadas` | `limit` | `itens`: `categoria_id`, `categoria_nome`, `total_retiradas` |
+| `GET /v1/kpis/colaboradores-que-mais-retiram` | `limit` (**só admin**) | `itens`: `colaborador_id`, `colaborador_nome`, `matricula`, `setor_nome` (setor de cadastro do colaborador), `total_retiradas`; do que mais retira para o que menos |
+| `GET /v1/kpis/setores-que-mais-retiram` | `limit` | `itens`: `setor_id`, `setor_nome`, `total_retiradas`, contando pelo **setor de destino** informado na retirada (`setor_destino_id`), não pelo setor de cadastro de quem retirou |
+| `GET /v1/kpis/tempo-medio-posse` | `agrupar=categoria\|ferramenta` (padrão `categoria`), `limit`, `min_devolucoes` (padrão 1) | `itens` com `total_devolucoes`, `horas_medias` e `dias_medios`; só empréstimos **devolvidos** dentro do período; do maior para o menor tempo |
+| `GET /v1/kpis/avarias-por-categoria` | — | `total` e `itens`: `categoria_id`, `categoria_nome`, `total` (ocorrências `AVARIA` abertas no período); categoria sem avaria não aparece |
+| `GET /v1/kpis/extravios-por-categoria` | — | O mesmo, para os extravios (ocorrências do tipo `PERDA` no banco, que a tela chama de "extravio") |
+| `GET /v1/kpis/taxa-avaria` | `agrupar`, `limit`, `min_devolucoes` (padrão 1) | `itens` com `total_devolucoes`, `total_avarias`, `taxa_avaria` (0 a 1, 4 casas) e `percentual`; da maior taxa para a menor |
+| `GET /v1/kpis/evolucao` | `granularidade=dia\|semana\|mes` (padrão `dia`) | `serie`, `totais`, `periodo_anterior` e `variacao_percentual` (abaixo) |
+| `GET /v1/kpis/indisponiveis` | — (sem `de`/`ate`) | `total_cadastradas`, `total_indisponiveis`, `percentual_do_parque` e `por_motivo` (`motivo`, `total`) |
+| `GET /v1/kpis/emprestimos-abertos` | `limit` (padrão 5, máx. 50; sem `de`/`ate`) | `total`, `atrasados` e `mais_antigos` (`emprestimo_id`, ferramenta, categoria, `data_retirada`, `previsao_devolucao`, `dias_aberto`) |
+
+Resposta dos rankings (os de período seguem o mesmo molde):
+
+```json
+{ "data": { "periodo": { "de": "2026-10-01", "ate": "2026-10-31" },
+            "itens": [ { "ferramenta_id": 12, "ferramenta_nome": "Furadeira de impacto", "codigo_identificacao": 7,
+                         "categoria_nome": "Elétricas", "total_retiradas": 18 } ] } }
+```
+
+**Regras de cálculo**
+- **Retiradas** contam `data_retirada`; **devoluções**, `data_devolucao`; **ocorrências**, `created_at`. Cada KPI usa só o seu campo, então um empréstimo retirado em março e devolvido em abril entra como retirada de março e devolução de abril. Empréstimo de peça de kit conta como retirada da ferramenta (o kit).
+- **Taxa de avaria** = devoluções com `condicao_devolucao = 'avaria'` ÷ devoluções feitas no período. Devolução com `perda` conta no denominador, mas não no numerador (o extravio tem KPI próprio). Só entram grupos com pelo menos `min_devolucoes` devoluções (padrão 1, então não há divisão por zero); o filtro vale antes do `limit`. Sem um mínimo, 1 devolução com 1 avaria (100%) fica acima de 10 avarias em 50 devoluções (20%), então para ranking de ferramentas use um mínimo (por exemplo, 5). `min_devolucoes` fora de 1 a 100000 devolve `400`.
+- **Tempo médio de posse e `min_devolucoes`:** o mínimo também vale aqui e é aplicado antes do `limit`. Sem ele, uma ferramenta devolvida uma única vez, depois de muito tempo, lidera o ranking de tempo médio. `min_devolucoes` fora de 1 a 100000 devolve `400`.
+- **Fontes diferentes:** avarias e perdas por categoria e a série de ocorrências da `evolucao` contam `ocorrencias.created_at`; a taxa de avaria conta `emprestimos.data_devolucao` e `condicao_devolucao`. Hoje coincidem (o trigger abre a ocorrência na devolução), mas uma ocorrência criada por outro caminho entra nos primeiros e não na taxa.
+- **Avarias e extravios por categoria** vêm das ocorrências (aberta automaticamente na devolução, Regra 3), não de `condicao_devolucao`, e usam o tipo `AVARIA` / `PERDA`. O nome da rota é "extravio"; o valor no banco continua `PERDA` (e `perda` em `indisponiveis.por_motivo`) até a issue #181 trocar o enum.
+- **Evolução:** `serie` traz um item por dia, semana (começa na segunda) ou mês, com `inicio` (`AAAA-MM-DD`), `retiradas`, `devolucoes` e `ocorrencias`, incluindo os baldes sem movimento (zeros). O primeiro e o último balde de semana/mês podem ser parciais: só contam o que cai dentro de `de`/`ate`, então a queda do último balde não é tendência. `periodo_anterior` é a janela imediatamente antes de `de` com o mesmo número de dias; `totais` traz `atual` e `anterior`; `variacao_percentual` é `(atual - anterior) / anterior × 100` por métrica, e **`null` quando o anterior é 0** (sem base de comparação).
+- **Instantâneos:** `indisponiveis` considera só ferramentas ativas; `por_motivo` soma o total de indisponíveis (`sem_motivo` para indisponível marcada à mão sem motivo). `emprestimos-abertos` conta `atrasados` pela previsão em dia anterior (a mesma definição do dashboard) e não traz o colaborador. Os dois e a `evolucao` saem de um snapshot só do banco.
+- `limit`, `agrupar` e `granularidade` fora do aceito devolvem `400`.
 
 ## Ocorrências (`GET` e `PATCH /v1/ocorrencias`)
 
