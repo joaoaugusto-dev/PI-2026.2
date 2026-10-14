@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as kpiService from '../services/kpiService.js';
 import { sendSuccess } from '../utils/response.js';
-import type { KpiAgrupadoQuery, KpiEvolucaoQuery, KpiPeriodoQuery, KpiRankingQuery } from '../validators/kpiValidator.js';
+import type { KpiAgrupadoQuery, KpiEvolucaoQuery, KpiPeriodoQuery, KpiRankingQuery, KpiTaxaQuery } from '../validators/kpiValidator.js';
 
 // As queries chegam já validadas e convertidas pelo middleware validate (datas AAAA-MM-DD, limit numérico,
 // agrupar e granularidade com padrão), por isso aqui só se repassa ao service.
@@ -81,8 +81,8 @@ export class KpiController {
   /** GET /v1/kpis/taxa-avaria */
   static async taxaAvaria(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      const q = req.query as unknown as KpiAgrupadoQuery;
-      return sendSuccess(res, await kpiService.taxaAvaria(periodo(q), q.agrupar, q.limit));
+      const q = req.query as unknown as KpiTaxaQuery;
+      return sendSuccess(res, await kpiService.taxaAvaria(periodo(q), q.agrupar, q.limit, q.min_devolucoes));
     } catch (error) {
       return next(error);
     }

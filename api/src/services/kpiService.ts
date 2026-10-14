@@ -155,10 +155,11 @@ async function ocorrenciasPorCategoria(p: Periodo, tipo: 'AVARIA' | 'PERDA') {
 export const avariasPorCategoria = (p: Periodo) => ocorrenciasPorCategoria(p, 'AVARIA');
 export const perdasPorCategoria = (p: Periodo) => ocorrenciasPorCategoria(p, 'PERDA');
 
-export async function taxaAvaria(p: Periodo, agrupar: Agrupamento, limit: number) {
+export async function taxaAvaria(p: Periodo, agrupar: Agrupamento, limit: number, minDevolucoes = 1) {
   const a = AGRUPAMENTO[agrupar];
-  // denominador: devoluções feitas dentro do período; numerador: as que voltaram com avaria. Só entram
-  // grupos com pelo menos uma devolução, então a divisão nunca é por zero.
+  // denominador: devoluções feitas dentro do período; numerador: as que voltaram com avaria (perda não entra,
+  // tem KPI próprio). Só entram grupos com pelo menos minDevolucoes devoluções (mínimo 1, então a divisão nunca
+  // é por zero); o HAVING vale antes do LIMIT, para o ranking não ser ocupado por amostras de 1 devolução.
   const { rows } = await query(
     `SELECT ${a.colunas},
             COUNT(*) AS total_devolucoes,
@@ -168,10 +169,11 @@ export async function taxaAvaria(p: Periodo, agrupar: Agrupamento, limit: number
        JOIN grupos_ferramentas g ON g.id = f.grupo_id
       WHERE ${NOS_DIAS('e.data_devolucao', 1, 2)}
       GROUP BY ${a.grupo}
+      HAVING COUNT(*) >= $4
       ORDER BY (COUNT(*) FILTER (WHERE e.condicao_devolucao = 'avaria'))::numeric / COUNT(*) DESC,
                COUNT(*) DESC, ${a.ordem}
       LIMIT $3`,
-    [p.de, p.ate, limit]
+    [p.de, p.ate, limit, minDevolucoes]
   );
   return {
     periodo: p,

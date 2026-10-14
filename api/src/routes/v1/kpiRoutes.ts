@@ -9,6 +9,7 @@ import {
   kpiEvolucaoQuerySchema,
   kpiPeriodoQuerySchema,
   kpiRankingQuerySchema,
+  kpiTaxaQuerySchema,
 } from '../../validators/kpiValidator.js';
 
 const router = Router();
@@ -215,7 +216,10 @@ router.get('/perdas-por-categoria', ...leitura, validate({ query: kpiPeriodoQuer
  *     summary: Taxa de avaria
  *     description: >
  *       Devoluções com avaria divididas pelas devoluções feitas entre de e ate (taxa_avaria de 0 a 1 e percentual),
- *       da maior para a menor taxa. agrupar=categoria (padrão) ou ferramenta. Só entram grupos com devolução no período.
+ *       da maior para a menor taxa. agrupar=categoria (padrão) ou ferramenta. Só entram grupos com pelo menos
+ *       min_devolucoes devoluções no período (padrão 1). Sem um mínimo, 1 devolução com 1 avaria (100%) fica acima de
+ *       10 avarias em 50 devoluções (20%): para ranking de ferramentas use um mínimo (ex.: 5). Perda não conta como
+ *       avaria (ver perdas-por-categoria).
  *     tags:
  *       - KPIs
  *     security:
@@ -235,6 +239,10 @@ router.get('/perdas-por-categoria', ...leitura, validate({ query: kpiPeriodoQuer
  *         name: agrupar
  *         schema: { type: string, enum: [categoria, ferramenta], default: categoria }
  *       - in: query
+ *         name: min_devolucoes
+ *         description: Mínimo de devoluções no período para o grupo entrar no ranking (padrão 1)
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
  *         name: limit
  *         description: Itens do ranking (padrão 10, máximo 50)
  *         schema: { type: integer }
@@ -242,13 +250,13 @@ router.get('/perdas-por-categoria', ...leitura, validate({ query: kpiPeriodoQuer
  *       200:
  *         description: "{ periodo, agrupar, itens }"
  *       400:
- *         description: de/ate ausentes ou inválidos, de depois de ate, período acima de 366 dias, agrupar desconhecido ou limit fora do intervalo
+ *         description: de/ate ausentes ou inválidos, de depois de ate, período acima de 366 dias, agrupar desconhecido, min_devolucoes ou limit fora do intervalo
  *       401:
  *         description: Token inválido ou não fornecido
  *       403:
  *         description: Perfil sem permissão (consulta)
  */
-router.get('/taxa-avaria', ...leitura, validate({ query: kpiAgrupadoQuerySchema }), KpiController.taxaAvaria);
+router.get('/taxa-avaria', ...leitura, validate({ query: kpiTaxaQuerySchema }), KpiController.taxaAvaria);
 
 /**
  * @openapi
@@ -309,7 +317,8 @@ router.get('/emprestimos-abertos', ...leitura, validate({ query: kpiAbertosQuery
  *     description: >
  *       Série por dia, semana (começa na segunda) ou mês, com zero nos baldes sem movimento. Traz também os totais
  *       do período e do período anterior (mesmo número de dias, logo antes de "de") e a variação percentual
- *       (null quando o anterior é 0).
+ *       (null quando o anterior é 0). Atenção: com granularidade semana ou mes, o primeiro e o último balde podem ser
+ *       parciais (só contam os dias dentro de de/ate); não leia a queda do último balde como tendência.
  *     tags:
  *       - KPIs
  *     security:
@@ -384,7 +393,7 @@ router.get('/colaboradores-que-mais-retiram', ...somenteAdmin, validate({ query:
  *   get:
  *     summary: Setores que mais retiram no período
  *     description: >
- *       Ranking de setores de destino das retiradas (setor_destino_id do empréstimo): setor_id, setor_nome e total_retiradas. Só admin.
+ *       Ranking de setores de destino das retiradas (setor_destino_id do empréstimo, para onde a ferramenta foi, e não o setor de cadastro de quem retirou): setor_id, setor_nome e total_retiradas. Só admin.
  *     tags:
  *       - KPIs
  *     security:

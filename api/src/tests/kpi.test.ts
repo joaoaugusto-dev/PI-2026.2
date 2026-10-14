@@ -259,6 +259,19 @@ describe('KPIs de gestão (#208)', () => {
       ]);
     });
 
+    it('min_devolucoes tira do ranking os grupos com poucas devoluções antes do limit', async () => {
+      const res = await get(`taxa-avaria?${MARCO}&agrupar=ferramenta&min_devolucoes=2`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.itens).toEqual([expect.objectContaining({ ferramenta_id: ferramentaA, total_devolucoes: 3 })]);
+      // o filtro vale antes do limit: com limit 1 e mínimo 2 ainda vem a A, e não uma lista vazia por B ter ficado de fora
+      const limitado = await get(`taxa-avaria?${MARCO}&agrupar=ferramenta&min_devolucoes=2&limit=1`);
+      expect(limitado.body.data.itens).toHaveLength(1);
+      expect((await get(`taxa-avaria?${MARCO}&min_devolucoes=5`)).body.data.itens).toEqual([]);
+      for (const ruim of ['0', '-1', 'abc']) {
+        expect((await get(`taxa-avaria?${MARCO}&min_devolucoes=${ruim}`)).status, ruim).toBe(400);
+      }
+    });
+
     it('período sem devolução não divide por zero', async () => {
       const res = await get('taxa-avaria?de=1990-01-01&ate=1990-01-31');
       expect(res.status).toBe(200);
