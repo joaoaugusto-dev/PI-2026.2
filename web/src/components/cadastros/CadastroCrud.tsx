@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileUp, Inbox, Plus } from 'lucide-react'
+import { FileUp, Inbox, Loader2, Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
@@ -95,6 +95,7 @@ export function CadastroCrud<T extends { id: number }>({
   }, [location, navigate])
   const [fotoSel, setFotoSel] = useState<FotoSelecionada | null>(null)
   const enviarFoto = useEnviarFoto()
+  const [salvandoTudo, setSalvandoTudo] = useState(false) // cobre registro + compressão + envio da foto
   const [criada, setCriada] = useState<Ferramenta | null>(null)
   const [importando, setImportando] = useState(false)
   useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
@@ -123,6 +124,8 @@ export function CadastroCrud<T extends { id: number }>({
   function aoSalvar(valores: Valores) {
     const id = editando && editando !== 'novo' ? editando.id : undefined
     const arquivo = fotoSel?.tipo === 'arquivo' ? fotoSel.arquivo : null
+    if (salvandoTudo) return
+    setSalvandoTudo(true)
     salvar.mutate(
       { id, dados: paraPayload(valores, id !== undefined) },
       {
@@ -139,12 +142,16 @@ export function CadastroCrud<T extends { id: number }>({
               avisarErro(erroDaApi(e) ?? 'O cadastro foi salvo, mas não foi possível enviar a foto.')
             }
           }
+          setSalvandoTudo(false)
           setEditando(null)
           if (!id && recurso === 'ferramentas' && salvo.codigo_identificacao) {
             setCriada(salvo)
           }
         },
-        onError: (e) => avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`),
+        onError: (e) => {
+          setSalvandoTudo(false)
+          avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`)
+        },
       },
     )
   }
@@ -181,7 +188,7 @@ export function CadastroCrud<T extends { id: number }>({
 
   const botaoUnidade = (item: T, rotulo = 'Unidade') => (
     <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
-      <Plus /> {rotulo}
+      {duplicando === item.id ? <Loader2 className="animate-spin" /> : <Plus />} {rotulo}
     </Button>
   )
 
@@ -282,7 +289,7 @@ export function CadastroCrud<T extends { id: number }>({
 
       <Paginacao meta={meta} page={page} onPage={setPage} itens="registros" />
 
-      <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvar.isPending && setEditando(null)}>
+      <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvandoTudo && setEditando(null)}>
         <DialogContent className={foto ? 'sm:max-w-2xl' : undefined}>
           <DialogHeader>
             <DialogTitle>
@@ -295,7 +302,7 @@ export function CadastroCrud<T extends { id: number }>({
               campos={campos}
               schema={schema}
               valoresIniciais={editando === 'novo' ? valoresVazios : deItem(editando)}
-              salvando={salvar.isPending || enviarFoto.isPending}
+              salvando={salvandoTudo}
               onSubmit={aoSalvar}
               onCancelar={() => setEditando(null)}
               extra={
@@ -334,6 +341,7 @@ export function CadastroCrud<T extends { id: number }>({
               Cancelar
             </Button>
             <Button disabled={inativar.isPending} onClick={confirmarInativacao}>
+              {inativar.isPending && <Loader2 className="size-4 animate-spin" />}
               {rotuloInativar}
             </Button>
           </div>
