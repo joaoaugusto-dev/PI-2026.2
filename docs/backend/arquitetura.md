@@ -116,6 +116,17 @@ Responsabilidades:
 3. **Nomes resolvidos:** desde a migration `0004_papel_admin_e_auto_cadastro.sql`, `usuarios` não guarda `nome`/`email` — a conta liga a um colaborador por `usuarios.colaborador_id`, e é de lá que vem o nome. `registrada_por_nome` e `resolvida_por_nome` seguem esse join (`usuarios → colaboradores`), o mesmo padrão já usado em `vw_emprestimos_detalhe` para `usuario_retirada_nome`/`usuario_devolucao_nome`.
 4. **Extra ("se sobrar tempo"):** ao resolver uma ocorrência (na transição de entrada, não em reenvios), a API confere o status atual da ferramenta e, se ainda estiver `indisponivel`, devolve `sugestao_disponibilizar_ferramenta_id` no response — uma sugestão para o front chamar `PATCH /v1/ferramentas/:id/disponibilizar` a seguir, sem chamar essa rota por conta própria (a issue pede sugerir, não forçar).
 
+## KPIs de gestão (fluxo)
+
+Issue #208. Nove indicadores de uso, avaria e perda em `GET /v1/kpis/*`, para a gestão responder "qual ferramenta mais saiu?", "quais categorias mais se avariam ou se perdem?" em qualquer janela de tempo. Contrato completo em `docs/backend/api.md`; passo a passo do que foi feito em `docs/issues/api-208-kpis.md`.
+
+Responsabilidades:
+
+1. **Filtro sempre `de`/`ate`:** os KPIs de período não têm atalho `semana|mes|trimestre|ano`; o front calcula o intervalo e manda as datas (`AAAA-MM-DD`, inclusivas, fuso de Brasília, até 366 dias). A validação (formato, data de calendário real, `de <= ate`, janela máxima) fica em `kpiValidator.ts` e responde `400 VALIDATION_ERROR`.
+2. **Tudo agregado no SQL**, em `kpiService.ts`: o dia vale pelo calendário de Brasília e o intervalo é escrito como `coluna >= início AND coluna < fim` para o Postgres usar índice. "Categoria" é `grupos_ferramentas`. Os dois KPIs "agora" (`indisponiveis`, `emprestimos-abertos`) e a `evolucao` usam o mesmo snapshot `REPEATABLE READ` do dashboard (`emSnapshot`), para os números da resposta baterem entre si.
+3. **Perfis:** `manutencao` e `admin`; `consulta` recebe `403`. Nenhum KPI devolve colaborador nem valores (Regra 8).
+4. **Índices:** a migration `0012_indices_kpis.sql` cria `idx_emprestimos_data_devolucao` (parcial, só devolvidos) e `idx_ocorrencias_created_at`; `data_retirada` já tinha índice desde a `0011`.
+
 ## Banco
 
 O banco de dados adotado é o **PostgreSQL** (hospedado na nuvem via AWS RDS ou em infraestrutura dedicada). Todas as tabelas, tipos ENUM, triggers, constraints, views e índices parciais são mantidos nativamente via scripts SQL/migrations.
