@@ -40,6 +40,14 @@ export function useInativarCadastro(recurso: Recurso) {
 }
 
 /** `PUT /ferramentas/:id/foto`: o corpo é a imagem crua (jpeg/png/webp, até 5 MB). */
+export function useRemoverFoto() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => api.delete(`/ferramentas/${id}/foto`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ferramentas'] }),
+  })
+}
+
 export function useEnviarFoto() {
   const queryClient = useQueryClient()
   return useMutation({

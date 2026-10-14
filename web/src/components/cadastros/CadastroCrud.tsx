@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Copy, FileUp, Inbox, Loader2, Plus } from 'lucide-react'
+import { Camera, FileUp, Inbox, Loader2, Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { useEnviarFoto, useInativarCadastro, useListaCadastro, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
+import { useEnviarFoto, useInativarCadastro, useListaCadastro, useRemoverFoto, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
 import { avisarErro } from '@/lib/avisar-erro'
 import { comprimirImagem, urlDaFoto } from '@/lib/imagem'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
@@ -101,6 +101,10 @@ export function CadastroCrud<T extends { id: number }>({
   useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
   const [inativando, setInativando] = useState<T | null>(null)
   const [duplicando, setDuplicando] = useState<number | null>(null)
+  const [fotoGrupo, setFotoGrupo] = useState<T[] | null>(null)
+  const [novaFoto, setNovaFoto] = useState<FotoSelecionada | 'remover' | null>(null)
+  const [aplicandoFoto, setAplicandoFoto] = useState(false)
+  const removerFoto = useRemoverFoto()
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -186,41 +190,59 @@ export function CadastroCrud<T extends { id: number }>({
       .finally(() => setDuplicando(null)) // só libera o botão depois da foto
   }
 
-  // "Copiar foto": manda a foto desta unidade para as outras do mesmo grupo (sobrescreve a delas)
-  async function copiarFotoParaIrmas(item: T, irmas: T[]) {
-    setDuplicando(item.id)
+  // "Foto": a foto vale para o grupo inteiro (ou a unidade avulsa) e é gravada em cada unidade
+  const fotoDoGrupo = fotoGrupo?.find((i) => (i as { foto_url?: string | null }).foto_url)
+  const fotoDoGrupoAtual = fotoDoGrupo ? fotoAtual(fotoDoGrupo) : null
+  const fotoExibida = novaFoto === 'remover' ? null : (novaFoto ?? fotoDoGrupoAtual)
+
+  function fecharFotoGrupo() {
+    setFotoGrupo(null)
+    setNovaFoto(null)
+  }
+
+  async function aplicarFotoGrupo() {
+    if (!fotoGrupo || !novaFoto) return
+    setAplicandoFoto(true)
     try {
-      const imagem = await (await fetch(urlDaFoto((item as { foto_url?: string | null }).foto_url!))).blob()
-      await Promise.all(irmas.map((o) => enviarFoto.mutateAsync({ id: o.id, imagem })))
-      toast.success(`Foto copiada para ${irmas.length} ${irmas.length === 1 ? 'unidade' : 'unidades'}.`)
-    } catch {
-      avisarErro('Não foi possível copiar a foto para as outras unidades.')
+      if (novaFoto === 'remover') {
+        await Promise.all(fotoGrupo.filter((i) => (i as { foto_url?: string | null }).foto_url).map((i) => removerFoto.mutateAsync(i.id)))
+        toast.success('Foto removida.')
+      } else if (novaFoto.tipo === 'arquivo') {
+        const imagem = await comprimirImagem(novaFoto.arquivo)
+        await Promise.all(fotoGrupo.map((i) => enviarFoto.mutateAsync({ id: i.id, imagem })))
+        toast.success(fotoGrupo.length > 1 ? 'Foto aplicada ao grupo.' : 'Foto atualizada.')
+      }
+      fecharFotoGrupo()
+    } catch (e) {
+      avisarErro(erroDaApi(e) ?? 'Não foi possível salvar a foto.')
     } finally {
-      setDuplicando(null)
+      setAplicandoFoto(false)
     }
   }
 
+  const botaoFoto = (itens: T[]) =>
+    foto && (
+      <Button size="sm" variant="outline" onClick={() => setFotoGrupo(itens)}>
+        <Camera /> Foto
+      </Button>
+    )
+
   const botaoUnidade = (item: T, rotulo = 'Unidade') => (
-    <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
-      {duplicando === item.id ? <Loader2 className="animate-spin" /> : <Plus />} {rotulo}
-    </Button>
+    <>
+      {botaoFoto(porChave.get(agrupar?.chave(item) ?? '') ?? [item])}
+      <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
+        {duplicando === item.id ? <Loader2 className="animate-spin" /> : <Plus />} {rotulo}
+      </Button>
+    </>
   )
 
   const porChave = new Map<string, T[]>()
   if (agrupar) for (const i of linhas) porChave.set(agrupar.chave(i), [...(porChave.get(agrupar.chave(i)) ?? []), i])
   const grupos: T[][] = [...porChave.values()]
 
-  const botoesUnidade = (item: T, comUnidade: boolean) => {
-    const irmas = (porChave.get(agrupar?.chave(item) ?? '') ?? []).filter((o) => o.id !== item.id)
-    const temFoto = foto && (item as { foto_url?: string | null }).foto_url && irmas.length > 0
-    return (
+  const botoesUnidade = (item: T, comUnidade: boolean) => (
     <>
       {comUnidade && botaoUnidade(item)}
-      {temFoto && (
-        <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => copiarFotoParaIrmas(item, irmas)}>
-          <Copy /> Copiar foto
-        </Button>
-      )}
       {acoesLinha?.(item)}
       <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
         Editar
@@ -229,8 +251,7 @@ export function CadastroCrud<T extends { id: number }>({
         {rotuloInativar}
       </Button>
     </>
-    )
-  }
+  )
 
   function confirmarInativacao() {
     if (!inativando) return
@@ -340,6 +361,33 @@ export function CadastroCrud<T extends { id: number }>({
               }
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={fotoGrupo !== null} onOpenChange={(a) => !a && !aplicandoFoto && fecharFotoGrupo()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto da ferramenta</DialogTitle>
+            <DialogDescription>
+              {fotoGrupo && fotoGrupo.length > 1
+                ? `Vale para as ${fotoGrupo.length} unidades do grupo.`
+                : 'Escolha, troque ou remova a foto.'}
+            </DialogDescription>
+          </DialogHeader>
+          <SeletorFoto
+            semUrl
+            value={fotoExibida}
+            onChange={(f) => setNovaFoto(f ?? (novaFoto && novaFoto !== 'remover' ? null : 'remover'))}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={aplicandoFoto} onClick={fecharFotoGrupo}>
+              Cancelar
+            </Button>
+            <Button disabled={novaFoto === null || aplicandoFoto} onClick={aplicarFotoGrupo}>
+              {aplicandoFoto && <Loader2 className="size-4 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
