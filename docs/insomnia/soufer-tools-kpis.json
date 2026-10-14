@@ -11,7 +11,7 @@
       "modified": 1790400000000,
       "created": 1790400000000,
       "name": "SOUFER Tools — KPIs de gestão",
-      "description": "# Testes da API SOUFER Tools — KPIs de gestão (issue #208)\nColeção de testes manuais e automáticos de `GET /v1/kpis/*`: 11 KPIs de uso, avaria e perda, sempre filtrados por `de` e `ate` (`AAAA-MM-DD`), exceto os dois \"agora\" (`indisponiveis` e `emprestimos-abertos`).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma. A coleção só lê dados: não cria nem altera nada no banco.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url`, `de` e `ate` (período dos testes, pode ser mudado), `token` e `token_consulta` (gravados por script na pasta 1) e `token_admin` (**manual**: faça `POST /auth/login` com um usuário `admin` e cole o `token`; só a pasta 4 e as requisições de admin dependem dele).\n\n**Perfis:** `manutencao` e `admin` acessam os KPIs; `consulta` recebe 403. `colaboradores-que-mais-retiram` e `setores-que-mais-retiram` são só do `admin`.\n\nOs testes conferem estrutura e regras (ordem, somas, limites, tipos), não números fixos, porque o banco de teste muda. Contrato completo em `docs/backend/api.md`.",
+      "description": "# Testes da API SOUFER Tools — KPIs de gestão (issue #208)\nColeção de testes manuais e automáticos de `GET /v1/kpis/*`: 11 KPIs de uso, avaria e perda, sempre filtrados por `de` e `ate` (`AAAA-MM-DD`), exceto os dois \"agora\" (`indisponiveis` e `emprestimos-abertos`).\n\n**Como usar:** suba a API (`npm run dev` em `api/`), rode a pasta 1 (autenticação) e depois as pastas na ordem, pelo Collection Runner ou uma a uma. A coleção só lê dados: não cria nem altera nada no banco.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url`, `de` e `ate` (período dos testes, pode ser mudado), `token`, `token_admin` e `token_consulta` (os três gravados por script na pasta 1, a partir do seed: manutenção 0001, admin 0053 e consulta 0003).\n\n**Perfis:** `manutencao` e `admin` acessam os KPIs; `consulta` recebe 403. `colaboradores-que-mais-retiram` e `setores-que-mais-retiram` são só do `admin`.\n\nOs testes conferem estrutura e regras (ordem, somas, limites, tipos), não números fixos, porque o banco de teste muda. Contrato completo em `docs/backend/api.md`.",
       "scope": "collection"
     },
     {
@@ -41,7 +41,7 @@
       "modified": 1790400000000,
       "created": 1790400000000,
       "name": "1 — Autenticação",
-      "description": "Obtém os tokens usados pelo resto da coleção: manutenção (login) e consulta (sessão por matrícula). O token do admin é colado à mão em `token_admin`.",
+      "description": "Obtém os tokens usados pelo resto da coleção: manutenção e admin (login por matrícula) e consulta (sessão por matrícula). Os três são gravados por script.",
       "environment": {},
       "environmentPropertyOrder": null,
       "metaSortKey": 1000
@@ -116,20 +116,25 @@
       "parentId": "fld_1",
       "modified": 1790400000000,
       "created": 1790400000000,
-      "name": "03 — Conferir o token do admin — 200",
-      "description": "## O que faz\nChama um KPI simples com o `token_admin` para confirmar que ele foi colado e é de um admin.\n\n## Por que existe\nA pasta 4 e as requisições de admin dependem desse token, que não é gerado por script (o seed não cria admin).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/kpis/indisponiveis`\n- **Autenticação:** Bearer Token = `token_admin`.\n- **Variáveis lidas:** `base_url`, `token_admin`\n\n## Resultado esperado\nHTTP 200 com o resumo de indisponíveis.\n\n## Testes automáticos\n- Status HTTP 200\n\n## Observações\nSe der 401, faça `POST /v1/auth/login` com um usuário admin (por exemplo, matrícula 0053) e cole o `token` no ambiente, em `token_admin`.",
-      "method": "GET",
-      "url": "{{ _.base_url }}/kpis/indisponiveis",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {
-        "type": "bearer",
-        "token": "{{ _.token_admin }}"
+      "name": "03 — Login do admin — 200",
+      "description": "## O que faz\nAutentica o admin por matrícula e devolve um token JWT.\n\n## Por que existe\nOs KPIs de colaboradores e setores são só do admin, e a pasta 4 e duas requisições da pasta 8 usam este token.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula e senha do admin criado pelo seed (`0053` / `123456`).\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token_admin`\n\n## Resultado esperado\nHTTP 200 com `data.token` e `data.usuario` (perfil `admin`).\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é admin\n\n## Observações\nRequer o seed (`npm run db:seed`). Se o seu banco não tem o admin 0053, troque a matrícula e a senha do corpo por as de um admin existente (ou crie um com `npm run db:admin`).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0053\",\n  \"senha\": \"123456\"\n}"
       },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
       "metaSortKey": 3000,
       "isPrivate": false,
-      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n",
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é admin\", () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('admin');\n});\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_admin', String(corpo.data.token));\n}\n",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
@@ -411,7 +416,7 @@
       "modified": 1790400000000,
       "created": 1790400000000,
       "name": "4 — Colaboradores e setores (só admin)",
-      "description": "Os dois KPIs que expõem pessoas e setores. Exigem `token_admin` (colado à mão); a manutenção recebe 403 (pasta 8).",
+      "description": "Os dois KPIs que expõem pessoas e setores. Exigem `token_admin` (requisição 03); a manutenção recebe 403 (pasta 8).",
       "environment": {},
       "environmentPropertyOrder": null,
       "metaSortKey": 4000

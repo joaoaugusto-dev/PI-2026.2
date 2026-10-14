@@ -133,7 +133,7 @@ no Windows; os 9 testes dele passam e o erro não tem relação com os KPIs.
 
 ## Como testar à mão (Insomnia/Swagger)
 
-Há uma coleção pronta em [`docs/insomnia/soufer-tools-kpis.json`](../insomnia/soufer-tools-kpis.json), com o passo a passo em [`teste-api-kpis.md`](../insomnia/teste-api-kpis.md): 40 requisições (sucesso, erros de filtro e permissões) e 119 testes automáticos. Rodei a coleção inteira contra a API local com o seed, sem falhas.
+Há uma coleção pronta em [`docs/insomnia/soufer-tools-kpis.json`](../insomnia/soufer-tools-kpis.json), com o passo a passo em [`teste-api-kpis.md`](../insomnia/teste-api-kpis.md): 40 requisições (sucesso, erros de filtro e permissões) e 121 testes automáticos. Rodei a coleção inteira contra a API local com o seed, sem falhas.
 
 1. Login em `/v1/auth/login` com um usuário `manutencao` ou `admin` e copiar o token.
 2. Chamar os exemplos acima com `Authorization: Bearer <token>`; o Swagger fica em `/docs`, tag **KPIs**.

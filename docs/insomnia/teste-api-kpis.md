@@ -25,18 +25,16 @@ npm run db:seed
 npm run dev
 ```
 
-O seed cria a manutenção `0001` / `123456` e o colaborador `0003` (usado na sessão de
-consulta). O seed **não cria admin**: veja o passo do `token_admin` abaixo.
+O seed cria a manutenção `0001` / `123456`, o admin `0053` / `123456` e o colaborador `0003`
+(usado na sessão de consulta). Se o seu banco tiver outro admin, troque a matrícula e a senha
+do corpo da requisição 03.
 
 ## 2. Importar e rodar
 
 1. No Insomnia, **Import** → `docs/insomnia/soufer-tools-kpis.json`.
 2. Abra **SOUFER Tools — KPIs de gestão**: 8 pastas e 40 requisições numeradas de 01 a 40.
-3. **Token do admin (manual):** faça `POST /v1/auth/login` com um usuário `admin`
-   (por exemplo, matrícula 0053) e cole o `token` retornado na variável `token_admin` do
-   Base Environment. Ele só é usado pela pasta 4 e por duas requisições da pasta 8.
-4. Rode a pasta 1 primeiro e depois as demais na ordem (Collection Runner ou uma a uma).
-   Cada execução completa tem 119 testes automáticos.
+3. Rode a pasta 1 primeiro (ela grava os três tokens) e depois as demais na ordem
+   (Collection Runner ou uma a uma). Cada execução completa tem 121 testes automáticos.
 
 Variáveis do Base Environment:
 
@@ -46,13 +44,13 @@ Variáveis do Base Environment:
 | `de` e `ate` | já vêm (`2026-01-01` e `2026-12-31`) | período dos KPIs; edite para testar semana, mês, trimestre ou outro intervalo |
 | `token` | script da requisição 01 | manutenção |
 | `token_consulta` | script da requisição 02 | consulta (expira em 15 minutos) |
-| `token_admin` | **manual** | admin |
+| `token_admin` | script da requisição 03 | admin |
 
 ## 3. O que cada pasta prova
 
 | Pasta | Prova |
 |---|---|
-| 1 · Autenticação | Login da manutenção, sessão de consulta e conferência do `token_admin`. |
+| 1 · Autenticação | Login da manutenção, sessão de consulta e login do admin. |
 | 2 · Uso das ferramentas | Ferramentas e categorias mais retiradas (ordem, `limit`) e tempo médio de posse por categoria e por ferramenta. |
 | 3 · Avarias, perdas e taxa | Avarias e perdas por categoria (total igual à soma dos itens) e taxa de avaria (taxa entre 0 e 1, `min_devolucoes`). |
 | 4 · Colaboradores e setores (só admin) | Os dois rankings de pessoas e setores, o `limit` e a ausência de valores na resposta. |
