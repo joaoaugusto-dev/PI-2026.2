@@ -51,7 +51,7 @@ const agrupar = z.enum(['ferramenta', 'categoria'], {
 // GET /kpis/ferramentas-mais-retiradas e /kpis/categorias-mais-utilizadas
 export const kpiRankingQuerySchema = periodoBase.extend({ limit: limite }).superRefine(validarPeriodo);
 
-// GET /kpis/avarias-por-categoria e /kpis/perdas-por-categoria (agrupam todas as categorias, sem limit)
+// GET /kpis/avarias-por-categoria e /kpis/extravios-por-categoria (agrupam todas as categorias, sem limit)
 export const kpiPeriodoQuerySchema = periodoBase.superRefine(validarPeriodo);
 
 // GET /kpis/tempo-medio-posse e /kpis/taxa-avaria. min_devolucoes evita que um grupo com 1 devolução apareça no topo:

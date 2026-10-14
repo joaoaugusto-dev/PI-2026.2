@@ -68,11 +68,11 @@ export class KpiController {
     }
   }
 
-  /** GET /v1/kpis/perdas-por-categoria */
-  static async perdasPorCategoria(req: Request, res: Response, next: NextFunction): Promise<any> {
+  /** GET /v1/kpis/extravios-por-categoria */
+  static async extraviosPorCategoria(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const q = req.query as unknown as KpiPeriodoQuery;
-      return sendSuccess(res, await kpiService.perdasPorCategoria(periodo(q)));
+      return sendSuccess(res, await kpiService.extraviosPorCategoria(periodo(q)));
     } catch (error) {
       return next(error);
     }

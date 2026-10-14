@@ -157,7 +157,7 @@ async function ocorrenciasPorCategoria(p: Periodo, tipo: 'AVARIA' | 'PERDA') {
 }
 
 export const avariasPorCategoria = (p: Periodo) => ocorrenciasPorCategoria(p, 'AVARIA');
-export const perdasPorCategoria = (p: Periodo) => ocorrenciasPorCategoria(p, 'PERDA');
+export const extraviosPorCategoria = (p: Periodo) => ocorrenciasPorCategoria(p, 'PERDA');
 
 export async function taxaAvaria(p: Periodo, agrupar: Agrupamento, limit: number, minDevolucoes = 1) {
   const a = AGRUPAMENTO[agrupar];

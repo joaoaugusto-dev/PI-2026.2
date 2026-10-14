@@ -15,7 +15,7 @@ const router = Router();
 
 // KPIs de gestão (issue #208). Só manutenção e admin: o perfil consulta nunca vê. Os de período exigem
 // de/ate (AAAA-MM-DD, inclusivos, fuso de Brasília, até 366 dias); os dois "agora" não têm período.
-// Os que expõem pessoas (colaboradores) e o de setores são só do admin.
+// O que expõe pessoas (colaboradores-que-mais-retiram) é só do admin; o de setores é agregado e segue aberto à manutenção.
 const leitura = [authenticate, authorize('manutencao', 'admin')];
 const somenteAdmin = [authenticate, authorize('admin')];
 
@@ -181,12 +181,13 @@ router.get('/avarias-por-categoria', ...leitura, validate({ query: kpiPeriodoQue
 
 /**
  * @openapi
- * /kpis/perdas-por-categoria:
+ * /kpis/extravios-por-categoria:
  *   get:
- *     summary: Ocorrências de perda por categoria
+ *     summary: Extravios por categoria
  *     description: >
- *       Total de ocorrências do tipo PERDA abertas entre de e ate, por categoria (da que mais perde para a que
- *       menos), e a soma geral em total. Categorias sem perda no período não aparecem.
+ *       Total de ocorrências de extravio (tipo PERDA no banco, o que a tela chama de "extravio") abertas entre de e
+ *       ate, por categoria (da que mais extravia para a que menos), e a soma geral em total. Categorias sem extravio
+ *       no período não aparecem.
  *     tags:
  *       - KPIs
  *     security:
@@ -212,7 +213,7 @@ router.get('/avarias-por-categoria', ...leitura, validate({ query: kpiPeriodoQue
  *       403:
  *         description: Perfil sem permissão (consulta)
  */
-router.get('/perdas-por-categoria', ...leitura, validate({ query: kpiPeriodoQuerySchema }), KpiController.perdasPorCategoria);
+router.get('/extravios-por-categoria', ...leitura, validate({ query: kpiPeriodoQuerySchema }), KpiController.extraviosPorCategoria);
 
 /**
  * @openapi
@@ -224,7 +225,7 @@ router.get('/perdas-por-categoria', ...leitura, validate({ query: kpiPeriodoQuer
  *       da maior para a menor taxa. agrupar=categoria (padrão) ou ferramenta. Só entram grupos com pelo menos
  *       min_devolucoes devoluções no período (padrão 1). Sem um mínimo, 1 devolução com 1 avaria (100%) fica acima de
  *       10 avarias em 50 devoluções (20%): para ranking de ferramentas use um mínimo (ex.: 5). Perda não conta como
- *       avaria (ver perdas-por-categoria).
+ *       avaria (ver extravios-por-categoria).
  *     tags:
  *       - KPIs
  *     security:
@@ -398,7 +399,7 @@ router.get('/colaboradores-que-mais-retiram', ...somenteAdmin, validate({ query:
  *   get:
  *     summary: Setores que mais retiram no período
  *     description: >
- *       Ranking de setores de destino das retiradas (setor_destino_id do empréstimo, para onde a ferramenta foi, e não o setor de cadastro de quem retirou): setor_id, setor_nome e total_retiradas. Só admin.
+ *       Ranking de setores de destino das retiradas (setor_destino_id do empréstimo, para onde a ferramenta foi, e não o setor de cadastro de quem retirou): setor_id, setor_nome e total_retiradas.
  *     tags:
  *       - KPIs
  *     security:
@@ -426,8 +427,8 @@ router.get('/colaboradores-que-mais-retiram', ...somenteAdmin, validate({ query:
  *       401:
  *         description: Token inválido ou não fornecido
  *       403:
- *         description: Só admin
+ *         description: Perfil sem permissão (consulta)
  */
-router.get('/setores-que-mais-retiram', ...somenteAdmin, validate({ query: kpiRankingQuerySchema }), KpiController.setoresQueMaisRetiram);
+router.get('/setores-que-mais-retiram', ...leitura, validate({ query: kpiRankingQuerySchema }), KpiController.setoresQueMaisRetiram);
 
 export default router;
