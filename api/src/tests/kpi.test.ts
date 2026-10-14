@@ -25,7 +25,7 @@ const ROTAS_COM_PERIODO = [
   'categorias-mais-utilizadas',
   'tempo-medio-posse',
   'avarias-por-categoria',
-  'perdas-por-categoria',
+  'extravios-por-categoria',
   'taxa-avaria',
   'evolucao',
 ];
@@ -250,8 +250,8 @@ describe('KPIs de gestão (#208)', () => {
       expect(res.body.data.itens).toEqual([{ categoria_id: categoriaId, categoria_nome: `${PREFIXO}Categoria`, total: 2 }]);
     });
 
-    it('perdas por categoria contam só o tipo PERDA', async () => {
-      const res = await get(`perdas-por-categoria?${MARCO}`);
+    it('extravios por categoria contam só o tipo PERDA (extravio)', async () => {
+      const res = await get(`extravios-por-categoria?${MARCO}`);
       expect(res.body.data.total).toBe(1);
       expect(res.body.data.itens).toEqual([{ categoria_id: categoriaId, categoria_nome: `${PREFIXO}Categoria`, total: 1 }]);
     });
@@ -363,7 +363,7 @@ describe('KPIs de gestão (#208)', () => {
   });
 });
 
-// Colaboradores e setores que mais retiram: só admin (expõem pessoas). Dados próprios em maio de 2002, com
+// Colaboradores e setores que mais retiram: colaboradores só admin (expõe pessoas); setores também para a manutenção. Dados próprios em maio de 2002, com
 // colaboradores e setores criados aqui, para o ranking e a ordem não dependerem do que já existe no banco.
 describe('KPIs de colaboradores e setores (#208)', () => {
   const PREFIXO_P = 'ZZTESTE_KPI208P_';
@@ -416,13 +416,20 @@ describe('KPIs de colaboradores e setores (#208)', () => {
     await query('DELETE FROM grupos_ferramentas WHERE nome LIKE $1', [`${PREFIXO_P}%`]);
   });
 
-  it('só admin: manutenção e consulta recebem 403 e sem token 401', async () => {
-    for (const rota of ['colaboradores-que-mais-retiram', 'setores-que-mais-retiram']) {
-      expect((await get(`${rota}?${MAIO}`, null)).status, rota).toBe(401);
-      expect((await get(`${rota}?${MAIO}`, 'manutencao')).status, rota).toBe(403);
-      expect((await get(`${rota}?${MAIO}`, 'consulta')).status, rota).toBe(403);
-      expect((await get(`${rota}?${MAIO}`, 'admin')).status, rota).toBe(200);
-    }
+  it('colaboradores: só admin (manutenção e consulta recebem 403, sem token 401)', async () => {
+    const rota = 'colaboradores-que-mais-retiram';
+    expect((await get(`${rota}?${MAIO}`, null)).status).toBe(401);
+    expect((await get(`${rota}?${MAIO}`, 'manutencao')).status).toBe(403);
+    expect((await get(`${rota}?${MAIO}`, 'consulta')).status).toBe(403);
+    expect((await get(`${rota}?${MAIO}`, 'admin')).status).toBe(200);
+  });
+
+  it('setores: manutenção e admin passam; consulta recebe 403 e sem token 401', async () => {
+    const rota = 'setores-que-mais-retiram';
+    expect((await get(`${rota}?${MAIO}`, null)).status).toBe(401);
+    expect((await get(`${rota}?${MAIO}`, 'consulta')).status).toBe(403);
+    expect((await get(`${rota}?${MAIO}`, 'manutencao')).status).toBe(200);
+    expect((await get(`${rota}?${MAIO}`, 'admin')).status).toBe(200);
   });
 
   it('exigem de/ate e validam limit, como os demais KPIs de período', async () => {
