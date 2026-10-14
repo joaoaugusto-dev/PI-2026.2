@@ -129,8 +129,8 @@ não filhas do layout autenticado.
   campo padrão = `--control-h` (56px); `size="sm"` = 44px (mínimo de toque, para
   ação em linha de tabela); ícones `icon`/`icon-sm` = 44px, `icon-lg` = 56px. Não
   repassar `h-8`/`h-9` na chamada; controle nativo solto (`<select>`, `<label>`
-  de upload) usa `h-(--control-h)`. Linha com muitas ações mostra só o ícone
-  abaixo de `2xl` (com `title` + `aria-label`), como em Colaboradores.
+  de upload) usa `h-(--control-h)`. Botão de ação em linha sempre leva texto (ícone sozinho
+  não diz o que faz); abaixo de `2xl` o cartão de cadastro empilha e os botões vão em grade.
 - **Movimento e animação (FE-01)** ficam centralizados em `src/index.css`:
   - **Regra de 60fps:** animação só toca `transform` e `opacity` — as duas
     propriedades que o compositor resolve sem layout nem repaint. Nunca
