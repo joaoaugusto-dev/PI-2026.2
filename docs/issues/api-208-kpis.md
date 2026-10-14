@@ -27,7 +27,7 @@ período recebe `de` e `ate` (`AAAA-MM-DD`); não existe atalho de semana, mês,
 | Dados sensíveis | Nenhum KPI devolve valores. Os dois de pessoas e setores (adicionados depois do MVP) são só do `admin` | Ranking de colaboradores expõe quem retira mais e a matrícula, então fica restrito ao admin, e o de setores acompanha para manter os dois juntos |
 | Setor | Setor de destino da retirada (`setor_destino_id`) | É para onde a ferramenta foi; o setor de cadastro do colaborador pode ser outro |
 | Coerência dos números | `indisponiveis`, `emprestimos-abertos` e `evolucao` usam o `emSnapshot` do dashboard (`REPEATABLE READ` somente leitura) | Totais e linhas da mesma resposta saem do mesmo retrato do banco |
-| Taxa de avaria e mínimo | `min_devolucoes` (padrão 1) filtra por quantidade de devoluções antes do `limit` | Apontado na revisão do PR: sem mínimo, 1 devolução com 1 avaria (100%) passa na frente de 10 em 50 (20%). O padrão 1 mantém o comportamento original |
+| Mínimo de devoluções | `min_devolucoes` (padrão 1) na taxa de avaria e no tempo médio de posse, aplicado antes do `limit` | Apontado na revisão do PR: sem mínimo, 1 devolução com 1 avaria (100%) passa na frente de 10 em 50 (20%), e uma ferramenta devolvida uma vez, depois de muito tempo, lidera o tempo médio. O padrão 1 mantém o comportamento original |
 | Perda na taxa | Perda conta no denominador (devolução) e fica fora do numerador | O KPI é de avaria; a perda tem `perdas-por-categoria` |
 | Fontes de data | Ocorrências por `created_at`; taxa por `data_devolucao` | Hoje coincidem (o trigger abre a ocorrência na devolução), mas ocorrência criada por outro caminho entra nos KPIs de ocorrência e não na taxa |
 | Setor só admin | Mantido admin-only junto com o de colaboradores | Decisão a confirmar com o time: o dado de setor não é pessoal e poderia ficar aberto à manutenção |
@@ -106,7 +106,7 @@ sequencial; os índices passam a valer quando a tabela crescer. A migration já 
 
 ## Testes
 
-[kpi.test.ts](../../api/src/tests/kpi.test.ts), 28 casos, Vitest + Supertest. Os dados são criados pelo próprio teste em
+[kpi.test.ts](../../api/src/tests/kpi.test.ts), 29 casos, Vitest + Supertest. Os dados são criados pelo próprio teste em
 março de 2001 (categoria e ferramentas com o prefixo `ZZTESTE_KPI208_`, apagadas no `afterAll`), então as contas não
 dependem do que já existe no banco nem de outros arquivos de teste:
 
@@ -125,15 +125,16 @@ dependem do que já existe no banco nem de outros arquivos de teste:
 
 - **Colaboradores e setores (só admin):** `401` sem token, `403` para manutenção e consulta, `200` para admin; `400` sem `de`/`ate`, `de` depois de `ate` e `limit` 51; ordem e contagem (P com 4 retiradas e Q com 1; setor X com 3 e Y com 2, mostrando que o setor vem do destino da retirada, não do cadastro); `limit`; período vazio. Colaboradores e setores são criados no próprio teste (maio de 2002) e apagados no `afterAll`.
 
+- **Tempo médio com `min_devolucoes`:** o mesmo mínimo tira do ranking as ferramentas com poucas devoluções antes do `limit`, e `0`, `-1` e `abc` dão `400`.
 - **Taxa com `min_devolucoes`:** o mínimo tira do ranking as ferramentas com poucas devoluções antes do `limit`, e valores `0`, `-1` e `abc` dão `400`.
 
-Resultado: `kpi.test.ts` 28/28 e `tsc --noEmit` sem erro. Na suíte completa, 36 arquivos passaram (377 testes) e
+Resultado: `kpi.test.ts` 29/29 e `tsc --noEmit` sem erro. Na suíte completa, 36 arquivos passaram (377 testes) e
 `ferramentaFoto.test.ts` falhou só no `afterAll`, com `EPERM` ao apagar a pasta temporária `C:\tmp\soufer-uploads-teste-*`
 no Windows; os 9 testes dele passam e o erro não tem relação com os KPIs.
 
 ## Como testar à mão (Insomnia/Swagger)
 
-Há uma coleção pronta em [`docs/insomnia/soufer-tools-kpis.json`](../insomnia/soufer-tools-kpis.json), com o passo a passo em [`teste-api-kpis.md`](../insomnia/teste-api-kpis.md): 40 requisições (sucesso, erros de filtro e permissões) e 121 testes automáticos. Rodei a coleção inteira contra a API local com o seed, sem falhas.
+Há uma coleção pronta em [`docs/insomnia/soufer-tools-kpis.json`](../insomnia/soufer-tools-kpis.json), com o passo a passo em [`teste-api-kpis.md`](../insomnia/teste-api-kpis.md): 41 requisições (sucesso, erros de filtro e permissões) e 124 testes automáticos. Rodei a coleção inteira contra a API local com o seed, sem falhas.
 
 1. Login em `/v1/auth/login` com um usuário `manutencao` ou `admin` e copiar o token.
 2. Chamar os exemplos acima com `Authorization: Bearer <token>`; o Swagger fica em `/docs`, tag **KPIs**.

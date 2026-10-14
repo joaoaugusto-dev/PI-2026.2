@@ -32,9 +32,9 @@ do corpo da requisição 03.
 ## 2. Importar e rodar
 
 1. No Insomnia, **Import** → `docs/insomnia/soufer-tools-kpis.json`.
-2. Abra **SOUFER Tools — KPIs de gestão**: 8 pastas e 40 requisições numeradas de 01 a 40.
+2. Abra **SOUFER Tools — KPIs de gestão**: 8 pastas e 41 requisições numeradas de 01 a 41.
 3. Rode a pasta 1 primeiro (ela grava os três tokens) e depois as demais na ordem
-   (Collection Runner ou uma a uma). Cada execução completa tem 121 testes automáticos.
+   (Collection Runner ou uma a uma). Cada execução completa tem 124 testes automáticos.
 
 Variáveis do Base Environment:
 
