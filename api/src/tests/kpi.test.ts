@@ -227,6 +227,21 @@ describe('KPIs de gestão (#208)', () => {
     });
   });
 
+  describe('tempo médio de posse com mínimo de devoluções', () => {
+    it('min_devolucoes tira do ranking os grupos com poucas devoluções antes do limit', async () => {
+      const res = await get(`tempo-medio-posse?${MARCO}&agrupar=ferramenta&min_devolucoes=2`);
+      expect(res.status).toBe(200);
+      // só a A (3 devoluções) passa; a B tem 1 e ficaria de fora mesmo com limit=1
+      expect(res.body.data.itens).toEqual([expect.objectContaining({ ferramenta_id: ferramentaA, total_devolucoes: 3 })]);
+      const limitado = await get(`tempo-medio-posse?${MARCO}&agrupar=ferramenta&min_devolucoes=2&limit=1`);
+      expect(limitado.body.data.itens).toHaveLength(1);
+      expect((await get(`tempo-medio-posse?${MARCO}&min_devolucoes=5`)).body.data.itens).toEqual([]);
+      for (const ruim of ['0', '-1', 'abc']) {
+        expect((await get(`tempo-medio-posse?${MARCO}&min_devolucoes=${ruim}`)).status, ruim).toBe(400);
+      }
+    });
+  });
+
   describe('avarias, perdas e taxa', () => {
     it('avarias por categoria contam só o tipo AVARIA aberto dentro do período', async () => {
       const res = await get(`avarias-por-categoria?${MARCO}`);
