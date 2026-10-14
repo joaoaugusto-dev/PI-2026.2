@@ -2,6 +2,7 @@ import { Camera, Link2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { RecortadorFoto } from './RecortadorFoto'
 
 export type FotoSelecionada = { tipo: 'arquivo'; arquivo: File } | { tipo: 'url'; url: string }
 
@@ -26,6 +27,15 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
   const inputRef = useRef<HTMLInputElement>(null)
   const [urlInput, setUrlInput] = useState('')
   const [previewArquivo, setPreviewArquivo] = useState<string | null>(null)
+  const [paraRecortar, setParaRecortar] = useState<File | null>(null)
+  const [urlRecorte, setUrlRecorte] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!paraRecortar) return setUrlRecorte(null)
+    const url = URL.createObjectURL(paraRecortar)
+    setUrlRecorte(url)
+    return () => URL.revokeObjectURL(url)
+  }, [paraRecortar])
 
   useEffect(() => {
     if (value?.tipo !== 'arquivo') {
@@ -49,6 +59,15 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-sm font-medium">Foto</span>
+      <RecortadorFoto
+        arquivo={paraRecortar}
+        previewUrl={urlRecorte}
+        onCancelar={() => setParaRecortar(null)}
+        onConfirmar={(arquivo) => {
+          onChange({ tipo: 'arquivo', arquivo })
+          setParaRecortar(null)
+        }}
+      />
       <input
         ref={inputRef}
         type="file"
@@ -56,7 +75,8 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
         className="hidden"
         onChange={(e) => {
           const arquivo = e.target.files?.[0]
-          if (arquivo) onChange({ tipo: 'arquivo', arquivo })
+          if (arquivo) setParaRecortar(arquivo)
+          e.target.value = '' // permite escolher o mesmo arquivo de novo
         }}
       />
 
