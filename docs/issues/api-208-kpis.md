@@ -24,13 +24,14 @@ período recebe `de` e `ate` (`AAAA-MM-DD`); não existe atalho de semana, mês,
 | Avarias e perdas | Vêm de `ocorrencias` (`tipo` `AVARIA` / `PERDA`), abertas pelo trigger na devolução (Regra 3) | É a fonte de verdade das tratativas. Foi mantido "perda" porque o banco ainda usa esse nome (as issues #180 e #181 tratam do renome para "extravio") |
 | Taxa de avaria | Devoluções com `condicao_devolucao = 'avaria'` ÷ devoluções feitas no período | O denominador é o que foi devolvido no período, não o que foi retirado, porque a condição só existe na devolução |
 | Acesso | `manutencao` e `admin`; `consulta` recebe `403` | Regra 8: o admin faz tudo o que a manutenção faz, e a consulta nunca vê histórico |
-| Dados sensíveis | Nenhum KPI devolve valores. Os dois de pessoas e setores (adicionados depois do MVP) são só do `admin` | Ranking de colaboradores expõe quem retira mais e a matrícula, então fica restrito ao admin, e o de setores acompanha para manter os dois juntos |
+| Dados sensíveis | Nenhum KPI devolve valores. O de colaboradores (adicionado depois do MVP) é só do `admin` | Ranking de colaboradores expõe quem retira mais e a matrícula, então fica restrito ao admin, e o de setores acompanha para manter os dois juntos |
 | Setor | Setor de destino da retirada (`setor_destino_id`) | É para onde a ferramenta foi; o setor de cadastro do colaborador pode ser outro |
 | Coerência dos números | `indisponiveis`, `emprestimos-abertos` e `evolucao` usam o `emSnapshot` do dashboard (`REPEATABLE READ` somente leitura) | Totais e linhas da mesma resposta saem do mesmo retrato do banco |
 | Mínimo de devoluções | `min_devolucoes` (padrão 1) na taxa de avaria e no tempo médio de posse, aplicado antes do `limit` | Apontado na revisão do PR: sem mínimo, 1 devolução com 1 avaria (100%) passa na frente de 10 em 50 (20%), e uma ferramenta devolvida uma vez, depois de muito tempo, lidera o tempo médio. O padrão 1 mantém o comportamento original |
-| Perda na taxa | Perda conta no denominador (devolução) e fica fora do numerador | O KPI é de avaria; a perda tem `perdas-por-categoria` |
+| Perda na taxa | Perda conta no denominador (devolução) e fica fora do numerador | O KPI é de avaria; o extravio tem `extravios-por-categoria` |
 | Fontes de data | Ocorrências por `created_at`; taxa por `data_devolucao` | Hoje coincidem (o trigger abre a ocorrência na devolução), mas ocorrência criada por outro caminho entra nos KPIs de ocorrência e não na taxa |
-| Setor só admin | Mantido admin-only junto com o de colaboradores | Decisão a confirmar com o time: o dado de setor não é pessoal e poderia ficar aberto à manutenção |
+| Setor aberto à manutenção | `setores-que-mais-retiram` é de `manutencao` e `admin` | Decidido na revisão: o dado é agregado por setor e não expõe pessoa. Só o ranking de colaboradores (nome e matrícula) fica restrito ao admin |
+| Nome extravio | A rota é `extravios-por-categoria` (antes `perdas-por-categoria`) | Decidido na revisão, para não precisar de `/v2` quando o renome das issues #180 e #181 entrar. O valor no banco continua `PERDA` |
 | Variação percentual | `null` quando o período anterior é 0 | Não existe percentual sem base de comparação; mostrar 0% ou infinito enganaria |
 
 ## O que foi feito
@@ -47,7 +48,7 @@ Commits, na ordem (um por etapa):
    [kpiRoutes.ts](../../api/src/routes/v1/kpiRoutes.ts) (com o Swagger de cada rota) e o registro em `routes/v1/index.ts`.
 4. `test(api-208): cobrir KPIs, filtros de/ate e permissões` — [kpi.test.ts](../../api/src/tests/kpi.test.ts).
 5. `docs(api-208): documentar os KPIs de gestão` — este arquivo, `docs/backend/api.md` e `docs/backend/arquitetura.md`.
-6. `feat(api-208): KPIs de colaboradores e setores que mais retiram` — dois endpoints a mais, só `admin`, com testes e documentação atualizada.
+6. `feat(api-208): KPIs de colaboradores e setores que mais retiram` — dois endpoints a mais (colaboradores só `admin`; setores aberto à manutenção), com testes e documentação atualizada.
 
 ### Endpoints
 
@@ -57,13 +58,13 @@ Commits, na ordem (um por etapa):
 | Categorias mais utilizadas | `GET /v1/kpis/categorias-mais-utilizadas` | `de`/`ate` + `limit` |
 | Tempo médio de posse | `GET /v1/kpis/tempo-medio-posse?agrupar=ferramenta\|categoria` | `de`/`ate` + `limit` |
 | Avarias por categoria | `GET /v1/kpis/avarias-por-categoria` | `de`/`ate` |
-| Perdas por categoria | `GET /v1/kpis/perdas-por-categoria` | `de`/`ate` |
+| Extravios por categoria | `GET /v1/kpis/extravios-por-categoria` | `de`/`ate` |
 | Taxa de avaria | `GET /v1/kpis/taxa-avaria?agrupar=ferramenta\|categoria` | `de`/`ate` + `limit` |
 | Ferramentas indisponíveis agora | `GET /v1/kpis/indisponiveis` | instantâneo |
 | Empréstimos abertos agora | `GET /v1/kpis/emprestimos-abertos` | instantâneo (`limit` dos mais antigos, padrão 5) |
 | Evolução temporal | `GET /v1/kpis/evolucao?granularidade=dia\|semana\|mes` | `de`/`ate` |
 | Colaboradores que mais retiram (só admin) | `GET /v1/kpis/colaboradores-que-mais-retiram` | `de`/`ate` + `limit` |
-| Setores que mais retiram (só admin) | `GET /v1/kpis/setores-que-mais-retiram` | `de`/`ate` + `limit` |
+| Setores que mais retiram | `GET /v1/kpis/setores-que-mais-retiram` | `de`/`ate` + `limit` |
 
 Contrato detalhado (campos, exemplos e regras de cálculo): [docs/backend/api.md](../backend/api.md#kpis-de-gestão-get-v1kpis).
 
@@ -123,7 +124,7 @@ dependem do que já existe no banco nem de outros arquivos de teste:
 - **Evolução:** 31 baldes diários, zeros, totais (5, 4 e 3), período anterior (`2001-01-29` a `2001-02-28`), variação
   (400%, 300% e `null` sem base), semanas começando na segunda, mês, e período sem movimento.
 
-- **Colaboradores e setores (só admin):** `401` sem token, `403` para manutenção e consulta, `200` para admin; `400` sem `de`/`ate`, `de` depois de `ate` e `limit` 51; ordem e contagem (P com 4 retiradas e Q com 1; setor X com 3 e Y com 2, mostrando que o setor vem do destino da retirada, não do cadastro); `limit`; período vazio. Colaboradores e setores são criados no próprio teste (maio de 2002) e apagados no `afterAll`.
+- **Colaboradores (só admin) e setores:** colaboradores `401` sem token, `403` para manutenção e consulta, `200` para admin; setores `401` sem token, `403` para consulta, `200` para manutenção e admin; `400` sem `de`/`ate`, `de` depois de `ate` e `limit` 51; ordem e contagem (P com 4 retiradas e Q com 1; setor X com 3 e Y com 2, mostrando que o setor vem do destino da retirada, não do cadastro); `limit`; período vazio. Colaboradores e setores são criados no próprio teste (maio de 2002) e apagados no `afterAll`.
 
 - **Tempo médio com `min_devolucoes`:** o mesmo mínimo tira do ranking as ferramentas com poucas devoluções antes do `limit`, e `0`, `-1` e `abc` dão `400`.
 - **Taxa com `min_devolucoes`:** o mínimo tira do ranking as ferramentas com poucas devoluções antes do `limit`, e valores `0`, `-1` e `abc` dão `400`.
@@ -134,7 +135,7 @@ no Windows; os 9 testes dele passam e o erro não tem relação com os KPIs.
 
 ## Como testar à mão (Insomnia/Swagger)
 
-Há uma coleção pronta em [`docs/insomnia/soufer-tools-kpis.json`](../insomnia/soufer-tools-kpis.json), com o passo a passo em [`teste-api-kpis.md`](../insomnia/teste-api-kpis.md): 41 requisições (sucesso, erros de filtro e permissões) e 124 testes automáticos. Rodei a coleção inteira contra a API local com o seed, sem falhas.
+Há uma coleção pronta em [`docs/insomnia/soufer-tools-kpis.json`](../insomnia/soufer-tools-kpis.json), com o passo a passo em [`teste-api-kpis.md`](../insomnia/teste-api-kpis.md): 42 requisições (sucesso, erros de filtro e permissões) e 125 testes automáticos. Rodei a coleção inteira contra a API local com o seed, sem falhas.
 
 1. Login em `/v1/auth/login` com um usuário `manutencao` ou `admin` e copiar o token.
 2. Chamar os exemplos acima com `Authorization: Bearer <token>`; o Swagger fica em `/docs`, tag **KPIs**.
@@ -154,8 +155,7 @@ permissão antes.
 
 ## Pendências e observações
 
-- A rota `/v1/kpis/perdas-por-categoria` entra no `/v1`: se o nome novo ("extravio") for desejado nela, é melhor decidir antes do merge, para não precisar de `/v2`.
-- Quando o renome de "perda" para "extravio" (#180/#181) entrar, `perdas-por-categoria` e o motivo `perda` em
-  `indisponiveis` precisam acompanhar o nome novo.
+- Quando o enum for renomeado (#181), o motivo `perda` em `indisponiveis.por_motivo` e o filtro `tipo = 'PERDA'` de
+  `extravios-por-categoria` precisam acompanhar o nome novo. O nome da rota já está no termo final.
 - O front ainda não consome os KPIs; a tela de gestão é uma issue de front à parte.
 - Dependências: não há dados de custo nem de data de aquisição usados nesta issue.

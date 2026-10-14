@@ -124,7 +124,7 @@ Responsabilidades:
 
 1. **Filtro sempre `de`/`ate`:** os KPIs de período não têm atalho `semana|mes|trimestre|ano`; o front calcula o intervalo e manda as datas (`AAAA-MM-DD`, inclusivas, fuso de Brasília, até 366 dias). A validação (formato, data de calendário real, `de <= ate`, janela máxima) fica em `kpiValidator.ts` e responde `400 VALIDATION_ERROR`.
 2. **Tudo agregado no SQL**, em `kpiService.ts`: o dia vale pelo calendário de Brasília e o intervalo é escrito como `coluna >= início AND coluna < fim` para o Postgres usar índice. "Categoria" é `grupos_ferramentas`. Os dois KPIs "agora" (`indisponiveis`, `emprestimos-abertos`) e a `evolucao` usam o mesmo snapshot `REPEATABLE READ` do dashboard (`emSnapshot`), para os números da resposta baterem entre si.
-3. **Perfis:** `manutencao` e `admin`; `consulta` recebe `403` (Regra 8). Os dois KPIs que expõem pessoas e setores (`colaboradores-que-mais-retiram` e `setores-que-mais-retiram`) são só do `admin`, e nenhum KPI devolve valores. O setor do KPI de setores é o de destino da retirada (`emprestimos.setor_destino_id`).
+3. **Perfis:** `manutencao` e `admin`; `consulta` recebe `403` (Regra 8). O KPI que expõe pessoas (`colaboradores-que-mais-retiram`, com nome e matrícula) é só do `admin`; o de setores é agregado e aberto à manutenção. Nenhum KPI devolve valores. O setor do KPI de setores é o de destino da retirada (`emprestimos.setor_destino_id`).
 4. **Índices:** a migration `0012_indices_kpis.sql` cria `idx_emprestimos_data_devolucao` (parcial, só devolvidos) e `idx_ocorrencias_created_at`; `data_retirada` já tinha índice desde a `0011`.
 
 ## Banco

@@ -32,9 +32,9 @@ do corpo da requisição 03.
 ## 2. Importar e rodar
 
 1. No Insomnia, **Import** → `docs/insomnia/soufer-tools-kpis.json`.
-2. Abra **SOUFER Tools — KPIs de gestão**: 8 pastas e 41 requisições numeradas de 01 a 41.
+2. Abra **SOUFER Tools — KPIs de gestão**: 8 pastas e 42 requisições numeradas de 01 a 42.
 3. Rode a pasta 1 primeiro (ela grava os três tokens) e depois as demais na ordem
-   (Collection Runner ou uma a uma). Cada execução completa tem 124 testes automáticos.
+   (Collection Runner ou uma a uma). Cada execução completa tem 125 testes automáticos.
 
 Variáveis do Base Environment:
 
@@ -52,8 +52,8 @@ Variáveis do Base Environment:
 |---|---|
 | 1 · Autenticação | Login da manutenção, sessão de consulta e login do admin. |
 | 2 · Uso das ferramentas | Ferramentas e categorias mais retiradas (ordem, `limit`) e tempo médio de posse por categoria e por ferramenta. |
-| 3 · Avarias, perdas e taxa | Avarias e perdas por categoria (total igual à soma dos itens) e taxa de avaria (taxa entre 0 e 1, `min_devolucoes`). |
-| 4 · Colaboradores e setores (só admin) | Os dois rankings de pessoas e setores, o `limit` e a ausência de valores na resposta. |
+| 3 · Avarias, extravios e taxa | Avarias e extravios por categoria (total igual à soma dos itens) e taxa de avaria (taxa entre 0 e 1, `min_devolucoes`). |
+| 4 · Colaboradores (só admin) e setores | O ranking de colaboradores (admin) e o de setores (manutenção e admin), o `limit` e a ausência de valores na resposta. |
 | 5 · Instantâneos | Indisponíveis agora (soma por motivo e percentual) e empréstimos abertos agora (sem colaborador, em ordem). |
 | 6 · Evolução temporal | Série por dia, semana (segunda-feira) e mês (dia 1), totais iguais à soma da série e período anterior. |
 | 7 · Erros de filtro (400) | Sem `de`/`ate`, `de` depois de `ate`, data inexistente, formato errado, 367 dias, `limit`, `agrupar`, `granularidade` e `min_devolucoes` inválidos. |
