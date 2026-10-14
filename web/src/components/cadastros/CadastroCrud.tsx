@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileUp, Inbox, Loader2, Plus } from 'lucide-react'
+import { Copy, FileUp, Inbox, Loader2, Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
@@ -186,6 +186,20 @@ export function CadastroCrud<T extends { id: number }>({
       .finally(() => setDuplicando(null)) // só libera o botão depois da foto
   }
 
+  // "Copiar foto": manda a foto desta unidade para as outras do mesmo grupo (sobrescreve a delas)
+  async function copiarFotoParaIrmas(item: T, irmas: T[]) {
+    setDuplicando(item.id)
+    try {
+      const imagem = await (await fetch(urlDaFoto((item as { foto_url?: string | null }).foto_url!))).blob()
+      await Promise.all(irmas.map((o) => enviarFoto.mutateAsync({ id: o.id, imagem })))
+      toast.success(`Foto copiada para ${irmas.length} ${irmas.length === 1 ? 'unidade' : 'unidades'}.`)
+    } catch {
+      avisarErro('Não foi possível copiar a foto para as outras unidades.')
+    } finally {
+      setDuplicando(null)
+    }
+  }
+
   const botaoUnidade = (item: T, rotulo = 'Unidade') => (
     <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
       {duplicando === item.id ? <Loader2 className="animate-spin" /> : <Plus />} {rotulo}
@@ -196,9 +210,17 @@ export function CadastroCrud<T extends { id: number }>({
   if (agrupar) for (const i of linhas) porChave.set(agrupar.chave(i), [...(porChave.get(agrupar.chave(i)) ?? []), i])
   const grupos: T[][] = [...porChave.values()]
 
-  const botoesUnidade = (item: T, comUnidade: boolean) => (
+  const botoesUnidade = (item: T, comUnidade: boolean) => {
+    const irmas = (porChave.get(agrupar?.chave(item) ?? '') ?? []).filter((o) => o.id !== item.id)
+    const temFoto = foto && (item as { foto_url?: string | null }).foto_url && irmas.length > 0
+    return (
     <>
       {comUnidade && botaoUnidade(item)}
+      {temFoto && (
+        <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => copiarFotoParaIrmas(item, irmas)}>
+          <Copy /> Copiar foto
+        </Button>
+      )}
       {acoesLinha?.(item)}
       <Button size="sm" variant="outline" onClick={() => setEditando(item)}>
         Editar
@@ -207,7 +229,8 @@ export function CadastroCrud<T extends { id: number }>({
         {rotuloInativar}
       </Button>
     </>
-  )
+    )
+  }
 
   function confirmarInativacao() {
     if (!inativando) return
