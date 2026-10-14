@@ -39,7 +39,7 @@ export function CabecalhoApp({ titulo, dataFormatada, horaFormatada }: Cabecalho
         <span className="text-corpo text-muted-foreground hidden xl:inline">
           {dataFormatada} · {horaFormatada}
         </span>
-        {usuario?.papel === 'admin' && (
+        {import.meta.env.DEV && usuario?.papel === 'admin' && (
           <Link to="/status" aria-label="Status da API" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Badge variant="outline" className="gap-1 text-xs py-0.5 px-2 bg-background cursor-pointer">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />

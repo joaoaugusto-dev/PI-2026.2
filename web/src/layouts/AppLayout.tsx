@@ -17,6 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
+  useSidebar,
 } from '@/components/ui/Sidebar'
 import { CabecalhoApp } from '@/components/layout/CabecalhoApp'
 import { RodapeSidebar } from '@/components/layout/RodapeSidebar'
@@ -115,6 +116,14 @@ function useRelogio() {
   return agora
 }
 
+// celular: a gaveta fecha sozinha ao navegar para outra página
+function FecharGavetaAoNavegar() {
+  const { pathname } = useLocation()
+  const { setOpenMobile } = useSidebar()
+  useEffect(() => setOpenMobile(false), [pathname, setOpenMobile])
+  return null
+}
+
 export function AppLayout() {
   const location = useLocation()
   const { usuario } = useAuth()
@@ -138,6 +147,7 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
+      <FecharGavetaAoNavegar />
       <Sidebar>
         <SidebarHeader className="px-4 py-4">
           <img src="/brand/soufer-negativo.png" alt="Soufer Tools" className="mx-auto block w-[85%]" />

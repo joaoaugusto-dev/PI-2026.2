@@ -188,7 +188,7 @@ export function FerramentaDetalhePage() {
         <CardHeader>
           <CardTitle>Histórico de empréstimos</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
           {carregandoHistorico ? (
             <Skeleton className="h-32 w-full" />
           ) : emprestimos.length === 0 ? (
@@ -196,7 +196,22 @@ export function FerramentaDetalhePage() {
               Esta ferramenta ainda não foi emprestada.
             </p>
           ) : (
-            <Table>
+            <>
+              <ul className="divide-y md:hidden">
+                {emprestimos.map((e) => (
+                  <li key={e.id} className="flex flex-col gap-0.5 py-3 text-corpo">
+                    <p>
+                      {e.colaborador_nome} <span className="text-rotulo text-muted-foreground">{e.colaborador_matricula}</span>
+                    </p>
+                    <p className="text-muted-foreground">{e.setor_nome}</p>
+                    <p className="text-rotulo text-muted-foreground">
+                      Retirada {dataHoraBR(e.data_retirada)} · Previsão {dataBR(e.previsao_devolucao)} · Devolução {dataHoraBR(e.data_devolucao)}
+                    </p>
+                    <p className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</p>
+                  </li>
+                ))}
+              </ul>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Colaborador</TableHead>
@@ -223,6 +238,7 @@ export function FerramentaDetalhePage() {
                 ))}
               </TableBody>
             </Table>
+            </>
           )}
         </CardContent>
       </Card>
