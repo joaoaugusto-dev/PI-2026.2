@@ -8,7 +8,7 @@ import sharp from 'sharp';
 
 // o diretório de uploads é lido na importação: aponta para uma pasta temporária antes de tudo
 const pasta = vi.hoisted(() => {
-  const dir = `${process.env.TMPDIR ?? '/tmp'}/soufer-uploads-teste-${process.pid}`;
+  const dir = `${process.env.TMPDIR ?? process.env.TEMP ?? process.env.TMP ?? '/tmp'}/soufer-uploads-teste-${process.pid}`;
   process.env.UPLOADS_DIR = dir;
   return dir;
 });
@@ -91,7 +91,9 @@ describe('processamento da foto', () => {
       const grande = await sharp({ create: { width: 3000, height: 2000, channels: 3, background: '#c33' } }).jpeg().toBuffer();
       const r = await request(app).put(`/v1/ferramentas/${id}/foto`).set(h).set('Content-Type', 'image/jpeg').send(grande);
       expect(r.status).toBe(200);
-      const meta = await sharp(path.join(pasta, path.basename(r.body.data.foto_url))).metadata();
+      // lê o arquivo para um buffer em vez de passar o caminho ao sharp: no Windows o libvips mantém o arquivo
+      // aberto depois do metadata() e o rmSync do afterAll falha com EPERM
+      const meta = await sharp(fs.readFileSync(path.join(pasta, path.basename(r.body.data.foto_url)))).metadata();
       expect([meta.format, meta.width, meta.height]).toEqual(['webp', 1280, 853]);
 
       // PNG de 8000x6000 (48 MP) pequeno em bytes: estoura o limite de pixels e vira 400
