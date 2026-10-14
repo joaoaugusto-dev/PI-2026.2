@@ -32,6 +32,7 @@ const navPrincipal: { to: string; label: string; contagem?: 'total' | 'indisponi
   { to: '/indisponiveis', label: 'Indisponíveis', contagem: 'indisponiveis' },
   { to: '/calendario', label: 'Calendário' },
   { to: '/emprestimos', label: 'Histórico' },
+  { to: '/analises', label: 'Análises' },
 ]
 
 // `titulo` desambigua aba e cabeçalho: "Ferramentas" existe no menu principal e em Cadastros
