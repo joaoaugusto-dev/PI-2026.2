@@ -39,6 +39,10 @@ export function useInativarCadastro(recurso: Recurso) {
   })
 }
 
+/** Foto em grupo dispara N mutações juntas: só a última refaz a lista. O contador é global (`['foto']`): conta qualquer mutação de foto em andamento, de qualquer tela. */
+const invalidarFerramentasNaUltima = (queryClient: QueryClient) => () =>
+  queryClient.isMutating({ mutationKey: ['foto'] }) <= 1 ? queryClient.invalidateQueries({ queryKey: ['ferramentas'] }) : undefined
+
 export function useRemoverFoto() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -47,10 +51,6 @@ export function useRemoverFoto() {
     onSuccess: invalidarFerramentasNaUltima(queryClient),
   })
 }
-
-/** Foto em grupo dispara N mutações juntas: só a última (a que se vê sozinha na fila) refaz a lista. */
-const invalidarFerramentasNaUltima = (queryClient: QueryClient) => () =>
-  queryClient.isMutating({ mutationKey: ['foto'] }) <= 1 ? queryClient.invalidateQueries({ queryKey: ['ferramentas'] }) : undefined
 
 /** `PUT /ferramentas/:id/foto`: o corpo é a imagem crua (jpeg/png/webp, até 5 MB). */
 export function useEnviarFoto() {
