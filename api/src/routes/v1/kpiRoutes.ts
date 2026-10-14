@@ -15,7 +15,9 @@ const router = Router();
 
 // KPIs de gestão (issue #208). Só manutenção e admin: o perfil consulta nunca vê. Os de período exigem
 // de/ate (AAAA-MM-DD, inclusivos, fuso de Brasília, até 366 dias); os dois "agora" não têm período.
+// Os que expõem pessoas (colaboradores) e o de setores são só do admin.
 const leitura = [authenticate, authorize('manutencao', 'admin')];
+const somenteAdmin = [authenticate, authorize('admin')];
 
 /**
  * @openapi
@@ -337,5 +339,81 @@ router.get('/emprestimos-abertos', ...leitura, validate({ query: kpiAbertosQuery
  *         description: Perfil sem permissão (consulta)
  */
 router.get('/evolucao', ...leitura, validate({ query: kpiEvolucaoQuerySchema }), KpiController.evolucao);
+
+/**
+ * @openapi
+ * /kpis/colaboradores-que-mais-retiram:
+ *   get:
+ *     summary: Colaboradores que mais retiram no período
+ *     description: >
+ *       Ranking de colaboradores por número de retiradas (data_retirada entre de e ate): colaborador_id, colaborador_nome, matricula, setor_nome e total_retiradas. Só admin.
+ *     tags:
+ *       - KPIs
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: de
+ *         required: true
+ *         description: Primeiro dia do período, AAAA-MM-DD (fuso de Brasília)
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: ate
+ *         required: true
+ *         description: Último dia do período (inclusive), AAAA-MM-DD. O período vai até 366 dias
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: limit
+ *         description: Itens do ranking (padrão 10, máximo 50)
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: "{ periodo, itens }"
+ *       400:
+ *         description: de/ate ausentes ou inválidos, de depois de ate, período acima de 366 dias ou limit fora do intervalo
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Só admin
+ */
+router.get('/colaboradores-que-mais-retiram', ...somenteAdmin, validate({ query: kpiRankingQuerySchema }), KpiController.colaboradoresQueMaisRetiram);
+
+/**
+ * @openapi
+ * /kpis/setores-que-mais-retiram:
+ *   get:
+ *     summary: Setores que mais retiram no período
+ *     description: >
+ *       Ranking de setores de destino das retiradas (setor_destino_id do empréstimo): setor_id, setor_nome e total_retiradas. Só admin.
+ *     tags:
+ *       - KPIs
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: de
+ *         required: true
+ *         description: Primeiro dia do período, AAAA-MM-DD (fuso de Brasília)
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: ate
+ *         required: true
+ *         description: Último dia do período (inclusive), AAAA-MM-DD. O período vai até 366 dias
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: limit
+ *         description: Itens do ranking (padrão 10, máximo 50)
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: "{ periodo, itens }"
+ *       400:
+ *         description: de/ate ausentes ou inválidos, de depois de ate, período acima de 366 dias ou limit fora do intervalo
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Só admin
+ */
+router.get('/setores-que-mais-retiram', ...somenteAdmin, validate({ query: kpiRankingQuerySchema }), KpiController.setoresQueMaisRetiram);
 
 export default router;

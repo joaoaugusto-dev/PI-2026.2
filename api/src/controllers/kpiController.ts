@@ -28,6 +28,26 @@ export class KpiController {
     }
   }
 
+  /** GET /v1/kpis/colaboradores-que-mais-retiram */
+  static async colaboradoresQueMaisRetiram(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const q = req.query as unknown as KpiRankingQuery;
+      return sendSuccess(res, await kpiService.colaboradoresQueMaisRetiram(periodo(q), q.limit));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /** GET /v1/kpis/setores-que-mais-retiram */
+  static async setoresQueMaisRetiram(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const q = req.query as unknown as KpiRankingQuery;
+      return sendSuccess(res, await kpiService.setoresQueMaisRetiram(periodo(q), q.limit));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** GET /v1/kpis/tempo-medio-posse */
   static async tempoMedioPosse(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {

@@ -10,7 +10,7 @@ PR: a abrir
 ## Objetivo
 
 A gestão consegue responder, em qualquer janela de tempo, perguntas como "qual ferramenta mais saiu no mês?",
-"quais categorias mais se avariam?" e "quais mais se extraviam?", com nove KPIs em `GET /v1/kpis/*`. Todo KPI de
+"quais categorias mais se avariam?" e "quais mais se extraviam?", com onze KPIs em `GET /v1/kpis/*` (os nove do MVP e, depois, colaboradores e setores que mais retiram). Todo KPI de
 período recebe `de` e `ate` (`AAAA-MM-DD`); não existe atalho de semana, mês, trimestre ou ano, o front calcula o intervalo.
 
 ## Decisões
@@ -24,7 +24,8 @@ período recebe `de` e `ate` (`AAAA-MM-DD`); não existe atalho de semana, mês,
 | Avarias e perdas | Vêm de `ocorrencias` (`tipo` `AVARIA` / `PERDA`), abertas pelo trigger na devolução (Regra 3) | É a fonte de verdade das tratativas. Foi mantido "perda" porque o banco ainda usa esse nome (as issues #180 e #181 tratam do renome para "extravio") |
 | Taxa de avaria | Devoluções com `condicao_devolucao = 'avaria'` ÷ devoluções feitas no período | O denominador é o que foi devolvido no período, não o que foi retirado, porque a condição só existe na devolução |
 | Acesso | `manutencao` e `admin`; `consulta` recebe `403` | Regra 8: o admin faz tudo o que a manutenção faz, e a consulta nunca vê histórico |
-| Dados sensíveis | Nenhum KPI devolve colaborador nem valores | Os do MVP não precisam, e os que expõem colaborador ficaram fora do escopo |
+| Dados sensíveis | Nenhum KPI devolve valores. Os dois de pessoas e setores (adicionados depois do MVP) são só do `admin` | Ranking de colaboradores expõe quem retira mais e a matrícula, então fica restrito ao admin, e o de setores acompanha para manter os dois juntos |
+| Setor | Setor de destino da retirada (`setor_destino_id`) | É para onde a ferramenta foi; o setor de cadastro do colaborador pode ser outro |
 | Coerência dos números | `indisponiveis`, `emprestimos-abertos` e `evolucao` usam o `emSnapshot` do dashboard (`REPEATABLE READ` somente leitura) | Totais e linhas da mesma resposta saem do mesmo retrato do banco |
 | Variação percentual | `null` quando o período anterior é 0 | Não existe percentual sem base de comparação; mostrar 0% ou infinito enganaria |
 
@@ -41,7 +42,8 @@ Commits, na ordem (um por etapa):
 3. `feat(api-208): rotas GET /v1/kpis/* para manutenção e admin` — [kpiController.ts](../../api/src/controllers/kpiController.ts),
    [kpiRoutes.ts](../../api/src/routes/v1/kpiRoutes.ts) (com o Swagger de cada rota) e o registro em `routes/v1/index.ts`.
 4. `test(api-208): cobrir KPIs, filtros de/ate e permissões` — [kpi.test.ts](../../api/src/tests/kpi.test.ts).
-5. `docs(api-208): documentar os KPIs` — este arquivo, `docs/backend/api.md` e `docs/backend/arquitetura.md`.
+5. `docs(api-208): documentar os KPIs de gestão` — este arquivo, `docs/backend/api.md` e `docs/backend/arquitetura.md`.
+6. `feat(api-208): KPIs de colaboradores e setores que mais retiram` — dois endpoints a mais, só `admin`, com testes e documentação atualizada.
 
 ### Endpoints
 
@@ -56,6 +58,8 @@ Commits, na ordem (um por etapa):
 | Ferramentas indisponíveis agora | `GET /v1/kpis/indisponiveis` | instantâneo |
 | Empréstimos abertos agora | `GET /v1/kpis/emprestimos-abertos` | instantâneo (`limit` dos mais antigos, padrão 5) |
 | Evolução temporal | `GET /v1/kpis/evolucao?granularidade=dia\|semana\|mes` | `de`/`ate` |
+| Colaboradores que mais retiram (só admin) | `GET /v1/kpis/colaboradores-que-mais-retiram` | `de`/`ate` + `limit` |
+| Setores que mais retiram (só admin) | `GET /v1/kpis/setores-que-mais-retiram` | `de`/`ate` + `limit` |
 
 Contrato detalhado (campos, exemplos e regras de cálculo): [docs/backend/api.md](../backend/api.md#kpis-de-gestão-get-v1kpis).
 
@@ -98,11 +102,11 @@ sequencial; os índices passam a valer quando a tabela crescer. A migration já 
 
 ## Testes
 
-[kpi.test.ts](../../api/src/tests/kpi.test.ts), 22 casos, Vitest + Supertest. Os dados são criados pelo próprio teste em
+[kpi.test.ts](../../api/src/tests/kpi.test.ts), 27 casos, Vitest + Supertest. Os dados são criados pelo próprio teste em
 março de 2001 (categoria e ferramentas com o prefixo `ZZTESTE_KPI208_`, apagadas no `afterAll`), então as contas não
 dependem do que já existe no banco nem de outros arquivos de teste:
 
-- **Acesso:** `401` sem token e `403` para `consulta` nas nove rotas; `manutencao` e `admin` recebem `200`.
+- **Acesso:** `401` sem token e `403` para `consulta` nas nove rotas do MVP; `manutencao` e `admin` recebem `200`.
 - **Filtros:** `400` sem `de`, sem `ate` ou sem os dois, em toda rota de período; formato errado, data inexistente, `de`
   depois de `ate`, 367 dias, `limit` fora de 1–50, `agrupar` e `granularidade` desconhecidos. `de = ate` e 366 dias valem.
 - **Cálculo, com valores conferidos à mão:** ranking (3 retiradas × 2, com a retirada de 31/03 às 23:30 contada em março),
@@ -115,7 +119,9 @@ dependem do que já existe no banco nem de outros arquivos de teste:
 - **Evolução:** 31 baldes diários, zeros, totais (5, 4 e 3), período anterior (`2001-01-29` a `2001-02-28`), variação
   (400%, 300% e `null` sem base), semanas começando na segunda, mês, e período sem movimento.
 
-Resultado: `kpi.test.ts` 22/22 e `tsc --noEmit` sem erro. Na suíte completa, 36 arquivos passaram (377 testes) e
+- **Colaboradores e setores (só admin):** `401` sem token, `403` para manutenção e consulta, `200` para admin; `400` sem `de`/`ate`, `de` depois de `ate` e `limit` 51; ordem e contagem (P com 4 retiradas e Q com 1; setor X com 3 e Y com 2, mostrando que o setor vem do destino da retirada, não do cadastro); `limit`; período vazio. Colaboradores e setores são criados no próprio teste (maio de 2002) e apagados no `afterAll`.
+
+Resultado: `kpi.test.ts` 27/27 e `tsc --noEmit` sem erro. Na suíte completa, 36 arquivos passaram (377 testes) e
 `ferramentaFoto.test.ts` falhou só no `afterAll`, com `EPERM` ao apagar a pasta temporária `C:\tmp\soufer-uploads-teste-*`
 no Windows; os 9 testes dele passam e o erro não tem relação com os KPIs.
 
@@ -133,9 +139,9 @@ no Windows; os 9 testes dele passam e o erro não tem relação com os KPIs.
 
 ## Fora do escopo (se sobrar tempo)
 
-Categorias reincidentes em avaria, vida útil até a primeira avaria, ferramentas ociosas, horários de pico, KPIs por
-colaborador e setor (só `admin`) e custo estimado de ocorrências. Ficaram de fora do MVP; os que expõem colaborador ou
-valores precisam de uma decisão de permissão antes.
+Categorias reincidentes em avaria, vida útil até a primeira avaria, ferramentas ociosas, horários de pico, KPIs de
+ocorrências por colaborador ou setor e custo estimado de ocorrências. Os que expõem valores precisam de uma decisão de
+permissão antes.
 
 ## Pendências e observações
 

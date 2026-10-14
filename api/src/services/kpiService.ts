@@ -5,7 +5,7 @@ import { diasNoPeriodo, somarDias } from '../validators/kpiValidator.js';
 
 // KPIs de gestão (issue #208). Tudo é agregado no SQL; o dia vale pelo calendário de Brasília (o servidor na
 // AWS roda em UTC), com `de` e `ate` inclusivos: [de 00:00, ate+1 00:00) em Brasília. Escrito como
-// "coluna >= constante" para o Postgres poder usar os índices de data. Nenhum KPI devolve colaborador ou valor.
+// "coluna >= constante" para o Postgres poder usar os índices de data. Só os de colaborador são pessoais (admin); nenhum devolve valores.
 const FUSO = 'America/Sao_Paulo';
 const INICIO = (n: number) => `($${n}::date)::timestamp AT TIME ZONE '${FUSO}'`;
 const FIM = (n: number) => `(($${n}::date + 1))::timestamp AT TIME ZONE '${FUSO}'`;
@@ -52,6 +52,37 @@ export async function categoriasMaisUtilizadas(p: Periodo, limit: number) {
       WHERE ${NOS_DIAS('e.data_retirada', 1, 2)}
       GROUP BY g.id, g.nome
       ORDER BY total_retiradas DESC, g.nome, g.id
+      LIMIT $3`,
+    [p.de, p.ate, limit]
+  );
+  return { periodo: p, itens: rows.map((r) => ({ ...r, total_retiradas: num(r.total_retiradas) })) };
+}
+
+export async function colaboradoresQueMaisRetiram(p: Periodo, limit: number) {
+  const { rows } = await query(
+    `SELECT c.id AS colaborador_id, c.nome AS colaborador_nome, c.matricula, s.nome AS setor_nome, COUNT(*) AS total_retiradas
+       FROM emprestimos e
+       JOIN colaboradores c ON c.id = e.colaborador_id
+       JOIN setores s ON s.id = c.setor_id
+      WHERE ${NOS_DIAS('e.data_retirada', 1, 2)}
+      GROUP BY c.id, c.nome, c.matricula, s.nome
+      ORDER BY total_retiradas DESC, c.nome, c.id
+      LIMIT $3`,
+    [p.de, p.ate, limit]
+  );
+  return { periodo: p, itens: rows.map((r) => ({ ...r, total_retiradas: num(r.total_retiradas) })) };
+}
+
+// Setor do empréstimo = setor de destino informado na retirada (emprestimos.setor_destino_id), que é para onde a
+// ferramenta foi, e não necessariamente o setor de cadastro de quem retirou.
+export async function setoresQueMaisRetiram(p: Periodo, limit: number) {
+  const { rows } = await query(
+    `SELECT s.id AS setor_id, s.nome AS setor_nome, COUNT(*) AS total_retiradas
+       FROM emprestimos e
+       JOIN setores s ON s.id = e.setor_destino_id
+      WHERE ${NOS_DIAS('e.data_retirada', 1, 2)}
+      GROUP BY s.id, s.nome
+      ORDER BY total_retiradas DESC, s.nome, s.id
       LIMIT $3`,
     [p.de, p.ate, limit]
   );

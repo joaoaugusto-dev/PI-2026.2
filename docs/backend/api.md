@@ -54,7 +54,7 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências (ver [Ocorrências](#ocorrências-get-e-patch-v1ocorrencias)) |
 | GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
 | GET | `/v1/dashboard` | Manutenção/Admin | Tela inicial: contadores e listas de pendências (ver [Dashboard](#dashboard-get-v1dashboard)) |
-| GET | `/v1/kpis/*` | Manutenção/Admin | Nove KPIs de uso, avaria e perda, filtrados por `de`/`ate` (ver [KPIs de gestão](#kpis-de-gestão-get-v1kpis)) |
+| GET | `/v1/kpis/*` | Manutenção/Admin (colaboradores e setores: Admin) | Onze KPIs de uso, avaria e perda, filtrados por `de`/`ate` (ver [KPIs de gestão](#kpis-de-gestão-get-v1kpis)) |
 | POST | `/v1/importacoes/:recurso` | Manutenção/Admin (categorias e setores: Admin) | Importação CSV de ferramentas, colaboradores, categorias e setores (ver [Importação e exportação CSV](#importação-e-exportação-csv)) |
 | GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
 | GET | `/v1/exportacoes/:recurso` | Manutenção/Admin | Exportação CSV de cadastros e do histórico de empréstimos |
@@ -150,7 +150,7 @@ Cada lista é `{ "total": n, "itens": [...] }` e traz só as 4 primeiras linhas 
 
 ## KPIs de gestão (`GET /v1/kpis/*`)
 
-Issue #208. Perfis `manutencao` e `admin` (`401` sem token, `403` para `consulta`). Nenhum KPI devolve colaborador nem valores. "Categoria" é o grupo da ferramenta (`grupos_ferramentas`).
+Issue #208. Perfis `manutencao` e `admin` (`401` sem token, `403` para `consulta`), exceto os dois KPIs de pessoas e setores (`colaboradores-que-mais-retiram` e `setores-que-mais-retiram`), que são só do `admin` (`403` para `manutencao`). Fora esses dois, nenhum KPI devolve colaborador; nenhum devolve valores. "Categoria" é o grupo da ferramenta (`grupos_ferramentas`).
 
 **Filtros dos KPIs de período (todos menos os dois "agora"):** `de` e `ate` são obrigatórios, no formato `AAAA-MM-DD`, inclusivos e no calendário de Brasília (uma retirada às 23:30 de 31/03 conta em março). Não existe atalho de semana/mês/trimestre/ano: o front calcula o intervalo. Respondem `400 VALIDATION_ERROR` (com `details` por campo): `de` ou `ate` ausente, fora do formato, data inexistente (`2001-02-30`), `de` depois de `ate` e período acima de 366 dias. `de = ate` vale (um dia). A resposta sempre devolve o `periodo` aplicado.
 
@@ -158,6 +158,8 @@ Issue #208. Perfis `manutencao` e `admin` (`401` sem token, `403` para `consulta
 |---|---|---|
 | `GET /v1/kpis/ferramentas-mais-retiradas` | `limit` (padrão 10, máx. 50) | `itens`: `ferramenta_id`, `ferramenta_nome`, `codigo_identificacao`, `categoria_nome`, `total_retiradas`; da mais para a menos retirada |
 | `GET /v1/kpis/categorias-mais-utilizadas` | `limit` | `itens`: `categoria_id`, `categoria_nome`, `total_retiradas` |
+| `GET /v1/kpis/colaboradores-que-mais-retiram` | `limit` (**só admin**) | `itens`: `colaborador_id`, `colaborador_nome`, `matricula`, `setor_nome` (setor de cadastro do colaborador), `total_retiradas`; do que mais retira para o que menos |
+| `GET /v1/kpis/setores-que-mais-retiram` | `limit` (**só admin**) | `itens`: `setor_id`, `setor_nome`, `total_retiradas`, contando pelo **setor de destino** informado na retirada (`setor_destino_id`), não pelo setor de cadastro de quem retirou |
 | `GET /v1/kpis/tempo-medio-posse` | `agrupar=categoria\|ferramenta` (padrão `categoria`), `limit` | `itens` com `total_devolucoes`, `horas_medias` e `dias_medios`; só empréstimos **devolvidos** dentro do período; do maior para o menor tempo |
 | `GET /v1/kpis/avarias-por-categoria` | — | `total` e `itens`: `categoria_id`, `categoria_nome`, `total` (ocorrências `AVARIA` abertas no período); categoria sem avaria não aparece |
 | `GET /v1/kpis/perdas-por-categoria` | — | O mesmo, para ocorrências `PERDA` |

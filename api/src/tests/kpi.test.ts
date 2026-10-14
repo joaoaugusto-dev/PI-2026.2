@@ -334,3 +334,102 @@ describe('KPIs de gestão (#208)', () => {
     });
   });
 });
+
+// Colaboradores e setores que mais retiram: só admin (expõem pessoas). Dados próprios em maio de 2002, com
+// colaboradores e setores criados aqui, para o ranking e a ordem não dependerem do que já existe no banco.
+describe('KPIs de colaboradores e setores (#208)', () => {
+  const PREFIXO_P = 'ZZTESTE_KPI208P_';
+  const MAIO = 'de=2002-05-01&ate=2002-05-31';
+  let setorX: number;
+  let setorY: number;
+  let colabP: number;
+  let colabQ: number;
+  let matriculaP: string;
+  let matriculaQ: string;
+  let ferramenta: number;
+  let grupo: number;
+
+  beforeAll(async () => {
+    const usuarioId = (await query<{ id: number }>('SELECT id FROM usuarios ORDER BY id LIMIT 1')).rows[0].id;
+    grupo = (await query<{ id: number }>('INSERT INTO grupos_ferramentas (nome) VALUES ($1) RETURNING id', [`${PREFIXO_P}Categoria`])).rows[0].id;
+    setorX = (await query<{ id: number }>('INSERT INTO setores (nome) VALUES ($1) RETURNING id', [`${PREFIXO_P}Setor X`])).rows[0].id;
+    setorY = (await query<{ id: number }>('INSERT INTO setores (nome) VALUES ($1) RETURNING id', [`${PREFIXO_P}Setor Y`])).rows[0].id;
+    // matrícula tem 4 dígitos: pega duas livres no fim da faixa para não colidir com colaborador real
+    const livres = (
+      await query<{ m: string }>(
+        `SELECT lpad(n::text, 4, '0') AS m FROM generate_series(9999, 9000, -1) n
+          WHERE NOT EXISTS (SELECT 1 FROM colaboradores WHERE matricula = lpad(n::text, 4, '0')) LIMIT 2`
+      )
+    ).rows.map((r) => r.m);
+    [matriculaP, matriculaQ] = livres;
+    colabP = (await query<{ id: number }>('INSERT INTO colaboradores (nome, matricula, setor_id) VALUES ($1, $2, $3) RETURNING id', [`${PREFIXO_P}Pessoa P`, matriculaP, setorX])).rows[0].id;
+    colabQ = (await query<{ id: number }>('INSERT INTO colaboradores (nome, matricula, setor_id) VALUES ($1, $2, $3) RETURNING id', [`${PREFIXO_P}Pessoa Q`, matriculaQ, setorY])).rows[0].id;
+    ferramenta = (await query<{ id: number }>('INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING id', [`${PREFIXO_P}Ferramenta`, grupo])).rows[0].id;
+
+    const retirar = (colaborador: number, setor: number, dia: string) =>
+      query(
+        `INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, usuario_retirada_id, usuario_devolucao_id,
+                                  data_retirada, previsao_devolucao, data_devolucao, condicao_devolucao)
+         VALUES ($1, $2, $3, $4, $4, $5, $6, $7, 'ok')`,
+        [ferramenta, colaborador, setor, usuarioId, `2002-05-${dia}T09:00:00-03:00`, `2002-05-${dia}T23:00:00-03:00`, `2002-05-${dia}T10:00:00-03:00`]
+      );
+    await retirar(colabP, setorX, '02');
+    await retirar(colabP, setorX, '03');
+    await retirar(colabP, setorX, '04');
+    await retirar(colabP, setorY, '05'); // P retira para o setor Y: conta para P e para Y
+    await retirar(colabQ, setorY, '06');
+  });
+
+  afterAll(async () => {
+    await query('DELETE FROM emprestimos WHERE ferramenta_id IN (SELECT id FROM ferramentas WHERE nome LIKE $1)', [`${PREFIXO_P}%`]);
+    await query('DELETE FROM ferramentas WHERE nome LIKE $1', [`${PREFIXO_P}%`]);
+    await query('DELETE FROM colaboradores WHERE nome LIKE $1', [`${PREFIXO_P}%`]);
+    await query('DELETE FROM setores WHERE nome LIKE $1', [`${PREFIXO_P}%`]);
+    await query('DELETE FROM grupos_ferramentas WHERE nome LIKE $1', [`${PREFIXO_P}%`]);
+  });
+
+  it('só admin: manutenção e consulta recebem 403 e sem token 401', async () => {
+    for (const rota of ['colaboradores-que-mais-retiram', 'setores-que-mais-retiram']) {
+      expect((await get(`${rota}?${MAIO}`, null)).status, rota).toBe(401);
+      expect((await get(`${rota}?${MAIO}`, 'manutencao')).status, rota).toBe(403);
+      expect((await get(`${rota}?${MAIO}`, 'consulta')).status, rota).toBe(403);
+      expect((await get(`${rota}?${MAIO}`, 'admin')).status, rota).toBe(200);
+    }
+  });
+
+  it('exigem de/ate e validam limit, como os demais KPIs de período', async () => {
+    for (const rota of ['colaboradores-que-mais-retiram', 'setores-que-mais-retiram']) {
+      expect((await get(`${rota}`, 'admin')).status, rota).toBe(400);
+      expect((await get(`${rota}?de=2002-05-01`, 'admin')).status, rota).toBe(400);
+      expect((await get(`${rota}?de=2002-05-31&ate=2002-05-01`, 'admin')).status, rota).toBe(400);
+      expect((await get(`${rota}?${MAIO}&limit=51`, 'admin')).status, rota).toBe(400);
+    }
+  });
+
+  it('colaboradores que mais retiram: ordem, contagem, matrícula e setor de cadastro', async () => {
+    const res = await get(`colaboradores-que-mais-retiram?${MAIO}`, 'admin');
+    expect(res.body.data.periodo).toEqual({ de: '2002-05-01', ate: '2002-05-31' });
+    expect(res.body.data.itens).toEqual([
+      { colaborador_id: colabP, colaborador_nome: `${PREFIXO_P}Pessoa P`, matricula: matriculaP, setor_nome: `${PREFIXO_P}Setor X`, total_retiradas: 4 },
+      { colaborador_id: colabQ, colaborador_nome: `${PREFIXO_P}Pessoa Q`, matricula: matriculaQ, setor_nome: `${PREFIXO_P}Setor Y`, total_retiradas: 1 },
+    ]);
+    const limitado = await get(`colaboradores-que-mais-retiram?${MAIO}&limit=1`, 'admin');
+    expect(limitado.body.data.itens).toHaveLength(1);
+  });
+
+  it('setores que mais retiram: conta pelo setor de destino da retirada, não pelo cadastro de quem retirou', async () => {
+    const res = await get(`setores-que-mais-retiram?${MAIO}`, 'admin');
+    expect(res.body.data.itens).toEqual([
+      { setor_id: setorX, setor_nome: `${PREFIXO_P}Setor X`, total_retiradas: 3 },
+      { setor_id: setorY, setor_nome: `${PREFIXO_P}Setor Y`, total_retiradas: 2 }, // inclui a retirada de P para o setor Y
+    ]);
+  });
+
+  it('período sem retirada devolve lista vazia', async () => {
+    for (const rota of ['colaboradores-que-mais-retiram', 'setores-que-mais-retiram']) {
+      const res = await get(`${rota}?de=1990-01-01&ate=1990-01-31`, 'admin');
+      expect(res.status).toBe(200);
+      expect(res.body.data.itens).toEqual([]);
+    }
+  });
+});
