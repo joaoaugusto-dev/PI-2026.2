@@ -27,6 +27,10 @@ período recebe `de` e `ate` (`AAAA-MM-DD`); não existe atalho de semana, mês,
 | Dados sensíveis | Nenhum KPI devolve valores. Os dois de pessoas e setores (adicionados depois do MVP) são só do `admin` | Ranking de colaboradores expõe quem retira mais e a matrícula, então fica restrito ao admin, e o de setores acompanha para manter os dois juntos |
 | Setor | Setor de destino da retirada (`setor_destino_id`) | É para onde a ferramenta foi; o setor de cadastro do colaborador pode ser outro |
 | Coerência dos números | `indisponiveis`, `emprestimos-abertos` e `evolucao` usam o `emSnapshot` do dashboard (`REPEATABLE READ` somente leitura) | Totais e linhas da mesma resposta saem do mesmo retrato do banco |
+| Taxa de avaria e mínimo | `min_devolucoes` (padrão 1) filtra por quantidade de devoluções antes do `limit` | Apontado na revisão do PR: sem mínimo, 1 devolução com 1 avaria (100%) passa na frente de 10 em 50 (20%). O padrão 1 mantém o comportamento original |
+| Perda na taxa | Perda conta no denominador (devolução) e fica fora do numerador | O KPI é de avaria; a perda tem `perdas-por-categoria` |
+| Fontes de data | Ocorrências por `created_at`; taxa por `data_devolucao` | Hoje coincidem (o trigger abre a ocorrência na devolução), mas ocorrência criada por outro caminho entra nos KPIs de ocorrência e não na taxa |
+| Setor só admin | Mantido admin-only junto com o de colaboradores | Decisão a confirmar com o time: o dado de setor não é pessoal e poderia ficar aberto à manutenção |
 | Variação percentual | `null` quando o período anterior é 0 | Não existe percentual sem base de comparação; mostrar 0% ou infinito enganaria |
 
 ## O que foi feito
@@ -102,7 +106,7 @@ sequencial; os índices passam a valer quando a tabela crescer. A migration já 
 
 ## Testes
 
-[kpi.test.ts](../../api/src/tests/kpi.test.ts), 27 casos, Vitest + Supertest. Os dados são criados pelo próprio teste em
+[kpi.test.ts](../../api/src/tests/kpi.test.ts), 28 casos, Vitest + Supertest. Os dados são criados pelo próprio teste em
 março de 2001 (categoria e ferramentas com o prefixo `ZZTESTE_KPI208_`, apagadas no `afterAll`), então as contas não
 dependem do que já existe no banco nem de outros arquivos de teste:
 
@@ -121,7 +125,9 @@ dependem do que já existe no banco nem de outros arquivos de teste:
 
 - **Colaboradores e setores (só admin):** `401` sem token, `403` para manutenção e consulta, `200` para admin; `400` sem `de`/`ate`, `de` depois de `ate` e `limit` 51; ordem e contagem (P com 4 retiradas e Q com 1; setor X com 3 e Y com 2, mostrando que o setor vem do destino da retirada, não do cadastro); `limit`; período vazio. Colaboradores e setores são criados no próprio teste (maio de 2002) e apagados no `afterAll`.
 
-Resultado: `kpi.test.ts` 27/27 e `tsc --noEmit` sem erro. Na suíte completa, 36 arquivos passaram (377 testes) e
+- **Taxa com `min_devolucoes`:** o mínimo tira do ranking as ferramentas com poucas devoluções antes do `limit`, e valores `0`, `-1` e `abc` dão `400`.
+
+Resultado: `kpi.test.ts` 28/28 e `tsc --noEmit` sem erro. Na suíte completa, 36 arquivos passaram (377 testes) e
 `ferramentaFoto.test.ts` falhou só no `afterAll`, com `EPERM` ao apagar a pasta temporária `C:\tmp\soufer-uploads-teste-*`
 no Windows; os 9 testes dele passam e o erro não tem relação com os KPIs.
 
@@ -145,6 +151,7 @@ permissão antes.
 
 ## Pendências e observações
 
+- A rota `/v1/kpis/perdas-por-categoria` entra no `/v1`: se o nome novo ("extravio") for desejado nela, é melhor decidir antes do merge, para não precisar de `/v2`.
 - Quando o renome de "perda" para "extravio" (#180/#181) entrar, `perdas-por-categoria` e o motivo `perda` em
   `indisponiveis` precisam acompanhar o nome novo.
 - O front ainda não consome os KPIs; a tela de gestão é uma issue de front à parte.
