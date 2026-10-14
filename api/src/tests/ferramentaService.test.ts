@@ -30,9 +30,9 @@ describe('ferramentaService', () => {
   let ocorrenciaId: number;
 
   beforeAll(async () => {
-    grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas LIMIT 1')).rows[0].id;
+    grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
     colaboradorId = (await query<{ id: number }>('SELECT id FROM colaboradores LIMIT 1')).rows[0].id;
-    setorId = (await query<{ id: number }>('SELECT id FROM setores LIMIT 1')).rows[0].id;
+    setorId = (await query<{ id: number }>('SELECT id FROM setores ORDER BY id LIMIT 1')).rows[0].id;
     usuarioId = (await query<{ id: number }>('SELECT id FROM usuarios LIMIT 1')).rows[0].id;
 
     const ferramentaComHistorico = await query<{ id: number; codigo_identificacao: number }>(
@@ -167,7 +167,7 @@ describe('ferramentaService — API-07 (criar/editar/status/baixa)', () => {
     const grupos = await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 2');
     grupoId = grupos.rows[0].id;
     outroGrupoId = grupos.rows[1]?.id ?? grupoId;
-    setorId = (await query<{ id: number }>('SELECT id FROM setores LIMIT 1')).rows[0].id;
+    setorId = (await query<{ id: number }>('SELECT id FROM setores ORDER BY id LIMIT 1')).rows[0].id;
     colaboradorId = (await query<{ id: number }>('SELECT id FROM colaboradores LIMIT 1')).rows[0].id;
     usuarioId = (await query<{ id: number }>('SELECT id FROM usuarios LIMIT 1')).rows[0].id;
 
