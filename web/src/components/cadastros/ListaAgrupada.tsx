@@ -20,7 +20,7 @@ export function ListaAgrupada<T extends { id: number }>({
   resumo,
   acoesGrupo,
   acoesUnidade,
-  larguraAcoes = '24rem',
+  larguraAcoes = '26rem',
 }: {
   colunas: Coluna<T>[]
   grupos: T[][]

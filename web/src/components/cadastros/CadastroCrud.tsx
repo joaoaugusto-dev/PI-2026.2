@@ -306,7 +306,7 @@ export function CadastroCrud<T extends { id: number }>({
               resumo={agrupar?.resumo ?? (() => null)}
               acoesGrupo={botaoUnidade}
               acoesUnidade={(item, avulsa) => botoesUnidade(item, avulsa && !!agrupar)}
-              larguraAcoes={agrupar ? '24rem' : '16rem'}
+              larguraAcoes={agrupar ? '26rem' : '28rem'}
             />
           )}
         </CardContent>
