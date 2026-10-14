@@ -41,6 +41,7 @@ export function CadastroFerramentasPage() {
       colunas={[
         {
           cabecalho: 'Foto',
+          largura: '4.5rem',
           render: (f) => <IconeFerramenta nome={f.nome} fotoUrl={f.foto_url} ampliavel className="size-10" />,
         },
         { cabecalho: 'Nome', render: (f) => f.nome },

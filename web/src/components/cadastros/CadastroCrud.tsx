@@ -14,7 +14,6 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { useEnviarFoto, useInativarCadastro, useListaCadastro, useRemoverFoto, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
 import { avisarErro } from '@/lib/avisar-erro'
 import { comprimirImagem, urlDaFoto } from '@/lib/imagem'
@@ -30,6 +29,8 @@ const LIMITE_AGRUPADO = 100
 export interface Coluna<T> {
   cabecalho: string
   render: (item: T) => ReactNode
+  /** Largura da coluna na grade larga (ex.: '4.5rem'); padrão: fatia igual do espaço. */
+  largura?: string
 }
 
 type Valores = Record<string, string>
@@ -288,7 +289,7 @@ export function CadastroCrud<T extends { id: number }>({
       {isError && <p className="text-corpo text-destructive">Não foi possível carregar os registros.</p>}
 
       <Card>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : linhas.length === 0 ? (
@@ -297,36 +298,16 @@ export function CadastroCrud<T extends { id: number }>({
               titulo="Nenhum registro encontrado"
               descricao="Ajuste a busca ou cadastre um novo."
             />
-          ) : agrupar ? (
+          ) : (
             <ListaAgrupada
               colunas={colunas}
-              grupos={grupos}
-              chave={agrupar.chave}
-              resumo={agrupar.resumo}
+              grupos={agrupar ? grupos : linhas.map((i) => [i])}
+              chave={agrupar?.chave ?? ((i) => String(i.id))}
+              resumo={agrupar?.resumo ?? (() => null)}
               acoesGrupo={botaoUnidade}
-              acoesUnidade={(item, avulsa) => botoesUnidade(item, avulsa)}
+              acoesUnidade={(item, avulsa) => botoesUnidade(item, avulsa && !!agrupar)}
+              larguraAcoes={agrupar ? '24rem' : '16rem'}
             />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {colunas.map((c) => (
-                    <TableHead key={c.cabecalho}>{c.cabecalho}</TableHead>
-                  ))}
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {linhas.map((item) => (
-                  <TableRow key={item.id}>
-                    {colunas.map((c) => (
-                      <TableCell key={c.cabecalho}>{c.render(item)}</TableCell>
-                    ))}
-                    <TableCell className="flex justify-end gap-2">{botoesUnidade(item, false)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           )}
         </CardContent>
       </Card>
