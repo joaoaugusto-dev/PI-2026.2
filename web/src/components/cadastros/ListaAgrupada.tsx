@@ -37,7 +37,7 @@ export function ListaAgrupada<T extends { id: number }>({
   const grade = { '--grade': [...colunas.map((c) => c.largura ?? 'minmax(0,1fr)'), larguraAcoes].join(' ') } as CSSProperties
   // no cartão empilhado o rótulo da coluna aparece junto do valor (o cabeçalho só existe em 2xl)
   const rotulo = (c: Coluna<T>, i: number) =>
-    i > 1 && <span className="mr-1 text-rotulo text-muted-foreground 2xl:hidden">{c.cabecalho}:</span>
+    i > 1 && <span className="mr-1 text-muted-foreground 2xl:hidden">{c.cabecalho}:</span>
   const alternar = (k: string) =>
     setAbertos((a) => {
       const n = new Set(a)
@@ -76,7 +76,7 @@ export function ListaAgrupada<T extends { id: number }>({
                   {i === 0 ? (
                     <span className="flex items-center gap-2">
                       {unica ? (
-                        <span className="size-4 shrink-0" />
+                        <span className="hidden size-4 shrink-0 2xl:block" />
                       ) : (
                         <ChevronRight
                           aria-hidden
@@ -94,7 +94,7 @@ export function ListaAgrupada<T extends { id: number }>({
                   )}
                 </div>
               ))}
-              <div className="flex basis-full flex-wrap justify-start gap-2 2xl:basis-auto 2xl:justify-end" onClick={(e) => e.stopPropagation()}>
+              <div className="grid basis-full grid-cols-2 gap-2 [&>button]:w-full sm:[&>button]:w-auto sm:flex sm:flex-wrap sm:justify-start 2xl:basis-auto 2xl:justify-end" onClick={(e) => e.stopPropagation()}>
                 {unica ? acoesUnidade(itens[0], true) : acoesGrupo(itens[0])}
               </div>
             </div>
@@ -117,7 +117,7 @@ export function ListaAgrupada<T extends { id: number }>({
                             {i === 0 ? <span className="pl-6">{c.render(item)}</span> : c.render(item)}
                           </div>
                         ))}
-                        <div className="flex basis-full flex-wrap justify-start gap-2 2xl:basis-auto 2xl:justify-end">
+                        <div className="grid basis-full grid-cols-2 gap-2 [&>button]:w-full sm:[&>button]:w-auto sm:flex sm:flex-wrap sm:justify-start 2xl:basis-auto 2xl:justify-end">
                           {acoesUnidade(item, false)}
                         </div>
                       </div>
