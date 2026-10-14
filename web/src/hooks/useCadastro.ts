@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 
 export interface ListaCadastro<T> {
@@ -42,17 +42,23 @@ export function useInativarCadastro(recurso: Recurso) {
 export function useRemoverFoto() {
   const queryClient = useQueryClient()
   return useMutation({
+    mutationKey: ['foto'],
     mutationFn: async (id: number) => api.delete(`/ferramentas/${id}/foto`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ferramentas'] }),
+    onSuccess: invalidarFerramentasNaUltima(queryClient),
   })
 }
+
+/** Foto em grupo dispara N mutações juntas: só a última (a que se vê sozinha na fila) refaz a lista. */
+const invalidarFerramentasNaUltima = (queryClient: QueryClient) => () =>
+  queryClient.isMutating({ mutationKey: ['foto'] }) <= 1 ? queryClient.invalidateQueries({ queryKey: ['ferramentas'] }) : undefined
 
 /** `PUT /ferramentas/:id/foto`: o corpo é a imagem crua (jpeg/png/webp, até 5 MB). */
 export function useEnviarFoto() {
   const queryClient = useQueryClient()
   return useMutation({
+    mutationKey: ['foto'],
     mutationFn: async ({ id, imagem }: { id: number; imagem: Blob }) =>
       api.put(`/ferramentas/${id}/foto`, imagem, { headers: { 'Content-Type': imagem.type || 'image/jpeg' } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ferramentas'] }),
+    onSuccess: invalidarFerramentasNaUltima(queryClient),
   })
 }

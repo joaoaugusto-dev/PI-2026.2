@@ -223,6 +223,7 @@ export function CadastroCrud<T extends { id: number }>({
     } catch (e) {
       avisarErro(erroDaApi(e) ?? (e instanceof Error ? e.message : 'Não foi possível salvar a foto.'))
     } finally {
+      queryClient.invalidateQueries({ queryKey: ['ferramentas'] }) // garante a lista certa mesmo com falha parcial
       setAplicandoFoto(false)
     }
   }
