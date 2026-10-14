@@ -9,7 +9,6 @@ import {
   kpiEvolucaoQuerySchema,
   kpiPeriodoQuerySchema,
   kpiRankingQuerySchema,
-  kpiTaxaQuerySchema,
 } from '../../validators/kpiValidator.js';
 
 const router = Router();
@@ -104,7 +103,9 @@ router.get('/categorias-mais-utilizadas', ...leitura, validate({ query: kpiRanki
  *     summary: Tempo médio de posse das ferramentas
  *     description: >
  *       Média entre retirada e devolução dos empréstimos devolvidos entre de e ate (horas_medias e dias_medios),
- *       do maior para o menor tempo. agrupar=categoria (padrão) ou ferramenta.
+ *       do maior para o menor tempo. agrupar=categoria (padrão) ou ferramenta. Só entram grupos com pelo menos
+ *       min_devolucoes devoluções no período (padrão 1): sem um mínimo, uma ferramenta devolvida uma única vez, depois
+ *       de muito tempo, lidera o ranking.
  *     tags:
  *       - KPIs
  *     security:
@@ -124,6 +125,10 @@ router.get('/categorias-mais-utilizadas', ...leitura, validate({ query: kpiRanki
  *         name: agrupar
  *         schema: { type: string, enum: [categoria, ferramenta], default: categoria }
  *       - in: query
+ *         name: min_devolucoes
+ *         description: Mínimo de devoluções no período para o grupo entrar no ranking (padrão 1)
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
  *         name: limit
  *         description: Itens do ranking (padrão 10, máximo 50)
  *         schema: { type: integer }
@@ -131,7 +136,7 @@ router.get('/categorias-mais-utilizadas', ...leitura, validate({ query: kpiRanki
  *       200:
  *         description: "{ periodo, agrupar, itens }"
  *       400:
- *         description: de/ate ausentes ou inválidos, de depois de ate, período acima de 366 dias, agrupar desconhecido ou limit fora do intervalo
+ *         description: de/ate ausentes ou inválidos, de depois de ate, período acima de 366 dias, agrupar desconhecido, min_devolucoes ou limit fora do intervalo
  *       401:
  *         description: Token inválido ou não fornecido
  *       403:
@@ -256,7 +261,7 @@ router.get('/perdas-por-categoria', ...leitura, validate({ query: kpiPeriodoQuer
  *       403:
  *         description: Perfil sem permissão (consulta)
  */
-router.get('/taxa-avaria', ...leitura, validate({ query: kpiTaxaQuerySchema }), KpiController.taxaAvaria);
+router.get('/taxa-avaria', ...leitura, validate({ query: kpiAgrupadoQuerySchema }), KpiController.taxaAvaria);
 
 /**
  * @openapi

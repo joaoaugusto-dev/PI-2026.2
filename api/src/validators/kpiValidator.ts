@@ -54,14 +54,14 @@ export const kpiRankingQuerySchema = periodoBase.extend({ limit: limite }).super
 // GET /kpis/avarias-por-categoria e /kpis/perdas-por-categoria (agrupam todas as categorias, sem limit)
 export const kpiPeriodoQuerySchema = periodoBase.superRefine(validarPeriodo);
 
-const agrupadoBase = periodoBase.extend({ agrupar: agrupar.default('categoria'), limit: limite });
-
-// GET /kpis/tempo-medio-posse
-export const kpiAgrupadoQuerySchema = agrupadoBase.superRefine(validarPeriodo);
-
-// GET /kpis/taxa-avaria: min_devolucoes evita que 1 devolução com 1 avaria (100%) passe na frente de 10 em 50 (20%)
-export const kpiTaxaQuerySchema = agrupadoBase
-  .extend({ min_devolucoes: z.coerce.number().int().min(1).max(100000).default(1) })
+// GET /kpis/tempo-medio-posse e /kpis/taxa-avaria. min_devolucoes evita que um grupo com 1 devolução apareça no topo:
+// 1 devolução com 1 avaria (100%) passando na frente de 10 em 50 (20%), ou 1 devolução muito demorada liderando o tempo médio
+export const kpiAgrupadoQuerySchema = periodoBase
+  .extend({
+    agrupar: agrupar.default('categoria'),
+    limit: limite,
+    min_devolucoes: z.coerce.number().int().min(1).max(100000).default(1),
+  })
   .superRefine(validarPeriodo);
 
 // GET /kpis/evolucao
@@ -81,5 +81,4 @@ export const kpiAbertosQuerySchema = z.object({
 export type KpiRankingQuery = z.infer<typeof kpiRankingQuerySchema>;
 export type KpiPeriodoQuery = z.infer<typeof kpiPeriodoQuerySchema>;
 export type KpiAgrupadoQuery = z.infer<typeof kpiAgrupadoQuerySchema>;
-export type KpiTaxaQuery = z.infer<typeof kpiTaxaQuerySchema>;
 export type KpiEvolucaoQuery = z.infer<typeof kpiEvolucaoQuerySchema>;

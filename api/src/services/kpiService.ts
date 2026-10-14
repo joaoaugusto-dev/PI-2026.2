@@ -96,17 +96,20 @@ const AGRUPAMENTO = {
     colunas: 'f.id AS ferramenta_id, f.nome AS ferramenta_nome, f.codigo_identificacao, g.nome AS categoria_nome',
     grupo: 'f.id, f.nome, f.codigo_identificacao, g.nome',
     ordem: 'f.nome, f.id',
+    ordemSaida: 'ferramenta_nome, ferramenta_id',
   },
   categoria: {
     colunas: 'g.id AS categoria_id, g.nome AS categoria_nome',
     grupo: 'g.id, g.nome',
     ordem: 'g.nome, g.id',
+    ordemSaida: 'categoria_nome, categoria_id',
   },
 } as const;
 
-export async function tempoMedioPosse(p: Periodo, agrupar: Agrupamento, limit: number) {
+export async function tempoMedioPosse(p: Periodo, agrupar: Agrupamento, limit: number, minDevolucoes = 1) {
   const a = AGRUPAMENTO[agrupar];
-  // só empréstimos devolvidos dentro do período: o tempo de posse só existe depois da devolução
+  // só empréstimos devolvidos dentro do período: o tempo de posse só existe depois da devolução. O HAVING vale antes
+  // do LIMIT: sem um mínimo, uma ferramenta devolvida uma única vez, depois de muito tempo, lidera o ranking.
   const { rows } = await query(
     `SELECT ${a.colunas},
             COUNT(*) AS total_devolucoes,
@@ -116,9 +119,10 @@ export async function tempoMedioPosse(p: Periodo, agrupar: Agrupamento, limit: n
        JOIN grupos_ferramentas g ON g.id = f.grupo_id
       WHERE ${NOS_DIAS('e.data_devolucao', 1, 2)}
       GROUP BY ${a.grupo}
+      HAVING COUNT(*) >= $4
       ORDER BY horas_medias DESC, ${a.ordem}
       LIMIT $3`,
-    [p.de, p.ate, limit]
+    [p.de, p.ate, limit, minDevolucoes]
   );
   return {
     periodo: p,
@@ -161,17 +165,19 @@ export async function taxaAvaria(p: Periodo, agrupar: Agrupamento, limit: number
   // tem KPI próprio). Só entram grupos com pelo menos minDevolucoes devoluções (mínimo 1, então a divisão nunca
   // é por zero); o HAVING vale antes do LIMIT, para o ranking não ser ocupado por amostras de 1 devolução.
   const { rows } = await query(
-    `SELECT ${a.colunas},
-            COUNT(*) AS total_devolucoes,
-            COUNT(*) FILTER (WHERE e.condicao_devolucao = 'avaria') AS total_avarias
-       FROM emprestimos e
-       JOIN ferramentas f ON f.id = e.ferramenta_id
-       JOIN grupos_ferramentas g ON g.id = f.grupo_id
-      WHERE ${NOS_DIAS('e.data_devolucao', 1, 2)}
-      GROUP BY ${a.grupo}
-      HAVING COUNT(*) >= $4
-      ORDER BY (COUNT(*) FILTER (WHERE e.condicao_devolucao = 'avaria'))::numeric / COUNT(*) DESC,
-               COUNT(*) DESC, ${a.ordem}
+    `WITH grupos AS (
+       SELECT ${a.colunas},
+              COUNT(*) AS total_devolucoes,
+              COUNT(*) FILTER (WHERE e.condicao_devolucao = 'avaria') AS total_avarias
+         FROM emprestimos e
+         JOIN ferramentas f ON f.id = e.ferramenta_id
+         JOIN grupos_ferramentas g ON g.id = f.grupo_id
+        WHERE ${NOS_DIAS('e.data_devolucao', 1, 2)}
+        GROUP BY ${a.grupo}
+     )
+     SELECT * FROM grupos
+      WHERE total_devolucoes >= $4
+      ORDER BY total_avarias::numeric / total_devolucoes DESC, total_devolucoes DESC, ${a.ordemSaida}
       LIMIT $3`,
     [p.de, p.ate, limit, minDevolucoes]
   );
@@ -181,7 +187,7 @@ export async function taxaAvaria(p: Periodo, agrupar: Agrupamento, limit: number
     itens: rows.map((r) => {
       const devolucoes = num(r.total_devolucoes);
       const avarias = num(r.total_avarias);
-      const taxa = devolucoes === 0 ? 0 : avarias / devolucoes;
+      const taxa = avarias / devolucoes; // devolucoes >= minDevolucoes >= 1
       return {
         ...r,
         total_devolucoes: devolucoes,
