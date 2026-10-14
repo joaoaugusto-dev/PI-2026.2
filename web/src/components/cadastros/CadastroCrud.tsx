@@ -41,6 +41,12 @@ type Valores = Record<string, string>
  * telas.md), Editar por linha, Inativar (nunca apaga) e importação de CSV.
  * Cada tela só descreve colunas, campos e schema.
  */
+/** Espera todas as unidades terminarem e diz quantas falharam (não para na primeira). */
+async function enquantoTodas(tarefas: Promise<unknown>[]) {
+  const falhas = (await Promise.allSettled(tarefas)).filter((r) => r.status === 'rejected').length
+  if (falhas) throw new Error(`Falhou em ${falhas} de ${tarefas.length} unidades. As demais foram alteradas.`)
+}
+
 export function CadastroCrud<T extends { id: number }>({
   recurso,
   singular,
@@ -206,16 +212,16 @@ export function CadastroCrud<T extends { id: number }>({
     setAplicandoFoto(true)
     try {
       if (novaFoto === 'remover') {
-        await Promise.all(fotoGrupo.filter((i) => (i as { foto_url?: string | null }).foto_url).map((i) => removerFoto.mutateAsync(i.id)))
+        await enquantoTodas(fotoGrupo.filter((i) => (i as { foto_url?: string | null }).foto_url).map((i) => removerFoto.mutateAsync(i.id)))
         toast.success('Foto removida.')
       } else if (novaFoto.tipo === 'arquivo') {
         const imagem = await comprimirImagem(novaFoto.arquivo)
-        await Promise.all(fotoGrupo.map((i) => enviarFoto.mutateAsync({ id: i.id, imagem })))
+        await enquantoTodas(fotoGrupo.map((i) => enviarFoto.mutateAsync({ id: i.id, imagem })))
         toast.success(fotoGrupo.length > 1 ? 'Foto aplicada ao grupo.' : 'Foto atualizada.')
       }
       fecharFotoGrupo()
     } catch (e) {
-      avisarErro(erroDaApi(e) ?? 'Não foi possível salvar a foto.')
+      avisarErro(erroDaApi(e) ?? (e instanceof Error ? e.message : 'Não foi possível salvar a foto.'))
     } finally {
       setAplicandoFoto(false)
     }
@@ -358,7 +364,7 @@ export function CadastroCrud<T extends { id: number }>({
           <SeletorFoto
             semUrl
             value={fotoExibida}
-            onChange={(f) => setNovaFoto(f ?? (novaFoto && novaFoto !== 'remover' ? null : 'remover'))}
+            onChange={(f) => setNovaFoto(f ?? (novaFoto === null && fotoDoGrupoAtual ? 'remover' : null))}
           />
           <div className="flex justify-end gap-2">
             <Button variant="outline" disabled={aplicandoFoto} onClick={fecharFotoGrupo}>

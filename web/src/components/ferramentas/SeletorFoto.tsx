@@ -60,6 +60,7 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
     <div className="flex flex-col gap-1.5">
       <span className="text-sm font-medium">Foto</span>
       <RecortadorFoto
+        key={urlRecorte ?? ''} // zera crop/zoom/área a cada imagem nova
         arquivo={paraRecortar}
         previewUrl={urlRecorte}
         onCancelar={() => setParaRecortar(null)}

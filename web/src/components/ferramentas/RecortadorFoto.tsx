@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/Button'
+import { avisarErro } from '@/lib/avisar-erro'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 
 const LADO_SAIDA = 1024
@@ -10,7 +11,10 @@ async function recortar(arquivo: File, area: Area): Promise<File> {
   const lado = Math.min(LADO_SAIDA, area.width)
   const canvas = document.createElement('canvas')
   canvas.width = canvas.height = Math.round(lado)
-  canvas.getContext('2d')!.drawImage(bitmap, area.x, area.y, area.width, area.height, 0, 0, canvas.width, canvas.height)
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#fff' // JPEG não tem alfa: PNG transparente ficaria preto
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(bitmap, area.x, area.y, area.width, area.height, 0, 0, canvas.width, canvas.height)
   bitmap.close()
   const blob = await new Promise<Blob>((ok, erro) =>
     canvas.toBlob((b) => (b ? ok(b) : erro(new Error('Falha ao recortar a imagem'))), 'image/jpeg', 0.92),
@@ -37,6 +41,8 @@ export function RecortadorFoto({ arquivo, previewUrl, onConfirmar, onCancelar }:
     setSalvando(true)
     try {
       onConfirmar(await recortar(arquivo, area))
+    } catch {
+      avisarErro('Não foi possível recortar a imagem.')
     } finally {
       setSalvando(false)
     }

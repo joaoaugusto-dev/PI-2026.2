@@ -39,7 +39,6 @@ export function useInativarCadastro(recurso: Recurso) {
   })
 }
 
-/** `PUT /ferramentas/:id/foto`: o corpo é a imagem crua (jpeg/png/webp, até 5 MB). */
 export function useRemoverFoto() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -48,6 +47,7 @@ export function useRemoverFoto() {
   })
 }
 
+/** `PUT /ferramentas/:id/foto`: o corpo é a imagem crua (jpeg/png/webp, até 5 MB). */
 export function useEnviarFoto() {
   const queryClient = useQueryClient()
   return useMutation({
