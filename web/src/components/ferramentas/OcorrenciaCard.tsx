@@ -110,6 +110,9 @@ export function OcorrenciaCard({
                 ) : (
                   <p className="text-corpo text-muted-foreground">{ocorrencia?.descricao ?? '—'}</p>
                 )}
+                {ocorrencia?.foto_url && (
+                  <IconeFerramenta nome={`Foto da ${perda ? 'perda' : 'avaria'}`} fotoUrl={ocorrencia.foto_url} ampliavel className="mt-1.5 size-20" />
+                )}
               </div>
             </div>
 

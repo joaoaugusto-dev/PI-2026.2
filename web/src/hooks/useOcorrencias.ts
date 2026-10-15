@@ -17,6 +17,7 @@ export interface Ocorrencia {
   custo_real: string | null
   data_resolucao: string | null
   observacoes_resolucao: string | null
+  foto_url?: string | null
   registrada_por: number
   resolvida_por: number | null
   created_at: string
