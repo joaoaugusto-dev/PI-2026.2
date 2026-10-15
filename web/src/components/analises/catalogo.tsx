@@ -49,6 +49,8 @@ export interface Cartao<T = never> {
   alturaMin: number
   consulta: (p: Periodo) => ConsultaKpi
   Conteudo: (props: { dado: T; altura: number }) => ReactNode
+  /** Versão do gráfico para o papel (largura fixa em px, sem animação); aparece antes da tabela no relatório. */
+  Impresso?: (props: { dado: T; largura: number }) => ReactNode
   destaque?: (dado: T) => Destaque
   tabela?: (dado: T) => Tabela
 }
@@ -63,9 +65,9 @@ const periodo = (rota: string, extra: Record<string, string | number> = {}) => (
 
 const evolucao = (p: Periodo) => periodo('evolucao', { granularidade: granularidadeDoPeriodo(p) })(p)
 
-function numeroDoPeriodo(metrica: Metrica, descricao: string): Cartao<Evolucao> {
+function numeroDoPeriodo(metrica: Metrica, descricao: string) {
   const rotulo = METRICAS.find((m) => m.chave === metrica)!.rotulo
-  return {
+  return definir<Evolucao>({
     id: metrica,
     titulo: rotulo,
     descricao,
@@ -81,7 +83,7 @@ function numeroDoPeriodo(metrica: Metrica, descricao: string): Cartao<Evolucao> 
         detalhe: v === null ? 'sem base no período anterior' : `${v > 0 ? '+' : ''}${percentualBR(v)} vs período anterior`,
       }
     },
-  }
+  })
 }
 
 function ranking<I>(
@@ -90,25 +92,25 @@ function ranking<I>(
   colunas: Tabela['colunas'],
   linha: (i: I) => (string | number)[],
   tom?: TomBarra,
-): Cartao<Itens<I>> {
+): Cartao<unknown> {
   const paraRanking = (i: I): ItemRanking => {
     const r = itens(i)
     return { ...r, rotulo: r.rotulo ?? inteiroBR(r.valor) }
   }
-  return {
+  return definir<Itens<I>>({
     ...base,
     proporcao: 1.15,
     larguraMin: 280,
     alturaMin: 260,
-    Conteudo: ({ dado, altura }) => <BarrasRanking itens={dado.itens.map(paraRanking)} altura={altura} tom={tom} />,
+    Conteudo: ({ dado }) => <BarrasRanking itens={dado.itens.map(paraRanking)} tom={tom} />,
     tabela: (d) => ({ colunas, linhas: d.itens.map(linha) }),
-  }
+  })
 }
 
 const RETIRADAS = { titulo: 'Retiradas', tipo: 'inteiro', largura: 12, barra: true } as const
 
-function porCategoria(id: string, titulo: string, rota: string, descricao: string): Cartao<OcorrenciasPorCategoria> {
-  return {
+function porCategoria(id: string, titulo: string, rota: string, descricao: string) {
+  return definir<OcorrenciasPorCategoria>({
     id,
     titulo,
     descricao,
@@ -116,10 +118,9 @@ function porCategoria(id: string, titulo: string, rota: string, descricao: strin
     larguraMin: 280,
     alturaMin: 260,
     consulta: periodo(rota),
-    Conteudo: ({ dado, altura }) => (
+    Conteudo: ({ dado }) => (
       <BarrasRanking
         tom="problema"
-        altura={altura}
         itens={dado.itens.map((i) => ({ chave: i.categoria_id, nome: i.categoria_nome, valor: i.total, rotulo: inteiroBR(i.total) }))}
       />
     ),
@@ -131,15 +132,18 @@ function porCategoria(id: string, titulo: string, rota: string, descricao: strin
       ],
       linhas: d.itens.map((i) => [i.categoria_nome, i.total]),
     }),
-  }
+  })
 }
 
+// guarda a tipagem de cada cartão (consulta, Conteudo e tabela do mesmo T) antes de entrar na lista mista
+const definir = <T,>(cartao: Cartao<T>) => cartao as Cartao<unknown>
+
 /** Todos os cartões possíveis, na ordem padrão do painel. */
-export const CARTOES: Cartao<any>[] = [
+export const CARTOES: Cartao<unknown>[] = [
   numeroDoPeriodo('retiradas', 'Ferramentas que saíram no período.'),
   numeroDoPeriodo('devolucoes', 'Ferramentas que voltaram no período.'),
   numeroDoPeriodo('ocorrencias', 'Avarias e extravios registrados na devolução.'),
-  {
+  definir<Evolucao>({
     id: 'evolucao',
     titulo: 'Movimento ao longo do tempo',
     descricao: 'Retiradas, devoluções e ocorrências na mesma escala, para comparar uma com a outra.',
@@ -147,7 +151,8 @@ export const CARTOES: Cartao<any>[] = [
     larguraMin: 420,
     alturaMin: 300,
     consulta: evolucao,
-    Conteudo: ({ dado, altura }: { dado: Evolucao; altura: number }) => <GraficoEvolucao dado={dado} altura={altura} />,
+    Conteudo: ({ dado, altura }) => <GraficoEvolucao dado={dado} altura={altura} />,
+    Impresso: ({ dado, largura }) => <GraficoEvolucao dado={dado} altura={3 * 64 + 24} largura={largura} />,
     tabela: (d: Evolucao) => ({
       colunas: [
         { titulo: d.granularidade === 'dia' ? 'Dia' : d.granularidade === 'semana' ? 'Semana de' : 'Mês de', tipo: 'texto', largura: 14 },
@@ -155,7 +160,7 @@ export const CARTOES: Cartao<any>[] = [
       ],
       linhas: d.serie.map((b) => [dataBR(b.inicio), b.retiradas, b.devolucoes, b.ocorrencias]),
     }),
-  } satisfies Cartao<Evolucao>,
+  }),
   ranking<ItemFerramenta>(
     { id: 'ferramentas', titulo: 'Ferramentas mais retiradas', descricao: 'As que mais saíram no período.', consulta: periodo('ferramentas-mais-retiradas', { limit: LIMITE }) },
     (i) => ({ chave: i.ferramenta_id, nome: i.ferramenta_nome, detalhe: formatarPatrimonio(i.codigo_identificacao), valor: i.total_retiradas }),
@@ -196,7 +201,7 @@ export const CARTOES: Cartao<any>[] = [
     ],
     (i) => [i.matricula, i.colaborador_nome, i.setor_nome, i.total_retiradas],
   ),
-  {
+  definir<EmprestimosAbertos>({
     id: 'abertos',
     titulo: 'Em uso agora',
     descricao: 'Retrato de agora, não depende do período.',
@@ -204,7 +209,7 @@ export const CARTOES: Cartao<any>[] = [
     larguraMin: 280,
     alturaMin: 260,
     consulta: () => ({ rota: 'emprestimos-abertos', params: { limit: LIMITE } }),
-    Conteudo: ({ dado, altura }: { dado: EmprestimosAbertos; altura: number }) => <ConteudoAbertos dado={dado} altura={altura} />,
+    Conteudo: ({ dado }) => <ConteudoAbertos dado={dado} />,
     destaque: (d: EmprestimosAbertos) => ({ valor: inteiroBR(d.total), detalhe: `${inteiroBR(d.atrasados)} ${d.atrasados === 1 ? 'atrasada' : 'atrasadas'}` }),
     tabela: (d: EmprestimosAbertos) => ({
       colunas: [
@@ -216,8 +221,8 @@ export const CARTOES: Cartao<any>[] = [
       ],
       linhas: d.mais_antigos.map((e) => [formatarPatrimonio(e.codigo_identificacao), e.ferramenta_nome, dataBR(e.data_retirada), dataBR(e.previsao_devolucao), e.dias_aberto]),
     }),
-  } satisfies Cartao<EmprestimosAbertos>,
-  {
+  }),
+  definir<IndisponiveisAgora>({
     id: 'indisponiveis',
     titulo: 'Parque indisponível',
     descricao: 'Retrato de agora, não depende do período.',
@@ -225,7 +230,7 @@ export const CARTOES: Cartao<any>[] = [
     larguraMin: 260,
     alturaMin: 240,
     consulta: () => ({ rota: 'indisponiveis', params: {} }),
-    Conteudo: ({ dado, altura }: { dado: IndisponiveisAgora; altura: number }) => <ParqueIndisponivel dado={dado} altura={altura} />,
+    Conteudo: ({ dado }) => <ParqueIndisponivel dado={dado} />,
     destaque: (d: IndisponiveisAgora) => ({
       valor: percentualBR(d.percentual_do_parque),
       detalhe: `${inteiroBR(d.total_indisponiveis)} de ${inteiroBR(d.total_cadastradas)} paradas`,
@@ -237,7 +242,7 @@ export const CARTOES: Cartao<any>[] = [
       ],
       linhas: d.por_motivo.map((m) => [MOTIVO[m.motivo] ?? m.motivo, m.total]),
     }),
-  } satisfies Cartao<IndisponiveisAgora>,
+  }),
   ranking<ItemTaxaAvaria>(
     {
       id: 'taxa_avaria',
