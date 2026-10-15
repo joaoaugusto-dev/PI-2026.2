@@ -24,6 +24,8 @@ export interface Emprestimo {
   data_devolucao: string | null
   condicao_devolucao: 'ok' | 'avaria' | 'perda' | null
   situacao: SituacaoEmprestimo
+  /** Foto anexada à ocorrência de avaria/perda da devolução, se houver. */
+  foto_ocorrencia_url?: string | null
 }
 
 export interface FiltrosEmprestimos {

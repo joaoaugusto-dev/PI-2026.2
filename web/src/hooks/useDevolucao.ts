@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { buscarEmprestimos, type Emprestimo } from '@/hooks/useEmprestimos'
+import { enviarFotoOcorrencia } from '@/hooks/useOcorrencias'
 import { api } from '@/lib/api'
 import { escolherPorCodigo, type Escolha } from '@/lib/patrimonio'
 
@@ -45,14 +46,16 @@ interface Devolucao {
   observacao?: string
   /** Custo estimado em reais (só avaria/perda); a API grava na ocorrência que a devolução abre. */
   custoEstimado?: number
+  /** Foto da avaria/perda (já recortada); só vai com condição diferente de "ok". */
+  foto?: File | null
 }
 
 /** `PATCH /emprestimos/:id/devolucao`. Com avaria/perda a trigger abre a ocorrência e a ferramenta vai para Indisponíveis. */
 export function useDevolverEmprestimo() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ emprestimo, condicao, observacao, custoEstimado }: Devolucao) => {
-      const { data } = await api.patch<{ data: Emprestimo & { resumo: string } }>(
+    mutationFn: async ({ emprestimo, condicao, observacao, custoEstimado, foto }: Devolucao) => {
+      const { data } = await api.patch<{ data: Emprestimo & { resumo: string; ocorrencia_id: number | null } }>(
         `/emprestimos/${emprestimo.id}/devolucao`,
         {
           condicaoDevolucao: condicao,
@@ -60,7 +63,17 @@ export function useDevolverEmprestimo() {
           custoEstimado: condicao === 'ok' ? undefined : custoEstimado,
         },
       )
-      return data.data
+      // a devolução já está gravada: foto que falha não a desfaz, só avisa
+      let fotoFalhou = false
+      if (foto && condicao !== 'ok') {
+        try {
+          if (!data.data.ocorrencia_id) throw new Error('devolução sem ocorrência') // caso raro: avisa em vez de pular a foto
+          await enviarFotoOcorrencia(data.data.ocorrencia_id, foto)
+        } catch {
+          fotoFalhou = true
+        }
+      }
+      return { ...data.data, fotoFalhou }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ferramentas'] })

@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import sharp from 'sharp';
 import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
 import { logger } from '../middlewares/logger.js';
-import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
+import { NotFoundError, ConflictError } from '../utils/errors.js';
+import { processarImagem } from '../utils/imagem.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
@@ -201,7 +201,7 @@ export async function historico(id: number): Promise<HistoricoFerramenta> {
     ),
     query(
       `SELECT id, emprestimo_id, item_kit_id, colaborador_id, tipo, descricao, status,
-              custo_estimado, custo_real, data_resolucao, observacoes_resolucao,
+              custo_estimado, custo_real, data_resolucao, observacoes_resolucao, foto_url,
               registrada_por, resolvida_por, created_at, updated_at
        FROM ocorrencias
        WHERE ferramenta_id = $1
@@ -385,17 +385,6 @@ export async function baixar(id: number): Promise<Ferramenta> {
   return result.rows[0];
 }
 
-// Tipo real pelo conteúdo (não pelo Content-Type, que o cliente controla).
-function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
-  if (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg';
-  if (b.length > 12 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
-  if (b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'webp';
-  return null;
-}
-
-// foto de celular chega a ~40 MP; acima disso o sharp recusa (limita a memória por requisição)
-const LIMITE_PIXELS_FOTO = 40_000_000;
-
 // basename evita sair do diretório. Falha ao apagar não derruba a requisição:
 // o banco já foi atualizado e o pior caso é um arquivo sobrando.
 async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
@@ -408,18 +397,7 @@ async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
 
 export async function salvarFoto(id: number, imagem: unknown): Promise<Ferramenta> {
   const anterior = await buscarPorId(id);
-  if (!Buffer.isBuffer(imagem) || imagem.length === 0) {
-    throw new ValidationError('Envie a imagem (jpeg, png ou webp) no corpo da requisição');
-  }
-  if (!extensaoDaImagem(imagem)) throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
-
-  // máx. 1280 px, webp, sem EXIF (o sharp descarta metadados por padrão; rotate() aplica a orientação antes)
-  let processada: Buffer;
-  try {
-    processada = await sharp(imagem, { limitInputPixels: LIMITE_PIXELS_FOTO }).rotate().resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
-  } catch {
-    throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
-  }
+  const processada = await processarImagem(imagem);
 
   await fs.mkdir(uploadsDir, { recursive: true });
   const arquivo = `${id}-${randomUUID()}.webp`;

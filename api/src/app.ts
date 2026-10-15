@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
-import { uploadsDir } from './config/uploads.js';
+import { avariasDir, uploadsDir } from './config/uploads.js';
 import { swaggerSpec } from './config/swagger.js';
 import { httpLogger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -93,14 +93,14 @@ app.get('/', (req: Request, res: Response) => {
 
 // Fotos de ferramentas (públicas, nomes com UUID). O helmet manda CORP same-origin,
 // o que bloquearia o <img> do front em outra origem; sob /v1 para passar pelo mesmo proxy da API.
-app.use(
-  '/v1/uploads',
-  (_req, res, next) => {
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    next();
-  },
-  express.static(uploadsDir, { immutable: true, maxAge: '365d', index: false })
-);
+const corpCrossOrigin = (_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+};
+const estatico = { immutable: true, maxAge: '365d', index: false };
+// avarias antes: /v1/uploads/avarias/x não pode cair na pasta das ferramentas
+app.use('/v1/uploads/avarias', corpCrossOrigin, express.static(avariasDir, estatico));
+app.use('/v1/uploads', corpCrossOrigin, express.static(uploadsDir, estatico));
 
 // Rotas da versão 1 (/v1)
 app.use('/v1', v1Routes);

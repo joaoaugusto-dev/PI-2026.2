@@ -17,6 +17,7 @@ export interface Ocorrencia {
   custo_real: string | null
   data_resolucao: string | null
   observacoes_resolucao: string | null
+  foto_url?: string | null
   registrada_por: number
   resolvida_por: number | null
   created_at: string
@@ -135,5 +136,22 @@ export function useBaixarFerramenta() {
       await api.delete(`/ferramentas/${ferramentaId}`)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ferramentas'] }),
+  })
+}
+
+/** `PUT /ocorrencias/:id/foto`: corpo é a imagem crua (o recortador gera JPEG; a API aceita jpeg/png/webp, até 5 MB). */
+export function enviarFotoOcorrencia(id: number, foto: Blob) {
+  return api.put(`/ocorrencias/${id}/foto`, foto, { headers: { 'Content-Type': foto.type || 'image/jpeg' } })
+}
+
+/** Anexa (ou troca) a foto de uma ocorrência já aberta; refaz histórico e listas que mostram a foto. */
+export function useEnviarFotoOcorrencia() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, foto }: { id: number; foto: Blob }) => enviarFotoOcorrencia(id, foto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ferramentas'] })
+      queryClient.invalidateQueries({ queryKey: ['emprestimos'] })
+    },
   })
 }

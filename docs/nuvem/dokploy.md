@@ -71,6 +71,8 @@ No Dokploy, a melhor prática para monorepos é criar **dois aplicativos separad
    TRUST_PROXY_HOPS=1
    # fotos das ferramentas: aponte para um volume persistente (aba Advanced → Volumes)
    UPLOADS_DIR=/app/data/ferramentas
+   # fotos de avaria/perda (anexadas na devolução): outro volume, também persistente
+   AVARIAS_DIR=/app/data/avarias
    ```
    > **Não publique a porta 3000 da API diretamente.** Com `TRUST_PROXY_HOPS=1` a API confia no
    > `X-Forwarded-For`; acessada sem o proxy na frente, qualquer cliente forja o próprio IP e escapa

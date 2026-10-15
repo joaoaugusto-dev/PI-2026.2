@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
 import { Paginacao } from '@/components/Paginacao'
 import { corDaSituacao, ROTULO_SITUACAO, textoSituacao } from '@/components/emprestimos/situacao'
+import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -74,6 +75,15 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
       .concat(aviso),
   )
   return truncou
+}
+
+/** Miniatura da foto da avaria/perda; clicar amplia (sem abrir a ferramenta, o IconeFerramenta cuida disso). */
+function FotoOcorrencia({ url, nome }: { url: string; nome: string }) {
+  return (
+    <div className="mt-1">
+      <IconeFerramenta nome={nome} fotoUrl={url} ampliavel className="size-14" />
+    </div>
+  )
 }
 
 const selectClasse = 'h-(--control-h) rounded-lg border border-input bg-background px-3 text-corpo'
@@ -217,6 +227,7 @@ export function EmprestimosPage() {
                     {e.data_devolucao ? ` · voltou ${dataHoraBR(e.data_devolucao)}` : ` · prazo ${dataBR(e.previsao_devolucao)}`}
                   </p>
                   {atividade(e) && <p className="text-sm text-muted-foreground">Atividade: {atividade(e)}</p>}
+                  {e.foto_ocorrencia_url && <FotoOcorrencia url={e.foto_ocorrencia_url} nome={`Foto da ${e.condicao_devolucao} de ${e.ferramenta_nome}`} />}
                 </li>
               ))}
             </ul>
@@ -244,7 +255,10 @@ export function EmprestimosPage() {
                       </p>
                       {atividade(e) && <p className="max-w-64 truncate text-rotulo text-muted-foreground" title={atividade(e)!}>{atividade(e)}</p>}
                     </TableCell>
-                    <TableCell className={cn('font-medium', corDaSituacao(e))}>{textoSituacao(e)}</TableCell>
+                    <TableCell className={cn('font-medium', corDaSituacao(e))}>
+                      {textoSituacao(e)}
+                      {e.foto_ocorrencia_url && <FotoOcorrencia url={e.foto_ocorrencia_url} nome={`Foto da ${e.condicao_devolucao} de ${e.ferramenta_nome}`} />}
+                    </TableCell>
                     <TableCell>
                       <p>{e.colaborador_nome}</p>
                       <p className="text-rotulo text-muted-foreground">{e.colaborador_matricula}</p>
