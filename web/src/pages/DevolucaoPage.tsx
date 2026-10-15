@@ -22,6 +22,7 @@ import { TelaSucessoAnimada } from '@/components/TelaSucessoAnimada'
 import { RodapeFluxo } from '@/components/fluxo/RodapeFluxo'
 import { SecaoFluxo } from '@/components/fluxo/SecaoFluxo'
 import { SeletorCondicao } from '@/components/fluxo/SeletorCondicao'
+import type { FotoSelecionada } from '@/components/ferramentas/SeletorFoto'
 
 /** Máscara de centavos: cada dígito empurra a casa decimal, igual ao valor do Pix no app do Mercado Pago. */
 function formatarMoeda(digitos: string) {
@@ -77,6 +78,7 @@ export function DevolucaoPage() {
   const { usuario } = useAuth()
   const devolver = useDevolverEmprestimo()
   const [concluida, setConcluida] = useState<string | null>(null)
+  const [foto, setFoto] = useState<FotoSelecionada | null>(null)
   const botaoRef = useRef<HTMLButtonElement>(null)
   const { data: escolha, isFetching: buscando, isError: erroBusca } = useEmprestimoAberto(termo)
   const termoAtual = termo === ferramentaCodigo.trim()
@@ -121,6 +123,7 @@ export function DevolucaoPage() {
 
   function buscarOutra() {
     reset(valoresIniciais())
+    setFoto(null)
     setTimeout(() => {
       setFocus('ferramentaCodigo')
       window.scrollTo({ top: 0 })
@@ -137,9 +140,10 @@ export function DevolucaoPage() {
         condicao: data.condicao,
         observacao: data.condicao === 'ok' ? undefined : data.descricaoOcorrencia?.trim().slice(0, 500),
         custoEstimado: centavos > 0 ? centavos / 100 : undefined, // NaN e R$ 0,00 viram "sem custo"
+        foto: foto?.tipo === 'arquivo' ? foto.arquivo : null,
       },
       {
-        onSuccess: () => {
+        onSuccess: (resultado) => {
           playSomConfirmacao()
           buscarOutra()
           if (data.condicao === 'ok') {
@@ -151,6 +155,7 @@ export function DevolucaoPage() {
             toast.success(`${nome} foi para Indisponíveis.`, {
               description: `Ocorrência de ${data.condicao} aberta em nome de ${encontrado.colaborador_nome}.`,
             })
+            if (resultado.fotoFalhou) avisarErro('A ocorrência foi aberta, mas a foto não foi enviada.')
           }
         },
         onError: (e) =>
@@ -269,6 +274,8 @@ export function DevolucaoPage() {
                 descricaoProps={register('descricaoOcorrencia')}
                 custoEstimado={custoEstimado}
                 onCustoChange={(digitos) => setValue('custoEstimado', digitos ? formatarMoeda(digitos) : '')}
+                foto={foto}
+                onFotoChange={setFoto}
               />
             )}
           </SecaoFluxo>

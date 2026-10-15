@@ -1,6 +1,7 @@
 import type { UseFormRegisterReturn } from 'react-hook-form'
 import { Info } from 'lucide-react'
 import { RotuloCampo } from '@/components/fluxo/RotuloCampo'
+import { SeletorFoto, type FotoSelecionada } from '@/components/ferramentas/SeletorFoto'
 
 type FormularioOcorrenciaProps = {
   tipo: 'avaria' | 'perda'
@@ -11,6 +12,8 @@ type FormularioOcorrenciaProps = {
   custoEstimado: string
   /** Recebe só os dígitos digitados; a máscara de moeda fica com quem chama. */
   onCustoChange: (digitos: string) => void
+  foto: FotoSelecionada | null
+  onFotoChange: (foto: FotoSelecionada | null) => void
 }
 
 /**
@@ -26,6 +29,8 @@ export function FormularioOcorrencia({
   descricaoProps,
   custoEstimado,
   onCustoChange,
+  foto,
+  onFotoChange,
 }: FormularioOcorrenciaProps) {
   return (
     <div className="space-y-4 rounded-lg border p-4">
@@ -48,6 +53,15 @@ export function FormularioOcorrencia({
           inputMode="numeric"
           placeholder="R$ 0,00"
           className="h-(--control-h) w-44 rounded-lg border px-3 text-corpo outline-none focus-visible:border-brand-red focus-visible:ring-2 focus-visible:ring-brand-red/20"
+        />
+      </div>
+
+      <div className="w-40">
+        <SeletorFoto
+          value={foto}
+          onChange={onFotoChange}
+          semUrl
+          rotulo={tipo === 'avaria' ? 'Foto da avaria (opcional)' : 'Foto (opcional)'}
         />
       </div>
 
