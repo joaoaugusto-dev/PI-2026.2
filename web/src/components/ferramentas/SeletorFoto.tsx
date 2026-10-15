@@ -13,17 +13,16 @@ type SeletorFotoProps = {
   semUrl?: boolean
   /** `false` esconde o X (ex.: foto que já está salva e não pode ser apagada por aqui). */
   removivel?: boolean
+  /** Título do campo (padrão "Foto"). */
+  rotulo?: string
 }
 
 /**
- * Dropzone quadrada de foto (cadastro de ferramenta): upload manual de
- * arquivo ou cola de uma URL de imagem já hospedada em outro lugar. Só o
- * preview local/remoto por enquanto — a coluna `ferramentas.foto_url` existe
- * no banco (migração 0001), mas não há endpoint de upload/armazenamento
- * físico na API ainda (onde a imagem seria salva fica pra depois), então
- * nada disso é enviado no submit (ver comentário no `onSubmit` da página).
+ * Dropzone quadrada de foto: escolhe o arquivo, recorta em 1:1 (RecortadorFoto) e devolve um
+ * `File` JPEG; quem usa envia à API (ferramenta ou ocorrência), que reduz e converte para webp.
+ * Também aceita colar uma URL (`semUrl` esconde o campo, pois a API só recebe arquivo).
  */
-export function SeletorFoto({ value, onChange, semUrl = false, removivel = true }: SeletorFotoProps) {
+export function SeletorFoto({ value, onChange, semUrl = false, removivel = true, rotulo = 'Foto' }: SeletorFotoProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [urlInput, setUrlInput] = useState('')
   const [previewArquivo, setPreviewArquivo] = useState<string | null>(null)
@@ -58,7 +57,7 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">Foto</span>
+      <span className="text-sm font-medium">{rotulo}</span>
       <RecortadorFoto
         key={urlRecorte ?? ''} // zera crop/zoom/área a cada imagem nova
         arquivo={paraRecortar}
@@ -84,7 +83,7 @@ export function SeletorFoto({ value, onChange, semUrl = false, removivel = true 
       <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-dashed border-input bg-muted/40">
         {preview ? (
           <>
-            <img src={preview} alt="Prévia da ferramenta" className="size-full object-cover" />
+            <img src={preview} alt="Prévia da foto" className="size-full object-cover" />
             {removivel && (
             <button
               type="button"

@@ -79,21 +79,21 @@ export function IndisponiveisPage() {
           <p className="text-corpo text-muted-foreground">
             Ferramentas paradas por avaria ou perda. Acompanhe cada uma até ela voltar a ser usada.
           </p>
-          <div className="flex shrink-0 gap-8">
+          <div className="flex w-full justify-between gap-4 sm:w-auto sm:shrink-0 sm:justify-start sm:gap-8">
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-kpi tabular-nums text-status-indisponivel">{data?.meta.total ?? '—'}</span>
+              <span className="text-[1.5rem] leading-none font-semibold sm:text-kpi tabular-nums text-status-indisponivel">{data?.meta.total ?? '—'}</span>
               <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
                 indisponíveis
               </span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-kpi tabular-nums text-status-atraso">{ocorrenciasAbertas}</span>
+              <span className="text-[1.5rem] leading-none font-semibold sm:text-kpi tabular-nums text-status-atraso">{ocorrenciasAbertas}</span>
               <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
                 ocorrências abertas
               </span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-kpi tabular-nums">{formatarMoeda(custoEstimadoTotal)}</span>
+              <span className="text-[1.5rem] leading-none font-semibold sm:text-kpi tabular-nums">{formatarMoeda(custoEstimadoTotal)}</span>
               <span className="text-rotulo font-medium tracking-wide text-muted-foreground uppercase">
                 custo estimado
               </span>

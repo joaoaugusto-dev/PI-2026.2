@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { ArrowRight, Ban, CheckCircle2, Loader2 } from 'lucide-react'
 import { ETAPAS, EtapasTratativa, rotuloEtapa } from '@/components/ferramentas/EtapasTratativa'
+import { BotaoFotoOcorrencia } from '@/components/ferramentas/BotaoFotoOcorrencia'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -78,7 +79,8 @@ export function OcorrenciaCard({
         saindo ? '-mb-4 grid-rows-[0fr] opacity-0 delay-[900ms]' : 'grid-rows-[1fr]',
       )}
     >
-      <div className="min-h-0 overflow-hidden">
+      {/* p-1/-m-1: o overflow-hidden da animação de saída cortava o ring (borda) do card */}
+      <div className="-m-1 min-h-0 overflow-hidden p-1">
         <Card className="relative shadow-xs">
           {saindo && (
             <div className="absolute inset-0 z-20 flex animate-entrada items-center justify-center gap-2.5 bg-status-disponivel text-white">
@@ -91,6 +93,7 @@ export function OcorrenciaCard({
               <IconeFerramenta
                 nome={ferramenta.nome}
                 fotoUrl={ferramenta.foto_url}
+                ampliavel
                 className="size-14 shrink-0 bg-status-indisponivel/10 text-status-indisponivel"
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -109,6 +112,14 @@ export function OcorrenciaCard({
                   <Skeleton className="mt-1 h-4 w-2/3" />
                 ) : (
                   <p className="text-corpo text-muted-foreground">{ocorrencia?.descricao ?? '—'}</p>
+                )}
+                {ocorrencia?.foto_url && (
+                  <IconeFerramenta nome={`Foto da ${perda ? 'perda' : 'avaria'}`} fotoUrl={ocorrencia.foto_url} ampliavel className="mt-1.5 size-20" />
+                )}
+                {ocorrencia && (
+                  <div className="mt-1.5">
+                    <BotaoFotoOcorrencia ocorrenciaId={ocorrencia.id} temFoto={!!ocorrencia.foto_url} />
+                  </div>
                 )}
               </div>
             </div>

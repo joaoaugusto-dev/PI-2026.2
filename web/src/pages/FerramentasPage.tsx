@@ -197,7 +197,7 @@ export function FerramentasPage() {
                   </TableCell>
                   <TableCell className="px-1.5 whitespace-normal sm:px-2">
                     <div className="flex items-center gap-2.5">
-                      <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} className="size-10 shrink-0" />
+                      <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-10 shrink-0" />
                       {/* o nome nunca é cortado: a medida ("10 mm", "1 3/4\"") é a informação */}
                       <span className="min-w-0">
                         <span className="block text-corpo font-medium">{ferramenta.nome}</span>

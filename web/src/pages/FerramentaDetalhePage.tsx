@@ -4,6 +4,7 @@ import { BotaoImprimirEtiqueta } from '@/components/ferramentas/BotaoImprimirEti
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { corDaSituacao, textoSituacao } from '@/components/emprestimos/situacao'
+import { BotaoFotoOcorrencia } from '@/components/ferramentas/BotaoFotoOcorrencia'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -93,7 +94,7 @@ export function FerramentaDetalhePage() {
       </Link>
 
       <div className="flex flex-wrap items-center gap-4">
-        <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} className="size-20 shrink-0" />
+        <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-20 shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <h1 className="text-titulo">{ferramenta.nome}</h1>
           <div className="flex flex-wrap items-center gap-3">
@@ -254,6 +255,12 @@ export function FerramentaDetalhePage() {
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <p className="text-corpo font-medium">{rotuloCondicao(o.tipo)}</p>
                   <p className="text-corpo text-muted-foreground">{o.descricao}</p>
+                  {o.foto_url && (
+                    <IconeFerramenta nome={`Foto da ${rotuloCondicao(o.tipo).toLowerCase()}`} fotoUrl={o.foto_url} ampliavel className="mt-1.5 size-20" />
+                  )}
+                  <div className="mt-1.5">
+                    <BotaoFotoOcorrencia ocorrenciaId={o.id} temFoto={!!o.foto_url} />
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-0.5 text-right">
                   <span className="text-corpo font-medium">{STATUS_OCORRENCIA[o.status] ?? o.status}</span>

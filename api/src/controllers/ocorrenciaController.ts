@@ -45,4 +45,16 @@ export class OcorrenciaController {
       return next(error);
     }
   }
+
+  /**
+   * PUT /v1/ocorrencias/:id/foto
+   */
+  static async salvarFoto(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { id } = req.params as unknown as { id: number };
+      return sendSuccess(res, await ocorrenciaService.salvarFoto(id, req.body), null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }
