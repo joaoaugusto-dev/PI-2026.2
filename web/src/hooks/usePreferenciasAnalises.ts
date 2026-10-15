@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CARTOES } from '@/components/analises/catalogo'
-import { erroDoPeriodo, periodoDoAtalho, type Atalho, type Periodo } from '@/lib/periodo'
+import { ATALHOS, erroDoPeriodo, periodoDoAtalho, type Atalho, type Periodo } from '@/lib/periodo'
 
 export type Tamanho = 'P' | 'M' | 'G'
 
@@ -23,26 +23,50 @@ const padrao = (): Preferencias => ({
   personalizado: periodoDoAtalho('30d'),
 })
 
+const ATALHOS_VALIDOS: string[] = [...ATALHOS.map((a) => a.id), 'personalizado']
+
+/**
+ * Lê o que estava salvo, campo a campo: o que não bate com o formato atual (atalho que não existe mais,
+ * tamanho desconhecido, período malformado, JSON quebrado) volta ao padrão em vez de derrubar a tela.
+ * Cartão novo no catálogo entra no fim; cartão que saiu do catálogo é descartado.
+ */
+export function lerPreferencias(texto: string | null, ids: string[]): Preferencias {
+  const base = { ...padrao(), ordem: ids }
+  let salvo: Record<string, unknown>
+  try {
+    const lido: unknown = JSON.parse(texto ?? 'null')
+    if (typeof lido !== 'object' || lido === null || Array.isArray(lido)) return base
+    salvo = lido as Record<string, unknown>
+  } catch {
+    return base
+  }
+  const lista = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && ids.includes(x)) : [])
+  const ordem = [...new Set(lista(salvo.ordem))]
+  const tamanhos: Record<string, Tamanho> = {}
+  if (typeof salvo.tamanhos === 'object' && salvo.tamanhos !== null) {
+    for (const [id, t] of Object.entries(salvo.tamanhos)) if (ids.includes(id) && t in FATOR_TAMANHO) tamanhos[id] = t as Tamanho
+  }
+  const pers = salvo.personalizado as Partial<Periodo> | null | undefined
+  return {
+    ordem: [...ordem, ...ids.filter((id) => !ordem.includes(id))],
+    ocultos: lista(salvo.ocultos),
+    tamanhos,
+    atalho: typeof salvo.atalho === 'string' && ATALHOS_VALIDOS.includes(salvo.atalho) ? (salvo.atalho as Atalho) : base.atalho,
+    personalizado: typeof pers?.de === 'string' && typeof pers.ate === 'string' ? { de: pers.de, ate: pers.ate } : base.personalizado,
+  }
+}
+
 /**
  * Painel de análises do jeito de cada pessoa (cartões, ordem, tamanho e período), em `localStorage` por
  * usuário: é conveniência deste navegador, como o som de confirmação. Se o armazenamento falhar (aba
- * anônima, bloqueado), o painel abre no padrão. Cartão novo no catálogo entra no fim; cartão que saiu
- * do catálogo é descartado.
+ * anônima, bloqueado), o painel abre no padrão. A chave é lida só na montagem: o painel desmonta no
+ * logout (a rota protegida redireciona para o login), então outra conta sempre monta do zero.
  */
 export function usePreferenciasAnalises(usuarioId: number | undefined) {
   const chave = `soufer:analises:v1:${usuarioId ?? 'anonimo'}`
   const [prefs, setPrefs] = useState<Preferencias>(() => {
     try {
-      const salvo = JSON.parse(localStorage.getItem(chave) ?? 'null') as Partial<Preferencias> | null
-      if (!salvo) return padrao()
-      const ids = CARTOES.map((c) => c.id)
-      const ordem = (salvo.ordem ?? []).filter((id) => ids.includes(id))
-      return {
-        ...padrao(),
-        ...salvo,
-        ordem: [...ordem, ...ids.filter((id) => !ordem.includes(id))],
-        ocultos: (salvo.ocultos ?? []).filter((id) => ids.includes(id)),
-      }
+      return lerPreferencias(localStorage.getItem(chave), CARTOES.map((c) => c.id))
     } catch {
       return padrao()
     }
