@@ -79,7 +79,8 @@ export function OcorrenciaCard({
         saindo ? '-mb-4 grid-rows-[0fr] opacity-0 delay-[900ms]' : 'grid-rows-[1fr]',
       )}
     >
-      <div className="min-h-0 overflow-hidden">
+      {/* p-1/-m-1: o overflow-hidden da animação de saída cortava o ring (borda) do card */}
+      <div className="-m-1 min-h-0 overflow-hidden p-1">
         <Card className="relative shadow-xs">
           {saindo && (
             <div className="absolute inset-0 z-20 flex animate-entrada items-center justify-center gap-2.5 bg-status-disponivel text-white">
