@@ -66,6 +66,12 @@ describe('PUT /v1/ocorrencias/:id/foto', () => {
     expect((await request(app).get(`/v1${url1}`)).status).toBe(404);
   });
 
+  it('Content-Type que não é imagem chega sem corpo e vira 400, não 500', async () => {
+    for (const tipo of ['text/plain', 'image/gif']) {
+      expect((await put(id, 'qualquer coisa', tipo)).status).toBe(400);
+    }
+  });
+
   it('recusa corpo que não é imagem (400) e ocorrência inexistente (404)', async () => {
     expect((await put(id, Buffer.from('não sou imagem, mas tenho mais de doze bytes'), 'image/png')).status).toBe(400);
     expect((await put(2147483000, PNG)).status).toBe(404);
