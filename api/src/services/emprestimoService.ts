@@ -191,6 +191,7 @@ function montarResumo(emprestimo: Emprestimo): string {
  */
 export async function devolver(id: number, input: DevolverEmprestimoInput, usuarioId: number): Promise<EmprestimoDevolvido> {
   const client = await getClient();
+  let ocorrenciaId: number | null = null;
   try {
     await client.query('BEGIN');
 
@@ -220,6 +221,13 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
       await client.query('UPDATE ocorrencias SET custo_estimado = $2 WHERE emprestimo_id = $1', [id, input.custoEstimado]);
     }
 
+    // uma foto por devolução: se a devolução abrir mais de uma ocorrência, vale a primeira
+    // (mesmo critério de foto_ocorrencia_url na view); devolução "ok" não abre nenhuma
+    if (input.condicaoDevolucao !== 'ok') {
+      const ocorrencia = await client.query<{ id: number }>('SELECT id FROM ocorrencias WHERE emprestimo_id = $1 ORDER BY id LIMIT 1', [id]);
+      ocorrenciaId = ocorrencia.rows[0]?.id ?? null;
+    }
+
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -230,8 +238,7 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
 
   const result = await query<Emprestimo>('SELECT * FROM vw_emprestimos_detalhe WHERE id = $1', [id]);
   const emprestimo = result.rows[0];
-  const ocorrencia = await query<{ id: number }>('SELECT id FROM ocorrencias WHERE emprestimo_id = $1 ORDER BY id LIMIT 1', [id]);
-  return { ...emprestimo, resumo: montarResumo(emprestimo), ocorrencia_id: ocorrencia.rows[0]?.id ?? null };
+  return { ...emprestimo, resumo: montarResumo(emprestimo), ocorrencia_id: ocorrenciaId };
 }
 
 /**

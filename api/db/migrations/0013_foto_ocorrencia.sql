@@ -3,6 +3,9 @@
 -- aqui só o caminho relativo (/uploads/avarias/<arquivo>).
 ALTER TABLE ocorrencias ADD COLUMN IF NOT EXISTS foto_url TEXT;
 
+-- A view abaixo consulta ocorrencias por emprestimo_id a cada linha do histórico (paginado e exportado).
+CREATE INDEX IF NOT EXISTS idx_ocorrencias_emprestimo_id ON ocorrencias (emprestimo_id);
+
 -- O histórico de empréstimos também mostra a foto: coluna nova no fim da view
 -- (exigência do CREATE OR REPLACE VIEW). Mesmo corpo da 0010.
 CREATE OR REPLACE VIEW vw_emprestimos_detalhe AS
@@ -37,6 +40,7 @@ SELECT
     cur.nome AS usuario_retirada_nome,
     cud.nome AS usuario_devolucao_nome,
     f.ativo AS ferramenta_ativa,
+    -- uma foto por devolução: a da primeira ocorrência aberta
     (SELECT o.foto_url FROM ocorrencias o WHERE o.emprestimo_id = e.id ORDER BY o.id LIMIT 1) AS foto_ocorrencia_url
 FROM emprestimos e
 JOIN ferramentas f ON f.id = e.ferramenta_id
