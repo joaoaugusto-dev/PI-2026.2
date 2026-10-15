@@ -93,7 +93,7 @@ export function FerramentaDetalhePage() {
       </Link>
 
       <div className="flex flex-wrap items-center gap-4">
-        <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} className="size-20 shrink-0" />
+        <IconeFerramenta nome={ferramenta.nome} fotoUrl={ferramenta.foto_url} ampliavel className="size-20 shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <h1 className="text-titulo">{ferramenta.nome}</h1>
           <div className="flex flex-wrap items-center gap-3">

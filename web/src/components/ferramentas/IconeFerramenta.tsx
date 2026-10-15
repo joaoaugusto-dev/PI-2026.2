@@ -136,6 +136,7 @@ export function IconeFerramenta({ nome, fotoUrl, ampliavel, className }: IconeFe
     const miniatura = <img src={src} alt={nome} onError={() => setQuebrada(fotoUrl)} className={cn('rounded object-cover', className)} />
     if (!ampliavel) return miniatura
     return (
+      <span className="contents" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
       <Dialog>
         <DialogTrigger asChild>
           <button type="button" aria-label={`Ampliar foto de ${nome}`} className="shrink-0 cursor-zoom-in rounded transition hover:brightness-90 focus-visible:ring-2 focus-visible:ring-ring">
@@ -148,6 +149,7 @@ export function IconeFerramenta({ nome, fotoUrl, ampliavel, className }: IconeFe
           <img src={src} alt={nome} className="max-h-[70vh] w-full rounded-lg object-contain" />
         </DialogContent>
       </Dialog>
+      </span>
     )
   }
 
