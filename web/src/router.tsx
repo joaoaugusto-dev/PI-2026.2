@@ -40,6 +40,7 @@ export const router = createBrowserRouter([
           { path: 'indisponiveis', lazy: pagina(() => import('@/pages/IndisponiveisPage'), 'IndisponiveisPage') },
           { path: 'calendario', lazy: pagina(() => import('@/pages/CalendarioPage'), 'CalendarioPage') },
           { path: 'emprestimos', lazy: pagina(() => import('@/pages/EmprestimosPage'), 'EmprestimosPage') },
+          { path: 'analises', lazy: pagina(() => import('@/pages/AnalisesPage'), 'AnalisesPage') },
           {
             path: 'cadastros/colaboradores',
             lazy: pagina(() => import('@/pages/ColaboradoresPage'), 'ColaboradoresPage', true),
