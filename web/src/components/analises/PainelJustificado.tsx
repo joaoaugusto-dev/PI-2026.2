@@ -9,14 +9,15 @@ import type { Periodo } from '@/lib/periodo'
 const ESPACO = 12 // gap-3
 
 /** Altura de tela que sobra abaixo do topo do painel: duas linhas e pouco cabem sem rolar. */
-function useAlturaVisivel(ref: RefObject<HTMLElement | null>) {
+function useAlturaVisivel(ref: RefObject<HTMLElement | null>, largura: number) {
   const [altura, setAltura] = useState(() => window.innerHeight)
   useEffect(() => {
     const medir = () => setAltura(window.innerHeight - ((ref.current?.getBoundingClientRect().top ?? 0) + window.scrollY))
     medir()
     window.addEventListener('resize', medir)
     return () => window.removeEventListener('resize', medir)
-  }, [ref])
+  // a largura entra na conta: ao mudar, o cabeçalho (filtros, botões) pode quebrar linha e empurrar o painel
+  }, [ref, largura])
   return altura
 }
 
@@ -27,7 +28,7 @@ function useAlturaVisivel(ref: RefObject<HTMLElement | null>) {
  */
 export function PainelJustificado({ cartoes, tamanhos, periodo }: { cartoes: Cartao<unknown>[]; tamanhos: Record<string, Tamanho>; periodo: Periodo }) {
   const { ref, largura } = useTamanhoElemento<HTMLDivElement>()
-  const alturaVisivel = useAlturaVisivel(ref)
+  const alturaVisivel = useAlturaVisivel(ref, largura)
 
   const linhas = useMemo(() => {
     // alvo: ~2,3 linhas por tela; teto evita um cartão sozinho do tamanho de um outdoor num monitor largo

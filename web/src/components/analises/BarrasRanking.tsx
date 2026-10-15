@@ -16,8 +16,8 @@ export type TomBarra = 'neutro' | 'problema'
  * medida da ferramenta é a informação) e o valor fica escrito na ponta, então a barra não precisa de eixo
  * nem de tooltip. Mostra as linhas que cabem inteiras no cartão (medidas); o resto vai para o relatório e a planilha.
  */
-export function BarrasRanking({ itens, altura, tom = 'neutro' }: { itens: ItemRanking[]; altura: number; tom?: TomBarra }) {
-  const { ref, cabem } = useQuantosCabem<HTMLOListElement>(altura, itens.length)
+export function BarrasRanking({ itens, tom = 'neutro' }: { itens: ItemRanking[]; tom?: TomBarra }) {
+  const { ref, cabem } = useQuantosCabem<HTMLOListElement>(itens.length)
   const maior = Math.max(...itens.map((i) => i.valor), 1)
   const restantes = itens.length - cabem
 

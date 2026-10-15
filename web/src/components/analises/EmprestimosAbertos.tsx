@@ -6,8 +6,8 @@ import { inteiroBR } from '@/lib/numeros'
 import { cn } from '@/lib/utils'
 
 /** Quantas ferramentas estão fora agora, quantas atrasadas e as que estão fora há mais tempo. */
-export function EmprestimosAbertos({ dado, altura }: { dado: Dado; altura: number }) {
-  const { ref, cabem } = useQuantosCabem<HTMLUListElement>(altura, dado.mais_antigos.length)
+export function EmprestimosAbertos({ dado }: { dado: Dado }) {
+  const { ref, cabem } = useQuantosCabem<HTMLUListElement>(dado.mais_antigos.length)
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">

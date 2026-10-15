@@ -4,7 +4,7 @@ import type { IndisponiveisAgora } from '@/hooks/useKpis'
 import { inteiroBR, percentualBR } from '@/lib/numeros'
 
 /** Parte do parque parada agora: percentual com medidor (trilho do mesmo tom) e o porquê, por motivo. */
-export function ParqueIndisponivel({ dado, altura }: { dado: IndisponiveisAgora; altura: number }) {
+export function ParqueIndisponivel({ dado }: { dado: IndisponiveisAgora }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <span className="text-kpi">{percentualBR(dado.percentual_do_parque)}</span>
@@ -17,7 +17,6 @@ export function ParqueIndisponivel({ dado, altura }: { dado: IndisponiveisAgora;
       {dado.por_motivo.length > 0 && (
         <div className="mt-4 min-h-0 flex-1">
           <BarrasRanking
-            altura={altura}
             tom="problema"
             itens={dado.por_motivo.map((m) => ({ chave: m.motivo, nome: MOTIVO[m.motivo] ?? m.motivo, valor: m.total, rotulo: inteiroBR(m.total) }))}
           />
