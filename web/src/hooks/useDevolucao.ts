@@ -65,8 +65,9 @@ export function useDevolverEmprestimo() {
       )
       // a devolução já está gravada: foto que falha não a desfaz, só avisa
       let fotoFalhou = false
-      if (foto && condicao !== 'ok' && data.data.ocorrencia_id) {
+      if (foto && condicao !== 'ok') {
         try {
+          if (!data.data.ocorrencia_id) throw new Error('devolução sem ocorrência') // caso raro: avisa em vez de pular a foto
           await enviarFotoOcorrencia(data.data.ocorrencia_id, foto)
         } catch {
           fotoFalhou = true

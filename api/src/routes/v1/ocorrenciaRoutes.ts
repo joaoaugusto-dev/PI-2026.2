@@ -199,6 +199,14 @@ router.patch(
  *           schema:
  *             type: string
  *             format: binary
+ *         image/png:
+ *           schema:
+ *             type: string
+ *             format: binary
+ *         image/webp:
+ *           schema:
+ *             type: string
+ *             format: binary
  *     responses:
  *       200:
  *         description: Ocorrência com foto_url atualizado
