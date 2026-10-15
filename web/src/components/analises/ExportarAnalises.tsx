@@ -3,10 +3,9 @@ import { createPortal } from 'react-dom'
 import { FileSpreadsheet, Loader2, Printer } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Cartao, Tabela } from '@/components/analises/catalogo'
-import { GraficoEvolucao } from '@/components/analises/GraficoEvolucao'
 import { Button } from '@/components/ui/Button'
 import { useImprimir } from '@/hooks/useImprimir'
-import { garantirKpi, type Evolucao } from '@/hooks/useKpis'
+import { garantirKpi } from '@/hooks/useKpis'
 import { avisarErro, mensagemDeErro } from '@/lib/avisar-erro'
 import { dataBR, dataHoraBR } from '@/lib/formatar'
 import { inteiroBR, percentualBR } from '@/lib/numeros'
@@ -94,17 +93,9 @@ function Relatorio({ itens, periodo, autor, geradoEm }: { itens: Item[]; periodo
           <section key={cartao.id}>
             <h2>{cartao.titulo}</h2>
             <p className="relatorio-descricao">{cartao.descricao}</p>
-            {cartao.id === 'evolucao' ? (
-              <>
-                <div className="relatorio-grafico">
-                  <GraficoEvolucao dado={dado as Evolucao} altura={3 * 64 + 24} largura={LARGURA_A4} />
-                </div>
-                {/* no papel só os dias com movimento: 30 linhas de zero não dizem nada que o gráfico não diga */}
-                <TabelaImpressa tabela={comMovimento(cartao.tabela(dado as never))} />
-              </>
-            ) : (
-              <TabelaImpressa tabela={cartao.tabela(dado as never)} />
-            )}
+            {cartao.Impresso && <div className="relatorio-grafico">{cartao.Impresso({ dado, largura: LARGURA_A4 })}</div>}
+            {/* com gráfico, a tabela leva só as linhas com movimento: 30 linhas de zero não dizem nada que ele não diga */}
+            <TabelaImpressa tabela={cartao.Impresso ? comMovimento(cartao.tabela(dado as never)) : cartao.tabela(dado as never)} />
           </section>
         ) : null,
       )}
@@ -122,8 +113,14 @@ export function ExportarAnalises({ cartoes, periodo, autor, desabilitado }: { ca
   const [ocupado, setOcupado] = useState<'imprimir' | 'planilha' | null>(null)
   const [relatorio, setRelatorio] = useState<{ itens: Item[]; geradoEm: string } | null>(null)
 
+  /** Os cartões que carregaram; os que falharam saem do arquivo e o aviso diz quais. */
   async function carregar() {
-    return Promise.all(cartoes.map(async (cartao) => ({ cartao, dado: await garantirKpi(cliente, cartao.consulta(periodo)) })))
+    const resultados = await Promise.allSettled(cartoes.map(async (cartao) => ({ cartao, dado: await garantirKpi(cliente, cartao.consulta(periodo)) })))
+    const itens = resultados.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))
+    const falhas = cartoes.filter((_, i) => resultados[i].status === 'rejected').map((c) => c.titulo)
+    if (itens.length === 0) throw new Error('nenhum cartão carregou')
+    if (falhas.length) avisarErro(`Ficaram de fora por falha ao carregar: ${falhas.join(', ')}.`)
+    return itens
   }
 
   async function aoImprimir() {
