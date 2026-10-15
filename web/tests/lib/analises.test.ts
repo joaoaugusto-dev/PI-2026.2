@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { CARTOES } from '@/components/analises/catalogo'
+import { lerPreferencias } from '@/hooks/usePreferenciasAnalises'
 import { montarLinhas, type Peca } from '@/lib/layout-justificado'
 import { diasNoPeriodo, erroDoPeriodo, granularidadeDoPeriodo, periodoDoAtalho } from '@/lib/periodo'
 
@@ -78,5 +80,44 @@ describe('período dos KPIs', () => {
     expect(granularidadeDoPeriodo({ de: '2026-10-01', ate: '2026-10-31' })).toBe('dia')
     expect(granularidadeDoPeriodo({ de: '2026-07-01', ate: '2026-09-30' })).toBe('semana')
     expect(granularidadeDoPeriodo({ de: '2026-01-01', ate: '2026-12-31' })).toBe('mes')
+  })
+})
+
+describe('lerPreferencias (localStorage do painel)', () => {
+  const ids = ['retiradas', 'evolucao', 'setores']
+
+  it('sem nada salvo, JSON quebrado ou formato errado volta ao padrão', () => {
+    for (const texto of [null, '{quebrado', '[]', '"x"', '42']) {
+      const p = lerPreferencias(texto, ids)
+      expect(p.ordem).toEqual(ids)
+      expect(p.atalho).toBe('30d')
+      expect(p.ocultos).toEqual([])
+    }
+  })
+
+  it('atalho, tamanho e período inválidos caem no padrão sem derrubar a tela', () => {
+    const p = lerPreferencias(
+      JSON.stringify({ atalho: 'semestre', tamanhos: { retiradas: 'GG', evolucao: 'G', fantasma: 'P' }, personalizado: { de: 1 } }),
+      ids,
+    )
+    expect(p.atalho).toBe('30d')
+    expect(p.tamanhos).toEqual({ evolucao: 'G' })
+    expect(typeof p.personalizado.de).toBe('string')
+  })
+
+  it('cartão novo entra no fim, removido sai e repetido não duplica', () => {
+    const p = lerPreferencias(JSON.stringify({ ordem: ['setores', 'velho', 'setores', 'retiradas'], ocultos: ['velho', 'evolucao'], atalho: 'mes' }), ids)
+    expect(p.ordem).toEqual(['setores', 'retiradas', 'evolucao'])
+    expect(p.ocultos).toEqual(['evolucao'])
+    expect(p.atalho).toBe('mes')
+  })
+})
+
+describe('catálogo → planilha', () => {
+  it('taxa de avaria vai como fração (o formato 0.0% da planilha multiplica por 100)', () => {
+    const taxa = CARTOES.find((c) => c.id === 'taxa_avaria')!
+    const t = taxa.tabela!({ itens: [{ categoria_nome: 'Chaves', total_devolucoes: 8, total_avarias: 1, percentual: 12.5 }] })
+    expect(t.colunas.at(-1)?.tipo).toBe('percentual')
+    expect(t.linhas[0]).toEqual(['Chaves', 8, 1, 0.125])
   })
 })
