@@ -105,6 +105,16 @@ describe('lerPreferencias (localStorage do painel)', () => {
     expect(typeof p.personalizado.de).toBe('string')
   })
 
+  it('não aceita chave herdada do protótipo como tamanho nem período fora do formato', () => {
+    const p = lerPreferencias(
+      JSON.stringify({ tamanhos: { retiradas: 'toString', evolucao: 'constructor' }, atalho: 'personalizado', personalizado: { de: 'ontem', ate: '2026-10-01' } }),
+      ids,
+    )
+    expect(p.tamanhos).toEqual({})
+    expect(erroDoPeriodo(p.personalizado)).toBeNull()
+    expect(p.personalizado.de).not.toBe('ontem')
+  })
+
   it('cartão novo entra no fim, removido sai e repetido não duplica', () => {
     const p = lerPreferencias(JSON.stringify({ ordem: ['setores', 'velho', 'setores', 'retiradas'], ocultos: ['velho', 'evolucao'], atalho: 'mes' }), ids)
     expect(p.ordem).toEqual(['setores', 'retiradas', 'evolucao'])

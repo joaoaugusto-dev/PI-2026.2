@@ -44,15 +44,18 @@ export function lerPreferencias(texto: string | null, ids: string[]): Preferenci
   const ordem = [...new Set(lista(salvo.ordem))]
   const tamanhos: Record<string, Tamanho> = {}
   if (typeof salvo.tamanhos === 'object' && salvo.tamanhos !== null) {
-    for (const [id, t] of Object.entries(salvo.tamanhos)) if (ids.includes(id) && t in FATOR_TAMANHO) tamanhos[id] = t as Tamanho
+    for (const [id, t] of Object.entries(salvo.tamanhos)) if (ids.includes(id) && typeof t === 'string' && Object.hasOwn(FATOR_TAMANHO, t)) tamanhos[id] = t as Tamanho
   }
   const pers = salvo.personalizado as Partial<Periodo> | null | undefined
+  // período salvo meio digitado ou editado à mão (formato, ordem, 366 dias) não volta: cai no padrão
+  const candidato = { de: String(pers?.de), ate: String(pers?.ate) }
+  const periodoSalvo = typeof pers?.de === 'string' && typeof pers.ate === 'string' && erroDoPeriodo(candidato) === null ? candidato : base.personalizado
   return {
     ordem: [...ordem, ...ids.filter((id) => !ordem.includes(id))],
     ocultos: lista(salvo.ocultos),
     tamanhos,
     atalho: typeof salvo.atalho === 'string' && ATALHOS_VALIDOS.includes(salvo.atalho) ? (salvo.atalho as Atalho) : base.atalho,
-    personalizado: typeof pers?.de === 'string' && typeof pers.ate === 'string' ? { de: pers.de, ate: pers.ate } : base.personalizado,
+    personalizado: periodoSalvo,
   }
 }
 
