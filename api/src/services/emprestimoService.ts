@@ -27,6 +27,7 @@ export interface Emprestimo {
   ordem_servico: string | null;
   observacoes_retirada: string | null;
   usuario_retirada_nome: string;
+  foto_ocorrencia_url: string | null;
 }
 
 // Confere que o registro existe e está ativo antes do INSERT, para responder
@@ -157,6 +158,8 @@ async function inserirComTrava(input: CriarEmprestimoInput, usuarioId: number): 
 
 export interface EmprestimoDevolvido extends Emprestimo {
   resumo: string;
+  // ocorrência aberta pelo trigger (avaria/perda); o front anexa a foto nela
+  ocorrencia_id: number | null;
 }
 
 // Mensagem pronta pra confirmação no front (item "se sobrar tempo" da API-12):
@@ -227,7 +230,8 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
 
   const result = await query<Emprestimo>('SELECT * FROM vw_emprestimos_detalhe WHERE id = $1', [id]);
   const emprestimo = result.rows[0];
-  return { ...emprestimo, resumo: montarResumo(emprestimo) };
+  const ocorrencia = await query<{ id: number }>('SELECT id FROM ocorrencias WHERE emprestimo_id = $1 ORDER BY id LIMIT 1', [id]);
+  return { ...emprestimo, resumo: montarResumo(emprestimo), ocorrencia_id: ocorrencia.rows[0]?.id ?? null };
 }
 
 /**

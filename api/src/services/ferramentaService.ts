@@ -397,18 +397,7 @@ async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
 
 export async function salvarFoto(id: number, imagem: unknown): Promise<Ferramenta> {
   const anterior = await buscarPorId(id);
-  if (!Buffer.isBuffer(imagem) || imagem.length === 0) {
-    throw new ValidationError('Envie a imagem (jpeg, png ou webp) no corpo da requisição');
-  }
-  if (!extensaoDaImagem(imagem)) throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
-
-  // máx. 1280 px, webp, sem EXIF (o sharp descarta metadados por padrão; rotate() aplica a orientação antes)
-  let processada: Buffer;
-  try {
-    processada = await sharp(imagem, { limitInputPixels: LIMITE_PIXELS_FOTO }).rotate().resize(1280, 1280, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
-  } catch {
-    throw new ValidationError('Arquivo não é uma imagem jpeg, png ou webp válida');
-  }
+  const processada = await processarImagem(imagem);
 
   await fs.mkdir(uploadsDir, { recursive: true });
   const arquivo = `${id}-${randomUUID()}.webp`;

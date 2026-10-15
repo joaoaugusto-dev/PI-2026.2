@@ -1,4 +1,10 @@
+import { randomUUID } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
 import { getClient, query } from '../config/database.js';
+import { avariasDir } from '../config/uploads.js';
+import { logger } from '../middlewares/logger.js';
+import { processarImagem } from '../utils/imagem.js';
 import { ConflictError, NotFoundError } from '../utils/errors.js';
 import { AtualizarOcorrenciaInput } from '../validators/ocorrenciaValidator.js';
 
@@ -19,6 +25,7 @@ export interface Ocorrencia {
   custo_real: string | null;
   data_resolucao: string | null;
   observacoes_resolucao: string | null;
+  foto_url: string | null;
   registrada_por: number;
   registrada_por_nome: string;
   resolvida_por: number | null;
@@ -40,7 +47,7 @@ const COLUNAS_OCORRENCIA = `
   o.item_kit_id, ik.nome AS item_kit_nome,
   o.colaborador_id, c.nome AS colaborador_nome, c.matricula AS colaborador_matricula,
   o.tipo, o.descricao, o.status, o.custo_estimado, o.custo_real,
-  o.data_resolucao, o.observacoes_resolucao,
+  o.data_resolucao, o.observacoes_resolucao, o.foto_url,
   o.registrada_por, cur.nome AS registrada_por_nome,
   o.resolvida_por, cus.nome AS resolvida_por_nome,
   o.created_at, o.updated_at
@@ -238,4 +245,34 @@ export async function atualizar(
   } finally {
     client.release();
   }
+}
+
+/**
+ * PUT /v1/ocorrencias/:id/foto — foto da avaria/perda (a devolução abre a ocorrência e o
+ * front anexa a foto em seguida). Mesmo tratamento das fotos de ferramenta, em AVARIAS_DIR;
+ * enviar de novo troca a anterior.
+ */
+export async function salvarFoto(id: number, imagem: unknown): Promise<Ocorrencia> {
+  const atual = await query<{ foto_url: string | null }>('SELECT foto_url FROM ocorrencias WHERE id = $1', [id]);
+  if (!atual.rows[0]) throw new NotFoundError('Ocorrência não encontrada', 'OCORRENCIA_NOT_FOUND');
+  const processada = await processarImagem(imagem);
+
+  await fs.mkdir(avariasDir, { recursive: true });
+  const arquivo = `${id}-${randomUUID()}.webp`;
+  const destino = path.join(avariasDir, arquivo);
+  await fs.writeFile(destino, processada);
+  try {
+    await query('UPDATE ocorrencias SET foto_url = $1, updated_at = NOW() WHERE id = $2', [`/uploads/avarias/${arquivo}`, id]);
+  } catch (error) {
+    await fs.rm(destino, { force: true }).catch(() => {}); // não deixa arquivo órfão
+    throw error;
+  }
+  const anterior = atual.rows[0].foto_url;
+  if (anterior?.startsWith('/uploads/avarias/')) {
+    await fs
+      .rm(path.join(avariasDir, path.basename(anterior)), { force: true })
+      .catch((erro) => logger.warn({ erro, anterior }, 'não foi possível apagar a foto anterior da ocorrência (arquivo órfão)'));
+  }
+  const result = await query<Ocorrencia>(`SELECT ${COLUNAS_OCORRENCIA} ${JOINS_OCORRENCIA} WHERE o.id = $1`, [id]);
+  return result.rows[0];
 }

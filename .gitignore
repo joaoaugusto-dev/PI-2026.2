@@ -64,3 +64,4 @@ api/db/backups/
 
 # Fotos de ferramentas (volume em produção)
 api/data/ferramentas/
+api/data/avarias/

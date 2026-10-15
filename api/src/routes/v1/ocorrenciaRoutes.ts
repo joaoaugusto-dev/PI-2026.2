@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { OcorrenciaController } from '../../controllers/ocorrenciaController.js';
 import { validate } from '../../middlewares/validate.js';
 import { authenticate } from '../../middlewares/auth.js';
@@ -170,6 +170,54 @@ router.patch(
   authorize('manutencao', 'admin'),
   validate({ params: ocorrenciaIdParamSchema }),
   OcorrenciaController.avancar
+);
+
+/**
+ * @openapi
+ * /ocorrencias/{id}/foto:
+ *   put:
+ *     summary: Envia (ou troca) a foto da avaria/perda
+ *     description: >
+ *       Corpo é a imagem crua (image/jpeg, image/png ou image/webp, até 5 MB; o
+ *       tipo é conferido pelo conteúdo). Reduzida a 1280 px e convertida para
+ *       webp, sem EXIF, em pasta própria (AVARIAS_DIR, servida em
+ *       /v1/uploads/avarias).
+ *     tags:
+ *       - Ocorrências
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         image/jpeg:
+ *           schema:
+ *             type: string
+ *             format: binary
+ *     responses:
+ *       200:
+ *         description: Ocorrência com foto_url atualizado
+ *       400:
+ *         description: Corpo ausente ou não é uma imagem válida
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       404:
+ *         description: Ocorrência não encontrada
+ *       413:
+ *         description: Imagem maior que 5 MB
+ */
+router.put(
+  '/:id/foto',
+  authenticate,
+  authorize('manutencao', 'admin'),
+  validate({ params: ocorrenciaIdParamSchema }),
+  express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' }),
+  OcorrenciaController.salvarFoto
 );
 
 export default router;
