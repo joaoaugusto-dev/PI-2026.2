@@ -18,7 +18,7 @@ escrito**.
 - TanStack Query (dado remoto) + Axios (cliente HTTP)
 - React Hook Form + Zod (formulários e validação)
 - Tailwind + shadcn/ui
-- `recharts` (gráficos) + `react-barcode` (Code128)
+- `recharts` (gráficos) + `react-barcode` (Code128) + `write-excel-file` (planilha .xlsx das Análises)
 
 ## Estrutura de pastas
 
@@ -129,8 +129,8 @@ não filhas do layout autenticado.
   campo padrão = `--control-h` (56px); `size="sm"` = 44px (mínimo de toque, para
   ação em linha de tabela); ícones `icon`/`icon-sm` = 44px, `icon-lg` = 56px. Não
   repassar `h-8`/`h-9` na chamada; controle nativo solto (`<select>`, `<label>`
-  de upload) usa `h-(--control-h)`. Linha com muitas ações mostra só o ícone
-  abaixo de `2xl` (com `title` + `aria-label`), como em Colaboradores.
+  de upload) usa `h-(--control-h)`. Botão de ação em linha sempre leva texto (ícone sozinho
+  não diz o que faz); abaixo de `2xl` o cartão de cadastro empilha e os botões vão em grade.
 - **Movimento e animação (FE-01)** ficam centralizados em `src/index.css`:
   - **Regra de 60fps:** animação só toca `transform` e `opacity` — as duas
     propriedades que o compositor resolve sem layout nem repaint. Nunca
@@ -326,6 +326,40 @@ não filhas do layout autenticado.
   vazio, para etiqueta ilegível. A atividade exibida vem de
   `atividade_nome ?? atividade_observacao` (a retirada grava texto livre em
   `atividade_observacao`).
+
+- **Análises (`/analises`, KPIs de gestão da API #208)**: último item do menu
+  principal, para `manutencao` e `admin`. Cada KPI é um cartão declarado uma vez
+  em `components/analises/catalogo.tsx` (consulta, conteúdo da tela, `destaque`
+  e `tabela`); a mesma definição alimenta a tela, o relatório A4 e a planilha —
+  KPI novo entra só ali. O cartão de colaboradores é `soAdmin` (a API dá 403
+  para a manutenção). Um filtro de período para todos (atalhos + intervalo de
+  até 366 dias, `lib/periodo.ts`); cartões, ordem, tamanho e período ficam em
+  `localStorage` por usuário (`soufer:analises:v1:<id>`), como o som de
+  confirmação.
+  - **Layout justificado** (`lib/layout-justificado.ts`, testado em
+    `tests/lib/analises.test.ts`): como galeria de fotos, cada linha preenche a
+    largura e cada cartão ganha largura proporcional à `proporcao` dele; a
+    quebra é escolhida por programação dinâmica (alturas perto da alvo, sem
+    cartão abaixo da `larguraMin`). A largura é a do painel medida com
+    ResizeObserver (`useTamanhoElemento`), então abrir/recolher a sidebar
+    refaz o layout; a altura alvo sai da altura visível da tela. Lista dentro
+    de cartão mostra só os itens que cabem inteiros, medidos
+    (`useQuantosCabem`), com "+N no relatório e na planilha".
+  - **Gráficos**: a paleta da marca (preto, cinza, vermelho) não distingue
+    três séries com segurança, então a evolução é em faixas (small multiples),
+    uma métrica por faixa na mesma escala, linha reta (contagem é discreta).
+    Rankings são barras em HTML com o valor escrito na ponta (nome nunca
+    cortado). Vermelho/status só onde significa problema (avaria, extravio,
+    indisponível); seta + texto na variação, cor só reforça.
+  - **Relatório A4** (`ExportarAnalises`, `@page relatorio` no `index.css`):
+    logo, fio vermelho, caixas de destaque e uma seção por cartão visível;
+    rodapé "Página X de Y" na margem da página. Gráfico de impressão com
+    largura fixa e sem animação; a tabela de evolução no papel leva só os
+    dias com movimento.
+  - **Planilha .xlsx** com `write-excel-file` (dependência nova, importada só
+    no clique): aba "Resumo" + uma aba por cartão, números como número
+    (milhar, `0.0%`, decimal), cabeçalho vermelho da marca congelado e linhas
+    zebradas. CSV não guarda formatação, por isso a lib.
 
 ## Responsividade
 

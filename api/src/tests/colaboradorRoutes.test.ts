@@ -40,7 +40,7 @@ describe('Rotas de Colaboradores (API-09)', () => {
   const matriculaSemToken = '9308';
 
   beforeAll(async () => {
-    setorId = (await query<{ id: number }>('SELECT id FROM setores LIMIT 1')).rows[0].id;
+    setorId = (await query<{ id: number }>('SELECT id FROM setores ORDER BY id LIMIT 1')).rows[0].id;
     usuarioId = (await query<{ id: number }>("SELECT id FROM usuarios WHERE papel = 'manutencao' LIMIT 1")).rows[0]
       .id;
 

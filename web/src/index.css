@@ -627,7 +627,8 @@
 /* Etiqueta térmica 90 x 60 mm (EtiquetaTermica) — só existe na impressão */
 .etiqueta-impressao,
 .cracha-impressao,
-.lista-impressao {
+.lista-impressao,
+.relatorio-impressao {
   display: none;
 }
 
@@ -637,13 +638,31 @@
   margin: 12mm;
 }
 
+/* Relatório de análises (RelatorioAnalises) em A4, com rodapé de página na margem */
+@page relatorio {
+  size: A4;
+  margin: 14mm 14mm 16mm;
+
+  @bottom-left {
+    content: 'SOUFER Tools · Relatório de análises';
+    font: 7pt 'Geist Variable', sans-serif;
+    color: #575756;
+  }
+
+  @bottom-right {
+    content: 'Página ' counter(page) ' de ' counter(pages);
+    font: 7pt 'Geist Variable', sans-serif;
+    color: #575756;
+  }
+}
+
 @media print {
   @page {
     size: 90mm 60mm;
     margin: 0;
   }
 
-  body > *:not(.etiqueta-impressao):not(.cracha-impressao):not(.lista-impressao) {
+  body > *:not(.etiqueta-impressao):not(.cracha-impressao):not(.lista-impressao):not(.relatorio-impressao) {
     display: none !important;
   }
 
@@ -868,5 +887,169 @@
     font-size: 24pt;
     font-weight: 800;
     letter-spacing: 0.05em;
+  }
+
+  /* Relatório de análises: papel branco, tinta preta, vermelho da marca só no fio do cabeçalho e no marcador
+     de seção; barras com print-color-adjust (o navegador descarta fundo na impressão por padrão). */
+  .relatorio-impressao {
+    display: block;
+    page: relatorio;
+    color: #1d1d1b;
+    background: #fff;
+    font-family: 'Geist Variable', sans-serif;
+    font-size: 9pt;
+    line-height: 1.35;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .relatorio-impressao header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8mm;
+    padding-bottom: 3mm;
+    border-bottom: 0.8mm solid #e30613;
+  }
+
+  .relatorio-impressao header img {
+    height: 13mm;
+    width: auto;
+  }
+
+  .relatorio-impressao header div {
+    text-align: right;
+  }
+
+  .relatorio-impressao h1 {
+    font-size: 15pt;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .relatorio-meta {
+    margin-top: 1mm;
+    color: #575756;
+    font-size: 8pt;
+  }
+
+  .relatorio-resumo {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3mm;
+    margin: 5mm 0 2mm;
+  }
+
+  .relatorio-resumo > div {
+    padding: 2.5mm 3mm;
+    border: 0.25mm solid #d9d9d9;
+    border-radius: 1.5mm;
+    break-inside: avoid;
+  }
+
+  .relatorio-resumo small,
+  .relatorio-impressao th {
+    display: block;
+    color: #575756;
+    font-size: 6.5pt;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .relatorio-resumo strong {
+    display: block;
+    margin-top: 0.5mm;
+    font-size: 18pt;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .relatorio-resumo span {
+    color: #575756;
+    font-size: 7.5pt;
+  }
+
+  /* seção pode quebrar entre páginas (tabela longa), mas título, descrição e gráfico não ficam órfãos */
+  .relatorio-impressao section {
+    margin-top: 6mm;
+  }
+
+  .relatorio-impressao h2,
+  .relatorio-descricao {
+    break-after: avoid;
+  }
+
+  .relatorio-grafico {
+    break-inside: avoid;
+  }
+
+  .relatorio-impressao h2 {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .relatorio-impressao h2::before {
+    content: '';
+    width: 2mm;
+    height: 2mm;
+    background: #e30613;
+  }
+
+  .relatorio-descricao {
+    margin: 0.5mm 0 2mm 4mm;
+    color: #575756;
+    font-size: 8pt;
+  }
+
+  .relatorio-impressao table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .relatorio-impressao th {
+    display: table-cell;
+    padding: 1.2mm 1.5mm;
+    border-bottom: 0.35mm solid #1d1d1b;
+    text-align: left;
+  }
+
+  .relatorio-impressao td {
+    padding: 1.2mm 1.5mm;
+    border-bottom: 0.2mm solid #e5e5e5;
+    vertical-align: middle;
+  }
+
+  .relatorio-impressao tr {
+    break-inside: avoid;
+  }
+
+  .relatorio-impressao .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .relatorio-barra {
+    width: 30%;
+  }
+
+  .relatorio-barra div {
+    height: 2.2mm;
+    border-radius: 0 0.6mm 0.6mm 0;
+    background: #1d1d1b;
+  }
+
+  .relatorio-vazio {
+    margin-left: 4mm;
+    color: #575756;
+    font-style: italic;
+  }
+
+  .relatorio-grafico {
+    margin-bottom: 2mm;
   }
 }
