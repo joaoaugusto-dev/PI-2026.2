@@ -77,11 +77,11 @@ async function exportarCsv(filtros: FiltrosEmprestimos, signal: AbortSignal) {
   return truncou
 }
 
-/** Miniatura da foto da avaria/perda; clicar amplia, sem abrir a ferramenta. */
-function FotoOcorrencia({ e }: { e: Emprestimo }) {
+/** Miniatura da foto da avaria/perda; clicar amplia (sem abrir a ferramenta, o IconeFerramenta cuida disso). */
+function FotoOcorrencia({ url, nome }: { url: string; nome: string }) {
   return (
-    <div className="mt-1" onClick={(ev) => ev.stopPropagation()} onKeyDown={(ev) => ev.stopPropagation()}>
-      <IconeFerramenta nome={`Foto da ${e.condicao_devolucao} de ${e.ferramenta_nome}`} fotoUrl={e.foto_ocorrencia_url!} ampliavel className="size-14" />
+    <div className="mt-1">
+      <IconeFerramenta nome={nome} fotoUrl={url} ampliavel className="size-14" />
     </div>
   )
 }
@@ -227,7 +227,7 @@ export function EmprestimosPage() {
                     {e.data_devolucao ? ` · voltou ${dataHoraBR(e.data_devolucao)}` : ` · prazo ${dataBR(e.previsao_devolucao)}`}
                   </p>
                   {atividade(e) && <p className="text-sm text-muted-foreground">Atividade: {atividade(e)}</p>}
-                  {e.foto_ocorrencia_url && <FotoOcorrencia e={e} />}
+                  {e.foto_ocorrencia_url && <FotoOcorrencia url={e.foto_ocorrencia_url} nome={`Foto da ${e.condicao_devolucao} de ${e.ferramenta_nome}`} />}
                 </li>
               ))}
             </ul>
@@ -257,7 +257,7 @@ export function EmprestimosPage() {
                     </TableCell>
                     <TableCell className={cn('font-medium', corDaSituacao(e))}>
                       {textoSituacao(e)}
-                      {e.foto_ocorrencia_url && <FotoOcorrencia e={e} />}
+                      {e.foto_ocorrencia_url && <FotoOcorrencia url={e.foto_ocorrencia_url} nome={`Foto da ${e.condicao_devolucao} de ${e.ferramenta_nome}`} />}
                     </TableCell>
                     <TableCell>
                       <p>{e.colaborador_nome}</p>

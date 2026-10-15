@@ -61,7 +61,7 @@ export function FormularioOcorrencia({
           value={foto}
           onChange={onFotoChange}
           semUrl
-          rotulo={tipo === 'avaria' ? 'Foto da avaria (opcional)' : 'Foto (opcional)'}
+          rotulo={`Foto da ${tipo} (opcional)`}
         />
       </div>
 

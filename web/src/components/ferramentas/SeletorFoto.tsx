@@ -18,12 +18,9 @@ type SeletorFotoProps = {
 }
 
 /**
- * Dropzone quadrada de foto (cadastro de ferramenta): upload manual de
- * arquivo ou cola de uma URL de imagem já hospedada em outro lugar. Só o
- * preview local/remoto por enquanto — a coluna `ferramentas.foto_url` existe
- * no banco (migração 0001), mas não há endpoint de upload/armazenamento
- * físico na API ainda (onde a imagem seria salva fica pra depois), então
- * nada disso é enviado no submit (ver comentário no `onSubmit` da página).
+ * Dropzone quadrada de foto: escolhe o arquivo, recorta em 1:1 (RecortadorFoto) e devolve um
+ * `File` JPEG; quem usa envia à API (ferramenta ou ocorrência), que reduz e converte para webp.
+ * Também aceita colar uma URL (`semUrl` esconde o campo, pois a API só recebe arquivo).
  */
 export function SeletorFoto({ value, onChange, semUrl = false, removivel = true, rotulo = 'Foto' }: SeletorFotoProps) {
   const inputRef = useRef<HTMLInputElement>(null)

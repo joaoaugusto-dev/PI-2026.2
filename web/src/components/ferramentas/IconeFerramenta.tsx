@@ -135,20 +135,21 @@ export function IconeFerramenta({ nome, fotoUrl, ampliavel, className }: IconeFe
     const src = urlDaFoto(fotoUrl)
     const miniatura = <img src={src} alt={nome} onError={() => setQuebrada(fotoUrl)} className={cn('rounded object-cover', className)} />
     if (!ampliavel) return miniatura
+    // clique/teclado (inclusive do diálogo, que borbulha pelo portal) não pode acionar a linha clicável em volta
     return (
-      <span className="contents" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-      <Dialog>
-        <DialogTrigger asChild>
-          <button type="button" aria-label={`Ampliar foto de ${nome}`} className="shrink-0 cursor-zoom-in rounded transition hover:brightness-90 focus-visible:ring-2 focus-visible:ring-ring">
-            {miniatura}
-          </button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-xl">
-          <DialogTitle>{nome}</DialogTitle>
-          <DialogDescription className="sr-only">Foto ampliada da ferramenta</DialogDescription>
-          <img src={src} alt={nome} className="max-h-[70vh] w-full rounded-lg object-contain" />
-        </DialogContent>
-      </Dialog>
+      <span className="contents" role="presentation" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button type="button" aria-label={`Ampliar foto de ${nome}`} className="shrink-0 cursor-zoom-in rounded transition hover:brightness-90 focus-visible:ring-2 focus-visible:ring-ring">
+              {miniatura}
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-xl">
+            <DialogTitle>{nome}</DialogTitle>
+            <DialogDescription className="sr-only">Foto ampliada da ferramenta</DialogDescription>
+            <img src={src} alt={nome} className="max-h-[70vh] w-full rounded-lg object-contain" />
+          </DialogContent>
+        </Dialog>
       </span>
     )
   }
