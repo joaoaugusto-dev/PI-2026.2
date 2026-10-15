@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import sharp from 'sharp';
 import type { QueryResultRow } from 'pg';
 import { query, getClient } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
 import { logger } from '../middlewares/logger.js';
-import { NotFoundError, ConflictError, ValidationError } from '../utils/errors.js';
+import { NotFoundError, ConflictError } from '../utils/errors.js';
+import { processarImagem } from '../utils/imagem.js';
 import { CriarFerramentaInput, AtualizarFerramentaInput } from '../validators/ferramentaValidator.js';
 
 export interface Ferramenta {
@@ -201,7 +201,7 @@ export async function historico(id: number): Promise<HistoricoFerramenta> {
     ),
     query(
       `SELECT id, emprestimo_id, item_kit_id, colaborador_id, tipo, descricao, status,
-              custo_estimado, custo_real, data_resolucao, observacoes_resolucao,
+              custo_estimado, custo_real, data_resolucao, observacoes_resolucao, foto_url,
               registrada_por, resolvida_por, created_at, updated_at
        FROM ocorrencias
        WHERE ferramenta_id = $1
@@ -384,17 +384,6 @@ export async function baixar(id: number): Promise<Ferramenta> {
   if ((result.rowCount ?? 0) > 0) await apagarArquivoFoto(atual.foto_url);
   return result.rows[0];
 }
-
-// Tipo real pelo conteúdo (não pelo Content-Type, que o cliente controla).
-function extensaoDaImagem(b: Buffer): 'jpg' | 'png' | 'webp' | null {
-  if (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg';
-  if (b.length > 12 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
-  if (b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'webp';
-  return null;
-}
-
-// foto de celular chega a ~40 MP; acima disso o sharp recusa (limita a memória por requisição)
-const LIMITE_PIXELS_FOTO = 40_000_000;
 
 // basename evita sair do diretório. Falha ao apagar não derruba a requisição:
 // o banco já foi atualizado e o pior caso é um arquivo sobrando.
