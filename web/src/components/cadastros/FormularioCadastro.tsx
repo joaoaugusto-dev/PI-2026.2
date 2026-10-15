@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import type { ZodType } from 'zod'
@@ -92,7 +93,8 @@ export function FormularioCadastro({
           Cancelar
         </Button>
         <Button type="submit" disabled={salvando}>
-          Salvar
+          {salvando && <Loader2 className="size-4 animate-spin" />}
+          {salvando ? 'Salvando…' : 'Salvar'}
         </Button>
       </div>
     </form>

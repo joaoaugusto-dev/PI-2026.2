@@ -44,6 +44,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { useState } from 'react'
 import { urlDaFoto } from '@/lib/imagem'
 import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/Dialog'
@@ -128,9 +129,11 @@ type IconeFerramentaProps = {
 
 /** Miniatura de ferramenta: foto quando existir, senão o ícone reconhecido pelo nome. */
 export function IconeFerramenta({ nome, fotoUrl, ampliavel, className }: IconeFerramentaProps) {
-  if (fotoUrl) {
+  // arquivo da foto sumiu do servidor (404): cai no ícone em vez de mostrar imagem quebrada
+  const [quebrada, setQuebrada] = useState<string | null>(null)
+  if (fotoUrl && quebrada !== fotoUrl) {
     const src = urlDaFoto(fotoUrl)
-    const miniatura = <img src={src} alt={nome} className={cn('rounded object-cover', className)} />
+    const miniatura = <img src={src} alt={nome} onError={() => setQuebrada(fotoUrl)} className={cn('rounded object-cover', className)} />
     if (!ampliavel) return miniatura
     return (
       <Dialog>

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CadastroCrud } from '@/components/cadastros/CadastroCrud'
 import { BotaoImprimirEtiqueta } from '@/components/ferramentas/BotaoImprimirEtiqueta'
+import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { useCategorias } from '@/hooks/useCategorias'
 import { useQueryClient } from '@tanstack/react-query'
 import { chaveFerramenta, formatarPatrimonio, todasFerramentasQuery, type Ferramenta } from '@/hooks/useFerramentas'
@@ -38,6 +39,11 @@ export function CadastroFerramentasPage() {
       }}
       acoesLinha={(f) => <BotaoImprimirEtiqueta ferramenta={f} compacto />}
       colunas={[
+        {
+          cabecalho: 'Foto',
+          largura: '4.5rem',
+          render: (f) => <IconeFerramenta nome={f.nome} fotoUrl={f.foto_url} ampliavel className="size-10" />,
+        },
         { cabecalho: 'Nome', render: (f) => f.nome },
         { cabecalho: 'Categoria', render: (f) => nomeDe(categorias, f.grupo_id) },
         { cabecalho: 'Marca / modelo', render: (f) => [f.marca, f.modelo].filter(Boolean).join(' ') || '—' },

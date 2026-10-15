@@ -16,7 +16,7 @@ describe('busca de ferramenta por código', () => {
   let seis: string;
 
   beforeAll(async () => {
-    const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas LIMIT 1')).rows[0].id;
+    const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
     const r = await query<{ id: number; codigo_identificacao: number }>(
       'INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING id, codigo_identificacao',
       [`${PREFIXO}Furadeira`, grupoId]
@@ -68,7 +68,7 @@ describe('geração do código na carga em lote', () => {
     const client = await getClient();
     try {
       await client.query('BEGIN');
-      const grupoId = (await client.query<{ id: number }>('SELECT id FROM grupos_ferramentas LIMIT 1')).rows[0].id;
+      const grupoId = (await client.query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
       const r = await client.query<{ codigo_identificacao: number }>(
         `INSERT INTO ferramentas (nome, grupo_id)
          SELECT '${PREFIXO}lote ' || g, $1 FROM generate_series(1, 300) g

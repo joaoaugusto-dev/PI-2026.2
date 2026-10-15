@@ -50,8 +50,7 @@ export function BotaoLinkAcesso({ colaboradorId, nome }: { colaboradorId: number
         aria-label="Link de acesso"
       >
         {gerando ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
-        {/* só ícone abaixo de 2xl: com botões de 44px os quatro rótulos não cabem na linha */}
-        <span className="hidden 2xl:inline">Link de acesso</span>
+        Link de acesso
       </Button>
       <Dialog open={linkManual !== null} onOpenChange={(a) => !a && setLinkManual(null)}>
         <DialogContent>

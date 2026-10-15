@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileUp, Inbox, Plus } from 'lucide-react'
+import { Camera, FileUp, Inbox, Loader2, Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { ZodType } from 'zod'
@@ -14,8 +14,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { useEnviarFoto, useInativarCadastro, useListaCadastro, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
+import { useEnviarFoto, useInativarCadastro, useListaCadastro, useRemoverFoto, useSalvarCadastro, type Recurso } from '@/hooks/useCadastro'
 import { avisarErro } from '@/lib/avisar-erro'
 import { comprimirImagem, urlDaFoto } from '@/lib/imagem'
 import { playSomConfirmacao } from '@/lib/som-confirmacao'
@@ -30,6 +29,8 @@ const LIMITE_AGRUPADO = 100
 export interface Coluna<T> {
   cabecalho: string
   render: (item: T) => ReactNode
+  /** Largura da coluna na grade larga (ex.: '4.5rem'); padrão: fatia igual do espaço. */
+  largura?: string
 }
 
 type Valores = Record<string, string>
@@ -40,6 +41,12 @@ type Valores = Record<string, string>
  * telas.md), Editar por linha, Inativar (nunca apaga) e importação de CSV.
  * Cada tela só descreve colunas, campos e schema.
  */
+/** Espera todas as unidades terminarem e diz quantas falharam (não para na primeira). */
+async function enquantoTodas(tarefas: Promise<unknown>[]) {
+  const falhas = (await Promise.allSettled(tarefas)).filter((r) => r.status === 'rejected').length
+  if (falhas) throw new Error(`Falhou em ${falhas} de ${tarefas.length} unidades. As demais foram alteradas.`)
+}
+
 export function CadastroCrud<T extends { id: number }>({
   recurso,
   singular,
@@ -95,11 +102,16 @@ export function CadastroCrud<T extends { id: number }>({
   }, [location, navigate])
   const [fotoSel, setFotoSel] = useState<FotoSelecionada | null>(null)
   const enviarFoto = useEnviarFoto()
+  const [salvandoTudo, setSalvandoTudo] = useState(false) // cobre registro + compressão + envio da foto
   const [criada, setCriada] = useState<Ferramenta | null>(null)
   const [importando, setImportando] = useState(false)
   useEffect(() => setFotoSel(null), [editando]) // cada abertura do pop-up começa sem foto escolhida
   const [inativando, setInativando] = useState<T | null>(null)
   const [duplicando, setDuplicando] = useState<number | null>(null)
+  const [fotoGrupo, setFotoGrupo] = useState<T[] | null>(null)
+  const [novaFoto, setNovaFoto] = useState<FotoSelecionada | 'remover' | null>(null)
+  const [aplicandoFoto, setAplicandoFoto] = useState(false)
+  const removerFoto = useRemoverFoto()
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -123,6 +135,8 @@ export function CadastroCrud<T extends { id: number }>({
   function aoSalvar(valores: Valores) {
     const id = editando && editando !== 'novo' ? editando.id : undefined
     const arquivo = fotoSel?.tipo === 'arquivo' ? fotoSel.arquivo : null
+    if (salvandoTudo) return
+    setSalvandoTudo(true)
     salvar.mutate(
       { id, dados: paraPayload(valores, id !== undefined) },
       {
@@ -139,12 +153,16 @@ export function CadastroCrud<T extends { id: number }>({
               avisarErro(erroDaApi(e) ?? 'O cadastro foi salvo, mas não foi possível enviar a foto.')
             }
           }
+          setSalvandoTudo(false)
           setEditando(null)
           if (!id && recurso === 'ferramentas' && salvo.codigo_identificacao) {
             setCriada(salvo)
           }
         },
-        onError: (e) => avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`),
+        onError: (e) => {
+          setSalvandoTudo(false)
+          avisarErro(erroDaApi(e) ?? `Não foi possível salvar o ${singular.toLowerCase()}.`)
+        },
       },
     )
   }
@@ -179,10 +197,51 @@ export function CadastroCrud<T extends { id: number }>({
       .finally(() => setDuplicando(null)) // só libera o botão depois da foto
   }
 
+  // "Foto": a foto vale para o grupo inteiro (ou a unidade avulsa) e é gravada em cada unidade
+  const fotoDoGrupo = fotoGrupo?.find((i) => (i as { foto_url?: string | null }).foto_url)
+  const fotoDoGrupoAtual = fotoDoGrupo ? fotoAtual(fotoDoGrupo) : null
+  const fotoExibida = novaFoto === 'remover' ? null : (novaFoto ?? fotoDoGrupoAtual)
+
+  function fecharFotoGrupo() {
+    setFotoGrupo(null)
+    setNovaFoto(null)
+  }
+
+  async function aplicarFotoGrupo() {
+    if (!fotoGrupo || !novaFoto) return
+    setAplicandoFoto(true)
+    try {
+      if (novaFoto === 'remover') {
+        await enquantoTodas(fotoGrupo.filter((i) => (i as { foto_url?: string | null }).foto_url).map((i) => removerFoto.mutateAsync(i.id)))
+        toast.success('Foto removida.')
+      } else if (novaFoto.tipo === 'arquivo') {
+        const imagem = await comprimirImagem(novaFoto.arquivo)
+        await enquantoTodas(fotoGrupo.map((i) => enviarFoto.mutateAsync({ id: i.id, imagem })))
+        toast.success(fotoGrupo.length > 1 ? 'Foto aplicada ao grupo.' : 'Foto atualizada.')
+      }
+      fecharFotoGrupo()
+    } catch (e) {
+      avisarErro(erroDaApi(e) ?? (e instanceof Error ? e.message : 'Não foi possível salvar a foto.'))
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['ferramentas'] }) // garante a lista certa mesmo com falha parcial
+      setAplicandoFoto(false)
+    }
+  }
+
+  const botaoFoto = (itens: T[]) =>
+    foto && (
+      <Button size="sm" variant="outline" onClick={() => setFotoGrupo(itens)}>
+        <Camera /> Foto
+      </Button>
+    )
+
   const botaoUnidade = (item: T, rotulo = 'Unidade') => (
-    <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
-      <Plus /> {rotulo}
-    </Button>
+    <>
+      {botaoFoto(porChave.get(agrupar?.chave(item) ?? '') ?? [item])}
+      <Button size="sm" variant="outline" disabled={duplicando !== null} onClick={() => adicionarUnidade(item)}>
+        {duplicando === item.id ? <Loader2 className="animate-spin" /> : <Plus />} {rotulo}
+      </Button>
+    </>
   )
 
   const porChave = new Map<string, T[]>()
@@ -237,7 +296,7 @@ export function CadastroCrud<T extends { id: number }>({
       {isError && <p className="text-corpo text-destructive">Não foi possível carregar os registros.</p>}
 
       <Card>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : linhas.length === 0 ? (
@@ -246,43 +305,23 @@ export function CadastroCrud<T extends { id: number }>({
               titulo="Nenhum registro encontrado"
               descricao="Ajuste a busca ou cadastre um novo."
             />
-          ) : agrupar ? (
+          ) : (
             <ListaAgrupada
               colunas={colunas}
-              grupos={grupos}
-              chave={agrupar.chave}
-              resumo={agrupar.resumo}
+              grupos={agrupar ? grupos : linhas.map((i) => [i])}
+              chave={agrupar?.chave ?? ((i) => String(i.id))}
+              resumo={agrupar?.resumo ?? (() => null)}
               acoesGrupo={botaoUnidade}
-              acoesUnidade={(item, avulsa) => botoesUnidade(item, avulsa)}
+              acoesUnidade={(item, avulsa) => botoesUnidade(item, avulsa && !!agrupar)}
+              larguraAcoes={agrupar ? '26rem' : '28rem'}
             />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {colunas.map((c) => (
-                    <TableHead key={c.cabecalho}>{c.cabecalho}</TableHead>
-                  ))}
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {linhas.map((item) => (
-                  <TableRow key={item.id}>
-                    {colunas.map((c) => (
-                      <TableCell key={c.cabecalho}>{c.render(item)}</TableCell>
-                    ))}
-                    <TableCell className="flex justify-end gap-2">{botoesUnidade(item, false)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           )}
         </CardContent>
       </Card>
 
       <Paginacao meta={meta} page={page} onPage={setPage} itens="registros" />
 
-      <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvar.isPending && setEditando(null)}>
+      <Dialog open={editando !== null} onOpenChange={(a) => !a && !salvandoTudo && setEditando(null)}>
         <DialogContent className={foto ? 'sm:max-w-2xl' : undefined}>
           <DialogHeader>
             <DialogTitle>
@@ -295,7 +334,7 @@ export function CadastroCrud<T extends { id: number }>({
               campos={campos}
               schema={schema}
               valoresIniciais={editando === 'novo' ? valoresVazios : deItem(editando)}
-              salvando={salvar.isPending || enviarFoto.isPending}
+              salvando={salvandoTudo}
               onSubmit={aoSalvar}
               onCancelar={() => setEditando(null)}
               extra={
@@ -310,6 +349,33 @@ export function CadastroCrud<T extends { id: number }>({
               }
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={fotoGrupo !== null} onOpenChange={(a) => !a && !aplicandoFoto && fecharFotoGrupo()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto da ferramenta</DialogTitle>
+            <DialogDescription>
+              {fotoGrupo && fotoGrupo.length > 1
+                ? `Vale para as ${fotoGrupo.length} unidades do grupo.`
+                : 'Escolha, troque ou remova a foto.'}
+            </DialogDescription>
+          </DialogHeader>
+          <SeletorFoto
+            semUrl
+            value={fotoExibida}
+            onChange={(f) => setNovaFoto(f ?? (novaFoto === null && fotoDoGrupoAtual ? 'remover' : null))}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={aplicandoFoto} onClick={fecharFotoGrupo}>
+              Cancelar
+            </Button>
+            <Button disabled={novaFoto === null || aplicandoFoto} onClick={aplicarFotoGrupo}>
+              {aplicandoFoto && <Loader2 className="size-4 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -334,6 +400,7 @@ export function CadastroCrud<T extends { id: number }>({
               Cancelar
             </Button>
             <Button disabled={inativar.isPending} onClick={confirmarInativacao}>
+              {inativar.isPending && <Loader2 className="size-4 animate-spin" />}
               {rotuloInativar}
             </Button>
           </div>
