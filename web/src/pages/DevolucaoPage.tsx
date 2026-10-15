@@ -155,7 +155,7 @@ export function DevolucaoPage() {
             toast.success(`${nome} foi para Indisponíveis.`, {
               description: `Ocorrência de ${data.condicao} aberta em nome de ${encontrado.colaborador_nome}.`,
             })
-            if (resultado.fotoFalhou) avisarErro('A ocorrência foi aberta, mas a foto não foi enviada.')
+            if (resultado.fotoFalhou) avisarErro('A ocorrência foi aberta, mas a foto não foi enviada. Anexe depois em Ferramentas > Ocorrências ou em Indisponíveis.')
           }
         },
         onError: (e) =>

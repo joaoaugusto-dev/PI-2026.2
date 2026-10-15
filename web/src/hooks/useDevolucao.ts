@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { buscarEmprestimos, type Emprestimo } from '@/hooks/useEmprestimos'
+import { enviarFotoOcorrencia } from '@/hooks/useOcorrencias'
 import { api } from '@/lib/api'
 import { escolherPorCodigo, type Escolha } from '@/lib/patrimonio'
 
@@ -66,7 +67,7 @@ export function useDevolverEmprestimo() {
       let fotoFalhou = false
       if (foto && condicao !== 'ok' && data.data.ocorrencia_id) {
         try {
-          await api.put(`/ocorrencias/${data.data.ocorrencia_id}/foto`, foto, { headers: { 'Content-Type': foto.type || 'image/jpeg' } })
+          await enviarFotoOcorrencia(data.data.ocorrencia_id, foto)
         } catch {
           fotoFalhou = true
         }

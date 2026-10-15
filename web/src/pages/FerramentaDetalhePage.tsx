@@ -4,6 +4,7 @@ import { BotaoImprimirEtiqueta } from '@/components/ferramentas/BotaoImprimirEti
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { corDaSituacao, textoSituacao } from '@/components/emprestimos/situacao'
+import { BotaoFotoOcorrencia } from '@/components/ferramentas/BotaoFotoOcorrencia'
 import { IconeFerramenta } from '@/components/ferramentas/IconeFerramenta'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -257,6 +258,9 @@ export function FerramentaDetalhePage() {
                   {o.foto_url && (
                     <IconeFerramenta nome={`Foto da ${rotuloCondicao(o.tipo).toLowerCase()}`} fotoUrl={o.foto_url} ampliavel className="mt-1.5 size-20" />
                   )}
+                  <div className="mt-1.5">
+                    <BotaoFotoOcorrencia ocorrenciaId={o.id} temFoto={!!o.foto_url} />
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-0.5 text-right">
                   <span className="text-corpo font-medium">{STATUS_OCORRENCIA[o.status] ?? o.status}</span>
