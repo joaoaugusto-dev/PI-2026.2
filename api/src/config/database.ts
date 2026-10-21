@@ -44,6 +44,40 @@ export const query = <T extends pg.QueryResultRow = any>(
  */
 export const getClient = (): Promise<pg.PoolClient> => pool.connect();
 
+/**
+ * Informa ao banco quem está escrevendo, para a trigger de auditoria (fn_auditoria) gravar `usuario_id`.
+ * Vale só até o fim da transação (set_config com is_local = true), então chame logo depois do BEGIN.
+ * O id vem sempre do JWT (req.usuario), nunca do corpo da requisição (regra 6).
+ */
+export async function definirUsuarioAuditoria(client: pg.PoolClient, usuarioId: number | null | undefined): Promise<void> {
+  await client.query(`SELECT set_config('app.usuario_id', $1, true)`, [usuarioId == null ? '' : String(usuarioId)]);
+}
+
+/**
+ * Como `query`, mas numa transação curta que identifica o usuário para a auditoria. Sem `usuarioId`
+ * (scripts, testes) cai no `query` comum e a linha de auditoria fica sem usuário.
+ */
+export async function queryComUsuario<T extends pg.QueryResultRow = any>(
+  usuarioId: number | null | undefined,
+  text: string,
+  params?: any[]
+): Promise<pg.QueryResult<T>> {
+  if (usuarioId == null) return query<T>(text, params);
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+    await definirUsuarioAuditoria(client, usuarioId);
+    const result = await client.query<T>(text, params);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export interface ConnectionTestResult {
   ok: boolean;
   timestamp?: string;

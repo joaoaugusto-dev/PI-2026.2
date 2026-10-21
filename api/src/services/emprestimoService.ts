@@ -1,4 +1,4 @@
-import { getClient, query } from '../config/database.js';
+import { definirUsuarioAuditoria, getClient, query } from '../config/database.js';
 import { AppError, ConflictError, NotFoundError } from '../utils/errors.js';
 import { CriarEmprestimoInput, DevolverEmprestimoInput } from '../validators/emprestimoValidator.js';
 import { adicionarDiasUteis } from './feriadoService.js';
@@ -104,6 +104,7 @@ async function inserirComTrava(input: CriarEmprestimoInput, usuarioId: number): 
   const client = await getClient();
   try {
     await client.query('BEGIN');
+    await definirUsuarioAuditoria(client, usuarioId);
 
     const ferramenta = await client.query<{ status: string }>(
       'SELECT status FROM ferramentas WHERE id = $1 AND ativo = true FOR UPDATE',
@@ -194,6 +195,7 @@ export async function devolver(id: number, input: DevolverEmprestimoInput, usuar
   let ocorrenciaId: number | null = null;
   try {
     await client.query('BEGIN');
+    await definirUsuarioAuditoria(client, usuarioId);
 
     const atual = await client.query<{ data_devolucao: string | null }>(
       'SELECT data_devolucao FROM emprestimos WHERE id = $1 FOR UPDATE',

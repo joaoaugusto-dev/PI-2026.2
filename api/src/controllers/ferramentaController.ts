@@ -90,7 +90,7 @@ export class FerramentaController {
    */
   static async criar(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      const ferramenta = await ferramentaService.criar(req.body);
+      const ferramenta = await ferramentaService.criar(req.body, req.usuario!.id);
       return sendSuccess(res, ferramenta, null, 201);
     } catch (error) {
       return next(error);
@@ -103,7 +103,7 @@ export class FerramentaController {
   static async atualizar(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const { id } = req.params as unknown as { id: number };
-      const ferramenta = await ferramentaService.atualizar(id, req.body);
+      const ferramenta = await ferramentaService.atualizar(id, req.body, req.usuario!.id);
       return sendSuccess(res, ferramenta, null, 200);
     } catch (error) {
       return next(error);
@@ -115,7 +115,7 @@ export class FerramentaController {
   static async marcarEtiquetaImpressa(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const { id } = req.params as unknown as { id: number };
-      const ferramenta = await ferramentaService.marcarEtiquetaImpressa(id);
+      const ferramenta = await ferramentaService.marcarEtiquetaImpressa(id, req.usuario!.id);
       return sendSuccess(res, ferramenta, null, 200);
     } catch (error) {
       return next(error);
@@ -141,7 +141,7 @@ export class FerramentaController {
   static async baixar(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const { id } = req.params as unknown as { id: number };
-      const ferramenta = await ferramentaService.baixar(id);
+      const ferramenta = await ferramentaService.baixar(id, req.usuario!.id);
       return sendSuccess(res, ferramenta, null, 200);
     } catch (error) {
       return next(error);
@@ -154,7 +154,7 @@ export class FerramentaController {
   static async salvarFoto(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const { id } = req.params as unknown as { id: number };
-      return sendSuccess(res, await ferramentaService.salvarFoto(id, req.body), null, 200);
+      return sendSuccess(res, await ferramentaService.salvarFoto(id, req.body, req.usuario!.id), null, 200);
     } catch (error) {
       return next(error);
     }
@@ -166,7 +166,7 @@ export class FerramentaController {
   static async removerFoto(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
       const { id } = req.params as unknown as { id: number };
-      return sendSuccess(res, await ferramentaService.removerFoto(id), null, 200);
+      return sendSuccess(res, await ferramentaService.removerFoto(id, req.usuario!.id), null, 200);
     } catch (error) {
       return next(error);
     }
