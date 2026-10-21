@@ -2,7 +2,7 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { query } from '../config/database.js';
 
 // fn_limpar_notificacoes() (migration 0007): só apaga lidas com mais de 30 dias.
-const PREFIXO = 'ZZTESTE_API17_LIMPEZA_';
+const PREFIXO = 'ZZTESTE_LIMPEZA_NOTIF_';
 
 describe('fn_limpar_notificacoes', () => {
   afterAll(async () => {

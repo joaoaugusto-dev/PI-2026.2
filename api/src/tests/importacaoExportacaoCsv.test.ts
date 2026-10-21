@@ -169,7 +169,13 @@ describe('GET /v1/exportacoes/:recurso', () => {
 
   it('o arquivo exportado volta pela importação sem duplicar nada', async () => {
     const exportado = await baixar('/exportacoes/setores');
-    const res = await importar('setores', exportado.body);
+    // setores ZZTESTE_ de outros arquivos de teste nascem e somem em paralelo: se um sumir entre a exportação e a
+    // importação, a reimportação o recriaria. Fora isso, o arquivo volta inteiro.
+    const arquivo = exportado.body
+      .split('\r\n')
+      .filter((linha: string, i: number) => i === 0 || !linha.includes('ZZTESTE_'))
+      .join('\r\n');
+    const res = await importar('setores', arquivo);
     expect(res.status).toBe(200);
     expect(res.body.data.resumo.aceitas).toBe(0);
     expect(res.body.data.resumo.ignoradas).toBe(res.body.data.resumo.total_linhas);

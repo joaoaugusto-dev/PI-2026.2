@@ -37,8 +37,17 @@ describe('GET /v1/emprestimos (histórico)', () => {
 describe('GET /v1/emprestimos — busca por patrimônio', () => {
   it('aceita SF000045, 000045 e 45 como o mesmo patrimônio', async () => {
     const [a, b, c] = await Promise.all(['SF000045', '000045', '45'].map((q) => get(`?q=${q}&limit=100`)));
+    // "45" também casa por texto (nome, matrícula) e "SF000045" não: o total geral varia com os dados do
+    // banco. O que tem de ser igual nas três formas é o conjunto de empréstimos do patrimônio 45.
+    const doPatrimonio = (res: { body: { data: any[] } }) =>
+      res.body.data
+        .filter((e: { ferramenta_codigo: string }) => e.ferramenta_codigo === '000045')
+        .map((e: { id: number }) => e.id)
+        .sort((x: number, y: number) => x - y);
     expect(a.status).toBe(200);
-    expect(a.body.meta.total).toBe(b.body.meta.total);
-    expect(b.body.meta.total).toBe(c.body.meta.total);
+    expect(b.status).toBe(200);
+    expect(c.status).toBe(200);
+    expect(doPatrimonio(b)).toEqual(doPatrimonio(a));
+    expect(doPatrimonio(c)).toEqual(doPatrimonio(a));
   });
 });
