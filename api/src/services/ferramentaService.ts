@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import type { QueryResultRow } from 'pg';
-import { query, getClient } from '../config/database.js';
+import { query, getClient, definirUsuarioAuditoria, queryComUsuario } from '../config/database.js';
 import { uploadsDir } from '../config/uploads.js';
 import { logger } from '../middlewares/logger.js';
 import { NotFoundError, ConflictError } from '../utils/errors.js';
@@ -213,8 +213,9 @@ export async function historico(id: number): Promise<HistoricoFerramenta> {
   return { emprestimos: emprestimosResult.rows, ocorrencias: ocorrenciasResult.rows };
 }
 
-export async function criar(input: CriarFerramentaInput): Promise<Ferramenta> {
-  const result = await query<Ferramenta>(
+export async function criar(input: CriarFerramentaInput, usuarioId?: number): Promise<Ferramenta> {
+  const result = await queryComUsuario<Ferramenta>(
+    usuarioId,
     `INSERT INTO ferramentas (nome, descricao, marca, modelo, grupo_id, subgrupo_id, setor_id, localizacao)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING ${COLUNAS_FERRAMENTA}`,
@@ -244,7 +245,7 @@ const COLUNAS_ATUALIZAVEIS: Record<keyof AtualizarFerramentaInput, string> = {
   localizacao: 'localizacao',
 };
 
-export async function atualizar(id: number, input: AtualizarFerramentaInput): Promise<Ferramenta> {
+export async function atualizar(id: number, input: AtualizarFerramentaInput, usuarioId?: number): Promise<Ferramenta> {
   await buscarPorId(id);
 
   const campos: string[] = [];
@@ -259,7 +260,8 @@ export async function atualizar(id: number, input: AtualizarFerramentaInput): Pr
   }
 
   params.push(id);
-  const result = await query<Ferramenta>(
+  const result = await queryComUsuario<Ferramenta>(
+    usuarioId,
     `UPDATE ferramentas
      SET ${campos.join(', ')}, updated_at = NOW()
      WHERE id = $${params.length} AND ativo = true
@@ -274,10 +276,11 @@ export async function atualizar(id: number, input: AtualizarFerramentaInput): Pr
  * PATCH /v1/ferramentas/:id/etiqueta-impressa — só marca a data/hora de
  * impressão da etiqueta Code128 (FE-09/DOC-08); não afeta status.
  */
-export async function marcarEtiquetaImpressa(id: number): Promise<Ferramenta> {
+export async function marcarEtiquetaImpressa(id: number, usuarioId?: number): Promise<Ferramenta> {
   await buscarPorId(id);
 
-  const result = await query<Ferramenta>(
+  const result = await queryComUsuario<Ferramenta>(
+    usuarioId,
     `UPDATE ferramentas
      SET etiqueta_impressa_em = NOW(), updated_at = NOW()
      WHERE id = $1 AND ativo = true
@@ -299,6 +302,7 @@ export async function disponibilizar(id: number, usuarioId: number): Promise<Fer
 
   try {
     await client.query('BEGIN');
+    await definirUsuarioAuditoria(client, usuarioId);
 
     const atual = await client.query<Ferramenta>(
       `SELECT ${COLUNAS_FERRAMENTA} FROM ferramentas WHERE id = $1 AND ativo = true FOR UPDATE`,
@@ -358,7 +362,7 @@ export async function disponibilizar(id: number, usuarioId: number): Promise<Fer
  * importante é não deixar `emprestimos.data_devolucao` nulo apontando para
  * uma ferramenta baixada.
  */
-export async function baixar(id: number): Promise<Ferramenta> {
+export async function baixar(id: number, usuarioId?: number): Promise<Ferramenta> {
   const atual = await buscarPorId(id);
 
   const emprestimoAberto = await query(
@@ -372,7 +376,8 @@ export async function baixar(id: number): Promise<Ferramenta> {
     );
   }
 
-  const result = await query<Ferramenta>(
+  const result = await queryComUsuario<Ferramenta>(
+    usuarioId,
     `UPDATE ferramentas
      SET ativo = false, status = 'indisponivel', motivo_indisponivel = 'baixada', foto_url = NULL, updated_at = NOW()
      WHERE id = $1 AND ativo = true
@@ -395,7 +400,7 @@ async function apagarArquivoFoto(fotoUrl: string | null): Promise<void> {
   }
 }
 
-export async function salvarFoto(id: number, imagem: unknown): Promise<Ferramenta> {
+export async function salvarFoto(id: number, imagem: unknown, usuarioId?: number): Promise<Ferramenta> {
   const anterior = await buscarPorId(id);
   const processada = await processarImagem(imagem);
 
@@ -406,7 +411,8 @@ export async function salvarFoto(id: number, imagem: unknown): Promise<Ferrament
 
   let result;
   try {
-    result = await query<Ferramenta>(
+    result = await queryComUsuario<Ferramenta>(
+      usuarioId,
       `UPDATE ferramentas SET foto_url = $1, updated_at = NOW() WHERE id = $2 RETURNING ${COLUNAS_FERRAMENTA}`,
       [`/uploads/${arquivo}`, id]
     );
@@ -418,9 +424,10 @@ export async function salvarFoto(id: number, imagem: unknown): Promise<Ferrament
   return result.rows[0];
 }
 
-export async function removerFoto(id: number): Promise<Ferramenta> {
+export async function removerFoto(id: number, usuarioId?: number): Promise<Ferramenta> {
   const anterior = await buscarPorId(id);
-  const result = await query<Ferramenta>(
+  const result = await queryComUsuario<Ferramenta>(
+    usuarioId,
     `UPDATE ferramentas SET foto_url = NULL, updated_at = NOW() WHERE id = $1 RETURNING ${COLUNAS_FERRAMENTA}`,
     [id]
   );

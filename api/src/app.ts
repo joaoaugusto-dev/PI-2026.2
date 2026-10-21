@@ -7,6 +7,7 @@ import { avariasDir, uploadsDir } from './config/uploads.js';
 import { swaggerSpec } from './config/swagger.js';
 import { httpLogger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { registrarContextoRequisicao } from './middlewares/contextoRequisicao.js';
 import { NotFoundError } from './utils/errors.js';
 import v1Routes from './routes/v1/index.js';
 
@@ -18,6 +19,7 @@ if (env.trustProxyHops > 0) {
 
 // Middlewares de Segurança e Parsing
 app.use(helmet());
+app.use(registrarContextoRequisicao);
 
 const defaultDevOrigins = [
   'http://localhost:3000',

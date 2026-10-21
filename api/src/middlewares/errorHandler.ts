@@ -46,6 +46,18 @@ export function errorHandler(
       );
     }
 
+    // CHECK do banco (ex.: matrícula de 4 dígitos, código entre 1 e 9999) que escapou da validação da API: erro do
+    // cliente, não 500. `err.detail` traz os valores da linha ("Failing row contains ..."), então só a constraint sai.
+    if (err.code === '23514') {
+      return sendError(
+        res,
+        'CHECK_VIOLATION',
+        'Valor fora do formato aceito pelo banco de dados.',
+        [{ constraint: err.constraint }],
+        400
+      );
+    }
+
     if (err.code === 'P0001') {
       return sendError(
         res,

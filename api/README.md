@@ -107,7 +107,13 @@ npm run db:feriados
 
 # Ou informando os anos explicitamente
 npm run db:feriados -- 2028 2029
+
+# Verifica a consistência dos dados (somente leitura; sai com 1 se achar erro)
+npm run data:check
+# Variações: npm run data:check -- --json   |   npm run data:check -- --so-erros
 ```
+
+`db:migrate` registra cada migration aplicada na tabela `schema_migrations` e só roda as pendentes, então pode ser executado quantas vezes for preciso. Depois de atualizar o código, rode-o antes dos testes: uma coluna nova sem migration aplicada derruba dezenas de testes de uma vez.
 
 ### 5. Iniciar o Servidor
 ```bash

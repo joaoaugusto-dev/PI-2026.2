@@ -82,3 +82,27 @@ describe('geração do código na carga em lote', () => {
     }
   });
 });
+
+// Cadastros simultâneos (duas pessoas cadastrando ao mesmo tempo, cada requisição na sua conexão): o advisory
+// lock de fn_gera_codigo_identificacao (migration 0005) tem de serializar a escolha do menor código livre.
+// Sem ele, duas inserções escolhem o mesmo número e uma falha em uq_ferramenta_codigo_ativo (issue #170).
+describe('geração do código com cadastros simultâneos', () => {
+  afterAll(async () => {
+    await query('DELETE FROM ferramentas WHERE nome LIKE $1', [`${PREFIXO}simultanea%`]);
+  });
+
+  it('12 inserções em paralelo, cada uma na sua conexão, recebem códigos distintos e nenhuma falha', async () => {
+    const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
+    const inserir = (n: number) =>
+      query<{ codigo_identificacao: number }>(
+        'INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING codigo_identificacao',
+        [`${PREFIXO}simultanea ${n}`, grupoId]
+      );
+
+    const resultados = await Promise.allSettled(Array.from({ length: 12 }, (_, n) => inserir(n)));
+
+    expect(resultados.filter((r) => r.status === 'rejected')).toHaveLength(0);
+    const codigos = resultados.map((r) => (r as PromiseFulfilledResult<{ rows: { codigo_identificacao: number }[] }>).value.rows[0].codigo_identificacao);
+    expect(new Set(codigos).size).toBe(12);
+  });
+});

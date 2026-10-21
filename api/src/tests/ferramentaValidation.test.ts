@@ -102,7 +102,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       const res = await request(app).patch('/v1/ferramentas/10').send({ nome: 'Furadeira', grupoId: 3 });
 
       expect(res.status).toBe(200);
-      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira', grupoId: 3 });
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira', grupoId: 3 }, 1);
     });
 
     it('descarta valorAquisicao, ehKit e status na edição (não são editáveis por PUT/PATCH /:id)', async () => {
@@ -111,7 +111,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
         .send({ nome: 'Furadeira', valorAquisicao: 10, ehKit: true, status: 'indisponivel' });
 
       expect(res.status).toBe(200);
-      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' }, 1);
     });
 
     it('aceita null na edição para limpar marca, modelo, descrição, localização, setor e subgrupo', async () => {
@@ -119,7 +119,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
       const res = await request(app).patch('/v1/ferramentas/10').send(limpar);
 
       expect(res.status).toBe(200);
-      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, limpar);
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, limpar, 1);
     });
 
     it('não aceita null em nome nem grupoId (continuam obrigatórios)', async () => {
@@ -136,7 +136,7 @@ describe('Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de
         .send({ nome: 'Furadeira', ativo: false, codigoIdentificacao: 4321 });
 
       expect(res.status).toBe(200);
-      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' });
+      expect(ferramentaService.atualizar).toHaveBeenCalledWith(10, { nome: 'Furadeira' }, 1);
     });
   });
 

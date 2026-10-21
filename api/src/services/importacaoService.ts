@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import type { z } from 'zod';
-import { getClient } from '../config/database.js';
+import { definirUsuarioAuditoria, getClient } from '../config/database.js';
 import { lerCsv } from '../utils/csv.js';
 import { ValidationError } from '../utils/errors.js';
 import {
@@ -258,6 +258,7 @@ export async function importar(recurso: RecursoImportavel, arquivo: Buffer, usua
   const client = await getClient();
   try {
     await client.query('BEGIN');
+    await definirUsuarioAuditoria(client, usuarioId);
     // Duas importações simultâneas do mesmo recurso leriam os mesmos registros
     // existentes e gravariam o mesmo item duas vezes. Forma de duas chaves para
     // não colidir com o lock de chave única de fn_gera_codigo_identificacao (0005).
