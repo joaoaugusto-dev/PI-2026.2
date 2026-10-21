@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import pg from 'pg';
 import { env } from './env.js';
 
@@ -44,13 +45,19 @@ export const query = <T extends pg.QueryResultRow = any>(
  */
 export const getClient = (): Promise<pg.PoolClient> => pool.connect();
 
+/** IP da requisição em andamento, preenchido por registrarContextoRequisicao; fora de uma requisição (scripts, testes) fica vazio. */
+export const contextoRequisicao = new AsyncLocalStorage<{ ip: string | null }>();
+
 /**
  * Informa ao banco quem está escrevendo, para a trigger de auditoria (fn_auditoria) gravar `usuario_id`.
  * Vale só até o fim da transação (set_config com is_local = true), então chame logo depois do BEGIN.
  * O id vem sempre do JWT (req.usuario), nunca do corpo da requisição (regra 6).
  */
 export async function definirUsuarioAuditoria(client: pg.PoolClient, usuarioId: number | null | undefined): Promise<void> {
-  await client.query(`SELECT set_config('app.usuario_id', $1, true)`, [usuarioId == null ? '' : String(usuarioId)]);
+  await client.query(`SELECT set_config('app.usuario_id', $1, true), set_config('app.ip_origem', $2, true)`, [
+    usuarioId == null ? '' : String(usuarioId),
+    contextoRequisicao.getStore()?.ip ?? '',
+  ]);
 }
 
 /**

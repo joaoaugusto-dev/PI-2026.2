@@ -210,6 +210,9 @@ describe('auditoria automática — pela API (usuário vem do JWT)', () => {
     const f = await trilha('ferramentas', ferramentaId);
     expect(f.map((x) => x.operacao)).toEqual(['INSERT', 'UPDATE', 'UPDATE']); // criada, em_uso, indisponivel
     expect(f.every((x) => x.usuario_id === usuarioId)).toBe(true);
+    const ips = (await query(`SELECT DISTINCT ip_origem FROM auditoria WHERE tabela = 'ferramentas' AND registro_id = $1`, [ferramentaId])).rows;
+    expect(ips).toHaveLength(1);
+    expect(ips[0].ip_origem).toMatch(/127\.0\.0\.1|::1/); // IP da requisição (req.ip), gravado pela trigger
     expect(f[2].dados_novos).toEqual({ status: 'indisponivel', motivo_indisponivel: 'avaria' });
 
     const e = await trilha('emprestimos', emprestimoId);
