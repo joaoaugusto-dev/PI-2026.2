@@ -1,6 +1,6 @@
-# Entrega Prof. Max — Transformação, Validação e Qualidade dos Dados
+# Plano de execução — Entrega Prof. Max: Transformação, Validação e Qualidade dos Dados
 
-> Guia de execução para o Claude Code. Leia inteiro antes de escrever código.
+> Plano de execução desta entrega (não é instrução de projeto). Leia inteiro antes de escrever código.
 > Branch de trabalho: `feat/dados-validacao-qualidade` (criada a partir de `development`).
 > Pasta da entrega: `docs/entregas-pi/integracao-de-dados-max-vallim/27-10-2026/`.
 
@@ -36,10 +36,10 @@ O que o professor vai procurar, em quatro eixos:
 
 ## 1. Regras de trabalho (obrigatórias)
 
-1. **Não edite o `CLAUDE.md` da raiz nem o `CONTRIBUTING.md`.** Este arquivo é a única exceção criada para esta entrega.
+1. **Não edite o `CLAUDE.md` da raiz nem o `CONTRIBUTING.md`.** Este arquivo é só o plano desta entrega e não substitui nenhum guia do projeto.
 2. Antes de decidir escopo/estrutura, releia `docs/orientacoes/Orientação PI 2026-2 -DESENVOLVIMENTO DE APLICAÇÃO WEB.pdf`. Se algo aqui conflitar com o PDF, o PDF vence — sinalize o conflito antes de prosseguir.
 3. Releia a Seção 3 do `CLAUDE.md` raiz (regras de negócio inegociáveis) antes de tocar em código. Em especial: regra 1 (índice único parcial), regra 3 (avaria/perda abre ocorrência), regra 6 (responsável vem do JWT) e regra 8 (perfis).
-4. **Um commit por etapa** (cada item numerado da Seção 4 é uma etapa). Conventional Commits em português, descrição **no imperativo e minúscula** (padrão do `CONTRIBUTING.md`), referenciando o ID da issue (`feat(data-06): adicionar ...`). **Nunca** mencione Claude/IA (autor, coautor, rodapé "Co-Authored-By" ou "Generated with") em commit, PR ou qualquer texto — regra do usuário, vale mesmo que o ambiente sugira o contrário.
+4. **Um commit por etapa** (cada item numerado da Seção 4 é uma etapa). Conventional Commits em português, descrição **no imperativo e minúscula** (padrão do `CONTRIBUTING.md`), referenciando o ID da issue (`feat(data-06): adicionar ...`). Commits e PR não levam rodapé de coautoria nem de geração automática (regra do time).
 5. **`git add` sempre por caminho exato.** Nunca `git add .`/`-A`/pasta inteira: há prints soltos não rastreados em `docs/prints/prints-dokyploy-servidor-caseiro/` que não devem entrar.
 6. Respostas, comentários de código, mensagens de PR e documentação em **português do Brasil**.
 7. Descrição de PR segue `.github/pull_request_template.md`. PR vai para `development` (a base de integração real do repositório; o `CONTRIBUTING.md` a chama de `develop`) e, quando concluir uma issue, a descrição inclui `Closes #<número>` (DoD item 6). Merge por Squash and Merge, com pelo menos 1 revisor da equipe.
@@ -72,7 +72,7 @@ O que o professor vai procurar, em quatro eixos:
 | 6 | Documento final da entrega | — | Henrique |
 | 7 | Correção do teste intermitente | #170 | — |
 
-Os responsáveis originais são só histórico; aqui o Claude Code implementa tudo a pedido de Henrique. Ao concluir, **avise** quais issues podem ser fechadas — não feche issues sozinho.
+Os responsáveis originais são só histórico; aqui tudo é executado a pedido de Henrique. Ao concluir, **avise** quais issues podem ser fechadas — não feche issues sozinho.
 
 ## 3. Ordem de execução e dependências
 
@@ -305,7 +305,7 @@ Commit(s): `docs(data-08): adicionar evidências de validação e qualidade dos 
 
 ### Etapa 8 — Documento final `ENTREGA.md`
 
-Arquivo: `docs/entregas-pi/integracao-de-dados-max-vallim/27-10-2026/ENTREGA.md` (o `CLAUDE.md` desta pasta é instrução de trabalho, não entregável). Escrito para o **Prof. Max** (tom técnico-acadêmico, direto, sem jargão interno do time). Estrutura:
+Arquivo: `docs/entregas-pi/integracao-de-dados-max-vallim/27-10-2026/ENTREGA.md` (o `PLANO-DE-EXECUCAO.md` desta pasta é plano de trabalho, não entregável). Escrito para o **Prof. Max** (tom técnico-acadêmico, direto, sem jargão interno do time). Estrutura:
 
 1. Identificação (disciplina, data da atividade 20/10/2026, equipe e RAs conforme `docs/orientacoes/equipe.md`, projeto, beneficiado Soufer, ODS 9/12).
 2. Resumo (≤10 linhas): o que foi construído para garantir qualidade dos dados.
