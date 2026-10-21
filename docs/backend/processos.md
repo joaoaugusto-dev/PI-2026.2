@@ -52,7 +52,7 @@ Toda alteração real em `ferramentas`, `emprestimos` e `ocorrencias` gera uma l
 - `UPDATE` grava **só as colunas que mudaram**, antes em `dados_anteriores` e depois em `dados_novos`. Um `UPDATE` que só mexeu em `updated_at` não gera linha;
 - `DELETE` grava o registro apagado em `dados_anteriores`.
 
-Quem fez a alteração vem do JWT: a API informa o `usuario_id` ao banco no começo da transação (`definirUsuarioAuditoria`), nunca a partir do corpo da requisição. Escritas fora da API (script, `psql`) ficam com `usuario_id` nulo.
+Quem fez a alteração vem do JWT: a API informa o `usuario_id` ao banco no começo da transação (`definirUsuarioAuditoria`), nunca a partir do corpo da requisição. O IP de origem (`req.ip`, que respeita `trust proxy`) segue o mesmo caminho, por um contexto da requisição (`AsyncLocalStorage`), e vai para `ip_origem`. Escritas fora da API (script, `psql`) ficam com `usuario_id` e `ip_origem` nulos.
 
 Uma devolução com avaria deixa três trilhas encadeadas pelas triggers de negócio: o empréstimo (`UPDATE`), a ferramenta (`UPDATE` para `indisponivel`) e a ocorrência aberta automaticamente (`INSERT`). A consulta é `GET /v1/auditoria` (só admin).
 

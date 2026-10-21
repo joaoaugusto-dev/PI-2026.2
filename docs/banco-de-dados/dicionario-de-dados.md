@@ -361,8 +361,9 @@ para calcular prazos em dias úteis.
 | `ferramentaService.disponibilizar` | `disponibilizar` | `status` e motivo, antes e depois |
 
 `usuario_id` e `ip_origem` das linhas de trigger vêm de `set_config('app.usuario_id', …)` e
-`set_config('app.ip_origem', …)`, chamados pela API no começo da transação com o id do JWT
-(`definirUsuarioAuditoria`). Sem isso (script, `psql`) ficam nulos. `usuarios` não é auditada
+`set_config('app.ip_origem', …)`, chamados pela API no começo da transação com o id do JWT e o
+`req.ip` (`definirUsuarioAuditoria`). Sem isso (script, `psql`) ficam nulos. As linhas gravadas à
+mão (`disponibilizar`, login, convite) não preenchem `ip_origem`. `usuarios` não é auditada
 automaticamente porque guarda `senha_hash`.
 
 ---

@@ -454,6 +454,17 @@ depois) e `DELETE` guarda o registro apagado. O `usuario_id` vem do JWT (regra 6
   "dados_novos": { "status": "indisponivel", "motivo_indisponivel": "avaria" } }
 ```
 
+**Uma ação de negócio pode deixar mais de uma linha.** As linhas gravadas à mão
+(`disponibilizar`, login, convite) convivem com as das triggers, e as duas aparecem em
+`GET /v1/auditoria`. `PATCH /v1/ferramentas/:id/disponibilizar`, por exemplo, deixa: (1) uma
+linha `disponibilizar` em `ferramentas`, que guarda o antes e o depois do status e do motivo e
+representa a decisão explícita da pessoa; (2) uma linha `UPDATE` automática em `ferramentas`
+(status e `motivo_indisponivel`); e (3) uma `UPDATE` automática em `ocorrencias` para cada
+ocorrência que a ação resolve. Para contar **ações**, filtre por `operacao=disponibilizar`; para
+reconstruir o **estado** de um registro, use as linhas `INSERT`, `UPDATE` e `DELETE`. O IP de
+origem (`ip_origem`) vem de `req.ip` e é gravado só nas linhas das triggers; as manuais ainda
+não o preenchem.
+
 **2. Verificação de consistência (`npm run data:check`).** 19 consultas somente de leitura
 procuram o que as regras deveriam ter impedido. Aceita `--json` (para CI) e `--so-erros`,
 sai com `0` quando não há erro, `1` quando há e `2` se não conseguiu rodar. Cada verificação

@@ -363,7 +363,7 @@ O formato é o mesmo do `baixarCsv` do front, para o Excel em português abrir d
 
 ## Auditoria (`GET /v1/auditoria`)
 
-Origem: issue DATA-05. Só `admin` (`403` para manutenção e consulta). Mostra a trilha gravada na tabela `auditoria`, mais recente primeiro, com o nome de quem fez a alteração. As linhas de `ferramentas`, `emprestimos` e `ocorrencias` vêm de triggers do banco (migration `0014`); as de login, convite e `disponibilizar` são gravadas pelo código, como antes.
+Origem: issue DATA-05. Só `admin` (`403` para manutenção e consulta). Mostra a trilha gravada na tabela `auditoria`, mais recente primeiro, com o nome de quem fez a alteração. As linhas de `ferramentas`, `emprestimos` e `ocorrencias` vêm de triggers do banco (migration `0014`); as de login, convite e `disponibilizar` são gravadas pelo código, como antes. Uma ação pode, portanto, deixar mais de uma linha: `disponibilizar` gera a linha manual (decisão da pessoa) e as `UPDATE` automáticas da ferramenta e das ocorrências que ela resolve. Para contar ações, use `operacao=disponibilizar`; para reconstruir o estado de um registro, use `INSERT`, `UPDATE` e `DELETE`. `ip_origem` vem de `req.ip` (respeita `trust proxy`) e é preenchido nas linhas das triggers.
 
 | Parâmetro | Tipo | Efeito |
 |---|---|---|
