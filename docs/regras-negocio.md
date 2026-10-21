@@ -10,6 +10,16 @@ As regras 1 a 9 são regras de **sistema** (têm implementação técnica). A
 regra 10 é uma regra **institucional do curso**, tratada separadamente ao
 final.
 
+**Revisão de 20/10/2026 (DATA-08, entrega de Transformação, Validação e
+Qualidade dos Dados).** As referências a código foram conferidas contra o
+repositório atual (referências a testes agora citam o **nome do teste**, que não
+muda quando o arquivo cresce), os trechos que tinham ficado para trás foram
+atualizados (perfis da regra 8, fallback da regra 9, concorrência da regra 7) e
+duas peças novas entraram no ciclo de cada regra: a **auditoria** automática em
+jsonb e o comando **`npm run data:check`**. O fim do documento traz o
+[mapa regra → implementação → teste → verificação](#mapa-regra--implementação--teste--verificação)
+e a seção sobre [como as regras são rastreadas e conferidas](#rastreabilidade-e-verificação-das-regras).
+
 ---
 
 ## Regra 1 — Um empréstimo aberto por ferramenta
@@ -37,11 +47,17 @@ do Postgres e traduz para **HTTP 409** com
 do `CLAUDE.md`).
 
 **Exemplo real:** teste
-`api/src/tests/emprestimoRoutes.test.ts:103` —
+`api/src/tests/emprestimoRoutes.test.ts` —
 `'recusa ferramenta já emprestada com 409 FERRAMENTA_INDISPONIVEL'`: faz uma
 retirada, repete o `POST /v1/emprestimos` para a mesma ferramenta e confirma
 `res.status === 409` com o código acima. O caso de kit (peça avulsa vs. kit
-inteiro) é coberto em `emprestimoRoutes.test.ts:245-255`.
+inteiro) é coberto no teste `'empresta uma peça avulsa e bloqueia repetir a peça
+e emprestar o kit inteiro (409)'` (mesmo arquivo).
+
+**Rastro e conferência:** a retirada deixa uma linha `INSERT` em `auditoria`
+(tabela `emprestimos`) e o `UPDATE` de status da ferramenta para `em_uso`
+(tabela `ferramentas`). `npm run data:check` procura o que esta regra deveria
+impedir: `EM_USO_SEM_EMPRESTIMO` e `EMPRESTIMO_ABERTO_FERRAMENTA_NAO_EM_USO`.
 
 ---
 
@@ -65,10 +81,16 @@ execução — é uma restrição de tipo. Qualquer valor fora dos três falha n
 `INSERT`/`UPDATE` com erro de tipo do Postgres (`invalid input value for
 enum status_ferramenta`), antes de qualquer lógica de negócio rodar.
 
-**Exemplo real:** o seed (`api/db/seed.sql:149-170`) cadastra ferramentas só
-como `'disponivel'`; os outros dois estados só aparecem através do fluxo real
-de retirada (`em_uso`) e devolução com avaria/perda (`indisponivel`) — ver
-Regra 3.
+**Exemplo real:** a coluna `ferramentas.status` nasce com `DEFAULT 'disponivel'`
+(o seed não cadastra ferramentas: elas entram pela aplicação ou pela importação
+de CSV); os outros dois estados só aparecem através do fluxo real de retirada
+(`em_uso`) e devolução com avaria/perda (`indisponivel`) — ver Regra 3. O teste
+`api/src/tests/emprestimoRoutes.test.ts` confere a ferramenta em `em_uso` logo
+depois da retirada (`'registra a retirada (201), coloca a ferramenta em uso...'`).
+
+**Conferência:** `data:check` (`INDISPONIVEL_SEM_MOTIVO`,
+`MOTIVO_COM_STATUS_DIFERENTE`) garante que "indisponível" sempre tem o motivo
+gravado e que o motivo não sobra em ferramenta que voltou a circular.
 
 ---
 
@@ -92,10 +114,21 @@ requisição — é um efeito automático de trigger de banco, disparado em
 qualquer `UPDATE` que leve a essa condição, inclusive fora da API. Não há
 como contornar via corpo da requisição.
 
-**Exemplo real:** `api/src/tests/emprestimoRoutes.test.ts:293` (avaria) e
-`:309` (perda) — devolver com `condicaoDevolucao: 'avaria'` resulta em
-`ferramentas.status = 'indisponivel'`, `motivo_indisponivel = 'avaria'`, e
-uma linha nova em `ocorrencias` com o `colaborador_id` correto.
+**Exemplo real:** `api/src/tests/emprestimoRoutes.test.ts`, testes
+`'devolução com avaria (200) deixa a ferramenta indisponivel e abre ocorrência
+com o colaborador certo'` e `'devolução com perda (200)...'` — devolver com
+`condicaoDevolucao: 'avaria'` resulta em `ferramentas.status = 'indisponivel'`,
+`motivo_indisponivel = 'avaria'`, e uma linha nova em `ocorrencias` com o
+`colaborador_id` correto. A resposta da devolução devolve o `ocorrencia_id`
+criado, e a foto da avaria (opcional, migration `0013`) é anexada depois em
+`PUT /v1/ocorrencias/:id/foto`.
+
+**Rastro e conferência:** as três mudanças encadeadas pela devolução (empréstimo,
+ferramenta e ocorrência) geram três linhas de `auditoria`, todas com o usuário do
+token (teste `auditoria.test.ts`, caso "retirada e devolução com avaria geram
+linhas nas três tabelas encadeadas pelas triggers"). `data:check` confere
+`INDISPONIVEL_SEM_OCORRENCIA_ABERTA`, `OCORRENCIA_ABERTA_FERRAMENTA_DISPONIVEL` e
+`OCORRENCIA_SEM_COLABORADOR_COM_EMPRESTIMO` (a ocorrência herda o colaborador).
 
 ### Diagrama de estados da ferramenta (bônus "se sobrar tempo")
 
@@ -148,7 +181,7 @@ na retirada.
 **O que acontece se for violada:** não há violação possível — é um campo
 opcional, nunca gera erro por estar ausente.
 
-**Exemplo real:** `api/src/tests/emprestimoRoutes.test.ts:115` —
+**Exemplo real:** `api/src/tests/emprestimoRoutes.test.ts` —
 `'aceita retirada sem atividade (Regra 4)'`: `POST /v1/emprestimos` sem
 `atividadeId` retorna **201** com `atividade_id: null`.
 
@@ -161,7 +194,7 @@ se não encontrar, abre cadastro rápido no meio do fluxo, sem perder o que já
 foi preenchido.
 
 **Onde está implementada:**
-- `GET /v1/colaboradores/identificar` (`api/src/routes/v1/colaboradorRoutes.ts:131-137`)
+- `GET /v1/colaboradores/identificar` (rota `/identificar` em `api/src/routes/v1/colaboradorRoutes.ts`)
   → `colaboradorService.identificar`: tenta matrícula exata primeiro, depois
   nome tolerante a acento/erro de digitação via `unaccent` + `pg_trgm`
   (índice `idx_colaboradores_nome_trgm`,
@@ -179,8 +212,13 @@ como o mesmo valor.
 **O que acontece se for violada (não encontrado):** retorna **404** — sinal
 para o front abrir o cadastro rápido.
 
-**Exemplo real:** `api/src/tests/colaboradorRoutes.test.ts:105` —
+**Exemplo real:** `api/src/tests/colaboradorRoutes.test.ts` —
 `'retorna 404 quando não encontra nenhum colaborador para o termo'`.
+
+**Conferência:** a matrícula é validada em três camadas (Zod: 4 dígitos de
+`0001` a `9999`; `UNIQUE`; `CHECK chk_colaboradores_matricula_formato` no banco).
+`data:check` ainda confere `COLABORADOR_MATRICULA_DUPLICADA` ignorando maiúsculas
+e espaços, para dado que tenha entrado por fora da API.
 
 ---
 
@@ -191,13 +229,14 @@ para o front abrir o cadastro rápido.
 nunca são aceitos vindos do corpo da requisição — sempre do usuário logado.
 
 **Onde está implementada:** comentários explícitos e código consistente em
-todos os validators de escrita —
-`api/src/validators/emprestimoValidator.ts:42-44,76-78`,
-`api/src/validators/colaboradorValidator.ts:34-36`,
-`api/src/validators/ocorrenciaValidator.ts:42-45`,
-`api/src/validators/authValidator.ts:19-20`. Os controllers passam o ID do
-usuário autenticado (`req.usuario!.id`) separadamente do `req.body` para o
-service.
+todos os validators de escrita (ver o comentário "Regra 6" em
+`api/src/validators/emprestimoValidator.ts` — nos schemas de retirada e de
+devolução —, em `colaboradorValidator.ts` e em `ocorrenciaValidator.ts`). Os
+controllers passam o ID do usuário autenticado (`req.usuario!.id`)
+separadamente do `req.body` para o service. Desde a migration `0014` o mesmo id
+também é entregue ao banco no começo de cada transação de escrita
+(`definirUsuarioAuditoria`, `set_config('app.usuario_id', …)`), e é ele que a
+trigger de auditoria grava em `auditoria.usuario_id`.
 
 **O que acontece se for violada:** campos desconhecidos enviados no corpo
 são **descartados silenciosamente pelo Zod** (comportamento padrão do
@@ -206,12 +245,15 @@ são **descartados silenciosamente pelo Zod** (comportamento padrão do
 `docs/decisoes-pendentes.md` sobre não usar `.strip()` explícito por ser
 redundante com esse comportamento.
 
-**Exemplo real:** `api/src/tests/emprestimoRoutes.test.ts:124` —
+**Exemplo real:** `api/src/tests/emprestimoRoutes.test.ts` —
 `'ignora usuarioRetiradaId enviado no corpo (Regra 6)'`: envia
 `{ usuarioRetiradaId: 999999, usuario_retirada_id: 999999 }`, recebe 201, e o
 banco grava o ID do token, não `999999`. Cobertura equivalente em pelo menos
-mais 6 rotas (colaboradores, devolução, ocorrências, auto-cadastro) — ver
-issue API-14.
+mais 6 rotas (colaboradores, devolução, ocorrências, convite de acesso) — ver
+issue API-14. A prova de ponta a ponta com a auditoria está em
+`api/src/tests/auditoria.test.ts`: a devolução enviada com
+`usuarioDevolucaoId: 999999` no corpo grava, em `emprestimos` e em `auditoria`,
+o id do token.
 
 ---
 
@@ -250,15 +292,19 @@ reescrever a regra por conta própria.
 `RAISE EXCEPTION 'Limite máximo de 9999 ferramentas ativas atingido...'`
 (`api/db/migrations/0001_init.sql:287`).
 
-**Exemplo real:** `api/src/tests/ferramentaService.test.ts:38-45` cadastra
-uma ferramenta sem informar `codigo_identificacao` e confirma que a trigger
-gera o valor automaticamente. A geração concorrente (dois cadastros
-simultâneos disputando o mesmo código) foi corrigida na migration
-`0005_corrige_concorrencia_codigo_identificacao.sql` (serializa com
-`pg_advisory_xact_lock`) e validada por um teste de estresse manual (15/30
-inserções concorrentes) descrito em
-`docs/issues/api-13-endpoints-ocorrencias.md` — não há, hoje, um teste
-automatizado permanente para essa concorrência na suíte principal.
+**Exemplo real:** `api/src/tests/ferramentaService.test.ts` cadastra uma
+ferramenta sem informar `codigo_identificacao` (bloco que cria a ferramenta com
+histórico) e confirma que a trigger gera o valor automaticamente. A geração
+concorrente (dois cadastros simultâneos disputando o mesmo código) foi corrigida
+na migration `0005_corrige_concorrencia_codigo_identificacao.sql` (serializa com
+`pg_advisory_xact_lock`) e hoje tem teste permanente em
+`api/src/tests/ferramentaCodigo.test.ts`: `'12 inserções em paralelo, cada uma na
+sua conexão, recebem códigos distintos e nenhuma falha'` e `'300 ferramentas numa
+transação ganham códigos distintos'`.
+
+**Conferência:** `data:check` (`FERRAMENTA_CODIGO_DUPLICADO`) confirma que não há
+dois códigos iguais entre as ferramentas ativas. Para o caso "esgotou os 9999
+códigos", a mensagem da trigger sai como `409 BUSINESS_RULE_VIOLATION`.
 
 ---
 
@@ -278,40 +324,44 @@ edição/inativação exclusivas do admin, leitura/criação de
 ferramenta/colaborador abertas à manutenção) e, desde esta issue, também lê
 e cadastra Atividades; `consulta` tem sessão de 15 minutos só leitura (nome, categoria, status e localização da ferramenta; nunca quem está com ela, histórico ou valores), com token isolado do da manutenção/admin.
 
-**Onde está implementada** (confirmado rota a rota, `authorize(...)` em cada
-arquivo de `api/src/routes/v1/`):
+**Onde está implementada** (confirmado rota a rota em 20/10/2026, `authorize(...)` em cada
+arquivo de `api/src/routes/v1/`). O `admin` entra em todas as rotas da manutenção; a coluna
+"Só admin" lista o que a manutenção **não** pode fazer:
 
-| Recurso | GET | POST | PUT/PATCH | DELETE |
-|---|---|---|---|---|
-| Ferramentas | `manutencao`,`admin` | `manutencao`,`admin` | `admin` | `admin` |
-| Colaboradores | `manutencao`,`admin` | `manutencao`,`admin` | `admin` | `admin` |
-| Setores / Categorias | `manutencao`,`admin` | `admin` | `admin` | `admin` |
-| **Atividades** | `manutencao`,`admin` (corrigido nesta issue) | `manutencao`,`admin` (corrigido nesta issue) | `manutencao` | `manutencao` |
-| Balcão (identificar, por-código, etiqueta, disponibilizar, empréstimos, ocorrências) | `manutencao` | `manutencao` | `manutencao` | — |
-| `usuarios` (aprovação) | `admin` | — | `admin` | — |
+| Recurso | Manutenção e admin | Só admin |
+|---|---|---|
+| Ferramentas | listar, detalhe, por código, histórico, cadastrar, marcar etiqueta impressa, disponibilizar | editar (`PATCH /:id`), baixar (`DELETE`), foto (`PUT` e `DELETE /:id/foto`) |
+| Colaboradores | listar, detalhe, identificar, cadastrar (cadastro rápido) | editar, inativar, gerar link de acesso (`POST /:id/convite`) |
+| Setores e categorias | listar, detalhe | cadastrar, editar, inativar |
+| Atividades | tudo (listar, cadastrar, editar, inativar) | — |
+| Empréstimos, ocorrências, notificações, dashboard, exportação | tudo | — |
+| Feriados | sincronização forçada (`POST /v1/feriados/sincronizar`) | — (a leitura é pública) |
+| KPIs | todos, menos o ranking de colaboradores | `GET /v1/kpis/colaboradores-que-mais-retiram` |
+| Importação de CSV | ferramentas e colaboradores | categorias e setores |
+| Auditoria (`GET /v1/auditoria`) | — | consulta da trilha |
+| `consulta` (sessão de 15 minutos) | só `GET /v1/consulta/ferramentas`, com token isolado | — |
 
-O 403 genérico vem de `api/src/middlewares/authorize.ts:4-22`
-(`error.code = "ACCESS_DENIED"`).
+O 403 genérico vem de `api/src/middlewares/authorize.ts` (função `authorize`,
+`error.code = "ACCESS_DENIED"`). O auto-cadastro com aprovação (`/v1/usuarios`) deixou de
+existir em 01/10/2026: o colaborador cadastrado pelo admin já é o funcionário e recebe o
+link de acesso.
 
-**Divergência encontrada e corrigida durante esta issue:** o texto da Regra
-8 (versão de 30/09/2026) já dizia que o admin "lê e cadastra" atividades, mas
-`api/src/routes/v1/atividadeRoutes.ts` autorizava só `manutencao` em **todas**
-as rotas — um `admin` recebia 403 até para listar atividades. Corrigido
-adicionando `admin` ao `authorize(...)` de `GET`/`POST` (lista, por ID e
-criação); `PUT`/`PATCH`/`DELETE` continuam exclusivos de `manutencao`, que
-mantém acesso completo por consumir o campo de atividade na retirada — o
-texto da regra não menciona o admin editando ou inativando atividades.
+**Histórico (30/09/2026):** o texto da regra já dizia que o admin "lê e cadastra"
+atividades, mas `atividadeRoutes.ts` autorizava só `manutencao`; foi corrigido e, na decisão
+de 01/10/2026 ("o admin é a manutenção com recursos a mais"), `PUT`/`PATCH`/`DELETE` de
+atividades também passaram a aceitar o admin.
 
 **O que acontece se for violada:** **HTTP 403** com `error.code =
 "ACCESS_DENIED"` e `details: [{ requiredRoles, userRole }]`.
 
 **Exemplo real:**
 - `api/src/tests/permissoesCadastros.test.ts` — manutenção lê mas recebe 403
-  em escrita de setores/categorias; admin recebe 403 em rotas de balcão
-  (`identificar`, `por-codigo`, `/emprestimos`); e, após a correção desta
-  issue, admin lê/cadastra atividades mas recebe 403 ao editar/inativar.
-- `api/src/tests/ferramentaPermissoes.test.ts:13-37` — par simétrico em
-  ferramentas.
+  em escrita de setores/categorias e admin passa nas rotas do balcão.
+- `api/src/tests/ferramentaPermissoes.test.ts` — par simétrico em ferramentas.
+- `api/src/tests/authorize.test.ts` e `consultaSessao.test.ts` — o token da
+  consulta e o da manutenção/admin são isolados nos dois sentidos.
+- `api/src/tests/auditoriaRoutes.test.ts` — `GET /v1/auditoria` devolve 401 sem
+  token e 403 para manutenção e consulta.
 
 ---
 
@@ -321,30 +371,38 @@ texto da regra não menciona o admin editando ou inativando atividades.
 fallback de sábado/domingo se a API estiver fora.
 
 **Onde está implementada** (`api/src/services/feriadoService.ts`):
-- `buscarNaBrasilApi` (linhas 25-48): chama
+- `buscarNaBrasilApi`: chama
   `https://brasilapi.com.br/api/feriados/v1/{ano}`; falha de rede ou status
   não-OK lança `AppError(502, 'BRASIL_API_UNAVAILABLE')`.
 - Cache: tabela `feriados` (`api/db/migrations/0001_init.sql:246-253`),
   preenchida por `sincronizarFeriados` (upsert).
-- `gerarFallbackFinsDeSemana` (linhas 83-101): gera só sábados/domingos do
+- `gerarFallbackFinsDeSemana`: gera só sábados/domingos do
   ano, marcados com `tipo: 'fallback_fim_de_semana'`.
-- `listarPorAno` (linhas 108-133): prioriza o cache; se vazio, tenta
+- `listarPorAno`: prioriza o cache; se vazio, tenta
   sincronizar; se a BrasilAPI falhar (`BRASIL_API_UNAVAILABLE`), cai no
   fallback e retorna `fonte: 'fallback_fim_de_semana'` em vez de propagar o
   erro ao cliente.
 
 **O que acontece se for violada (fonte externa indisponível):** não é
 tratado como erro para quem chama a API — é um fallback silencioso
-(`console.warn`, linha 126-128); o cliente recebe 200 com
-`fonte: 'fallback_fim_de_semana'` em vez de um 502.
+(`console.warn` no serviço); o cliente recebe 200 com
+`fonte: 'fallback_fim_de_semana'` em vez de um 502. Só a falha **da BrasilAPI**
+vira fallback: se o erro for do banco (por exemplo, o upsert falhar), ele é
+repassado e a API responde erro de verdade, sem mascarar problema de
+infraestrutura como "feriado indisponível".
 
-**Exemplo real:** `api/src/tests/feriado.test.ts:130` —
-`'GET /v1/feriados?ano=2026 retorna lista de feriados do cache/banco'` cobre
-o caminho de cache. **Lacuna encontrada:** não há, hoje, um teste automatizado
-que force a falha da BrasilAPI (mock de rede) para exercitar o caminho de
-fallback — ele existe e está implementado (linhas 83-101, 125-129), mas sem
-cobertura de teste direta. Fica registrado aqui como item para uma issue de
-testes futura, fora do escopo desta documentação.
+**Exemplo real:** `api/src/tests/feriado.test.ts` cobre o caminho de cache e o
+cálculo de dias úteis com feriados (Tiradentes, Carnaval, virada de ano), e
+`api/src/tests/feriadoFallback.test.ts` (novo) simula a rede com um `fetch` falso e cobre
+o fallback: BrasilAPI com erro de rede, BrasilAPI respondendo 503, fallback com os 104
+sábados e domingos de um ano, gravação em cache com upsert (a segunda leitura vem do
+cache, sem nova chamada) e a falha de banco **não** mascarada como fallback. A lacuna
+que este documento apontava na versão anterior (fallback sem teste automatizado) está
+fechada.
+
+**Conferência:** `npm run db:feriados -- <ano>` grava os feriados reais e o
+`GET /v1/feriados/dia-util` os usa (evidência em
+`docs/entregas-pi/integracao-de-dados-max-vallim/27-10-2026/evidencias/08-feriados-brasilapi.md`).
 
 ---
 
@@ -366,13 +424,60 @@ ferramenta, sem relação com a entrega do trabalho).
 
 | # | Regra | Implementação técnica | Status |
 |---|---|---|---|
-| 1 | Empréstimo único por ferramenta | Índice único + trigger | ✅ Implementada e testada |
-| 2 | 3 estados da ferramenta | Enum + páginas separadas | ✅ Implementada |
-| 3 | Avaria/perda abre ocorrência | 2 triggers encadeadas | ✅ Implementada e testada |
+| 1 | Empréstimo único por ferramenta | Índice único + trigger | ✅ Implementada, testada, auditada e conferida pelo `data:check` |
+| 2 | 3 estados da ferramenta | Enum + páginas separadas | ✅ Implementada; coerência de motivo conferida pelo `data:check` |
+| 3 | Avaria/perda abre ocorrência | 2 triggers encadeadas | ✅ Implementada, testada e auditada (3 tabelas encadeadas) |
 | 4 | Atividade opcional | Schema Zod | ✅ Implementada e testada |
-| 5 | Identificação por matrícula/nome | Service + índice trgm | ✅ Implementada e testada (divergência do "crachá" documentada) |
-| 6 | Autoria sempre do JWT | Validators + controllers | ✅ Implementada e testada em 7+ rotas |
-| 7 | Código de patrimônio | Trigger + CHECK | ⚠️ Implementada, mas diverge do texto formal (4 dígitos, não `SF`+6) |
-| 8 | 3 perfis e permissões | `authorize()` por rota | ✅ Implementada; 1 divergência encontrada e corrigida nesta issue (atividades) |
-| 9 | Feriados BrasilAPI + fallback | Service com cache | ✅ Implementada; fallback sem teste automatizado dedicado |
+| 5 | Identificação por matrícula/nome | Service + índice trgm + CHECK | ✅ Implementada e testada (divergência do "crachá" documentada) |
+| 6 | Autoria sempre do JWT | Validators + controllers + `app.usuario_id` | ✅ Implementada e testada em 7+ rotas; provada na auditoria |
+| 7 | Código de patrimônio | Trigger + CHECK + advisory lock | ⚠️ Implementada e testada com concorrência, mas diverge do texto formal (4 dígitos, não `SF`+6) |
+| 8 | 3 perfis e permissões | `authorize()` por rota | ✅ Implementada; matriz revisada em 20/10/2026 |
+| 9 | Feriados BrasilAPI + fallback | Service com cache | ✅ Implementada e testada, inclusive o fallback e a falha de banco |
 | 10 | Entrega fora do prazo = zero | — | N/A — regra institucional, sem implementação de software |
+
+---
+
+## Rastreabilidade e verificação das regras
+
+Regra escrita só no código não prova que o **dado** está certo. Por isso cada regra tem, além
+da implementação e do teste, duas peças que olham para o dado já gravado:
+
+**1. Auditoria automática (migration `0014`).** Toda alteração real em `ferramentas`,
+`emprestimos` e `ocorrencias` gera uma linha em `auditoria` (jsonb), por trigger do banco:
+`INSERT` guarda o registro inteiro, `UPDATE` guarda **só as colunas que mudaram** (antes e
+depois) e `DELETE` guarda o registro apagado. O `usuario_id` vem do JWT (regra 6). A consulta
+é `GET /v1/auditoria` (só admin). Exemplo real, uma devolução com avaria:
+
+```json
+{ "tabela": "ferramentas", "operacao": "UPDATE",
+  "dados_anteriores": { "status": "em_uso", "motivo_indisponivel": null },
+  "dados_novos": { "status": "indisponivel", "motivo_indisponivel": "avaria" } }
+```
+
+**2. Verificação de consistência (`npm run data:check`).** 19 consultas somente de leitura
+procuram o que as regras deveriam ter impedido. Aceita `--json` (para CI) e `--so-erros`,
+sai com `0` quando não há erro, `1` quando há e `2` se não conseguiu rodar. Cada verificação
+é testada forçando a inconsistência dentro de uma transação revertida
+(`api/src/tests/dataCheck.test.ts`). Duas verificações (`FERRAMENTA_CODIGO_DUPLICADO` e
+`COLABORADOR_MATRICULA_DUPLICADA`) são defensivas: o banco já impede o caso, e o teste prova
+que o banco o recusa (erro `23505`) e que a verificação roda limpa.
+
+## Mapa regra → implementação → teste → verificação
+
+| # | Camada | Implementação | Teste que prova | `data:check` |
+|---|---|---|---|---|
+| 1 | Banco + API | `uq_emprestimo_aberto`, `fn_valida_retirada`, `emprestimoService` (409) | `emprestimoRoutes.test.ts`: recusa ferramenta já emprestada; peça avulsa × kit | `EM_USO_SEM_EMPRESTIMO`, `EMPRESTIMO_ABERTO_FERRAMENTA_NAO_EM_USO` |
+| 2 | Banco + front | enum `status_ferramenta`, páginas de Ferramentas e Indisponíveis | `emprestimoRoutes.test.ts`: retirada põe em uso; `ferramentaService.test.ts`: disponibilizar tira a ferramenta de indisponível e audita | `INDISPONIVEL_SEM_MOTIVO`, `MOTIVO_COM_STATUS_DIFERENTE` |
+| 3 | Banco | `fn_abre_ocorrencia`, `fn_sync_status_ferramenta` | `emprestimoRoutes.test.ts`: devolução com avaria e com perda; `auditoria.test.ts`: três trilhas encadeadas | `INDISPONIVEL_SEM_OCORRENCIA_ABERTA`, `OCORRENCIA_ABERTA_FERRAMENTA_DISPONIVEL`, `OCORRENCIA_SEM_COLABORADOR_COM_EMPRESTIMO` |
+| 4 | API + banco | `atividadeId` opcional (Zod), coluna sem `NOT NULL` | `emprestimoRoutes.test.ts`: aceita retirada sem atividade | — (campo opcional, nada a conferir) |
+| 5 | API + banco | `colaboradorService.identificar`, `idx_colaboradores_nome_trgm`, CHECK de matrícula | `colaboradorRoutes.test.ts`: identificar (404 e achados) | `COLABORADOR_MATRICULA_DUPLICADA` |
+| 6 | API | validators sem o campo, `req.usuario!.id`, `definirUsuarioAuditoria` | `emprestimoRoutes.test.ts`, `ocorrenciaRoutes.test.ts`, `colaboradorRoutes.test.ts`, `auditoria.test.ts` | `AUDITORIA_TRIGGER_AUSENTE`, `AUDITORIA_SEM_REGISTRO` |
+| 7 | Banco | `fn_gera_codigo_identificacao`, `uq_ferramenta_codigo_ativo`, CHECK 1 a 9999 | `ferramentaCodigo.test.ts` (paralelo e lote), `ferramentaService.test.ts` | `FERRAMENTA_CODIGO_DUPLICADO` |
+| 8 | API | `authorize()`, token de consulta isolado | `permissoesCadastros.test.ts`, `ferramentaPermissoes.test.ts`, `authorize.test.ts`, `consultaSessao*.test.ts`, `auditoriaRoutes.test.ts` | — (permissão não deixa marca no dado) |
+| 9 | API + banco | `feriadoService`, tabela `feriados` | `feriado.test.ts`, `feriadoFallback.test.ts` | — |
+| 10 | — (institucional) | — | — | — |
+| — | Validação geral | Zod em todas as rotas de escrita, `errorHandler` | `ferramentaValidation.test.ts`, `errorHandler.test.ts`, `kpi.test.ts`, `importacaoFerramentas.test.ts` | `FERRAMENTA_VALOR_NEGATIVO`, `FERRAMENTA_NOME_VAZIO`, `FERRAMENTA_SUBGRUPO_FORA_DO_GRUPO`, `EMPRESTIMO_PREVISAO_ANTES_RETIRADA`, `EMPRESTIMO_DEVOLUCAO_ANTES_RETIRADA`, `EMPRESTIMO_DEVOLVIDO_SEM_CONDICAO`, `EMPRESTIMO_COLABORADOR_INATIVO_ABERTO`, `FOTO_ARQUIVO_INEXISTENTE` |
+
+As evidências de execução de cada coluna (saída dos testes, do `data:check`, da importação
+e da auditoria) estão em
+[`docs/entregas-pi/integracao-de-dados-max-vallim/27-10-2026/evidencias/`](entregas-pi/integracao-de-dados-max-vallim/27-10-2026/evidencias/).

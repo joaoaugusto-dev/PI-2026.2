@@ -44,6 +44,41 @@ resolvida / baixada
 
 Após o reparo, a disponibilização deve ser uma ação explícita e auditável.
 
+## Auditoria
+
+Toda alteração real em `ferramentas`, `emprestimos` e `ocorrencias` gera uma linha em `auditoria` por trigger do banco (migration `0014`), sem depender de a API lembrar de gravar:
+
+- `INSERT` grava o registro inteiro em `dados_novos`;
+- `UPDATE` grava **só as colunas que mudaram**, antes em `dados_anteriores` e depois em `dados_novos`. Um `UPDATE` que só mexeu em `updated_at` não gera linha;
+- `DELETE` grava o registro apagado em `dados_anteriores`.
+
+Quem fez a alteração vem do JWT: a API informa o `usuario_id` ao banco no começo da transação (`definirUsuarioAuditoria`), nunca a partir do corpo da requisição. Escritas fora da API (script, `psql`) ficam com `usuario_id` nulo.
+
+Uma devolução com avaria deixa três trilhas encadeadas pelas triggers de negócio: o empréstimo (`UPDATE`), a ferramenta (`UPDATE` para `indisponivel`) e a ocorrência aberta automaticamente (`INSERT`). A consulta é `GET /v1/auditoria` (só admin).
+
+`usuarios` fica fora da auditoria automática de propósito (tem `senha_hash`).
+
+## Verificação de consistência dos dados
+
+`npm run data:check` (em `api/`) roda 19 consultas somente de leitura e aponta dado incoerente antes que vire bug:
+
+| Verificação | Gravidade |
+|---|---|
+| Ferramenta "em uso" sem empréstimo aberto; empréstimo aberto de ferramenta que não está "em uso" | erro |
+| Indisponível sem motivo; código de identificação repetido entre ferramentas ativas | erro |
+| Matrícula repetida (ignorando maiúsculas e espaços) | erro |
+| Previsão de devolução ou devolução anterior à retirada | erro |
+| Subgrupo de outro grupo; valor de aquisição negativo; nome em branco | erro |
+| Trigger de auditoria ausente ou desabilitada | erro |
+| Motivo de indisponibilidade em ferramenta que não está indisponível | aviso |
+| Indisponível por avaria/perda sem ocorrência em andamento; ocorrência em andamento com a ferramenta disponível | aviso |
+| Devolvido sem a condição; empréstimo aberto de colaborador inativo | aviso |
+| Ocorrência de empréstimo sem o colaborador responsável | aviso |
+| Foto cadastrada cujo arquivo não existe no disco | aviso |
+| Registro criado depois da auditoria entrar em vigor mas sem nenhuma linha de auditoria | aviso |
+
+Saída `0` quando não há **erro** (aviso não reprova), `1` quando há erro e `2` se o comando não conseguiu rodar. `--json` imprime só o JSON (para CI) e `--so-erros` esconde o que passou. O comando **nunca corrige** nada: só lê.
+
 ## Consulta
 
 O operador informa a matrícula (4 dígitos, sem senha).

@@ -58,6 +58,7 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | POST | `/v1/importacoes/:recurso` | Manutenção/Admin (categorias e setores: Admin) | Importação CSV de ferramentas, colaboradores, categorias e setores (ver [Importação e exportação CSV](#importação-e-exportação-csv)) |
 | GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
 | GET | `/v1/exportacoes/:recurso` | Manutenção/Admin | Exportação CSV de cadastros e do histórico de empréstimos |
+| GET | `/v1/auditoria` | Admin | Trilha de auditoria: quem mudou o quê, com antes e depois (ver [Auditoria](#auditoria-get-v1auditoria)) |
 | GET | `/v1/usuarios?ativo=false` | Admin | Lista cadastros pendentes de aprovação |
 | PATCH | `/v1/usuarios/:id/ativar` | Admin | Aprova um cadastro pendente |
 
@@ -359,6 +360,35 @@ O formato é o mesmo do `baixarCsv` do front, para o Excel em português abrir d
 - **Cadastros** (`ferramentas`, `colaboradores`, `categorias`, `setores`): só os registros ativos, com **as colunas do modelo de importação**. A exceção é `valor` em `ferramentas`, que não é exportado porque a listagem de ferramentas também não expõe `valor_aquisicao` (incluir depende de decisão da equipe). Em `ferramentas` saem também `codigo` e `status`, que são ignoradas se o arquivo voltar pela importação.
 - **Exportar → editar → reimportar** serve para **acrescentar registros novos**: o que já existe volta como `ignoradas`. Alterar um registro existente pela planilha não tem efeito; edição é pela rota de cadastro.
 - **`emprestimos`:** as mesmas colunas e o mesmo formato do "Exportar CSV" da tela de histórico. Aceita os mesmos filtros de `GET /v1/emprestimos` (`q`, `situacao`, `setorId`), e filtro inválido devolve `400`. Sai numa consulta só, sem paginação, até 50 mil linhas. Acima disso, o arquivo é cortado e ganha uma linha final avisando.
+
+## Auditoria (`GET /v1/auditoria`)
+
+Origem: issue DATA-05. Só `admin` (`403` para manutenção e consulta). Mostra a trilha gravada na tabela `auditoria`, mais recente primeiro, com o nome de quem fez a alteração. As linhas de `ferramentas`, `emprestimos` e `ocorrencias` vêm de triggers do banco (migration `0014`); as de login, convite e `disponibilizar` são gravadas pelo código, como antes.
+
+| Parâmetro | Tipo | Efeito |
+|---|---|---|
+| `tabela` | `ferramentas`, `emprestimos`, `ocorrencias` ou `colaboradores` | Só a trilha dessa tabela |
+| `registroId` | inteiro positivo | Só um registro (ex.: o histórico de uma ferramenta) |
+| `operacao` | texto | `INSERT`, `UPDATE`, `DELETE` ou a ação de negócio (`disponibilizar`, `convite_criado`...) |
+| `usuarioId` | inteiro positivo | Só o que um usuário fez |
+| `de`, `ate` | `AAAA-MM-DD` | Período inclusivo, no fuso de Brasília. `de` depois de `ate` devolve `400` |
+| `page`, `limit` | inteiros | Paginação (`limit` até 100) |
+
+Cada item traz `tabela`, `operacao`, `registro_id`, `dados_anteriores`, `dados_novos`, `usuario_id`, `usuario_nome`, `ip_origem` e `created_at`. Em um `UPDATE`, `dados_anteriores` e `dados_novos` têm **só as colunas que mudaram** (e nunca `updated_at`):
+
+```json
+{
+  "tabela": "ferramentas",
+  "operacao": "UPDATE",
+  "registro_id": 12,
+  "dados_anteriores": { "status": "em_uso" },
+  "dados_novos": { "status": "indisponivel", "motivo_indisponivel": "avaria" },
+  "usuario_id": 3,
+  "usuario_nome": "Fulano de Tal"
+}
+```
+
+Filtro inválido devolve `400 VALIDATION_ERROR` com o campo em `details`.
 
 ## Resposta de sucesso
 
