@@ -1,0 +1,38 @@
+Evidência API-17: execução manual de fn_gerar_notificacoes() em soufer_dev (22/10/2026)
+$ psql -d soufer_dev -f api/db/testes-notificacoes.sql
+
+--- Retiradas abertas criadas (hoje em Brasilia: ver coluna previsao) ---
+          nome          |  previsao  |    hoje    
+------------------------+------------+------------
+ API17 futura           | 2026-10-25 | 2026-10-22
+ API17 hoje             | 2026-10-22 | 2026-10-22
+ API17 atrasada 2 dias  | 2026-10-20 | 2026-10-22
+ API17 atrasada 10 dias | 2026-10-12 | 2026-10-22
+(4 linhas)
+
+--- 1a execucao: SELECT fn_gerar_notificacoes() (inclui avisos de outros emprestimos abertos do banco) ---
+ gerados_total 
+---------------
+             3
+(1 linha)
+
+--- Notificacoes geradas para estas retiradas (esperado: hoje=devolucao_hoje, 2 e 10 dias=atraso, futura=nenhuma) ---
+      tipo      |            titulo            |                                    mensagem                                    | usuario_id | lida 
+----------------+------------------------------+--------------------------------------------------------------------------------+------------+------
+ devolucao_hoje | Devolução prevista para hoje | API17 hoje com Colaborador Teste API-17 deve ser devolvida hoje.               |            | f
+ atraso         | Empréstimo atrasado          | API17 atrasada 2 dias com Colaborador Teste API-17 está atrasada desde 20/10.  |            | f
+ atraso         | Empréstimo atrasado          | API17 atrasada 10 dias com Colaborador Teste API-17 está atrasada desde 12/10. |            | f
+(3 linhas)
+
+--- 2a execucao (esperado: 0 novas para estas retiradas, sem duplicar) ---
+ gerados_total 
+---------------
+             0
+(1 linha)
+
+ notificacoes_destas_retiradas 
+-------------------------------
+                             3
+(1 linha)
+
+ROLLBACK
