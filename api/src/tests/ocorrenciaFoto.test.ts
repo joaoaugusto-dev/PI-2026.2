@@ -18,7 +18,7 @@ const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
   'base64'
 );
-const PREFIXO = 'ZZTESTE_API_FOTO_OCOR_';
+const PREFIXO = 'ZZTESTE_FOTO_AVARIA_';
 const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
 
 describe('PUT /v1/ocorrencias/:id/foto', () => {
@@ -82,7 +82,7 @@ describe('foto da ocorrência aberta pela devolução', () => {
   let usuarioId: number;
   let ferramentaId: number;
   let emprestimoId: number;
-  const PREF = 'ZZTESTE_API_FOTO_DEV_';
+  const PREF = 'ZZTESTE_FOTO_DEV_';
 
   beforeAll(async () => {
     usuarioId = (await query<{ id: number }>("SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true ORDER BY id LIMIT 1")).rows[0].id;

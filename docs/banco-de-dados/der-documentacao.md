@@ -5,6 +5,18 @@
 
 ---
 
+> **Atualização de 20/10/2026.** Este documento registra a revisão de 02/09. O schema
+> seguiu evoluindo: login por matrícula e perfil `admin` (0004), convites de acesso
+> (`convites_acesso`, 0008), bloqueio de login (`usuarios.tentativas_falhas` e
+> `bloqueado_ate`, 0009), foto da avaria (`ocorrencias.foto_url`, 0013) e auditoria
+> automática por triggers (0014). O estado atual campo a campo está em
+> [`dicionario-de-dados.md`](dicionario-de-dados.md) e em [`der.dbml`](der.dbml), ambos
+> conferidos contra o banco. **O PNG [`der-visual-dbdiagram.png`](der-visual-dbdiagram.png)
+> ainda é o da revisão de 02/09 e precisa ser regerado manualmente em dbdiagram.io
+> a partir do `der.dbml`.**
+
+---
+
 ## 1. O que mudou nesta revisão
 
 A primeira versão do DER (11 tabelas) foi feita antes da visita técnica de

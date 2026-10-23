@@ -49,15 +49,19 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | GET/POST/PUT/DELETE | `/v1/atividades` | Manutenção | CRUD |
 | GET | `/v1/emprestimos` | Manutenção | Consulta de empréstimos |
 | POST | `/v1/emprestimos` | Manutenção | Retirada (ver [Retirada de ferramenta](#retirada-de-ferramenta-post-v1emprestimos)) |
+| GET | `/v1/emprestimos/calendario` | Manutenção/Admin | Devoluções previstas do mês agrupadas por dia (ver [Calendário](#calendário-get-v1emprestimoscalendariomesaaaa-mm)) |
 | GET | `/v1/emprestimos/previsao-sugerida` | Manutenção | Sugestão de previsão de devolução em dias úteis |
 | PATCH | `/v1/emprestimos/:id/devolucao` | Manutenção | Devolução (ver [Devolução de ferramenta](#devolução-de-ferramenta-patch-v1emprestimosiddevolucao)) |
 | GET/PATCH | `/v1/ocorrencias` | Manutenção | Ocorrências (ver [Ocorrências](#ocorrências-get-e-patch-v1ocorrencias)) |
-| GET/PATCH | `/v1/notificacoes` | Manutenção | Notificações |
+| GET | `/v1/notificacoes` | Manutenção/Admin | Lista as notificações da equipe (ver [Notificações](#notificações-v1notificacoes)) |
+| PATCH | `/v1/notificacoes/:id/lida` | Manutenção/Admin | Marca uma notificação como lida |
+| PATCH | `/v1/notificacoes/lida` | Manutenção/Admin | Marca todas as não lidas como lidas |
 | GET | `/v1/dashboard` | Manutenção/Admin | Tela inicial: contadores e listas de pendências (ver [Dashboard](#dashboard-get-v1dashboard)) |
 | GET | `/v1/kpis/*` | Manutenção/Admin (colaboradores: Admin) | Onze KPIs de uso, avaria e perda, filtrados por `de`/`ate` (ver [KPIs de gestão](#kpis-de-gestão-get-v1kpis)) |
 | POST | `/v1/importacoes/:recurso` | Manutenção/Admin (categorias e setores: Admin) | Importação CSV de ferramentas, colaboradores, categorias e setores (ver [Importação e exportação CSV](#importação-e-exportação-csv)) |
 | GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
 | GET | `/v1/exportacoes/:recurso` | Manutenção/Admin | Exportação CSV de cadastros e do histórico de empréstimos |
+| GET | `/v1/auditoria` | Admin | Trilha de auditoria: quem mudou o quê, com antes e depois (ver [Auditoria](#auditoria-get-v1auditoria)) |
 | GET | `/v1/usuarios?ativo=false` | Admin | Lista cadastros pendentes de aprovação |
 | PATCH | `/v1/usuarios/:id/ativar` | Admin | Aprova um cadastro pendente |
 
@@ -133,6 +137,66 @@ Calcula "hoje + N dias úteis", pulando sábados, domingos e feriados nacionais.
 - "Hoje" é a data em Brasília.
 - Resposta `200`: `{ "data": { "previsaoDevolucao": "2026-10-06", "diasUteis": 2 } }`.
 - Perfis `manutencao` e `admin` (`401` sem token, `403` para `consulta`).
+
+## Calendário (`GET /v1/emprestimos/calendario?mes=AAAA-MM`)
+
+Alimenta a tela de Calendário (FE-18) com as devoluções previstas de um mês (issue API-17). Perfis `manutencao` e `admin`.
+
+- `mes`: obrigatório, no formato `AAAA-MM` com mês de `01` a `12` (senão `400 VALIDATION_ERROR`).
+- Só entram empréstimos ainda abertos (`data_devolucao` nulo) cuja previsão cai no mês, com o dia calculado no fuso de Brasília.
+- Resposta `200`, sem `meta`: lista de dias, só os que têm devolução, em ordem cronológica; dentro do dia, por horário previsto.
+
+```json
+{
+  "data": [
+    {
+      "dia": "2026-10-22",
+      "emprestimos": [
+        {
+          "id": 41,
+          "ferramenta_nome": "Furadeira de impacto",
+          "ferramenta_codigo": "000012",
+          "colaborador_nome": "Maria Souza",
+          "setor_id": 3,
+          "setor_nome": "Manutenção",
+          "ramal": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+`ferramenta_codigo` é o código de identificação com 6 dígitos (ou `"—"` se a ferramenta não tem). `ramal` é sempre `null`, pois o cadastro não tem ramal. Erros: `400` (`mes` ausente ou fora do formato), `401` (sem token) e `403` (perfil `consulta`).
+
+## Notificações (`/v1/notificacoes`)
+
+Avisos para a equipe de manutenção (issue API-17, tela FE-19). Perfis `manutencao` e `admin`. São geradas por `fn_gerar_notificacoes()` (ver `arquitetura.md`): uma `devolucao_hoje` ou `atraso` por empréstimo aberto e uma `ocorrencia_pendente` por ocorrência não encerrada há mais de 7 dias, sem repetir. As geradas pelo banco têm `usuario_id` nulo, ou seja, são da equipe toda, e o estado `lida` é compartilhado.
+
+Item de notificação:
+
+| Campo | Conteúdo |
+|---|---|
+| `id` | Identificador. |
+| `tipo` | `devolucao_hoje`, `atraso`, `ocorrencia_pendente` ou `sistema` (`sistema` ainda não é gerado). |
+| `titulo`, `mensagem` | Texto pronto para exibir. |
+| `lida` | Booleano. |
+| `link` | Rota do front, por exemplo `/ferramentas/12?emprestimo=41` (ou `?ocorrencia=7` na pendente); pode ser `null`. |
+| `created_at` | Data de criação. |
+
+### `GET /v1/notificacoes`
+
+- Query opcional: `lida` (`true` ou `false`; outro valor é `400`), `page` (1 a 100000) e `limit` (1 a 100, padrão 20).
+- Resposta `200`: `data` é a lista, da mais recente para a mais antiga, e `meta` traz `page`, `limit` e `total`. Com `lida=false`, `meta.total` é o contador de não lidas do sino. A aba Histórico usa `lida=true`.
+- Retorna as notificações da equipe e as endereçadas ao usuário logado.
+
+### `PATCH /v1/notificacoes/:id/lida`
+
+Marca uma notificação como lida (idempotente). Sem corpo. Resposta `200` com a notificação atualizada em `data`. Erros: `400` (`id` não numérico ou não positivo), `401`, `403` e `404 NOT_FOUND` se a notificação não existe ou é de outro usuário.
+
+### `PATCH /v1/notificacoes/lida`
+
+Marca de uma vez todas as não lidas da equipe e do usuário ("Limpar tudo" do sino). Sem corpo. Resposta `200`: `{ "data": { "atualizadas": 3 } }`, com `0` se não havia nenhuma. Erros: `401` e `403`.
 
 ## Dashboard (`GET /v1/dashboard`)
 
@@ -359,6 +423,35 @@ O formato é o mesmo do `baixarCsv` do front, para o Excel em português abrir d
 - **Cadastros** (`ferramentas`, `colaboradores`, `categorias`, `setores`): só os registros ativos, com **as colunas do modelo de importação**. A exceção é `valor` em `ferramentas`, que não é exportado porque a listagem de ferramentas também não expõe `valor_aquisicao` (incluir depende de decisão da equipe). Em `ferramentas` saem também `codigo` e `status`, que são ignoradas se o arquivo voltar pela importação.
 - **Exportar → editar → reimportar** serve para **acrescentar registros novos**: o que já existe volta como `ignoradas`. Alterar um registro existente pela planilha não tem efeito; edição é pela rota de cadastro.
 - **`emprestimos`:** as mesmas colunas e o mesmo formato do "Exportar CSV" da tela de histórico. Aceita os mesmos filtros de `GET /v1/emprestimos` (`q`, `situacao`, `setorId`), e filtro inválido devolve `400`. Sai numa consulta só, sem paginação, até 50 mil linhas. Acima disso, o arquivo é cortado e ganha uma linha final avisando.
+
+## Auditoria (`GET /v1/auditoria`)
+
+Origem: issue DATA-05. Só `admin` (`403` para manutenção e consulta). Mostra a trilha gravada na tabela `auditoria`, mais recente primeiro, com o nome de quem fez a alteração. As linhas de `ferramentas`, `emprestimos` e `ocorrencias` vêm de triggers do banco (migration `0014`); as de login, convite e `disponibilizar` são gravadas pelo código, como antes. Uma ação pode, portanto, deixar mais de uma linha: `disponibilizar` gera a linha manual (decisão da pessoa) e as `UPDATE` automáticas da ferramenta e das ocorrências que ela resolve. Para contar ações, use `operacao=disponibilizar`; para reconstruir o estado de um registro, use `INSERT`, `UPDATE` e `DELETE`. `ip_origem` vem de `req.ip` (respeita `trust proxy`) e é preenchido nas linhas das triggers.
+
+| Parâmetro | Tipo | Efeito |
+|---|---|---|
+| `tabela` | `ferramentas`, `emprestimos`, `ocorrencias` ou `colaboradores` | Só a trilha dessa tabela |
+| `registroId` | inteiro positivo | Só um registro (ex.: o histórico de uma ferramenta) |
+| `operacao` | texto | `INSERT`, `UPDATE`, `DELETE` ou a ação de negócio (`disponibilizar`, `convite_criado`...) |
+| `usuarioId` | inteiro positivo | Só o que um usuário fez |
+| `de`, `ate` | `AAAA-MM-DD` | Período inclusivo, no fuso de Brasília. `de` depois de `ate` devolve `400` |
+| `page`, `limit` | inteiros | Paginação (`limit` até 100) |
+
+Cada item traz `tabela`, `operacao`, `registro_id`, `dados_anteriores`, `dados_novos`, `usuario_id`, `usuario_nome`, `ip_origem` e `created_at`. Em um `UPDATE`, `dados_anteriores` e `dados_novos` têm **só as colunas que mudaram** (e nunca `updated_at`):
+
+```json
+{
+  "tabela": "ferramentas",
+  "operacao": "UPDATE",
+  "registro_id": 12,
+  "dados_anteriores": { "status": "em_uso" },
+  "dados_novos": { "status": "indisponivel", "motivo_indisponivel": "avaria" },
+  "usuario_id": 3,
+  "usuario_nome": "Fulano de Tal"
+}
+```
+
+Filtro inválido devolve `400 VALIDATION_ERROR` com o campo em `details`.
 
 ## Resposta de sucesso
 

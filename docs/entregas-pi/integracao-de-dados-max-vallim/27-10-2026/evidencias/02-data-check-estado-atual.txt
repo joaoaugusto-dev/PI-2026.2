@@ -1,0 +1,45 @@
+# data:check no estado atual do banco
+# Gerado em: 20/10/2026, 21:22:00 (Brasília)
+# Comando: cd api && npm run data:check
+# Ambiente: banco de desenvolvimento (soufer_dev @ 127.0.0.1:5432) · commit 43bf5a5 + alterações ainda não commitadas
+🔎 SOUFER Tools — verificação de consistência dos dados
+Banco: soufer_dev @ 127.0.0.1:5432   Data: 20/10/2026, 21:22
+
+✅ EM_USO_SEM_EMPRESTIMO......................... 0
+✅ EMPRESTIMO_ABERTO_FERRAMENTA_NAO_EM_USO....... 0
+✅ INDISPONIVEL_SEM_MOTIVO....................... 0
+✅ MOTIVO_COM_STATUS_DIFERENTE................... 0
+⚠️  INDISPONIVEL_SEM_OCORRENCIA_ABERTA............ 6
+     Ferramenta indisponível por avaria/perda sem ocorrência em andamento
+     • nome=ZZINSOMNIA Ocorrencia B  motivo=avaria  ferramenta_id=2439
+     • nome=ZZINSOMNIA Ocorrencia B  motivo=avaria  ferramenta_id=2427
+     • nome=ZZINSOMNIA Ocorrencia A  motivo=avaria  ferramenta_id=2438
+     • nome=ZZINSOMNIA Ocorrencia A  motivo=avaria  ferramenta_id=2424
+     • nome=ZZINSOMNIA Ocorrencia A  motivo=avaria  ferramenta_id=2426
+     • nome=ZZINSOMNIA Ocorrencia B  motivo=avaria  ferramenta_id=2425
+     Como corrigir: Abrir a ocorrência correspondente ou reativar a ferramenta, se o problema já foi resolvido.
+✅ OCORRENCIA_ABERTA_FERRAMENTA_DISPONIVEL....... 0
+✅ COLABORADOR_MATRICULA_DUPLICADA............... 0
+✅ FERRAMENTA_CODIGO_DUPLICADO................... 0
+✅ EMPRESTIMO_PREVISAO_ANTES_RETIRADA............ 0
+✅ EMPRESTIMO_DEVOLUCAO_ANTES_RETIRADA........... 0
+✅ EMPRESTIMO_DEVOLVIDO_SEM_CONDICAO............. 0
+✅ EMPRESTIMO_COLABORADOR_INATIVO_ABERTO......... 0
+✅ FERRAMENTA_SUBGRUPO_FORA_DO_GRUPO............. 0
+✅ FERRAMENTA_VALOR_NEGATIVO..................... 0
+✅ FERRAMENTA_NOME_VAZIO......................... 0
+✅ OCORRENCIA_SEM_COLABORADOR_COM_EMPRESTIMO..... 0
+⚠️  FOTO_ARQUIVO_INEXISTENTE...................... 4
+     Foto cadastrada cujo arquivo não existe no disco
+     • tabela=ferramentas  ferramenta_id=3881  foto_url=/uploads/3881-02b509af-c456-4809-affa-be6fb48ce026.webp
+     • tabela=ferramentas  ferramenta_id=3884  foto_url=/uploads/3884-6b9d747c-bc14-4747-9f37-3dbb3917e8b8.webp
+     • tabela=ferramentas  ferramenta_id=3887  foto_url=/uploads/3887-f87cf2b3-8b62-41b1-aba3-0e66e6a941a4.webp
+     • tabela=ferramentas  ferramenta_id=3890  foto_url=/uploads/3890-5762bfe4-2a7b-409d-8ff5-a07c342a5182.webp
+     Como corrigir: Reenviar a foto ou limpar o campo foto_url (em produção, conferir o volume persistente de uploads).
+✅ AUDITORIA_TRIGGER_AUSENTE..................... 0
+✅ AUDITORIA_SEM_REGISTRO........................ 0
+
+Resumo: 19 verificações · 17 ok · 0 com erro · 2 com aviso
+Resultado: tudo certo (saída 0)
+
+[código de saída: 0]

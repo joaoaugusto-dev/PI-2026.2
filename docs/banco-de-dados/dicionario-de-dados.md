@@ -1,8 +1,10 @@
 # Dicionário de Dados — SOUFER Tools
 
-Documento campo a campo das 13 tabelas do banco, gerado a partir de
-`api/db/migrations/0001_init.sql` (não editar este
-documento sem editar a migration junto, e vice-versa).
+Documento campo a campo das tabelas do banco: as 13 do `api/db/migrations/0001_init.sql`
+mais as que as migrations seguintes (`0002` a `0014`) acrescentaram — `convites_acesso`
+(0008) e `schema_migrations` (controle do `npm run db:migrate`) — e as colunas novas
+de cada uma. Conferido contra o banco real (`information_schema`) em 20/10/2026. Não editar
+este documento sem editar a migration junto, e vice-versa.
 
 **Origem do dado — legenda:**
 - **Digitado**: preenchido pelo usuário em algum formulário.
@@ -96,6 +98,8 @@ Quem tem acesso operacional ao sistema (perfil `manutencao`).
 | `senha_hash` | varchar(255) | Sim | hash bcrypt — nunca a senha em texto puro | Calculado (a API faz o hash antes de salvar) |
 | `papel` | enum `papel_usuario` | Sim | `manutencao` ou `admin` (só `admin` aprova auto-cadastros) | Calculado (default) |
 | `ativo` | boolean | Sim | true / false — default true | Calculado (default) |
+| `tentativas_falhas` | integer | Sim | senhas erradas seguidas; default 0; zerado por login certo ou nova senha (migration `0009`) | Calculado |
+| `bloqueado_ate` | timestamptz | Não | conta bloqueada até este instante, depois de 5 senhas erradas (migration `0009`) | Calculado |
 | `created_at` | timestamptz | Sim | — | Calculado (default) |
 | `updated_at` | timestamptz | Sim | — | Calculado (default) |
 
@@ -156,6 +160,7 @@ A tabela mais alterada desde a v1 do DER.
 | `eh_kit` | boolean | Sim | true / false — default false | Digitado |
 | `valor_aquisicao` | numeric(10,2) | Não | >= 0 | Digitado |
 | `foto_url` | text | Não | URL/caminho do arquivo — não é o binário da imagem | Digitado (upload gera a URL) |
+| `etiqueta_impressa_em` | timestamptz | Não | quando a etiqueta Code128 foi impressa; nulo = nunca impressa (`PATCH /v1/ferramentas/:id/etiqueta-impressa`) | Calculado |
 | `ativo` | boolean | Sim | true / false — default true (baixa lógica) | Digitado/Calculado (baixa manual) |
 | `created_at` | timestamptz | Sim | — | Calculado (default) |
 | `updated_at` | timestamptz | Sim | — | Calculado (default) |
@@ -174,11 +179,12 @@ A tabela mais alterada desde a v1 do DER.
 > fluxo de cadastro que deixe esse campo vazio de propósito.
 >
 > **Substituição em relação à v1 do DER:** não existe mais
-> `codigo_patrimonio` (`SF`+6 dígitos, calculado do `id`, com etiqueta
-> Code128), nem `patrimonio_legado`, nem `etiqueta_impressa_em`. O código
-> atual é gerado buscando o menor número livre entre ferramentas ativas, e é
-> gravado fisicamente a lápis elétrico — o sistema não depende dessa
-> gravação para funcionar, só reflete o valor atribuído.
+> `codigo_patrimonio` (`SF`+6 dígitos, calculado do `id`) nem `patrimonio_legado`.
+> O código atual é gerado buscando o menor número livre entre ferramentas
+> ativas e é o valor codificado na etiqueta Code128 (`etiqueta_impressa_em`
+> guarda quando ela foi impressa). Se a identificação física passar a ser a
+> gravação a lápis elétrico, decisão pendente de ata, o sistema não depende
+> dela para funcionar: só reflete o valor atribuído.
 
 ---
 
@@ -273,11 +279,13 @@ Avarias, perdas e reparos — em geral geradas automaticamente pela trigger
 | `observacoes_resolucao` | text | Não | texto livre | Digitado |
 | `registrada_por` | integer (FK) | Sim | referencia `usuarios` | **Token** |
 | `resolvida_por` | integer (FK) | Não | referencia `usuarios` | **Token** |
+| `foto_url` | text | Não | caminho relativo da foto da avaria (`/uploads/avarias/<arquivo>`), anexada na devolução (migration `0013`) | Digitado (upload) |
 | `created_at` | timestamptz | Sim | — | Calculado (default) |
 | `updated_at` | timestamptz | Sim | — | Calculado (default) |
 
 **Índices/constraints relevantes:** FK `emprestimo_id` com
 `ON DELETE SET NULL`; FK `ferramenta_id` com `ON DELETE RESTRICT`.
+`idx_ocorrencias_emprestimo_id` (migration `0013`) acelera o histórico paginado.
 
 > `resolvida_por` não estava previsto na v1 do DER — é um campo do schema
 > atual que também segue a regra do token (Regra 6), igual `registrada_por`.
@@ -339,6 +347,55 @@ para calcular prazos em dias úteis.
 
 **Índices/constraints relevantes:** FK `usuario_id` com `ON DELETE SET NULL`
 — apagar um usuário não apaga o histórico de auditoria dele.
+`idx_auditoria_tabela_registro` (`tabela`, `registro_id`, `created_at DESC`) e
+`idx_auditoria_created_at` (`created_at DESC`) servem `GET /v1/auditoria` (migration `0014`).
+
+**Quem grava (desde a migration `0014`):**
+
+| Origem | `operacao` | `dados_anteriores` / `dados_novos` |
+|---|---|---|
+| Trigger `trg_auditoria_ferramentas`, `trg_auditoria_emprestimos` e `trg_auditoria_ocorrencias` (função `fn_auditoria`) | `INSERT` | nulo / registro inteiro |
+| idem | `UPDATE` | **só as colunas que mudaram**, antes / depois (`updated_at` sozinho não gera linha) |
+| idem | `DELETE` | registro inteiro / nulo |
+| `authService` (login, convite, troca de senha) | `convite_criado`, `senha_definida` etc. | só `dados_novos` |
+| `ferramentaService.disponibilizar` | `disponibilizar` | `status` e motivo, antes e depois |
+
+`usuario_id` e `ip_origem` das linhas de trigger vêm de `set_config('app.usuario_id', …)` e
+`set_config('app.ip_origem', …)`, chamados pela API no começo da transação com o id do JWT e o
+`req.ip` (`definirUsuarioAuditoria`). Sem isso (script, `psql`) ficam nulos. As linhas gravadas à
+mão (`disponibilizar`, login, convite) não preenchem `ip_origem`. `usuarios` não é auditada
+automaticamente porque guarda `senha_hash`.
+
+---
+
+## 14. `convites_acesso`
+
+Link de acesso que o admin gera para o colaborador definir a própria senha (migration `0008`;
+substitui o auto-cadastro com aprovação).
+
+| Campo | Tipo | Obrigatório | Domínio / valores | Origem |
+|---|---|---|---|---|
+| `id` | serial | Sim (PK) | sequencial | Calculado |
+| `colaborador_id` | integer (FK) | Sim | referencia `colaboradores` — `ON DELETE CASCADE` | Selecionado |
+| `token_hash` | char(64) | Sim | SHA-256 do token; único. O link em si aparece uma única vez, na resposta que o gera | Calculado |
+| `expira_em` | timestamptz | Sim | validade do link | Calculado |
+| `usado_em` | timestamptz | Não | quando a senha foi definida; nulo = ainda válido | Calculado |
+| `criado_por` | integer (FK) | Não | referencia `usuarios` — `ON DELETE SET NULL` | **Token** |
+| `created_at` | timestamptz | Sim | — | Calculado (default) |
+
+**Índices/constraints relevantes:** `UNIQUE(token_hash)`, `idx_convites_acesso_colaborador`.
+
+---
+
+## 15. `schema_migrations`
+
+Controle do `npm run db:migrate` (criada pelo próprio script, não por uma migration): uma linha por
+arquivo `.sql` já aplicado, para que cada migration rode uma única vez.
+
+| Campo | Tipo | Obrigatório | Domínio / valores | Origem |
+|---|---|---|---|---|
+| `version` | varchar(255) | Sim (PK) | nome do arquivo, ex.: `0014_auditoria_triggers.sql` | Calculado |
+| `executed_at` | timestamptz | Sim | quando foi aplicada | Calculado (default) |
 
 ---
 
@@ -350,7 +407,7 @@ para calcular prazos em dias úteis.
 | `motivo_indisponibilidade` | `avaria`, `perda`, `manutencao_preventiva`, `baixada` | `ferramentas.motivo_indisponivel` |
 | `condicao_devolucao` | `ok`, `avaria`, `perda` | `emprestimos.condicao_devolucao` |
 | `status_ocorrencia` | `aberta`, `em_reparo`, `cobrada`, `resolvida`, `baixada` | `ocorrencias.status` |
-| `papel_usuario` | `manutencao` | `usuarios.papel` |
+| `papel_usuario` | `manutencao`, `admin` (o `almoxarife` original foi renomeado para `manutencao` na migration `0004`) | `usuarios.papel` |
 | `tipo_notificacao` | `devolucao_hoje`, `atraso`, `ocorrencia_pendente`, `sistema` | `notificacoes.tipo` |
 
 ---
@@ -364,4 +421,4 @@ do usuário autenticado:
 - `emprestimos.usuario_devolucao_id`
 - `ocorrencias.registrada_por`
 - `ocorrencias.resolvida_por`
-- `auditoria.usuario_id`
+- `auditoria.usuario_id` (agora também nas linhas de trigger, via `app.usuario_id`)
