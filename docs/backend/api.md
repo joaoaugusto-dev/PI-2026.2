@@ -171,17 +171,17 @@ Alimenta a tela de Calendário (FE-18) com as devoluções previstas de um mês 
 
 ## Notificações (`/v1/notificacoes`)
 
-Avisos para a equipe de manutenção (issue API-17, tela FE-19). Perfis `manutencao` e `admin`. São geradas por `fn_gerar_notificacoes()` (ver `arquitetura.md`): uma `devolucao_hoje` ou `atraso` por empréstimo aberto, sem repetir. As geradas pelo banco têm `usuario_id` nulo, ou seja, são da equipe toda, e o estado `lida` é compartilhado.
+Avisos para a equipe de manutenção (issue API-17, tela FE-19). Perfis `manutencao` e `admin`. São geradas por `fn_gerar_notificacoes()` (ver `arquitetura.md`): uma `devolucao_hoje` ou `atraso` por empréstimo aberto e uma `ocorrencia_pendente` por ocorrência não encerrada há mais de 7 dias, sem repetir. As geradas pelo banco têm `usuario_id` nulo, ou seja, são da equipe toda, e o estado `lida` é compartilhado.
 
 Item de notificação:
 
 | Campo | Conteúdo |
 |---|---|
 | `id` | Identificador. |
-| `tipo` | `devolucao_hoje`, `atraso`, `ocorrencia_pendente` ou `sistema` (hoje só os dois primeiros são gerados). |
+| `tipo` | `devolucao_hoje`, `atraso`, `ocorrencia_pendente` ou `sistema` (`sistema` ainda não é gerado). |
 | `titulo`, `mensagem` | Texto pronto para exibir. |
 | `lida` | Booleano. |
-| `link` | Rota do front, por exemplo `/ferramentas/12?emprestimo=41`; pode ser `null`. |
+| `link` | Rota do front, por exemplo `/ferramentas/12?emprestimo=41` (ou `?ocorrencia=7` na pendente); pode ser `null`. |
 | `created_at` | Data de criação. |
 
 ### `GET /v1/notificacoes`
