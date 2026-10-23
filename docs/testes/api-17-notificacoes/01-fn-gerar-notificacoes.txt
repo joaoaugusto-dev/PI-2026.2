@@ -1,4 +1,4 @@
-Evidência API-17: execução manual de fn_gerar_notificacoes() em soufer_dev (22/10/2026)
+Evidência API-17: execução manual de fn_gerar_notificacoes() em soufer_dev (22/10/2026), com empréstimos e ocorrências de teste
 $ psql -d soufer_dev -f api/db/testes-notificacoes.sql
 
 --- Retiradas abertas criadas (hoje em Brasilia: ver coluna previsao) ---
@@ -13,16 +13,17 @@ $ psql -d soufer_dev -f api/db/testes-notificacoes.sql
 --- 1a execucao: SELECT fn_gerar_notificacoes() (inclui avisos de outros emprestimos abertos do banco) ---
  gerados_total 
 ---------------
-             3
+             4
 (1 linha)
 
---- Notificacoes geradas para estas retiradas (esperado: hoje=devolucao_hoje, 2 e 10 dias=atraso, futura=nenhuma) ---
-      tipo      |            titulo            |                                    mensagem                                    | usuario_id | lida 
-----------------+------------------------------+--------------------------------------------------------------------------------+------------+------
- devolucao_hoje | Devolução prevista para hoje | API17 hoje com Colaborador Teste API-17 deve ser devolvida hoje.               |            | f
- atraso         | Empréstimo atrasado          | API17 atrasada 2 dias com Colaborador Teste API-17 está atrasada desde 20/10.  |            | f
- atraso         | Empréstimo atrasado          | API17 atrasada 10 dias com Colaborador Teste API-17 está atrasada desde 12/10. |            | f
-(3 linhas)
+--- Notificacoes geradas para estas retiradas (esperado: hoje=devolucao_hoje, 2 e 10 dias=atraso, ocorrencia de 10 dias=ocorrencia_pendente, demais nenhuma) ---
+        tipo         |            titulo            |                                    mensagem                                    | usuario_id | lida 
+---------------------+------------------------------+--------------------------------------------------------------------------------+------------+------
+ devolucao_hoje      | Devolução prevista para hoje | API17 hoje com Colaborador Teste API-17 deve ser devolvida hoje.               |            | f
+ atraso              | Empréstimo atrasado          | API17 atrasada 2 dias com Colaborador Teste API-17 está atrasada desde 20/10.  |            | f
+ atraso              | Empréstimo atrasado          | API17 atrasada 10 dias com Colaborador Teste API-17 está atrasada desde 12/10. |            | f
+ ocorrencia_pendente | Ocorrência pendente          | API17 ocorrencia 10 dias está com ocorrência de avaria sem solução há 10 dias. |            | f
+(4 linhas)
 
 --- 2a execucao (esperado: 0 novas para estas retiradas, sem duplicar) ---
  gerados_total 
@@ -32,7 +33,7 @@ $ psql -d soufer_dev -f api/db/testes-notificacoes.sql
 
  notificacoes_destas_retiradas 
 -------------------------------
-                             3
+                             4
 (1 linha)
 
 ROLLBACK
