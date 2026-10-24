@@ -28,6 +28,17 @@ export class DashboardController {
   }
 
   /**
+   * GET /v1/dashboard/atrasos
+   */
+  static async atrasos(_req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      return sendSuccess(res, await dashboardService.atrasosPorSetor(), null, 200);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
    * GET /v1/dashboard/:lista?page=&limit=
    */
   static async listar(req: Request, res: Response, next: NextFunction): Promise<any> {

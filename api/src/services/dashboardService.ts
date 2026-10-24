@@ -191,6 +191,35 @@ export async function kpisNaConexao(client: PoolClient): Promise<Kpis> {
   return contagem;
 }
 
+export interface AtrasoPorSetor {
+  setor_id: number;
+  setor_nome: string;
+  atrasados: number;
+  /** Dias de atraso do empréstimo mais antigo do setor. */
+  maior_atraso_dias: number;
+}
+
+/**
+ * GET /v1/dashboard/atrasos — empréstimos atrasados (a mesma definição do cartão de atrasados: previsão em dia
+ * anterior) agrupados pelo setor de destino, o mais atrasado primeiro. Alimenta o gráfico da FE-21; a soma de
+ * `atrasados` é o `kpis.atrasadas`.
+ */
+export function atrasosPorSetor(): Promise<AtrasoPorSetor[]> {
+  return emSnapshot(atrasosNaConexao);
+}
+
+/** Os atrasos por setor numa conexão já aberta (exportado para o teste ler dentro da própria transação). */
+export async function atrasosNaConexao(client: PoolClient): Promise<AtrasoPorSetor[]> {
+  const { rows } = await client.query<{ setor_id: number; setor_nome: string; atrasados: string; maior_atraso_dias: number }>(
+    `SELECT setor_id, setor_nome, COUNT(*)::text AS atrasados, MAX(${HOJE} - ${DIA_PREVISTO})::int AS maior_atraso_dias
+     FROM vw_emprestimos_detalhe
+     WHERE data_devolucao IS NULL AND ${DIA_PREVISTO} < ${HOJE}
+     GROUP BY setor_id, setor_nome
+     ORDER BY COUNT(*) DESC, setor_nome, setor_id`
+  );
+  return rows.map((r) => ({ ...r, atrasados: Number(r.atrasados) }));
+}
+
 /** Uma lista do dashboard, paginada: o "Mostrar tudo" de cada cartão. */
 export function lista(nome: 'indisponiveis', limit: number, offset?: number): Promise<Lista<FerramentaAguardando>>;
 export function lista(nome: Exclude<NomeLista, 'indisponiveis'>, limit: number, offset?: number): Promise<Lista<EmprestimoPendente>>;
