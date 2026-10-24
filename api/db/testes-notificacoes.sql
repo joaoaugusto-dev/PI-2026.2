@@ -7,8 +7,9 @@
 --   atrasada  -> atraso (2 dias)
 --   muito     -> atraso (10 dias)
 --   futura    -> nenhuma notificacao
--- E duas ocorrencias nao encerradas (uma de 10 dias e outra de 3 dias) e uma
--- resolvida de 10 dias: so a de 10 dias nao encerrada gera ocorrencia_pendente.
+-- E ocorrencias: AVARIA aberta ha 10 dias e PERDA em reparo ha 9 dias (geram
+-- ocorrencia_pendente; PERDA aparece como extravio), AVARIA de 3 dias e uma
+-- PERDA resolvida de 10 dias (nao geram).
 -- Roda a funcao uma segunda vez para provar que nao duplica.
 --
 -- Tudo acontece em uma unica transacao que termina em ROLLBACK, entao pode
@@ -40,9 +41,11 @@ INSERT INTO ferramentas (nome, grupo_id, setor_id) VALUES ('API17 futura', :grup
 INSERT INTO ferramentas (nome, grupo_id, setor_id) VALUES ('API17 ocorrencia 10 dias', :grupo_id, :setor_id) RETURNING id \gset focantiga_
 INSERT INTO ferramentas (nome, grupo_id, setor_id) VALUES ('API17 ocorrencia 3 dias', :grupo_id, :setor_id) RETURNING id \gset focrecente_
 INSERT INTO ferramentas (nome, grupo_id, setor_id) VALUES ('API17 ocorrencia resolvida', :grupo_id, :setor_id) RETURNING id \gset focresolvida_
+INSERT INTO ferramentas (nome, grupo_id, setor_id) VALUES ('API17 ocorrencia extravio 9 dias', :grupo_id, :setor_id) RETURNING id \gset focextravio_
 INSERT INTO ocorrencias (ferramenta_id, tipo, descricao, status, registrada_por, created_at) VALUES
     (:focantiga_id,   'AVARIA', 'teste API-17', 'aberta',    :usuario_id, NOW() - INTERVAL '10 days'),
     (:focrecente_id,  'AVARIA', 'teste API-17', 'aberta',    :usuario_id, NOW() - INTERVAL '3 days'),
+    (:focextravio_id, 'PERDA',  'teste API-17', 'em_reparo', :usuario_id, NOW() - INTERVAL '9 days'),
     (:focresolvida_id, 'PERDA', 'teste API-17', 'resolvida', :usuario_id, NOW() - INTERVAL '10 days');
 
 INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, previsao_devolucao, usuario_retirada_id) VALUES
@@ -62,7 +65,7 @@ ORDER BY e.previsao_devolucao DESC;
 \echo '--- 1a execucao: SELECT fn_gerar_notificacoes() (inclui avisos de outros emprestimos abertos do banco) ---'
 SELECT fn_gerar_notificacoes() AS gerados_total;
 
-\echo '--- Notificacoes geradas para estas retiradas (esperado: hoje=devolucao_hoje, 2 e 10 dias=atraso, ocorrencia de 10 dias=ocorrencia_pendente, demais nenhuma) ---'
+\echo '--- Notificacoes geradas para estas retiradas (esperado: hoje=devolucao_hoje, 2 e 10 dias=atraso, ocorrencias de 10 e 9 dias=ocorrencia_pendente, demais nenhuma) ---'
 SELECT tipo, titulo, mensagem, usuario_id, lida
 FROM notificacoes
 WHERE mensagem LIKE 'API17 %'
