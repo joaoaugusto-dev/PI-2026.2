@@ -3,7 +3,10 @@
 -- Pendente = ocorrência ainda não encerrada (status fora de 'resolvida' e
 -- 'baixada') aberta há mais de 7 dias, contados em dias de Brasília. É um
 -- aviso por ocorrência: o link /ferramentas/:id?ocorrencia=:id a deduplica,
--- como o do empréstimo. Se ela continuar pendente depois que a notificação
+-- como o do empréstimo. Ocorrência nunca retrocede de status (a API recusa), então
+-- uma encerrada não volta a ficar pendente e o created_at fixo basta para a
+-- deduplicação. Na mensagem, PERDA aparece como "extravio", o nome que a tela
+-- usa (o valor no banco continua PERDA). Se ela continuar pendente depois que a notificação
 -- lida for limpada (fn_limpar_notificacoes, 30 dias), um novo aviso é gerado
 -- (lembrete mensal). O retorno soma os avisos de empréstimo e de ocorrência.
 CREATE OR REPLACE FUNCTION fn_gerar_notificacoes()
@@ -64,7 +67,7 @@ BEGIN
             o.created_at,
             o.ferramenta_id,
             f.nome AS ferramenta_nome,
-            LOWER(o.tipo) AS tipo_ocorrencia,
+            CASE o.tipo WHEN 'PERDA' THEN 'extravio' ELSE LOWER(o.tipo) END AS tipo_ocorrencia,
             hoje - (o.created_at AT TIME ZONE 'America/Sao_Paulo')::DATE AS dias
         FROM ocorrencias o
         JOIN ferramentas f ON f.id = o.ferramenta_id

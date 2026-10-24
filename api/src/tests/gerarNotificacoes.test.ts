@@ -63,18 +63,19 @@ describe('fn_gerar_notificacoes: ocorrência pendente', () => {
   beforeAll(async () => {
     const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
     const usuarioId = (await query<{ id: number }>('SELECT id FROM usuarios WHERE ativo = true ORDER BY id LIMIT 1')).rows[0].id;
-    const casos: Record<string, [string, string]> = {
+    const casos: Record<string, [string, string, string?]> = {
       antiga: ['aberta', '10 days'],
+      extraviada: ['em_reparo', '9 days', 'PERDA'],
       recente: ['aberta', '3 days'],
       resolvida: ['resolvida', '10 days'],
       baixada: ['baixada', '10 days'],
     };
-    for (const [nome, [status, idade]] of Object.entries(casos)) {
+    for (const [nome, [status, idade, tipo = 'AVARIA']] of Object.entries(casos)) {
       const f = await query<{ id: number }>('INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING id', [`${PREFIXO_OC}${nome}`, grupoId]);
       const o = await query<{ id: number }>(
         `INSERT INTO ocorrencias (ferramenta_id, tipo, descricao, status, registrada_por, created_at)
-         VALUES ($1, 'AVARIA', 'teste', $2, $3, NOW() - $4::interval) RETURNING id`,
-        [f.rows[0].id, status, usuarioId, idade]
+         VALUES ($1, $5, 'teste', $2, $3, NOW() - $4::interval) RETURNING id`,
+        [f.rows[0].id, status, usuarioId, idade, tipo]
       );
       ferr[nome] = f.rows[0].id;
       ocs[nome] = o.rows[0].id;
@@ -94,19 +95,24 @@ describe('fn_gerar_notificacoes: ocorrência pendente', () => {
       [`${PREFIXO_OC}%`]
     )).rows;
 
-  it('avisa só a ocorrência não encerrada com mais de 7 dias, para a equipe', async () => {
+  it('avisa só as ocorrências não encerradas com mais de 7 dias, para a equipe', async () => {
     await query('SELECT fn_gerar_notificacoes()');
     const lista = await geradas();
-    expect(lista).toHaveLength(1);
-    expect(lista[0].tipo).toBe('ocorrencia_pendente');
-    expect(lista[0].usuario_id).toBeNull();
-    expect(lista[0].link).toBe(`/ferramentas/${ferr.antiga}?ocorrencia=${ocs.antiga}`);
-    expect(lista[0].mensagem).toContain('avaria');
+    expect(lista).toHaveLength(2);
+    expect(lista.every((n) => n.tipo === 'ocorrencia_pendente' && n.usuario_id === null)).toBe(true);
+    const antiga = lista.find((n) => n.link === `/ferramentas/${ferr.antiga}?ocorrencia=${ocs.antiga}`);
+    expect(antiga?.mensagem).toContain('ocorrência de avaria');
+  });
+
+  it('chama PERDA de extravio na mensagem', async () => {
+    await query('SELECT fn_gerar_notificacoes()');
+    const extraviada = (await geradas()).find((n) => n.link === `/ferramentas/${ferr.extraviada}?ocorrencia=${ocs.extraviada}`);
+    expect(extraviada?.mensagem).toContain('ocorrência de extravio');
   });
 
   it('é idempotente', async () => {
     await query('SELECT fn_gerar_notificacoes()');
     await query('SELECT fn_gerar_notificacoes()');
-    expect(await geradas()).toHaveLength(1);
+    expect(await geradas()).toHaveLength(2);
   });
 });
