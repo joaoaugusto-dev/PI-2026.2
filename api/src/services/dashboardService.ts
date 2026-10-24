@@ -181,11 +181,14 @@ export function obter(): Promise<Dashboard> {
  * cartão de atrasados (previsão em dia anterior) e não a da view, para o número ser o mesmo em todo lugar.
  */
 export function kpis(): Promise<Kpis> {
-  return emSnapshot(async (client) => {
-    const contagem = await contadores(client);
-    contagem.atrasadas = (await listaNoSnapshot(client, 'atrasados', 1, 0)).total;
-    return contagem;
-  });
+  return emSnapshot(kpisNaConexao);
+}
+
+/** Os seis contadores numa conexão já aberta (exportado para o teste ler dentro da própria transação). */
+export async function kpisNaConexao(client: PoolClient): Promise<Kpis> {
+  const contagem = await contadores(client);
+  contagem.atrasadas = (await listaNoSnapshot(client, 'atrasados', 1, 0)).total;
+  return contagem;
 }
 
 /** Uma lista do dashboard, paginada: o "Mostrar tudo" de cada cartão. */

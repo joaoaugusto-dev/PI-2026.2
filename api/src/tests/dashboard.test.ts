@@ -3,8 +3,8 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
-import { query } from '../config/database.js';
-import { emSnapshot, obter } from '../services/dashboardService.js';
+import { getClient, query } from '../config/database.js';
+import { emSnapshot, kpisNaConexao, obter } from '../services/dashboardService.js';
 
 const token = (papel: string) => jwt.sign({ id: 1, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
 
@@ -95,6 +95,56 @@ describe('GET /v1/dashboard/kpis', () => {
     const depois = (await request(app).get('/v1/dashboard/kpis').set('Authorization', `Bearer ${token('manutencao')}`)).body.data;
     if (JSON.stringify(antes) === JSON.stringify(depois)) expect(antes).toEqual(esperado);
   });
+
+  it('dados criados pelo teste mexem em cada contador na medida certa (transação isolada, desfeita no fim)', async () => {
+    // REPEATABLE READ: a leitura de antes e a de depois enxergam o mesmo retrato do banco mais o que este teste
+    // inseriu, então outros arquivos de teste gravando ao lado não atrapalham; o ROLLBACK não deixa nada para trás
+    const client = await getClient();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      const antes = await kpisNaConexao(client);
+
+      const um = async (sql: string) => (await client.query<{ id: number }>(sql)).rows[0].id;
+      const grupoId = await um('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1');
+      const colaboradorId = await um('SELECT id FROM colaboradores LIMIT 1');
+      const setorId = await um('SELECT id FROM setores ORDER BY id LIMIT 1');
+      const usuarioId = await um('SELECT id FROM usuarios LIMIT 1');
+      // código explícito e alto: a trigger que gera o código não é atômica e corre com os outros arquivos de teste
+      let codigo = 9990;
+      const ferramenta = (status: string, ativo = true) =>
+        um(`INSERT INTO ferramentas (nome, grupo_id, status, ativo, codigo_identificacao)
+            VALUES ('ZZTESTE_API18_${status}', ${grupoId}, '${status}', ${ativo}, ${codigo++}) RETURNING id`);
+
+      await ferramenta('disponivel');
+      await ferramenta('disponivel', false); // inativa: não entra em nenhum contador
+      await ferramenta('indisponivel');
+      const comEmprestimo = await ferramenta('disponivel');
+      // retirada com previsão 3 dias atrás: a trigger passa a ferramenta para em_uso e o empréstimo é atrasado
+      await client.query(
+        `INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, usuario_retirada_id, previsao_devolucao)
+         VALUES ($1, $2, $3, $4, NOW() - INTERVAL '3 days')`,
+        [comEmprestimo, colaboradorId, setorId, usuarioId]
+      );
+      await client.query(
+        `INSERT INTO ocorrencias (ferramenta_id, colaborador_id, tipo, descricao, registrada_por)
+         VALUES ($1, $2, 'avaria', 'ocorrencia de teste', $3)`,
+        [comEmprestimo, colaboradorId, usuarioId]
+      );
+
+      const depois = await kpisNaConexao(client);
+      expect({
+        cadastradas: depois.cadastradas - antes.cadastradas,
+        disponiveis: depois.disponiveis - antes.disponiveis,
+        em_uso: depois.em_uso - antes.em_uso,
+        indisponiveis: depois.indisponiveis - antes.indisponiveis,
+        atrasadas: depois.atrasadas - antes.atrasadas,
+        ocorrencias: depois.ocorrencias - antes.ocorrencias,
+      }).toEqual({ cadastradas: 3, disponiveis: 1, em_uso: 1, indisponiveis: 1, atrasadas: 1, ocorrencias: 1 });
+    } finally {
+      await client.query('ROLLBACK').catch(() => undefined);
+      client.release();
+    }
+  }, 20000);
 
   it('retorna 401 sem token e 403 com papel consulta', async () => {
     expect((await request(app).get('/v1/dashboard/kpis')).status).toBe(401);
