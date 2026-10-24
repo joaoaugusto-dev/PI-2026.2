@@ -176,6 +176,11 @@ export function obter(): Promise<Dashboard> {
   });
 }
 
+/** GET /v1/dashboard/kpis — só os seis contadores, direto da vw_dashboard_kpis. */
+export function kpis(): Promise<Kpis> {
+  return emSnapshot(contadores);
+}
+
 /** Uma lista do dashboard, paginada: o "Mostrar tudo" de cada cartão. */
 export function lista(nome: 'indisponiveis', limit: number, offset?: number): Promise<Lista<FerramentaAguardando>>;
 export function lista(nome: Exclude<NomeLista, 'indisponiveis'>, limit: number, offset?: number): Promise<Lista<EmprestimoPendente>>;

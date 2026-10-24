@@ -32,6 +32,28 @@ router.get('/', authenticate, authorize('manutencao', 'admin'), DashboardControl
 
 /**
  * @openapi
+ * /dashboard/kpis:
+ *   get:
+ *     summary: Os seis contadores do dashboard (vw_dashboard_kpis)
+ *     description: >
+ *       cadastradas, disponiveis, em_uso, indisponiveis, atrasadas e ocorrencias (abertas). Declarada antes de
+ *       /dashboard/{lista}, que senão trataria "kpis" como nome de lista.
+ *     tags:
+ *       - Dashboard
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Contadores
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get('/kpis', authenticate, authorize('manutencao', 'admin'), DashboardController.kpis);
+
+/**
+ * @openapi
  * /dashboard/{lista}:
  *   get:
  *     summary: Uma lista do dashboard, paginada (o "Mostrar tudo" de cada cartão)
