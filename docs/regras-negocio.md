@@ -20,6 +20,11 @@ jsonb e o comando **`npm run data:check`**. O fim do documento traz o
 [mapa regra → implementação → teste → verificação](#mapa-regra--implementação--teste--verificação)
 e a seção sobre [como as regras são rastreadas e conferidas](#rastreabilidade-e-verificação-das-regras).
 
+**Atualização de 24/10/2026 (DATA-08).** Entrou o complemento
+[Calendário e notificações](#complemento--calendário-e-notificações-derivados-das-regras-1-e-3),
+consequência da API-17: o cálculo do calendário, os três tipos de aviso, o timer do servidor no
+lugar do `pg_cron` e o aviso de ocorrência pendente há mais de 7 dias. Não altera nenhuma das 10 regras.
+
 ---
 
 ## Regra 1 — Um empréstimo aberto por ferramenta
@@ -420,6 +425,49 @@ ferramenta, sem relação com a entrega do trabalho).
 
 ---
 
+## Complemento — Calendário e notificações (derivados das regras 1 e 3)
+
+**Não é uma 11ª regra de negócio inegociável.** São duas leituras derivadas dos
+empréstimos e das ocorrências que as regras 1 e 3 já garantem, entregues na API-17
+(telas de calendário e de notificações). O que muda aqui é o cálculo, e ele merece
+estar documentado porque envolve data, fuso e deduplicação.
+
+**Calendário** (`GET /v1/emprestimos/calendario?mes=AAAA-MM`): só entram empréstimos
+**abertos** (`data_devolucao` nulo) cuja previsão cai no mês. O dia é calculado no fuso
+de Brasília (`America/Sao_Paulo`), então uma previsão às 23:30 de 31/03 conta em março.
+Responde só os dias que têm devolução, em ordem cronológica. Perfis `manutencao` e `admin`.
+
+**Notificações** (`fn_gerar_notificacoes()`, migrations `0006` e `0015`): três tipos, todos
+da equipe toda (`usuario_id` nulo, `lida` compartilhado):
+
+| Tipo | Quando nasce | Deduplicação |
+|---|---|---|
+| `devolucao_hoje` | Empréstimo aberto com previsão para hoje (data de Brasília) | Um por empréstimo (`link` `/ferramentas/:id?emprestimo=:id`) |
+| `atraso` | Empréstimo aberto com previsão em dia anterior | Um por empréstimo; o mesmo empréstimo que estava em `devolucao_hoje` ganha o `atraso` no dia seguinte |
+| `ocorrencia_pendente` | Ocorrência com status fora de `resolvida` e `baixada`, aberta há **mais de 7 dias** (constante `dias_pendente`) | Um por ocorrência (`link` `/ferramentas/:id?ocorrencia=:id`). Na mensagem, `PERDA` aparece como "extravio" |
+
+**Quem executa.** O timer do `api/src/server.ts` chama `fn_gerar_notificacoes()` ao subir e
+a cada 30 minutos, e `fn_limpar_notificacoes()` ao subir e a cada 24 horas (apaga as lidas
+com mais de 30 dias). O `pg_cron` deixou de ser requisito: o PostgreSQL do Dokploy não traz
+a extensão, e onde ela existir só funciona como reforço, porque as duas funções são
+idempotentes. Como o timer roda todos os dias, o aviso também sai no fim de semana (o
+`pg_cron` rodava só de segunda a sexta).
+
+**Se for violada / se falhar.** Não há 409 aqui: a geração é do banco, não de uma rota. Se o
+timer falhar, o servidor registra `logger.warn` e tenta na rodada seguinte; o efeito visível
+é o sino sem avisos novos. Se a ocorrência continuar pendente depois que o aviso lido for
+apagado (30 dias), nasce um novo aviso, na prática um lembrete mensal. A ocorrência nunca
+retrocede de status (a API recusa), então uma encerrada não volta a ficar pendente.
+
+**Teste:** `api/src/tests/gerarNotificacoes.test.ts` (`devolucao_hoje` e `atraso` sem aviso para
+prazo futuro, `ocorrencia_pendente` só para as não encerradas com mais de 7 dias, `PERDA` chamada
+de extravio e a segunda execução sem duplicar). Evidência
+da execução manual e da coleção do Insomnia em
+[`testes/api-17-notificacoes/`](testes/api-17-notificacoes/). Rotas documentadas em
+[`backend/api.md`](backend/api.md#notificações-v1notificacoes).
+
+---
+
 ## Resumo
 
 | # | Regra | Implementação técnica | Status |
@@ -434,6 +482,7 @@ ferramenta, sem relação com a entrega do trabalho).
 | 8 | 3 perfis e permissões | `authorize()` por rota | ✅ Implementada; matriz revisada em 20/10/2026 |
 | 9 | Feriados BrasilAPI + fallback | Service com cache | ✅ Implementada e testada, inclusive o fallback e a falha de banco |
 | 10 | Entrega fora do prazo = zero | — | N/A — regra institucional, sem implementação de software |
+| — | Calendário e notificações (derivados das regras 1 e 3) | `fn_gerar_notificacoes`, timer do servidor, `GET /v1/emprestimos/calendario` | ✅ Implementada e testada; não é uma das 10 regras |
 
 ---
 
@@ -487,6 +536,7 @@ que o banco o recusa (erro `23505`) e que a verificação roda limpa.
 | 8 | API | `authorize()`, token de consulta isolado | `permissoesCadastros.test.ts`, `ferramentaPermissoes.test.ts`, `authorize.test.ts`, `consultaSessao*.test.ts`, `auditoriaRoutes.test.ts` | — (permissão não deixa marca no dado) |
 | 9 | API + banco | `feriadoService`, tabela `feriados` | `feriado.test.ts`, `feriadoFallback.test.ts` | — |
 | 10 | — (institucional) | — | — | — |
+| — | Calendário e notificações | `fn_gerar_notificacoes`, `fn_limpar_notificacoes`, timer em `server.ts`, migrations `0006`, `0007` e `0015` | `gerarNotificacoes.test.ts` | — (aviso derivado, não deixa dado a conferir) |
 | — | Validação geral | Zod em todas as rotas de escrita, `errorHandler` | `ferramentaValidation.test.ts`, `errorHandler.test.ts`, `kpi.test.ts`, `importacaoFerramentas.test.ts` | `FERRAMENTA_VALOR_NEGATIVO`, `FERRAMENTA_NOME_VAZIO`, `FERRAMENTA_SUBGRUPO_FORA_DO_GRUPO`, `EMPRESTIMO_PREVISAO_ANTES_RETIRADA`, `EMPRESTIMO_DEVOLUCAO_ANTES_RETIRADA`, `EMPRESTIMO_DEVOLVIDO_SEM_CONDICAO`, `EMPRESTIMO_COLABORADOR_INATIVO_ABERTO`, `FOTO_ARQUIVO_INEXISTENTE` |
 
 As evidências de execução de cada coluna (saída dos testes, do `data:check`, da importação
