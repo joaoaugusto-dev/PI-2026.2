@@ -101,13 +101,25 @@ Não permite:
 
 ## Notificações
 
-Um job diário gera notificações para:
+O timer do servidor (`api/src/server.ts`) gera as notificações: `fn_gerar_notificacoes()`
+roda ao subir a API e a cada 30 minutos, sem depender do `pg_cron` (o PostgreSQL do
+Dokploy não traz a extensão). Os avisos são da equipe toda e cobrem:
 
-- devolução prevista para hoje;
-- empréstimo atrasado;
-- ocorrência pendente.
+- `devolucao_hoje`: empréstimo aberto com devolução prevista para hoje;
+- `atraso`: empréstimo aberto com a previsão em dia anterior;
+- `ocorrencia_pendente`: ocorrência não encerrada (fora de `resolvida` e `baixada`) aberta
+  há mais de 7 dias. `PERDA` aparece no texto como "extravio".
 
-O sino do cabeçalho apresenta o contador de não lidas.
+Há um aviso por empréstimo e por ocorrência: rodar de novo não duplica. A limpeza
+(`fn_limpar_notificacoes()`, ao subir e a cada 24 horas) apaga as notificações lidas com mais
+de 30 dias; se a situação continuar, nasce um novo aviso, como um lembrete mensal. Falha do
+timer vira `logger.warn` e a próxima rodada tenta de novo; o log informa quantos avisos foram
+gerados ou apagados, só quando maior que zero.
+
+O sino do cabeçalho apresenta o contador de não lidas (`meta.total` de
+`GET /v1/notificacoes?lida=false`). Regras e rotas em
+[`../regras-negocio.md`](../regras-negocio.md#complemento--calendário-e-notificações-derivados-das-regras-1-e-3)
+e [`api.md`](api.md#notificações-v1notificacoes).
 
 ## Código de barras
 
