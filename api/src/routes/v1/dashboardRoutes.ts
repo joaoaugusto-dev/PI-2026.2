@@ -45,6 +45,31 @@ router.get('/', authenticate, authorize('manutencao', 'admin'), DashboardControl
  *     responses:
  *       200:
  *         description: Contadores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cadastradas:
+ *                       type: integer
+ *                       description: Ferramentas ativas
+ *                     disponiveis:
+ *                       type: integer
+ *                     em_uso:
+ *                       type: integer
+ *                     indisponiveis:
+ *                       type: integer
+ *                     atrasadas:
+ *                       type: integer
+ *                       description: Empréstimos abertos com previsão em dia anterior (Brasília), a mesma definição do cartão de atrasados
+ *                     ocorrencias:
+ *                       type: integer
+ *                       description: Ocorrências abertas
+ *             example:
+ *               data: { cadastradas: 81, disponiveis: 52, em_uso: 18, indisponiveis: 11, atrasadas: 18, ocorrencias: 5 }
  *       401:
  *         description: Token inválido ou não fornecido
  *       403:
