@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
 import { getClient, query } from '../config/database.js';
-import { emSnapshot, kpisNaConexao, obter } from '../services/dashboardService.js';
+import { atrasosNaConexao, emSnapshot, kpisNaConexao, obter } from '../services/dashboardService.js';
 
 const token = (papel: string) => jwt.sign({ id: 1, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
 
@@ -149,6 +149,84 @@ describe('GET /v1/dashboard/kpis', () => {
   it('retorna 401 sem token e 403 com papel consulta', async () => {
     expect((await request(app).get('/v1/dashboard/kpis')).status).toBe(401);
     expect((await request(app).get('/v1/dashboard/kpis').set('Authorization', `Bearer ${token('consulta')}`)).status).toBe(403);
+  });
+});
+
+describe('GET /v1/dashboard/atrasos', () => {
+  it('traz um item por setor com atrasados, para manutenção e admin, e "atrasos" não é uma lista', async () => {
+    for (const papel of ['manutencao', 'admin']) {
+      const res = await request(app).get('/v1/dashboard/atrasos').set('Authorization', `Bearer ${token(papel)}`);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual(expect.any(Array));
+      for (const item of res.body.data) {
+        expect(item).toEqual({
+          setor_id: expect.any(Number),
+          setor_nome: expect.any(String),
+          atrasados: expect.any(Number),
+          maior_atraso_dias: expect.any(Number),
+        });
+        expect(item.atrasados).toBeGreaterThan(0);
+        expect(item.maior_atraso_dias).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('a soma dos setores é o kpis.atrasadas (mesmo snapshot)', async () => {
+    const { soma, atrasadas } = await emSnapshot(async (client) => ({
+      soma: (await atrasosNaConexao(client)).reduce((total, s) => total + s.atrasados, 0),
+      atrasadas: (await kpisNaConexao(client)).atrasadas,
+    }));
+    expect(soma).toBe(atrasadas);
+  });
+
+  it('agrupa por setor de destino, conta cada atraso e acha o maior (transação isolada, desfeita no fim)', async () => {
+    const client = await getClient();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      const antes = await atrasosNaConexao(client);
+
+      const um = async (sql: string) => (await client.query<{ id: number }>(sql)).rows[0].id;
+      const grupoId = await um('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1');
+      const colaboradorId = await um('SELECT id FROM colaboradores LIMIT 1');
+      const usuarioId = await um('SELECT id FROM usuarios LIMIT 1');
+      const setorId = (await um("INSERT INTO setores (nome) VALUES ('ZZTESTE_API18_setor') RETURNING id"));
+      // código explícito e alto: a trigger que gera o código não é atômica e corre com os outros arquivos de teste
+      let codigo = 9980;
+      const retirada = async (diasAtras: number) => {
+        const f = await um(
+          `INSERT INTO ferramentas (nome, grupo_id, codigo_identificacao) VALUES ('ZZTESTE_API18_atraso', ${grupoId}, ${codigo++}) RETURNING id`
+        );
+        await client.query(
+          `INSERT INTO emprestimos (ferramenta_id, colaborador_id, setor_destino_id, usuario_retirada_id, previsao_devolucao)
+           VALUES ($1, $2, $3, $4, NOW() - $5 * INTERVAL '1 day')`,
+          [f, colaboradorId, setorId, usuarioId, diasAtras]
+        );
+      };
+      await retirada(3);
+      await retirada(10);
+      await retirada(-2); // previsão daqui a 2 dias: não é atraso
+
+      const depois = await atrasosNaConexao(client);
+      expect(depois.find((s) => s.setor_id === setorId)).toEqual({
+        setor_id: setorId,
+        setor_nome: 'ZZTESTE_API18_setor',
+        atrasados: 2,
+        maior_atraso_dias: 10,
+      });
+      // os demais setores ficam como estavam
+      expect(depois.filter((s) => s.setor_id !== setorId)).toEqual(antes);
+      // ordem: o setor com mais atrasos primeiro
+      const contagens = depois.map((s) => s.atrasados);
+      expect(contagens).toEqual([...contagens].sort((a, b) => b - a));
+    } finally {
+      await client.query('ROLLBACK').catch(() => undefined);
+      client.release();
+    }
+  }, 20000);
+
+  it('retorna 401 sem token e 403 com papel consulta', async () => {
+    expect((await request(app).get('/v1/dashboard/atrasos')).status).toBe(401);
+    expect((await request(app).get('/v1/dashboard/atrasos').set('Authorization', `Bearer ${token('consulta')}`)).status).toBe(403);
   });
 });
 
