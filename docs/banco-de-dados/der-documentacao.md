@@ -13,7 +13,7 @@
 > [`dicionario-de-dados.md`](dicionario-de-dados.md) e em [`der.dbml`](der.dbml), ambos
 > conferidos contra o banco. **O PNG [`der-visual-dbdiagram-24.10.2026.png`](der-visual-dbdiagram-24.10.2026.png)
 > foi regerado em 24/10/2026 em dbdiagram.io a partir do `der.dbml` e mostra as
-> 16 tabelas atuais, inclusive `auditoria`, `convites_acesso` e `notificacoes`.**
+> 14 tabelas de negócio, inclusive `auditoria`, `convites_acesso` e `notificacoes`.**
 
 ---
 
