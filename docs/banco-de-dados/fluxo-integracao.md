@@ -4,10 +4,12 @@ Este documento registra de onde vêm os dados do SOUFER Tools e o caminho que
 cada um percorre até chegar à tela do usuário: o inventário legado da Soufer
 (CSV), a BrasilAPI de feriados e o que a manutenção digita no balcão. As seções 1 e
 2 descrevem as **fontes**; a seção 3 traz o **fluxo completo** (diagrama e
-explicação de cada etapa); a seção 4 mostra como as **inconsistências** são
+explicação de cada etapa, inclusive o calendário e as notificações que o
+banco deriva dos empréstimos e das ocorrências); a seção 4 mostra como as **inconsistências** são
 barradas, detectadas e rastreadas.
 
-Atualizado em 20/10/2026 (entrega de Transformação, Validação e Qualidade dos Dados).
+Atualizado em 24/10/2026: entrega de Transformação, Validação e Qualidade dos Dados
+(20/10) e a API-17, que acrescentou o calendário e as notificações (seção 3.4).
 
 - [1. Inventário legado da manutenção](#1-inventário-legado-da-manutenção)
 - [2. BrasilAPI — feriados nacionais](#2-brasilapi--feriados-nacionais)
@@ -178,7 +180,10 @@ flowchart LR
         TAB[("Tabelas<br/>ferramentas, emprestimos,<br/>ocorrencias, feriados ...")]
         AUD[("auditoria (jsonb)<br/>triggers fn_auditoria")]
         VIEWS["Views<br/>vw_emprestimos_detalhe,<br/>vw_dashboard_kpis"]
+        NOTIF[("notificacoes<br/>fn_gerar_notificacoes<br/>fn_limpar_notificacoes")]
     end
+
+    TIMER["Timer do servidor (server.ts)<br/>gera a cada 30 min, limpa a cada 24 h"]
 
     API["API /v1<br/>envelope data / meta / error"]
     FRONT["Front (TanStack Query)"]
@@ -192,6 +197,9 @@ flowchart LR
     FER --> TAB
     REG --> TAB
     TAB --> AUD
+    TIMER -- "chama as funções" --> NOTIF
+    TAB -- "atrasos e ocorrências parados" --> NOTIF
+    NOTIF --> API
     TAB --> VIEWS --> API
     TAB --> API
     AUD --> API
@@ -216,6 +224,9 @@ flowchart LR
 | Tabelas → views → API | As telas de listagem e o dashboard leem views (`vw_emprestimos_detalhe`, `vw_dashboard_kpis`) que juntam ferramenta, colaborador e setor e calculam a situação (`em_aberto`, `atrasado`, `devolvido`) | migrations `0001`, `0010`, `0013`; `emprestimoService`, `dashboardService`, `kpiService` | Erro de banco inesperado vira `500 INTERNAL_SERVER_ERROR` (em produção, sem detalhe) |
 | API → front → tela | Resposta no envelope `{ data, meta }`; o front usa TanStack Query, invalida o cache depois de cada escrita e mostra a mensagem do `error.message` quando a API recusa | `web/src/lib/api.ts`, hooks em `web/src/` | A tela mostra o erro da API; falha de rede é distinguida de recusa |
 | API → front (importação) | O relatório da importação (`resumo`, `aceitas`, `rejeitadas` com `motivos`, `ignoradas`) volta pronto e permite montar um CSV só com as linhas rejeitadas para corrigir e reenviar | `RelatorioImportacao` em `importacaoService.ts`; [`../backend/import/importacao-front.md`](../backend/import/importacao-front.md) | — |
+| Tabelas → timer → `notificacoes` | O timer do servidor chama `fn_gerar_notificacoes()` ao subir e a cada 30 minutos. A função olha os empréstimos abertos e as ocorrências e grava um aviso por situação: `devolucao_hoje` (previsão é hoje), `atraso` (previsão já passou) e `ocorrencia_pendente` (ocorrência fora de `resolvida` e `baixada` aberta há mais de 7 dias; `PERDA` aparece como "extravio" no texto). Um aviso por empréstimo e por ocorrência, deduplicado pelo `link`. `fn_limpar_notificacoes()` roda ao subir e a cada 24 h e apaga as lidas com mais de 30 dias. O `pg_cron` só serve de reforço onde a extensão existe, e o Postgres do Dokploy não a traz | `api/src/server.ts`, migrations `0006`, `0007` e `0015` | Falha do timer vira `logger.warn` e o servidor segue de pé; a próxima rodada tenta de novo. O log registra quantos avisos foram gerados ou apagados, só quando maior que zero |
+| `notificacoes` → API → sino | `GET /v1/notificacoes` lista os avisos da equipe (com `lida=false`, `meta.total` é o contador do sino); `PATCH` marca um ou todos como lidos. O estado `lida` é compartilhado entre os usuários da manutenção | `notificacaoService.ts`, [`../backend/api.md`](../backend/api.md#notificações-v1notificacoes) | `400` para filtro inválido, `404` se o aviso não existe |
+| Tabelas → API → calendário | `GET /v1/emprestimos/calendario?mes=AAAA-MM` agrupa por dia as devoluções previstas dos empréstimos ainda abertos, com o dia calculado no fuso de Brasília | `emprestimoService`, [`../backend/api.md`](../backend/api.md#calendário-get-v1emprestimoscalendariomesaaaa-mm) | `400 VALIDATION_ERROR` se `mes` não for `AAAA-MM` |
 | Tabelas → API → CSV | A exportação (`GET /v1/exportacoes/:recurso`) devolve o mesmo formato da importação (ponto e vírgula, BOM, `'` na frente de células que o Excel leria como fórmula) e a reimportação desfaz esse `'` | `exportacaoService.ts`, `utils/csv.ts` | `400` para filtro inválido |
 | Tabelas e auditoria → `data:check` | Consultas somente de leitura procuram o que as regras acima deveriam ter impedido (status incoerente, datas trocadas, matrícula ou código repetidos, foto sem arquivo, trigger de auditoria desligada) | `api/src/services/dataCheckService.ts`, `api/scripts/data-check.ts` | Saída `1` se houver **erro**; avisos não reprovam |
 
@@ -238,6 +249,16 @@ Um CSV com 8 linhas de dados (arquivo e resposta reais em
 5. A API responde `200` com o relatório. Cada linha aceita deixou uma linha de `INSERT` em `auditoria` com o usuário do token.
 6. `GET /v1/ferramentas` e as demais telas passam a enxergar as ferramentas novas; `npm run data:check` continua sem erro.
 
+### 3.4 Exemplo ponta a ponta (do atraso ao sino)
+
+1. A manutenção registra a retirada de uma furadeira com previsão de devolução para 20/10. A linha entra em `emprestimos` e a ferramenta vai para `em_uso`.
+2. Em 21/10 a previsão já passou. Na rodada seguinte do timer (no máximo 30 minutos depois), `fn_gerar_notificacoes()` grava um `atraso` com o texto "Furadeira com Maria Souza está atrasada desde 20/10" e o link `/ferramentas/12?emprestimo=41`. As rodadas seguintes não repetem o aviso.
+3. `GET /v1/notificacoes?lida=false` devolve o aviso e `meta.total` alimenta o contador do sino.
+4. A manutenção abre o aviso pelo link e marca como lido (`PATCH /v1/notificacoes/:id/lida`). Depois de 30 dias, `fn_limpar_notificacoes()` apaga a lida. Se o empréstimo continuar aberto, nasce um novo aviso: na prática, um lembrete mensal.
+5. A devolução com avaria ou perda abre a ocorrência (Regra 3). Se ela ficar mais de 7 dias sem solução, o timer gera um `ocorrencia_pendente` ("... com ocorrência de extravio sem solução há 8 dias").
+
+Evidência de execução: [`../testes/api-17-notificacoes/`](../testes/api-17-notificacoes/).
+
 ## 4. Tratamento de inconsistências
 
 A estratégia tem quatro camadas, da mais barata (impedir) à mais tardia (corrigir):
@@ -245,7 +266,7 @@ A estratégia tem quatro camadas, da mais barata (impedir) à mais tardia (corri
 1. **Prevenir:** validação Zod na API e restrições no banco, que valem para qualquer caminho de escrita.
 2. **Detectar:** `npm run data:check`, que aponta o que escapou (dado antigo, escrita direta no banco, bug).
 3. **Rastrear:** `auditoria` em jsonb, para saber quem mudou o quê e o valor anterior.
-4. **Corrigir:** o relatório de importação lista cada linha recusada com o motivo, para o almoxarife ajustar a planilha e reenviar; para dado já gravado, o `data:check` diz como corrigir.
+4. **Corrigir:** o relatório de importação lista cada linha recusada com o motivo, para quem cuida da planilha na manutenção ajustar a planilha e reenviar; para dado já gravado, o `data:check` diz como corrigir.
 
 | Problema | Onde é barrado | Resposta ao usuário | Como é detectado depois |
 |---|---|---|---|
@@ -260,6 +281,8 @@ A estratégia tem quatro camadas, da mais barata (impedir) à mais tardia (corri
 | JSON malformado | Parser do Express | `400 INVALID_JSON` | — |
 | BrasilAPI fora do ar | `feriadoService` | Fallback de sábado e domingo (Regra 9); `502` só na sincronização forçada | — |
 | Banco fora do ar | Pool `pg` (`connectionTimeoutMillis` de 5 s) | `500` (em produção, sem detalhe); o processo continua de pé, porque erro em conexão emprestada é capturado | `npm run data:check` sai com `2` |
+| Aviso repetido a cada rodada do timer | `fn_gerar_notificacoes()` confere o `link` e a data antes de inserir (idempotente) | A segunda execução gera 0 | — |
+| Servidor sem `pg_cron` (Dokploy) | Timer do `server.ts` faz o papel do agendador | Nenhuma; a falha do timer só aparece como aviso no log | Sem avisos novos no sino e `logger.warn` no log |
 | Alguém desligou a auditoria | — | — | `AUDITORIA_TRIGGER_AUSENTE`, `AUDITORIA_SEM_REGISTRO` |
 
 ## Referências relacionadas
@@ -267,7 +290,7 @@ A estratégia tem quatro camadas, da mais barata (impedir) à mais tardia (corri
 - [`dados.md`](dados.md) — pipeline de importação/normalização e regras de
   qualidade de dados.
 - [`dicionario-de-dados.md`](dicionario-de-dados.md) — schema completo (15 tabelas
-  das migrations `0001` a `0014`), incluindo `ferramentas`, `feriados` e `auditoria`.
+  das migrations `0001` a `0015`), incluindo `ferramentas`, `feriados` e `auditoria`.
 - [`../regras-negocio.md`](../regras-negocio.md) — as 10 regras, onde vivem e o mapa regra → teste.
 - [`../backend/importacao.md`](../backend/importacao.md) e [`../backend/processos.md`](../backend/processos.md)
   — importação passo a passo, auditoria e `data:check`.
