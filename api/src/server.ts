@@ -9,12 +9,17 @@ const PORT = env.port;
 // as funções são idempotentes (gerar deduplica por empréstimo; limpar só apaga lidas antigas),
 // então rodar na subida e em intervalo fixo é seguro mesmo com o pg_cron agendado (RDS).
 // ponytail: várias instâncias só repetem um SELECT/DELETE inofensivo.
+// As funções devolvem quantas linhas geraram/apagaram; só vale registrar quando mexeram em algo.
 function gerarNotificacoes() {
-  query('SELECT fn_gerar_notificacoes()').catch((err) => logger.warn({ err }, 'falha ao gerar notificações'));
+  query<{ total: number }>('SELECT fn_gerar_notificacoes() AS total')
+    .then(({ rows }) => rows[0].total > 0 && logger.info(`${rows[0].total} notificação(ões) gerada(s)`))
+    .catch((err) => logger.warn({ err }, 'falha ao gerar notificações'));
 }
 
 function limparNotificacoes() {
-  query('SELECT fn_limpar_notificacoes()').catch((err) => logger.warn({ err }, 'falha ao limpar notificações'));
+  query<{ total: number }>('SELECT fn_limpar_notificacoes() AS total')
+    .then(({ rows }) => rows[0].total > 0 && logger.info(`${rows[0].total} notificação(ões) lida(s) antiga(s) apagada(s)`))
+    .catch((err) => logger.warn({ err }, 'falha ao limpar notificações'));
 }
 
 const server = app.listen(PORT, async () => {
