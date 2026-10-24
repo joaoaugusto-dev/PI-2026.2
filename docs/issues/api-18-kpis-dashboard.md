@@ -27,6 +27,11 @@ indisponíveis, atrasadas e ocorrências abertas), sem as listas do `GET /v1/das
 3. `test(api): cobrir GET /v1/dashboard/kpis ...` — [dashboard.test.ts](../../api/src/tests/dashboard.test.ts): formato dos seis campos,
    401, 403 e conferência com contagem direta nas tabelas.
 4. `docs(api): documentar GET /v1/dashboard/kpis` — [docs/backend/api.md](../backend/api.md).
+5. `docs(api): detalhar o schema de resposta ... no Swagger` — bloco `@openapi` em [dashboardRoutes.ts](../../api/src/routes/v1/dashboardRoutes.ts).
+6. `test(api): conferir os seis contadores ... em transação isolada` — o teste cria ferramentas, retirada atrasada e ocorrência
+   dentro de uma transação `REPEATABLE READ` (exportada como `kpisNaConexao`), confere a variação de cada contador e faz `ROLLBACK`;
+   usa código de patrimônio explícito porque a trigger que gera o código não é atômica e corre com os outros arquivos de teste.
+7. `docs(api): evidência da conferência manual ...` — [evidencias-api-18-conferencia-kpis.txt](evidencias-api-18-conferencia-kpis.txt).
 
 ## Conferência manual (critério "Pronto quando")
 
