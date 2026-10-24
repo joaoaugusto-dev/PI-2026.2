@@ -3,7 +3,7 @@
 Issue: [#69 — API-18 — Endpoint de KPIs do dashboard](https://github.com/joaoaugusto-dev/PI-2026.2/issues/69)
 Responsável: Henrique de Oliveira Molinari (@henrique-molinari)
 Branch: `feat/api-18-endpoint-kpis-dashboard` (criada a partir da `development`, um commit por etapa)
-PR: a abrir
+PR: [#219](https://github.com/joaoaugusto-dev/PI-2026.2/pull/219)
 
 ## Objetivo
 
