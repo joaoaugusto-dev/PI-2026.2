@@ -50,7 +50,10 @@ tabelas `ferramentas`, `emprestimos` e `ocorrencias`:
 Os seis números batem. Evidência completa (resposta bruta, SQL usado e o `atrasados.total` do painel, também 18): [evidencias-api-18-conferencia-kpis.txt](evidencias-api-18-conferencia-kpis.txt). A mesma comparação roda no teste automatizado (só exige igualdade quando nenhum outro teste alterou
 o banco entre as duas leituras).
 
-## Se sobrar tempo
+## Se sobrar tempo: `GET /v1/dashboard/atrasos`
 
-`GET /v1/dashboard/atrasos` para o gráfico da FE-21 não foi feito: a issue não define o formato dos dados e depende de
-combinar com o front (por exemplo atrasados por setor ou por faixa de dias). Quando entrar, a rota também precisa vir antes de `/:lista`.
+A issue não define o formato; escolhi **atrasados por setor de destino**, o mesmo recorte do gráfico da FE-21 (empréstimos por setor).
+Cada item traz `setor_id`, `setor_nome`, `atrasados` e `maior_atraso_dias`, o setor com mais atrasos primeiro. Atrasado segue a
+definição do cartão de atrasados, então a soma de `atrasados` é o `kpis.atrasadas` (o teste confere os dois no mesmo snapshot).
+Declarada antes de `/:lista`, com os mesmos perfis do `/kpis`. Se o João preferir outro recorte (por faixa de dias de atraso, por
+exemplo), é uma consulta nova no mesmo endpoint ou numa rota irmã; o contrato atual está em [docs/backend/api.md](../backend/api.md).
