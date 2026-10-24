@@ -88,19 +88,21 @@ como está, ver observação abaixo):
   com item `None`) — o parser de importação (`importacaoService`, DATA-03) descarta
   essas linhas.
 
-### Uso previsto
+### Como é usado
 
-Importação para a tabela `ferramentas` (fluxo completo descrito em
-`dados.md`), com a estratégia de carga combinada na visita técnica:
+A importação para a tabela `ferramentas` está implementada (`POST /v1/importacoes/ferramentas`,
+passos em [`../backend/importacao.md`](../backend/importacao.md) e fluxo completo em
+`dados.md`), seguindo a estratégia de carga combinada na visita técnica:
 
 - **Não importar tudo de uma vez.** Priorizar por valor/giro: primeiro
   máquinas e equipamentos maiores (ex.: parafusadeira, paleteira, escadas,
   extensões), depois chaves e itens de menor porte/maior volume.
-- Cada linha do `.docx` vira um candidato a registro de `ferramentas`
-  (`nome`, `grupo_id`/`subgrupo_id` atribuídos na normalização,
-  `codigo_identificacao` gerado pelo trigger do banco — não vem do arquivo).
-- O `.xlsx` fica pendente de decisão do time (ver observação acima) antes de
-  entrar em qualquer carga.
+- Cada linha do `.docx` vira um registro de `ferramentas` (`nome`, categoria e setor
+  resolvidos pelo nome na importação, `codigo_identificacao` gerado pelo trigger do banco,
+  não vem do arquivo). A carga do inventário real depende do arquivo da Soufer chegar no
+  formato do modelo (`GET /v1/importacoes/ferramentas/modelo`).
+- O `.xlsx` (peças de reposição e insumos) **continua sem decisão registrada em ata**: não
+  entrou em nenhuma carga e segue fora do escopo de empréstimo até o time decidir.
 
 ---
 
@@ -145,15 +147,19 @@ Array de objetos com 4 campos, todos string:
 | `type` | `"national"` | `tipo` |
 | `weekday` | `"quinta-feira"` | — (não persistido; `ano` é extraído de `date`) |
 
-### Uso previsto
+### Como é usado
 
-- Cache local na tabela `feriados` (uma carga por ano).
-- Cálculo de `previsao_devolucao` em dias úteis (pular fins de semana e
-  datas presentes no cache).
-- Classificação de empréstimo atrasado.
-- Fallback se a API estiver fora: usar o cache local já existente; se o
-  cache também estiver vazio, considerar apenas sábado/domingo como não
-  úteis e registrar aviso em log (detalhado em `dados.md`).
+- **Cache local** na tabela `feriados` (uma carga por ano), gravado por `npm run db:feriados -- <ano>`
+  ou por `POST /v1/feriados/sincronizar` (manutenção e admin; força a ida à BrasilAPI e
+  devolve `502 BRASIL_API_UNAVAILABLE` se ela estiver fora).
+- **Leitura** (`GET /v1/feriados`, `/dia-util` e `/dias-uteis`, públicas): `listarPorAno`
+  responde com a origem em `fonte`: `cache` (já gravado), `brasil_api` (cache vazio, buscou
+  e gravou agora) ou `fallback_fim_de_semana`.
+- **Cálculo de `previsao_devolucao` em dias úteis** (`GET /v1/emprestimos/previsao-sugerida`):
+  pula sábados, domingos e as datas do cache.
+- **Fallback:** se a BrasilAPI estiver fora e o cache vazio, só sábado e domingo contam como
+  não úteis e o serviço registra um aviso no log (detalhado em `dados.md` e na Regra 9 de
+  [`../regras-negocio.md`](../regras-negocio.md)). Falha de banco não vira fallback.
 
 ---
 

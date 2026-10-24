@@ -1,19 +1,20 @@
 # Banco de dados
 
 PostgreSQL 18 próprio, sem serviços intermediários (sem Supabase). Todo o schema —
-tabelas, tipos enumerados, índices, funções e triggers — vive em uma única migration
-(`db/migrations/0001_init.sql`) e é o próprio banco quem garante as regras de negócio
+tabelas, tipos enumerados, índices, funções e triggers — nasce na migration
+`db/migrations/0001_init.sql` e evolui em migrations versionadas (`0002` a `0015`, controladas
+pela tabela `schema_migrations`). O próprio banco quem garante as regras de negócio
 que não podem falhar em hipótese nenhuma, independente de quem ou o que estiver
 inserindo os dados.
 
 ## Entidades
 
-13 tabelas, organizadas em 5 domínios:
+14 tabelas de negócio, organizadas em 5 domínios (mais a `schema_migrations`, de controle):
 
 | Domínio | Tabelas | Papel |
 |---|---|---|
 | Cadastro | `setores`, `grupos_ferramentas`, `subgrupos_ferramentas`, `atividades` | Vocabulário fixo usado para classificar ferramentas e empréstimos |
-| Identidade | `usuarios` | Conta de acesso (senha e papel) de um colaborador da manutenção, ligada a `colaboradores` — nome e matrícula vêm de lá |
+| Identidade | `usuarios`, `convites_acesso` | Conta de acesso (senha e papel) de um colaborador da manutenção, ligada a `colaboradores` — nome e matrícula vêm de lá; o convite é o link de acesso gerado pelo admin |
 | Operação | `colaboradores`, `ferramentas`, `itens_kit` | Quem retira e o que é retirado (inclusive peças de um kit) |
 | Transacional | `emprestimos` | Cada retirada/devolução — onde vivem as regras mais importantes |
 | Suporte | `ocorrencias`, `notificacoes`, `feriados`, `auditoria` | Dados derivados, gerados automaticamente, para gestão e rastreabilidade |
@@ -30,7 +31,7 @@ status_ferramenta          disponivel | em_uso | indisponivel
 motivo_indisponibilidade   avaria | perda | manutencao_preventiva | baixada
 condicao_devolucao         ok | avaria | perda
 status_ocorrencia          aberta | em_reparo | cobrada | resolvida | baixada
-papel_usuario               manutenção
+papel_usuario               manutencao | admin
 tipo_notificacao            devolucao_hoje | atraso | ocorrencia_pendente | sistema
 ```
 
