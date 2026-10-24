@@ -60,6 +60,14 @@ describe('Middleware errorHandler e Envelope Padrão de Erro', () => {
     throw err;
   });
 
+  app.get('/test/erro-pg-check', () => {
+    const err: any = new Error('new row for relation "colaboradores" violates check constraint');
+    err.code = '23514';
+    err.detail = 'Failing row contains (1, Fulano, 12AB, ...).';
+    err.constraint = 'chk_colaboradores_matricula_formato';
+    throw err;
+  });
+
   app.get('/test/erro-pg-trigger', () => {
     const err: any = new Error('Ferramenta 1 não está disponível para empréstimo (status atual: em_uso)');
     err.code = 'P0001';
@@ -130,6 +138,14 @@ describe('Middleware errorHandler e Envelope Padrão de Erro', () => {
     const res = await request(app).get('/test/erro-pg-foreign-key');
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('FOREIGN_KEY_VIOLATION');
+  });
+
+  it('mapeia erro PostgreSQL 23514 (CHECK) para 400 CHECK_VIOLATION sem vazar os valores da linha', async () => {
+    const res = await request(app).get('/test/erro-pg-check');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('CHECK_VIOLATION');
+    expect(res.body.error.details).toEqual([{ constraint: 'chk_colaboradores_matricula_formato' }]);
+    expect(JSON.stringify(res.body)).not.toContain('Fulano');
   });
 
   it('mapeia erro PostgreSQL P0001 (trigger/regra de negócio) para 409 BUSINESS_RULE_VIOLATION', async () => {

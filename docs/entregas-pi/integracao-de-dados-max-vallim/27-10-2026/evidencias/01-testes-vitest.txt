@@ -1,0 +1,446 @@
+# Suíte de testes automatizados (Vitest + Supertest)
+# Gerado em: 20/10/2026, 21:21:59 (Brasília)
+# Comando: cd api && npx vitest run --reporter=verbose
+# Ambiente: banco de desenvolvimento (soufer_dev @ 127.0.0.1:5432) · commit 43bf5a5 + alterações ainda não commitadas
+ RUN  v5.0.0 C:/Users/henri/OneDrive/Desktop/soufer_tools_pi/PI-2026.2/api
+ ✓ src/tests/dataCheck.test.ts > data:check — catálogo de verificações > lista as verificações esperadas e cada uma roda sem falhar 143ms
+ ✓ src/tests/dataCheck.test.ts > data:check — catálogo de verificações > uma verificação que falha ao executar vira erro e não derruba as outras 6ms
+ ✓ src/tests/dataCheck.test.ts > data:check — catálogo de verificações > só os erros reprovam: aviso com registros mantém a saída 0 1ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > EM_USO_SEM_EMPRESTIMO 24ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > EMPRESTIMO_ABERTO_FERRAMENTA_NAO_EM_USO 49ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > INDISPONIVEL_SEM_MOTIVO 9ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > MOTIVO_COM_STATUS_DIFERENTE 9ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > INDISPONIVEL_SEM_OCORRENCIA_ABERTA 10ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > OCORRENCIA_ABERTA_FERRAMENTA_DISPONIVEL 14ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > COLABORADOR_MATRICULA_DUPLICADA roda limpo (UNIQUE + CHECK de 4 dígitos impedem forçar o caso) 37ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > FERRAMENTA_CODIGO_DUPLICADO roda limpo (o índice único impede forçar o caso) 13ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > EMPRESTIMO_PREVISAO_ANTES_RETIRADA 32ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > EMPRESTIMO_DEVOLUCAO_ANTES_RETIRADA 40ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > EMPRESTIMO_DEVOLVIDO_SEM_CONDICAO 33ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > EMPRESTIMO_COLABORADOR_INATIVO_ABERTO 31ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > FERRAMENTA_SUBGRUPO_FORA_DO_GRUPO 16ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > FERRAMENTA_VALOR_NEGATIVO 11ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > FERRAMENTA_NOME_VAZIO 8ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > OCORRENCIA_SEM_COLABORADOR_COM_EMPRESTIMO 34ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > FOTO_ARQUIVO_INEXISTENTE 16ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > AUDITORIA_TRIGGER_AUSENTE 6ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > AUDITORIA_SEM_REGISTRO 17ms
+ ✓ src/tests/dataCheck.test.ts > data:check — detecta a inconsistência forçada > nada vaza: os cenários acima terminaram em ROLLBACK 4ms
+ ✓ src/tests/dataCheck.test.ts > data:check — comando (CLI) > --json imprime os resultados e sai com 0 ou 1 conforme os erros encontrados 1363ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > lista sem filtro (200) trazendo a ocorrência recém-criada com os nomes resolvidos 224ms
+ ✓ src/tests/corsOrigemCuringa.test.ts > CORS com origem contendo * > aceita só um rótulo de DNS no lugar do * 5824ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > só admin gera convite; colaborador inexistente ou inativo é 404 233ms
+ ✓ src/tests/ferramentaCodigo.test.ts > busca de ferramenta por código > por-codigo aceita o número, com zeros à esquerda e com o prefixo SF 252ms
+ ✓ src/tests/dashboard.test.ts > GET /v1/dashboard > traz as quatro listas de pendências (total + itens) para manutenção e admin 621ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > filtra por status 97ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > registra a retirada (201), coloca a ferramenta em uso e grava o responsável do JWT 270ms
+ ✓ src/tests/ferramentaFoto.test.ts > PUT /v1/ferramentas/:id/foto > é só do admin (manutenção recebe 403) 155ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > PUT /v1/ocorrencias/:id/foto > sem token recebe 401; consulta recebe 403 149ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > PUT /v1/ocorrencias/:id/foto > recusa imagem acima de 5 MB (413) 236ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > filtra por colaboradorId 77ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > filtra por tipo 80ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > recusa ferramenta já emprestada com 409 FERRAMENTA_INDISPONIVEL 138ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > aceita retirada sem atividade (Regra 4) 96ms
+ ✓ src/tests/ferramentaCodigo.test.ts > busca de ferramenta por código > por-codigo recusa texto em branco, fora da faixa e não numérico com 400 262ms
+ ✓ src/tests/ferramentaFoto.test.ts > PUT /v1/ferramentas/:id/foto > grava a foto, serve em /v1/uploads com CORP cross-origin e apaga a anterior ao trocar 392ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > acesso > 401 sem token e 403 para consulta, em todas as rotas 565ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > normaliza tipo para maiúsculo no filtro (aceita minúsculo) 178ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > retorna 400 com status ou tipo inválidos 55ms
+ ✓ src/tests/ferramentaFoto.test.ts > PUT /v1/ferramentas/:id/foto > 400 quando o conteúdo não é imagem ou não há corpo 106ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > ignora usuarioRetiradaId enviado no corpo (Regra 6) 116ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > trata previsaoDevolucao só com data como o fim do dia em Brasília 63ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > retorna 400 sem previsaoDevolucao 35ms
+ ✓ src/tests/ferramentaCodigo.test.ts > busca de ferramenta por código > a listagem (q) acha pelo código em qualquer das formas 171ms
+ ✓ src/tests/ferramentaCodigo.test.ts > busca de ferramenta por código > número com 5 ou mais dígitos não é código: vira só busca por texto, sem erro 50ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > GET /v1/ocorrencias > retorna 401 sem token e 403 com papel consulta 45ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > PUT /v1/ocorrencias/:id/foto > grava em pasta própria, serve em /v1/uploads/avarias e apaga a anterior ao trocar 384ms
+ ✓ src/tests/dashboard.test.ts > GET /v1/dashboard > cada lista do resumo traz no máximo 4 linhas e a rota :lista pagina o resto (15 por página) 542ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna os dados do usuário logado quando o token é válido 463ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > retorna 400 com mensagem específica para previsaoDevolucao no passado 42ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > retorna 400 com mensagem específica para previsaoDevolucao inválida 41ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > retorna 400 quando falta um campo obrigatório 31ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > PUT /v1/ocorrencias/:id/foto > Content-Type que não é imagem chega sem corpo e vira 400, não 500 61ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > devolve nome e matrícula do banco mesmo com token antigo (emitido com e-mail, sem matrícula) 40ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna 401 TOKEN_OUTDATED para token antigo com o papel `almoxarife` (renomeado para manutencao) 25ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna 401 quando o usuário foi desativado após o token ter sido emitido 24ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id/avancar > anda uma etapa por chamada até resolvida (gravando resolvida_por) e depois recusa com 409 238ms
+ ✓ src/tests/ferramentaFoto.test.ts > PUT /v1/ferramentas/:id/foto > 413 acima de 5 MB 189ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna 401 quando nenhum token é enviado 24ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna 401 quando o header não está no formato "Bearer <token>" 41ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna 401 quando o token é inválido 25ms
+ ✓ src/tests/auth.test.ts > GET /v1/auth/me > retorna 401 quando o token está expirado 22ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > PUT /v1/ocorrencias/:id/foto > recusa corpo que não é imagem (400) e ocorrência inexistente (404) 67ms
+ ✓ src/tests/dashboard.test.ts > GET /v1/dashboard > page e limit malformados ou fora do intervalo são 400, não 500 249ms
+ ✓ src/tests/ferramentaFoto.test.ts > PUT /v1/ferramentas/:id/foto > 401 sem token, 403 para consulta, 404 para ferramenta inexistente, 400 para id inválido 115ms
+ ✓ src/tests/dashboard.test.ts > GET /v1/dashboard > lista desconhecida é 400, página além do fim volta vazia e consulta é 403 90ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > acesso > manutenção e admin passam 551ms
+ ✓ src/tests/dashboard.test.ts > GET /v1/dashboard > retorna 401 sem token e 403 com papel consulta 26ms
+ ✓ src/tests/dashboard.test.ts > snapshot do dashboard > contador de atrasadas e cartão de atrasados mostram o mesmo número (mesmo snapshot, mesma definição) 66ms
+ ✓ src/tests/dashboard.test.ts > snapshot do dashboard > devolve a conexão ao pool mesmo quando a consulta falha (25 falhas seguidas, com o pool em 20) 73ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > autentica com matrícula e senha e devolve token e usuário sem e-mail 310ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > filtros de/ate > 400 sem de, sem ate ou sem nenhum dos dois, em toda rota de período 698ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > o token do login é aceito em /v1/auth/me 566ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > filtros de/ate > 400 para formato errado, data inexistente, de depois de ate e janela acima de 366 dias 251ms
+ ✓ src/tests/ferramentaCodigo.test.ts > geração do código na carga em lote > 300 ferramentas numa transação ganham códigos distintos 1375ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > fluxo completo: gera, abre, define a senha, já recebe a sessão e entra com a senha nova 1948ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > filtros de/ate > aceita de = ate (um dia) e a janela de 366 dias 43ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id/avancar > retorna 404, 401 e 403 nos casos de borda 1493ms
+ ✓ src/tests/dashboard.test.ts > snapshot do dashboard > um painel inteiro ocupa uma conexão: 25 painéis ao mesmo tempo (pool de 20) não esgotam o pool 1138ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 401 INVALID_CREDENTIALS para senha errada 322ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > novo convite invalida o anterior ainda não usado 334ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > retorna 404 para ferramenta, colaborador, setor e atividade inexistentes 1849ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > retorna 401 sem token e 403 com papel consulta 80ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 401 INVALID_CREDENTIALS para matrícula sem conta 325ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > kits > retorna 400 ITEM_KIT_INVALIDO quando o item não pertence à ferramenta 38ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > kits > retorna 404 ITEM_KIT_NOT_FOUND para item inexistente 43ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > faz o ciclo aberta → em_reparo → resolvida, gravando resolvida_por e data_resolucao do JWT 526ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > filtros de/ate > limit, agrupar e granularidade fora do aceito são 400 839ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > matrícula sem conta também roda o bcrypt (o tempo não revela quem tem acesso) 359ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > filtros de/ate > somarDias e diasNoPeriodo contam dias de calendário, inclusive na virada de mês e ano 1ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > uso > ferramentas mais retiradas: conta pelo dia de Brasília e ordena da mais para a menos retirada 33ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > uso > respeita o limit 52ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > POST /v1/emprestimos > kits > empresta uma peça avulsa e bloqueia repetir a peça e emprestar o kit inteiro (409) 122ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 401 USER_INACTIVE quando o colaborador dono da conta está inativo 166ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula com letras 22ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula com 5 dígitos 29ms
+ ✓ src/tests/authLoginRateLimit.test.ts > Rate limit do login (10 tentativas por minuto por IP) > a 11ª tentativa com matrícula bem formada em um minuto devolve 429 TOO_MANY_REQUESTS 3480ms
+ ✓ src/tests/ferramentaCodigo.test.ts > geração do código com cadastros simultâneos > 12 inserções em paralelo, cada uma na sua conexão, recebem códigos distintos e nenhuma falha 1045ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > uso > período sem dados devolve lista vazia, não erro 23ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > uso > categorias mais utilizadas soma as retiradas da categoria 25ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > sugere disponibilizar a ferramenta ao resolver, se ela ainda estiver indisponível (extra "se sobrar tempo") 118ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > devolução ok (200) volta a ferramenta a disponivel 207ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula com 3 dígitos 13ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula zerada 31ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula com espaços 12ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula vazia 20ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 para matrícula numérica (não texto) 15ms
+ ✓ src/tests/auth.test.ts > POST /v1/auth/login (matrícula + senha) > retorna 400 quando a matrícula não é enviada (e-mail não é mais aceito) 11ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > foto da ocorrência aberta pela devolução > a devolução com avaria devolve ocorrencia_id e a foto aparece em /v1/emprestimos 1045ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > uso > tempo médio de posse por categoria (padrão) e por ferramenta, só devoluções do período 91ms
+ ✓ src/tests/ocorrenciaFoto.test.ts > foto da ocorrência aberta pela devolução > o perfil consulta não acessa histórico nem ocorrências (nenhum foto_url chega a ele) 67ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > não sugere disponibilizar quando o PATCH não resolve agora (reenvio ou outro campo) 272ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > devolução com avaria (200) deixa a ferramenta indisponivel e abre ocorrência com o colaborador certo 228ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > tempo médio de posse com mínimo de devoluções > min_devolucoes tira do ranking os grupos com poucas devoluções antes do limit 271ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > avarias, perdas e taxa > avarias por categoria contam só o tipo AVARIA aberto dentro do período 85ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > aceita transição para cobrada e depois baixada (estados fora do ciclo de 3 citado na issue) 163ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > recusa retroceder o status (409 OCORRENCIA_TRANSICAO_INVALIDA) 81ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > custoEstimado na devolução com avaria (200) vai para a ocorrência aberta 136ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > custoEstimado com condição ok é 400 e não devolve a ferramenta 92ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > avarias, perdas e taxa > extravios por categoria contam só o tipo PERDA (extravio) 31ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > avarias, perdas e taxa > período sem ocorrência devolve total 0 e lista vazia 29ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > avarias, perdas e taxa > taxa de avaria: avarias ÷ devoluções do período, por categoria e por ferramenta 56ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > não sobrescreve resolvida_por/data_resolucao ao reenviar status resolvida 71ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > atualiza só custoEstimado ou só observacoesResolucao sem mudar o status 53ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > retorna 400 com corpo vazio 41ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > retorna 400 com custoEstimado vazio em vez de aceitar como zero 50ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > avarias, perdas e taxa > min_devolucoes tira do ranking os grupos com poucas devoluções antes do limit 193ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > devolução com perda (200) deixa a ferramenta indisponivel e abre ocorrência 126ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > retorna 400 com custoEstimado acima do limite da coluna NUMERIC(10,2) 67ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > retorna 400 com custoEstimado infinito 31ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > retorna 404 OCORRENCIA_NOT_FOUND para ocorrência inexistente 25ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > avarias, perdas e taxa > período sem devolução não divide por zero 19ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > instantâneos > indisponíveis agora: total, percentual do parque e motivo 28ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > instantâneos > empréstimos abertos agora: o mais antigo vem primeiro, atrasado, e sem dados de colaborador 33ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > recusa devolver o mesmo empréstimo duas vezes (409 EMPRESTIMO_JA_DEVOLVIDO) 177ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > retorna 404 EMPRESTIMO_NOT_FOUND para empréstimo inexistente 32ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > retorna 401 sem token e 403 com papel consulta 48ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > evolução > por dia: série completa com zeros, totais, período anterior e variação 33ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > evolução > por semana (começa na segunda) e por mês 75ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > retorna 400 com mensagem específica quando condicaoDevolucao está ausente 84ms
+ ✓ src/tests/ocorrenciaRoutes.test.ts > Rotas de Ocorrências (API-13) > PATCH /v1/ocorrencias/:id > ignora resolvidaPor enviado no corpo (Regra 6) 76ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > serve para trocar a senha de quem já tem conta 1625ms
+ ✓ src/tests/ferramentaFoto.test.ts > processamento da foto > reduz para 1280 px, converte para webp e 400 para imagem corrompida 3170ms
+ ✓ src/tests/kpi.test.ts > KPIs de gestão (#208) > evolução > período sem movimento: série de zeros e variação null 35ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > retorna 400 com mensagem específica quando condicaoDevolucao é inválida 89ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > retorna 400 com mensagem específica quando observacaoDevolucao é uma string vazia 162ms
+ ✓ src/tests/ferramentaFoto.test.ts > DELETE /v1/ferramentas/:id/foto e baixa > remove a foto: arquivo apagado e foto_url nulo 172ms
+ ✓ src/tests/ferramentaFoto.test.ts > DELETE /v1/ferramentas/:id/foto e baixa > 401 sem token, 403 para manutenção e 404 para ferramenta inexistente 99ms
+ ✓ src/tests/kpi.test.ts > KPIs de colaboradores e setores (#208) > colaboradores: só admin (manutenção e consulta recebem 403, sem token 401) 134ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > link expirado, forjado ou malformado é 404/400 sem revelar o motivo 402ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > retorna 401 sem token e 403 com papel consulta 111ms
+ ✓ src/tests/ferramentaFoto.test.ts > DELETE /v1/ferramentas/:id/foto e baixa > baixar a ferramenta apaga o arquivo da foto 139ms
+ ✓ src/tests/kpi.test.ts > KPIs de colaboradores e setores (#208) > setores: manutenção e admin passam; consulta recebe 403 e sem token 401 161ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > ignora usuarioDevolucaoId enviado no corpo (Regra 6) 118ms
+ ✓ src/tests/kpi.test.ts > KPIs de colaboradores e setores (#208) > exigem de/ate e validam limit, como os demais KPIs de período 215ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > PATCH /v1/emprestimos/:id/devolucao (API-12) > devolve peça avulsa de kit sem mudar o status do kit e abre ocorrência na avaria 141ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > ferramenta e kit indisponíveis (Regra 2) > recusa ferramenta simples indisponível (409) 68ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > 400 para senha fora do padrão de 6 dígitos (e o convite continua valendo) 131ms
+ ✓ src/tests/kpi.test.ts > KPIs de colaboradores e setores (#208) > colaboradores que mais retiram: ordem, contagem, matrícula e setor de cadastro 79ms
+ ✓ src/tests/kpi.test.ts > KPIs de colaboradores e setores (#208) > setores que mais retiram: conta pelo setor de destino da retirada, não pelo cadastro de quem retirou 18ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > ferramenta e kit indisponíveis (Regra 2) > recusa o kit inteiro indisponível e mantém status e motivo 93ms
+ ✓ src/tests/kpi.test.ts > KPIs de colaboradores e setores (#208) > período sem retirada devolve lista vazia 43ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > ferramenta e kit indisponíveis (Regra 2) > recusa peça avulsa de kit indisponível e não cria empréstimo 47ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > concorrência no kit > espera a ferramenta ser liberada por outra transação e então respeita a exclusividade 575ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > previsaoDevolucao sem offset (horário de Brasília) > interpreta data e hora sem offset como Brasília, qualquer que seja o fuso do servidor 17ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > previsaoDevolucao sem offset (horário de Brasília) > respeita offset explícito e mantém a data sem horário como fim do dia em Brasília 28ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > GET /v1/emprestimos/previsao-sugerida > pula o fim de semana: retirada na sexta por 2 dias devolve na terça 114ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > GET /v1/emprestimos/previsao-sugerida > usa a data de Brasília depois das 21h (quinta 22h por 2 dias devolve na segunda) 25ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > GET /v1/emprestimos/previsao-sugerida > retorna 400 sem dias ou com dias fora de 1 a 30 127ms
+ ✓ src/tests/emprestimoRoutes.test.ts > Rotas de Empréstimos (API-11) > GET /v1/emprestimos/previsao-sugerida > retorna 401 sem token e 403 com papel consulta 32ms
+ ✓ src/tests/conviteAcesso.test.ts > Convites de acesso > bloqueia a conta após 5 senhas erradas e o link de acesso desbloqueia; ambos vão para a auditoria 2410ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > GET /v1/categorias > requer autenticação (retorna 401 sem token) 111ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > GET /v1/categorias > lista categorias ativas com paginação e formato padrão 62ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > GET /v1/categorias > filtra categorias por busca textual q 34ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > GET /v1/categorias/:id > retorna os detalhes da categoria existente 28ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > GET /v1/categorias/:id > retorna 404 quando a categoria não existe 32ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > POST /v1/categorias > cria uma nova categoria com sucesso 87ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > POST /v1/categorias > rejeita criação com nome vazio (400) 34ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > POST /v1/categorias > retorna 409 quando o nome da categoria já existe 47ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > listar > filtra por q escapando coringas do ILIKE (% e _ tratados como texto literal) 20ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > listar > não retorna nada quando o texto de busca não corresponde a nenhuma ferramenta 10ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > listar > filtra por status 11ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > listar > filtra por grupoId 7ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > listar > mantém paginação estável (sem repetição/salto de IDs) ao ordenar por status 20ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > buscarPorId > retorna a ferramenta quando o ID existe 3ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > buscarPorId > lança NotFoundError quando o ID não existe 6ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > buscarPorCodigo > retorna a ferramenta quando o código de identificação existe 4ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > buscarPorCodigo > lança NotFoundError quando o código não existe 3ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > POST /v1/categorias > retorna 409 para duplicidade case-insensitive (maiúsculas/minúsculas) 234ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > historico > junta empréstimos e ocorrências da ferramenta 186ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > historico > retorna listas vazias para ferramenta sem empréstimos/ocorrências 64ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService > historico > lança NotFoundError quando a ferramenta não existe 3ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > atualizar > atualiza somente os campos informados, mantendo os demais 13ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > atualizar > atualiza múltiplos campos de uma vez 8ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > atualizar > lança NotFoundError quando a ferramenta não existe 7ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > marcarEtiquetaImpressa > grava a data/hora de impressão sem alterar o status 8ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > marcarEtiquetaImpressa > lança NotFoundError quando a ferramenta não existe 2ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > disponibilizar > tira a ferramenta de indisponivel, registra auditoria e resolve a ocorrência em aberto 33ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > PUT / PATCH /v1/categorias/:id > atualiza o nome da categoria via PUT 246ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > disponibilizar > lança ConflictError ao tentar disponibilizar uma ferramenta que já está disponível 7ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > disponibilizar > lança NotFoundError quando a ferramenta não existe 5ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > baixar > lança ConflictError quando há empréstimo em aberto para a ferramenta 6ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > baixar > dá baixa lógica (ativo=false, status=indisponivel, motivo=baixada) quando não há empréstimo em aberto 10ms
+ ✓ src/tests/ferramentaService.test.ts > ferramentaService — API-07 (criar/editar/status/baixa) > baixar > lança NotFoundError quando a ferramenta não existe 2ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > PUT / PATCH /v1/categorias/:id > atualiza a categoria via PATCH 30ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > PUT / PATCH /v1/categorias/:id > retorna 409 ao tentar atualizar para um nome já existente 44ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > PUT / PATCH /v1/categorias/:id > retorna 404 ao tentar atualizar categoria inexistente 206ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > DELETE /v1/categorias/:id (Exclusão Lógica) > desativa a categoria (ativo = false) sem remover do banco 37ms
+ ✓ src/tests/categoria.test.ts > CRUD Categorias / Grupos de Ferramentas (/v1/categorias) > DELETE /v1/categorias/:id (Exclusão Lógica) > retorna 404 ao tentar desativar categoria inexistente 19ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores > requer autenticação (retorna 401 sem token) 119ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > GET /v1/atividades > requer autenticação (retorna 401 sem token) 103ms
+ ✓ src/tests/emprestimoListagem.test.ts > GET /v1/emprestimos (histórico) > exige token e perfil manutencao 192ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores > lista setores ativos com paginação e formato padrão 59ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > GET /v1/atividades > lista atividades ativas com paginação e formato padrão 83ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores > filtra setores por busca textual q 69ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores > ordena setores por ID (padrão DESC e explícito ASC) 80ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > GET /v1/atividades > filtra atividades por busca textual q (nome ou descrição) 35ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > GET /v1/atividades/:id > retorna os detalhes da atividade existente 33ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores/:id > retorna os detalhes do setor existente 69ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > encontra por matrícula exata 155ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > encontra por nome, tolerante a acento (critério de aceite: "joao augusto" acha "João Augusto") 68ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > GET /v1/atividades/:id > retorna 404 quando a atividade não existe 81ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores/:id > retorna 404 quando o setor não existe 88ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > GET /v1/setores/:id > retorna 400 quando o ID não é numérico 25ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > POST /v1/atividades > cria uma nova atividade com descrição opcional com sucesso 131ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > POST /v1/atividades > cria atividade sem descrição com sucesso 32ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > POST /v1/atividades > rejeita criação com nome vazio (400) 26ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > POST /v1/atividades > retorna 409 quando o nome da atividade já existe 46ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > retorna 409 COLABORADOR_AMBIGUO com os candidatos quando vários nomes servem 43ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > acha por trecho do nome mesmo em nome longo ("zeferino" perde na similaridade, ganha no contém) 43ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > termo com menos de 3 caracteres não entra pelo "contém" (não devolve candidatos arbitrários) 34ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões dos cadastros auxiliares > manutenção lê setores, mas não cria, edita nem inativa (403) 917ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > POST /v1/setores > cria um novo setor com sucesso 91ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > POST /v1/setores > rejeita criação com nome vazio (400) 35ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > POST /v1/setores > retorna 409 quando o nome do setor já existe 70ms
+ ✓ src/tests/emprestimoListagem.test.ts > GET /v1/emprestimos (histórico) > pagina com meta e ordena do mais recente para o mais antigo 683ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > a matrícula resolve a ambiguidade 38ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > retorna 404 quando não encontra nenhum colaborador para o termo 51ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > retorna 400 quando o termo não é informado 40ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões dos cadastros auxiliares > admin lê setores 81ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > retorna 401 quando nenhum token é enviado 33ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/identificar > retorna 403 para o perfil consulta (rota é exclusiva da manutenção) 27ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > POST /v1/atividades > retorna 409 para duplicidade case-insensitive (maiúsculas/minúsculas) 239ms
+ ✓ src/tests/emprestimoListagem.test.ts > GET /v1/emprestimos (histórico) > filtra por situação e rejeita valor inválido 106ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > POST /v1/setores > retorna 409 para duplicidade case-insensitive (maiúsculas/minúsculas) 236ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões dos cadastros auxiliares > manutenção lê categorias, mas não cria, edita nem inativa (403) 196ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > POST /v1/colaboradores > cadastra um colaborador com criado_por vindo do JWT, ignorando o corpo da requisição 102ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões dos cadastros auxiliares > admin lê categorias 71ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > POST /v1/colaboradores > retorna 409 para matrícula duplicada 107ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões dos cadastros auxiliares > perfil consulta não acessa os cadastros (403) 36ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > PUT / PATCH /v1/atividades/:id > atualiza o nome e descrição da atividade via PUT 318ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > PUT / PATCH /v1/setores/:id > atualiza o nome de um setor via PUT 275ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões de atividades (regra própria, diferente dos outros cadastros) > manutenção continua com acesso completo (ler, criar, editar, inativar) 214ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > PUT / PATCH /v1/atividades/:id > atualiza parcialmente via PATCH 99ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > POST /v1/colaboradores > retorna 400 quando falta campo obrigatório 330ms
+ ✓ src/tests/emprestimoListagem.test.ts > GET /v1/emprestimos — busca por patrimônio > aceita SF000045, 000045 e 45 como o mesmo patrimônio 507ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > PUT / PATCH /v1/setores/:id > atualiza o setor via PATCH 95ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > importação de cadastros por CSV > colaboradores: completa zeros da matrícula, grava criado_por do JWT e ignora matrícula repetida 397ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > POST /v1/colaboradores > retorna 401 quando nenhum token é enviado 36ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/:id > busca um colaborador pelo ID 22ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores/:id > retorna 404 quando o ID não existe 21ms
+ ✓ src/tests/databasePool.test.ts > pool de conexões > conexão emprestada que cai não derruba o processo e o pool volta a atender 654ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > PUT / PATCH /v1/setores/:id > retorna 409 ao tentar atualizar para um nome que já pertence a outro setor 49ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > PUT / PATCH /v1/atividades/:id > retorna 409 ao tentar atualizar para um nome que já existe 80ms
+ ✓ src/tests/permissoesCadastros.test.ts > Permissões de atividades (regra própria, diferente dos outros cadastros) > admin lê, cadastra, edita e inativa atividades (passa da autorização) 191ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > PATCH /v1/colaboradores/:id > atualiza somente os campos informados 78ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > PATCH /v1/colaboradores/:id > retorna 404 quando o colaborador não existe 51ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > PATCH /v1/colaboradores/:id > ignora criado_por vindo do corpo, sem sobrescrever o autor original (Regra 6) 40ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > PUT / PATCH /v1/atividades/:id > retorna 404 ao tentar atualizar atividade inexistente 242ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > PUT / PATCH /v1/setores/:id > retorna 404 ao tentar atualizar setor inexistente 248ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > importação de cadastros por CSV > categorias e setores: só nome, sem duplicar ignorando maiúsculas, e só o admin importa 174ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > importação de cadastros por CSV > 400 para recurso desconhecido e para cabeçalho sem as colunas do recurso 62ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > PATCH /v1/colaboradores/:id > retorna 400 quando nenhum campo é informado 26ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > DELETE /v1/colaboradores/:id > inativa (ativo = false) em vez de apagar, e some da consulta por ID em seguida 53ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > DELETE /v1/colaboradores/:id > retorna 404 quando o colaborador não existe 15ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > DELETE /v1/atividades/:id (Exclusão Lógica) > desativa a atividade (ativo = false) sem remover do banco 35ms
+ ✓ src/tests/atividade.test.ts > CRUD Atividades (/v1/atividades) > DELETE /v1/atividades/:id (Exclusão Lógica) > retorna 404 ao tentar desativar atividade inexistente 24ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > DELETE /v1/setores/:id (Exclusão Lógica) > desativa o setor (ativo = false) sem deletar do banco 40ms
+ ✓ src/tests/setor.test.ts > CRUD Setores (/v1/setores) > DELETE /v1/setores/:id (Exclusão Lógica) > retorna 404 ao tentar desativar setor inexistente 17ms
+ ✓ src/tests/permissoesCadastros.test.ts > Admin opera o balcão (é a manutenção com recursos a mais) > identificar colaborador, buscar ferramenta por código e histórico de empréstimos não dão 403 208ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > importação de cadastros por CSV > GET /modelo devolve o CSV de exemplo de cada recurso, que pode ser reimportado 74ms
+ ✓ src/tests/permissoesCadastros.test.ts > Paginação > page absurdo é 400, não 500 (OFFSET estouraria o bigint) 32ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores > lista com busca textual e paginação no envelope { data, meta } 43ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > GET /v1/colaboradores > retorna 401 quando nenhum token é enviado 14ms
+ ✓ src/tests/colaboradorRoutes.test.ts > Rotas de Colaboradores (API-09) > Edição e inativação são só do admin > manutenção leva 403 em PATCH e DELETE 44ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > GET /v1/exportacoes/:recurso > ferramentas: cabeçalho do modelo de importação, aspas escapadas e fórmula neutralizada 150ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > GET /v1/exportacoes/:recurso > reimportar a exportação não grava o apóstrofo de proteção contra fórmula 118ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > GET /v1/exportacoes/:recurso > o arquivo exportado volta pela importação sem duplicar nada 93ms
+ ✓ src/tests/auditoriaRoutes.test.ts > GET /v1/auditoria > exige token e perfil admin (manutenção e consulta recebem 403) 191ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > GET /v1/exportacoes/:recurso > emprestimos: colunas da tela de histórico e filtros da listagem 184ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > importa as linhas boas e relata as 2 rejeitadas com o motivo e o número da linha 340ms
+ ✓ src/tests/auditoriaRoutes.test.ts > GET /v1/auditoria > devolve a trilha de um registro, mais recente primeiro, com o nome de quem alterou 260ms
+ ✓ src/tests/importacaoExportacaoCsv.test.ts > GET /v1/exportacoes/:recurso > 400 para recurso desconhecido, 401 sem token e 403 para consulta 67ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > reenviar a mesma onda não duplica: as já cadastradas viram ignoradas 49ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > ignora repetida no próprio arquivo, rejeita categoria/setor inexistentes e coluna a mais 72ms
+ ✓ src/tests/auditoriaRoutes.test.ts > GET /v1/auditoria > filtra por operação, usuário e período, e pagina 282ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > lê CSV salvo pelo Excel em Windows-1252 e com BOM em UTF-8 127ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > 400 para corpo ausente, outro Content-Type, arquivo vazio, só cabeçalho ou sem colunas obrigatórias 239ms
+ ✓ src/tests/auditoriaRoutes.test.ts > GET /v1/auditoria > recusa filtros inválidos com 400 e detalhe do campo 204ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > 400 acima de 5000 linhas e 413 acima de 2 MB 236ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > lista não lidas, com o contador em meta.total, sem as de outro usuário 402ms
+ ✓ src/tests/importacaoFerramentas.test.ts > POST /v1/importacoes/ferramentas > 401 sem token e 403 para consulta 30ms
+ ✓ src/tests/importacaoFerramentas.test.ts > normalização da importação > converte valor no formato brasileiro 2ms
+ ✓ src/tests/importacaoFerramentas.test.ts > normalização da importação > normaliza o cabeçalho (acento, caixa e espaço) 1ms
+ ✓ src/tests/feriadoFallback.test.ts > feriados: BrasilAPI, cache e fallback (Regra 9) > BrasilAPI fora do ar (erro de rede): cai no fallback de sábado e domingo, sem erro para quem chama 301ms
+ ✓ src/tests/feriadoFallback.test.ts > feriados: BrasilAPI, cache e fallback (Regra 9) > BrasilAPI respondendo erro HTTP (503): também cai no fallback 9ms
+ ✓ src/tests/feriadoFallback.test.ts > feriados: BrasilAPI, cache e fallback (Regra 9) > fallback traz só fins de semana do ano pedido 9ms
+ ✓ src/tests/feriadoFallback.test.ts > feriados: BrasilAPI, cache e fallback (Regra 9) > BrasilAPI no ar: grava no cache (upsert) e as leituras seguintes vêm do cache, sem nova chamada 25ms
+ ✓ src/tests/feriadoFallback.test.ts > feriados: BrasilAPI, cache e fallback (Regra 9) > falha de BANCO ao gravar não é mascarada como "API fora": o erro chega a quem chamou 234ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > marca como lida e some do filtro lida=false 174ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > marca todas como lidas, menos as de outro usuário, e exige perfil manutencao 98ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > 404 ao marcar notificação inexistente ou de outro usuário 74ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > 400 para lida inválida e para id inválido 74ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > admin também lista e marca como lida 54ms
+ ✓ src/tests/notificacaoRoutes.test.ts > Rotas de Notificações (API-17) > 401 sem token e 403 para perfil consulta 68ms
+ ✓ src/tests/gerarNotificacoes.test.ts > fn_gerar_notificacoes > gera devolucao_hoje e atraso para a equipe, e nada para prazo futuro 38ms
+ ✓ src/tests/gerarNotificacoes.test.ts > fn_gerar_notificacoes > é idempotente: rodar de novo (como o servidor faz a cada 30 min) não duplica 15ms
+ ✓ src/tests/limpezaNotificacoes.test.ts > fn_limpar_notificacoes > apaga lida antiga e preserva lida recente e não lida antiga 235ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > aceita cadastro com dados válidos completos e preço positivo 175ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > ignora status, ativo e codigoIdentificacao vindos do corpo no cadastro (campos controlados pelo servidor) 125ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > aceita edição parcial de ferramenta com nome e grupo válidos 28ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > descarta valorAquisicao, ehKit e status na edição (não são editáveis por PUT/PATCH /:id) 47ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > aceita null na edição para limpar marca, modelo, descrição, localização, setor e subgrupo 27ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna envelope 400 formatado para erro de validação forçado (Zod) 161ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna envelope 404 para NotFoundError 30ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna envelope 401 para UnauthorizedError 19ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna envelope 403 para ForbiddenError 33ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > não aceita null em nome nem grupoId (continuam obrigatórios) 40ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Sucesso (dados válidos) > descarta ativo e codigoIdentificacao na edição (campos controlados pelo servidor) 13ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 1: Campo obrigatório faltando (Missing Required Field) > rejeita cadastro de ferramenta sem o campo obrigatório "nome" 23ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna envelope 409 para ConflictError 17ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > mapeia erro PostgreSQL 23505 (duplicação) para 409 DUPLICATE_ENTRY 22ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > mapeia erro PostgreSQL 23503 (chave estrangeira) para 400 FOREIGN_KEY_VIOLATION 11ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > mapeia erro PostgreSQL 23514 (CHECK) para 400 CHECK_VIOLATION sem vazar os valores da linha 11ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > mapeia erro PostgreSQL P0001 (trigger/regra de negócio) para 409 BUSINESS_RULE_VIOLATION 39ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna 400 INVALID_JSON para corpo JSON malformado (não 500) 19ms
+ ✓ src/tests/errorHandler.test.ts > Middleware errorHandler e Envelope Padrão de Erro > retorna 500 INTERNAL_SERVER_ERROR para erros não tratados 30ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 1: Campo obrigatório faltando (Missing Required Field) > rejeita cadastro de ferramenta sem o campo obrigatório "grupoId" 37ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 2: Tipo errado (Invalid Data Types) > rejeita grupoId que não pode ser convertido para número inteiro 19ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 2: Tipo errado (Invalid Data Types) > rejeita valorAquisicao com tipo de dado não numérico 38ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 2: Tipo errado (Invalid Data Types) > rejeita parâmetro :id não numérico ou inválido 16ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 3: Valor fora do domínio (Out-of-domain Values) > rejeita preço negativo no cadastro (valorAquisicao < 0) 27ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 3: Valor fora do domínio (Out-of-domain Values) > rejeita edição sem nenhum campo editável 17ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 3: Valor fora do domínio (Out-of-domain Values) > rejeita nome vazio ou contendo apenas espaços 16ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 3: Valor fora do domínio (Out-of-domain Values) > rejeita nome com 1 caractere (mínimo é 2) 18ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Caso 3: Valor fora do domínio (Out-of-domain Values) > rejeita grupoId negativo ou zero (categoria/grupo inexistente / fora do domínio) 13ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > valida dados obrigatórios de colaborador (nome, matrícula, setorId) 14ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > aceita colaborador válido 11ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > completa matrícula curta com zeros à esquerda (36 -> 0036) 15ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > completa matrícula curta com zeros à esquerda (5 -> 0005) 11ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > continua recusando matrícula inválida (0) 15ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > continua recusando matrícula inválida (0000) 16ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > continua recusando matrícula inválida (12345) 13ms
+ ✓ src/tests/ferramentaValidation.test.ts > Validação Zod de Ferramentas e Envelope de Erro (API-08 / Depende de API-07) > Reaproveitamento de padrão (Colaborador) > continua recusando matrícula inválida (ab) 14ms
+ ✓ src/tests/authMiddleware.test.ts > authenticate — erro de infraestrutura na revalidação de ativo > propaga o erro cru para o errorHandler (500) em vez de responder 401 TOKEN_INVALID 19ms
+ ✓ src/tests/authMiddleware.test.ts > authenticate — erro de infraestrutura na revalidação de ativo > continua devolvendo TOKEN_EXPIRED normalmente quando o problema é mesmo o token 9ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — ferramentas > INSERT grava dados_novos completos e dados_anteriores nulo 57ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — ferramentas > UPDATE grava só as colunas que mudaram (antes e depois) 17ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — ferramentas > UPDATE sem mudança real (ou só de updated_at) não gera linha 13ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — ferramentas > DELETE grava dados_anteriores e dados_novos nulo 38ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — ferramentas > grava o usuário informado por set_config; sem ele, usuario_id fica nulo 15ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — ferramentas > rollback não deixa auditoria para trás 11ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — emprestimos e ocorrencias > retirada e devolução com avaria geram linhas nas três tabelas encadeadas pelas triggers 48ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — emprestimos e ocorrencias > UPDATE e DELETE em ocorrencias e emprestimos 30ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > getPaginationParams > retorna valores padrão quando a query está vazia 8ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > getPaginationParams > calcula o offset correto para página 2 com limit 10 1ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > getPaginationParams > respeita o limite máximo de 100 itens por página 1ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > getPaginationParams > trata valores negativos ou inválidos definindo valores seguros 1ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > getPaginationParams > page não numérico cai na página 1 (offset nunca é NaN) 1ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > buildPaginationMeta > calcula totalPages corretamente 1ms
+ ✓ src/tests/pagination.test.ts > Helper de Paginação e Envelope de Sucesso > buildPaginationMeta > retorna totalPages 1 quando não há registros 1ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — pela API (usuário vem do JWT) > criar ferramenta, retirar e devolver com avaria deixa a trilha completa com o usuário do JWT 302ms
+ ✓ src/tests/auditoria.test.ts > auditoria automática — pela API (usuário vem do JWT) > PATCH da ferramenta audita só o campo alterado, com o usuário do JWT 89ms
+ ✓ src/tests/swaggerSpec.test.ts > swaggerSpec (merge JSDoc + zod-to-openapi) > mantém o GET /ferramentas vindo do JSDoc e adiciona o POST gerado do Zod 8ms
+ ✓ src/tests/swaggerSpec.test.ts > swaggerSpec (merge JSDoc + zod-to-openapi) > gera PATCH /ferramentas/{id} com id integer em path 2ms
+ ✓ src/tests/authorize.test.ts > authorize > chama next() sem erro quando o papel do usuário está na lista permitida 7ms
+ ✓ src/tests/authorize.test.ts > authorize > chama next() com ForbiddenError quando o papel não está na lista permitida 3ms
+ ✓ src/tests/authorize.test.ts > authorize > chama next() com UnauthorizedError quando não há usuário autenticado 1ms
+ ✓ src/tests/consultaSessaoRateLimitMatricula.test.ts > Rate limit do quiosque por matrícula (5 falhas por minuto) > a 6ª tentativa da mesma matrícula em um minuto devolve 429 e outra matrícula segue livre 569ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > retorna 200 com token de consulta 99ms
+ ✓ src/tests/opcoes.test.ts > GET /v1/opcoes (Opções combinadas) > requer autenticação (retorna 401 sem token) 77ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > devolve só id, nome, categoria, status, localização e código — nada de colaborador, histórico ou valores 45ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > categoria vem do nome do grupo e o filtro por status continua valendo 47ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > retorna 403 com token de manutenção (rota é exclusiva do papel consulta) 45ms
+ ✓ src/tests/consultaSessaoRateLimitMatricula.test.ts > Rate limit do quiosque por matrícula (5 falhas por minuto) > tentativa com formato inválido não gasta o limite da matrícula 118ms
+ ✓ src/tests/consultaSessaoRateLimitMatricula.test.ts > Rate limit do quiosque por matrícula (5 falhas por minuto) > sem matrícula no corpo (rota sem validate()), conta por IP e não cria contador global 117ms
+ ✓ src/tests/opcoes.test.ts > GET /v1/opcoes (Opções combinadas) > retorna setores, categorias e atividades ativas em um único payload estruturado 245ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > retorna 401 sem token 22ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > retorna 403 com token de consulta em GET /v1/ferramentas (isolamento no sentido inverso) 19ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > retorna 403 com token de admin (a rota é só do papel consulta) 19ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > retorna 401 TOKEN_EXPIRED com token de consulta expirado 22ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > token emitido por /consulta/sessao vale 15 minutos, lista ferramentas e não abre rota da manutenção 181ms
+ ✓ src/tests/consultaFerramentas.test.ts > GET /v1/consulta/ferramentas (API-16) > registra no log quem consultou e com quais filtros, sem gravar em tabela de negócio 22ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > abre a sessão de consulta com a matrícula de um colaborador ativo 406ms
+ ✓ src/tests/consultaSessaoRateLimit.test.ts > Rate limit do quiosque (30 tentativas por minuto por IP) > a 31ª tentativa em um minuto devolve 429 TOO_MANY_REQUESTS 576ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 404 para matrícula válida sem colaborador 22ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula com letras 20ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula com 5 dígitos 18ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula com 3 dígitos 14ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula zerada 14ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula com espaços 11ms
+ ✓ src/tests/emprestimoCalendario.test.ts > GET /v1/emprestimos/calendario (API-17) > exige token e perfil manutencao 118ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula vazia 11ms
+ ✓ src/tests/consultaSessao.test.ts > POST /v1/consulta/sessao (quiosque: só matrícula, sem senha) > retorna 400 para matrícula numérica (não texto) 11ms
+ ✓ src/tests/consultaSessaoRateLimit.test.ts > criarLimiter > bloqueia acima do máximo e responde no envelope de erro 28ms
+ ✓ src/tests/emprestimoCalendario.test.ts > GET /v1/emprestimos/calendario (API-17) > 400 sem mes ou com mes fora do formato 174ms
+ ✓ src/tests/emprestimoCalendario.test.ts > GET /v1/emprestimos/calendario (API-17) > agrupa por dia as devoluções abertas do mês, em ordem, com o formato do front 49ms
+ ✓ src/tests/emprestimoCalendario.test.ts > GET /v1/emprestimos/calendario (API-17) > mês sem devoluções devolve lista vazia 14ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehFimDeSemana > identifica sábado como fim de semana 2ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehFimDeSemana > identifica domingo como fim de semana 0ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehFimDeSemana > identifica dia de semana como não fim de semana 0ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehDiaUtil > retorna false para sábado 1ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehDiaUtil > retorna false para domingo 0ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehDiaUtil > retorna false para feriado nacional (Tiradentes - 2026-04-21) 87ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehDiaUtil > retorna true para dia útil normal (Segunda - 2026-04-20) 2ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehDiaUtil > rejeita data de calendário inexistente (dia fora do intervalo do mês) com INVALID_DATE 3ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > ehDiaUtil > rejeita data de calendário inexistente (mês fora do intervalo) com INVALID_DATE 1ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 1: soma dias úteis na mesma semana sem feriados (Segunda + 2 dias = Quarta) 2ms
+ ✓ src/tests/ferramentaPermissoes.test.ts > Permissões de ferramentas por perfil > admin também opera etiqueta e disponibilizar (admin = manutenção + cadastros) 150ms
+ ✓ src/tests/ferramentaPermissoes.test.ts > Permissões de ferramentas por perfil > manutenção não edita nem baixa ferramenta (cadastro é do admin) 38ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 2: pula fins de semana (Sexta + 1 dia útil = Segunda / Sexta + 3 dias úteis = Quarta) 3ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 3: pula feriados nacionais cadastrados (Tiradentes 21/04/2026) 2ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 4: pula múltiplos feriados consecutivos e fins de semana (Carnaval 2026) 2ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 5: calcula corretamente na virada de ano de 2026 para 2027 (Ano Novo) 3ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 6: retorna a mesma data quando quantidadeDias for 0 0ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > Caso 7: aceita objeto Date e a função auxiliar adicionarDiasUteis 2ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > diasUteis > rejeita quantidade negativa de dias com AppError 0ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > Rotas HTTP de Feriados > GET /v1/feriados?ano=2026 retorna lista de feriados do cache/banco 37ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > Rotas HTTP de Feriados > GET /v1/feriados/dia-util verifica se data é dia útil 20ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > Rotas HTTP de Feriados > GET /v1/feriados/dias-uteis calcula data final somando dias úteis 9ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > Rotas HTTP de Feriados > GET /v1/feriados/dias-uteis retorna 400 para parâmetros inválidos 7ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > Rotas HTTP de Feriados > GET /v1/feriados/dia-util retorna 400 INVALID_DATE para dia inexistente no mês (2026-02-30) 5ms
+ ✓ src/tests/feriado.test.ts > Serviço de Feriados e Cálculo de Dias Úteis > Rotas HTTP de Feriados > GET /v1/feriados/dias-uteis retorna 400 INVALID_DATE para mês inexistente (2026-13-01) 5ms
+ Test Files  42 passed (42)
+      Tests  437 passed (437)
+   Start at  21:21:32
+   Duration  26.74s (import 63%, tests 31%, transform 6%)
