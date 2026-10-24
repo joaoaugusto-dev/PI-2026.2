@@ -75,6 +75,17 @@ export async function emSnapshot<T>(fn: (client: PoolClient) => Promise<T>): Pro
   }
 }
 
+// atrasado: previsão em dia anterior ao de hoje (Brasília). Única definição, da lista, da contagem e do /atrasos
+const CONDICAO_ATRASADOS = `${DIA_PREVISTO} < ${HOJE}`;
+
+async function contarEmprestimos(client: PoolClient, condicaoDia: string, params: unknown[] = []): Promise<number> {
+  const { rows } = await client.query<{ total: string }>(
+    `SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe WHERE data_devolucao IS NULL AND ${condicaoDia}`,
+    params
+  );
+  return Number(rows[0].total);
+}
+
 async function emprestimos(
   client: PoolClient,
   condicaoDia: string,
@@ -84,10 +95,7 @@ async function emprestimos(
 ): Promise<Lista<EmprestimoPendente>> {
   const where = `data_devolucao IS NULL AND ${condicaoDia}`;
   const n = params.length;
-  const total = await client.query<{ total: string }>(
-    `SELECT COUNT(*)::text AS total FROM vw_emprestimos_detalhe WHERE ${where}`,
-    params
-  );
+  const total = await contarEmprestimos(client, condicaoDia, params);
   const itens = await client.query<EmprestimoPendente>(
     `SELECT id, colaborador_nome, colaborador_matricula, setor_nome, ferramenta_nome, codigo_identificacao,
             previsao_devolucao, ABS(${DIA_PREVISTO} - ${HOJE})::int AS dias
@@ -97,7 +105,7 @@ async function emprestimos(
      LIMIT $${n + 1} OFFSET $${n + 2}`,
     [...params, limit, offset]
   );
-  return { total: Number(total.rows[0].total), itens: itens.rows };
+  return { total, itens: itens.rows };
 }
 
 async function ferramentasAguardando(client: PoolClient, limit: number, offset: number): Promise<Lista<FerramentaAguardando>> {
@@ -144,7 +152,7 @@ function listaNoSnapshot(client: PoolClient, nome: NomeLista, limit: number, off
     case 'cobrar_hoje':
       return emprestimos(client, `${DIA_PREVISTO} = ${HOJE}`, [], limit, offset);
     case 'atrasados':
-      return emprestimos(client, `${DIA_PREVISTO} < ${HOJE}`, [], limit, offset);
+      return emprestimos(client, CONDICAO_ATRASADOS, [], limit, offset);
     case 'proximos_do_prazo':
       return emprestimos(client, `${DIA_PREVISTO} > ${HOJE} AND ${DIA_PREVISTO} <= ${HOJE} + $1::int`, [DIAS_PROXIMOS], limit, offset);
     case 'indisponiveis':
@@ -187,7 +195,7 @@ export function kpis(): Promise<Kpis> {
 /** Os seis contadores numa conexão já aberta (exportado para o teste ler dentro da própria transação). */
 export async function kpisNaConexao(client: PoolClient): Promise<Kpis> {
   const contagem = await contadores(client);
-  contagem.atrasadas = (await listaNoSnapshot(client, 'atrasados', 1, 0)).total;
+  contagem.atrasadas = await contarEmprestimos(client, CONDICAO_ATRASADOS);
   return contagem;
 }
 
@@ -213,7 +221,7 @@ export async function atrasosNaConexao(client: PoolClient): Promise<AtrasoPorSet
   const { rows } = await client.query<{ setor_id: number; setor_nome: string; atrasados: string; maior_atraso_dias: number }>(
     `SELECT setor_id, setor_nome, COUNT(*)::text AS atrasados, MAX(${HOJE} - ${DIA_PREVISTO})::int AS maior_atraso_dias
      FROM vw_emprestimos_detalhe
-     WHERE data_devolucao IS NULL AND ${DIA_PREVISTO} < ${HOJE}
+     WHERE data_devolucao IS NULL AND ${CONDICAO_ATRASADOS}
      GROUP BY setor_id, setor_nome
      ORDER BY COUNT(*) DESC, setor_nome, setor_id`
   );
