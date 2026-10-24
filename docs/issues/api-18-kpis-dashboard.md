@@ -30,7 +30,7 @@ indisponíveis, atrasadas e ocorrências abertas), sem as listas do `GET /v1/das
 
 ## Conferência manual (critério "Pronto quando")
 
-Em 24/10/2026, no banco de desenvolvimento, a resposta de `kpis()` foi comparada com `SELECT COUNT(*)` escritos direto nas
+Em 24/10/2026, no banco de desenvolvimento, a resposta HTTP de `GET /v1/dashboard/kpis` (200, perfil `manutencao`) foi comparada com `SELECT COUNT(*)` escritos direto nas
 tabelas `ferramentas`, `emprestimos` e `ocorrencias`:
 
 | Contador | API | Contagem manual |
@@ -42,7 +42,7 @@ tabelas `ferramentas`, `emprestimos` e `ocorrencias`:
 | atrasadas | 18 | 18 |
 | ocorrencias | 5 | 5 |
 
-Os seis números batem. A mesma comparação roda no teste automatizado (só exige igualdade quando nenhum outro teste alterou
+Os seis números batem. Evidência completa (resposta bruta, SQL usado e o `atrasados.total` do painel, também 18): [evidencias-api-18-conferencia-kpis.txt](evidencias-api-18-conferencia-kpis.txt). A mesma comparação roda no teste automatizado (só exige igualdade quando nenhum outro teste alterou
 o banco entre as duas leituras).
 
 ## Se sobrar tempo
