@@ -3,6 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { env } from '../config/env.js';
+import { query } from '../config/database.js';
 import { emSnapshot, obter } from '../services/dashboardService.js';
 
 const token = (papel: string) => jwt.sign({ id: 1, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
@@ -58,6 +59,46 @@ describe('GET /v1/dashboard', () => {
   it('retorna 401 sem token e 403 com papel consulta', async () => {
     expect((await request(app).get('/v1/dashboard')).status).toBe(401);
     expect((await request(app).get('/v1/dashboard').set('Authorization', `Bearer ${token('consulta')}`)).status).toBe(403);
+  });
+});
+
+describe('GET /v1/dashboard/kpis', () => {
+  const contar = async (sql: string) => Number((await query(sql)).rows[0].n);
+
+  it('devolve os seis contadores para manutenção e admin e não confunde "kpis" com uma lista', async () => {
+    for (const papel of ['manutencao', 'admin']) {
+      const res = await request(app).get('/v1/dashboard/kpis').set('Authorization', `Bearer ${token(papel)}`);
+      expect(res.status).toBe(200);
+      expect(Object.keys(res.body.data).sort()).toEqual(
+        ['atrasadas', 'cadastradas', 'disponiveis', 'em_uso', 'indisponiveis', 'ocorrencias']
+      );
+      for (const valor of Object.values(res.body.data)) expect(valor).toEqual(expect.any(Number));
+    }
+  });
+
+  it('os seis números batem com uma contagem direta nas tabelas', async () => {
+    const res = await request(app).get('/v1/dashboard/kpis').set('Authorization', `Bearer ${token('manutencao')}`);
+    const antes = res.body.data;
+    // contagem manual: as mesmas definições, escritas direto nas tabelas
+    const esperado = {
+      cadastradas: await contar('SELECT COUNT(*) AS n FROM ferramentas WHERE ativo'),
+      disponiveis: await contar("SELECT COUNT(*) AS n FROM ferramentas WHERE ativo AND status = 'disponivel'"),
+      em_uso: await contar("SELECT COUNT(*) AS n FROM ferramentas WHERE ativo AND status = 'em_uso'"),
+      indisponiveis: await contar("SELECT COUNT(*) AS n FROM ferramentas WHERE ativo AND status = 'indisponivel'"),
+      atrasadas: await contar(
+        `SELECT COUNT(*) AS n FROM emprestimos WHERE data_devolucao IS NULL
+         AND (previsao_devolucao AT TIME ZONE 'America/Sao_Paulo')::date < (NOW() AT TIME ZONE 'America/Sao_Paulo')::date`
+      ),
+      ocorrencias: await contar("SELECT COUNT(*) AS n FROM ocorrencias WHERE status = 'aberta'"),
+    };
+    // outros arquivos de teste mexem no banco ao mesmo tempo: só se exige igualdade se nada mudou entre as duas leituras
+    const depois = (await request(app).get('/v1/dashboard/kpis').set('Authorization', `Bearer ${token('manutencao')}`)).body.data;
+    if (JSON.stringify(antes) === JSON.stringify(depois)) expect(antes).toEqual(esperado);
+  });
+
+  it('retorna 401 sem token e 403 com papel consulta', async () => {
+    expect((await request(app).get('/v1/dashboard/kpis')).status).toBe(401);
+    expect((await request(app).get('/v1/dashboard/kpis').set('Authorization', `Bearer ${token('consulta')}`)).status).toBe(403);
   });
 });
 
