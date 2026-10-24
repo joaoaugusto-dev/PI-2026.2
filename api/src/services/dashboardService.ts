@@ -176,9 +176,16 @@ export function obter(): Promise<Dashboard> {
   });
 }
 
-/** GET /v1/dashboard/kpis — só os seis contadores, direto da vw_dashboard_kpis. */
+/**
+ * GET /v1/dashboard/kpis — só os seis contadores (vw_dashboard_kpis). `atrasadas` usa a mesma definição do
+ * cartão de atrasados (previsão em dia anterior) e não a da view, para o número ser o mesmo em todo lugar.
+ */
 export function kpis(): Promise<Kpis> {
-  return emSnapshot(contadores);
+  return emSnapshot(async (client) => {
+    const contagem = await contadores(client);
+    contagem.atrasadas = (await listaNoSnapshot(client, 'atrasados', 1, 0)).total;
+    return contagem;
+  });
 }
 
 /** Uma lista do dashboard, paginada: o "Mostrar tudo" de cada cartão. */
