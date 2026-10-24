@@ -96,7 +96,7 @@ Quem tem acesso operacional ao sistema (perfil `manutencao`).
 | `id` | serial | Sim (PK) | sequencial | Calculado |
 | `colaborador_id` | integer | Sim (FK) | único; aponta para `colaboradores.id` — nome e matrícula de login vêm de lá | Selecionado |
 | `senha_hash` | varchar(255) | Sim | hash bcrypt — nunca a senha em texto puro | Calculado (a API faz o hash antes de salvar) |
-| `papel` | enum `papel_usuario` | Sim | `manutencao` ou `admin` (só `admin` aprova auto-cadastros) | Calculado (default) |
+| `papel` | enum `papel_usuario` | Sim | `manutencao` ou `admin` (o admin é a manutenção com recursos a mais; não há auto-cadastro) | Calculado (default) |
 | `ativo` | boolean | Sim | true / false — default true | Calculado (default) |
 | `tentativas_falhas` | integer | Sim | senhas erradas seguidas; default 0; zerado por login certo ou nova senha (migration `0009`) | Calculado |
 | `bloqueado_ate` | timestamptz | Não | conta bloqueada até este instante, depois de 5 senhas erradas (migration `0009`) | Calculado |
