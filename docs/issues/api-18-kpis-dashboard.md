@@ -32,6 +32,9 @@ indisponíveis, atrasadas e ocorrências abertas), sem as listas do `GET /v1/das
    dentro de uma transação `REPEATABLE READ` (exportada como `kpisNaConexao`), confere a variação de cada contador e faz `ROLLBACK`;
    usa código de patrimônio explícito porque a trigger que gera o código não é atômica e corre com os outros arquivos de teste.
 7. `docs(api): evidência da conferência manual ...` — [evidencias-api-18-conferencia-kpis.txt](evidencias-api-18-conferencia-kpis.txt).
+8. `docs(insomnia): coleção do dashboard` — [soufer-tools-dashboard.json](../insomnia/soufer-tools-dashboard.json) e o guia
+   [teste-api-dashboard.md](../insomnia/teste-api-dashboard.md): 14 requisições e 41 testes automáticos (contadores, atrasos por setor,
+   regressão de `/:lista`, 401 e 403).
 
 ## Conferência manual (critério "Pronto quando")
 
