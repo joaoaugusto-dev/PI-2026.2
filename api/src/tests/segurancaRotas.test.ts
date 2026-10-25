@@ -28,8 +28,6 @@ const PUBLICAS = [
 const ABERTAS_AO_TOKEN_DE_CONSULTA: Record<string, string> = {
   'GET /v1/consulta/ferramentas': 'é a rota do quiosque (exclusiva do papel consulta)',
   'GET /v1/auth/me': 'devolve só os dados do próprio token, para qualquer perfil restaurar a sessão',
-  // Pendência da API-19 (D1): sai desta lista quando /v1/opcoes passar a exigir manutencao/admin.
-  'GET /v1/opcoes': 'PENDENTE: ainda sem authorize (API-19, D1)',
 };
 
 // Express 4: o prefixo de um `router.use('/x', ...)` só existe dentro da regexp da camada.
