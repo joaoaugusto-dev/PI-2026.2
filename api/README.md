@@ -305,7 +305,7 @@ router.use('/ferramentas', ferramentasRoutes);
 
 ## 🧪 Credenciais Iniciais de Teste (após `npm run db:seed`)
 
-> Só para desenvolvimento: com `NODE_ENV=production` o seed se recusa a rodar. Em produção o primeiro
+> Só para desenvolvimento: o seed só roda com `NODE_ENV=development` ou `test`; com qualquer outro valor, inclusive vazio, ele se recusa. Em produção o primeiro
 > admin sai de `npm run db:admin -- <matrícula> "<nome>" "<setor>"`, que imprime um link de convite.
 
 | Perfil | Matrícula | Senha | Finalidade |

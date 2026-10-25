@@ -58,6 +58,17 @@ describe('env.ts: segredos padrão só em development e test (D5)', () => {
     await expect(carregar({ NODE_ENV: 'production', JWT_SECRET: SEGREDO_FORTE, DB_PASSWORD: 'sua_senha_do_postgres', CORS_ORIGIN: 'https://app.exemplo.com' })).rejects.toThrow(/DB_PASSWORD/);
   });
 
+  it('ambienteLocal (guarda do db:seed) é true só em development e test', async () => {
+    expect((await carregar({ NODE_ENV: 'development' })).ambienteLocal).toBe(true);
+    expect((await carregar({ NODE_ENV: 'test' })).ambienteLocal).toBe(true);
+
+    const reais = { JWT_SECRET: SEGREDO_FORTE, DB_PASSWORD: 'senha-do-banco-forte', CORS_ORIGIN: 'https://app.exemplo.com' };
+    for (const nodeEnv of ['production', 'staging', 'Development', '']) {
+      expect((await carregar({ NODE_ENV: nodeEnv, ...reais })).ambienteLocal, nodeEnv).toBe(false);
+    }
+    expect((await carregar(reais)).ambienteLocal).toBe(false);
+  });
+
   it('a mensagem de erro diz qual NODE_ENV foi lido e como corrigir', async () => {
     await expect(carregar({ DB_PASSWORD: 'senha-do-banco-forte' })).rejects.toThrow(/NODE_ENV não definido.*NODE_ENV=development/);
     await expect(carregar({ NODE_ENV: 'staging', DB_PASSWORD: 'senha-do-banco-forte' })).rejects.toThrow(/NODE_ENV=staging/);

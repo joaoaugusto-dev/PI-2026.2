@@ -116,7 +116,7 @@ Após o primeiro deploy da API com o banco conectado:
    até a pessoa usar o link.
 
 > **Não rode `npm run db:seed` em produção.** Ele cria as contas 0001, 0002 e 0053 com a senha
-> `123456` e setores/categorias fictícios; com `NODE_ENV=production` o script se recusa a rodar.
+> `123456` e setores/categorias fictícios; o script só roda com `NODE_ENV=development` ou `test` e se recusa com qualquer outro valor, inclusive vazio.
 > Se o container não tiver o `tsx` (devDependency), use as versões compiladas:
 > `node dist/scripts/migrate.js` e `node dist/scripts/criar-admin.js <matrícula> "<nome>" "<setor>"`.
 
