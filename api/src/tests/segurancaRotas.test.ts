@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import v1Routes from '../routes/v1/index.js';
 import { authenticate } from '../middlewares/auth.js';
 import { env } from '../config/env.js';
@@ -73,7 +73,7 @@ const chamar = (r: RotaDescoberta, token?: string) => {
 };
 
 const assinar = (papel: string, expiresIn: number | string) =>
-  jwt.sign({ id: 1, nome: 'Teste Segurança', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: expiresIn as any });
+  assinarToken({ id: 1, nome: 'Teste Segurança', papel, matricula: '0001' }, expiresIn as any);
 
 const tokenConsulta = assinar('consulta', '15m');
 const protegidas = rotas.filter((r) => !PUBLICAS.includes(chave(r)));

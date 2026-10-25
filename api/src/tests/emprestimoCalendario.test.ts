@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
-const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, papel }, '1h');
 const get = (qs: string, papel: string | null = 'manutencao') => {
   const req = request(app).get(`/v1/emprestimos/calendario${qs}`);
   if (papel) req.set('Authorization', `Bearer ${token(papel)}`);

@@ -1,15 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
-import { env } from '../config/env.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 
 // API-19 (#78), "pronto quando": os dois testes de invasão simulada falham como esperado, ou seja,
 // o sistema bloqueia certo. A varredura completa está em segurancaRotas.test.ts; aqui ficam os
 // dois cenários da issue com os nomes que ela usa.
 
 const assinar = (papel: string, expiresIn: number | string) =>
-  jwt.sign({ id: 1, nome: 'Invasor Simulado', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: expiresIn as any });
+  assinarToken({ id: 1, nome: 'Invasor Simulado', papel, matricula: '0001' }, expiresIn as any);
 
 describe('Invasão simulada 1: token de consulta tentando acessar rota da manutenção', () => {
   const tokenConsulta = assinar('consulta', '15m');

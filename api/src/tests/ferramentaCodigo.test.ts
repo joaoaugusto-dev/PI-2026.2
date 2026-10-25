@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { getClient, query } from '../config/database.js';
 
 // Código de patrimônio na busca: zeros à esquerda e o prefixo SF das etiquetas antigas não importam.
 const PREFIXO = 'ZZTESTE_CODIGO_';
-const token = jwt.sign({ id: 1, nome: 'T', papel: 'manutencao', matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
+const token = assinarToken({ id: 1, nome: 'T', papel: 'manutencao', matricula: '0001' }, '1h');
 const get = (url: string) => request(app).get(url).set('Authorization', `Bearer ${token}`);
 
 describe('busca de ferramenta por código', () => {
