@@ -4,6 +4,7 @@ Issue: [#78](https://github.com/joaoaugusto-dev/PI-2026.2/issues/78)
 Responsável na issue: Guilherme Portilho da Rosa Santi (@TGuiDev); executada por Henrique de Oliveira Molinari (@henrique-molinari)
 Depende de: API-03 e API-16 (concluídas)
 Branch: `feat/api-19-teste-varredura-rotas`
+PR: [#220](https://github.com/joaoaugusto-dev/PI-2026.2/pull/220)
 Última atualização: 24/10/2026
 
 ## Objetivo
