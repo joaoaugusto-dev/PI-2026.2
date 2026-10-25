@@ -39,7 +39,23 @@ ou `aud` trocado). O Insomnia não consegue assiná-los, então um script gera o
 node --env-file=api/.env docs/insomnia/gerar-tokens-invasao.mjs
 ```
 
-A saída tem uma linha `nome=valor` por token. Cole cada valor na variável de mesmo nome do **Base Environment** da coleção.
+A saída já vem no formato do editor de ambiente do Insomnia (JSON), uma linha por token:
+
+```json
+  "token_vencido_manutencao": "eyJhbGciOi...",
+  "token_vencido_consulta": "eyJhbGciOi...",
+  ...
+  "token_sem_aud": "eyJhbGciOi..."
+```
+
+Para colar no Insomnia:
+
+1. Abra **Manage Environments** (o menu do ambiente no canto superior esquerdo) e escolha o **Base Environment** da coleção.
+2. No JSON, as sete últimas linhas são as variáveis vazias (`"token_vencido_manutencao": "",` até `"token_sem_aud": ""`). **Apague essas sete linhas.**
+3. Cole no lugar a saída do script. A última linha impressa não tem vírgula porque é a última chave do objeto, e a linha de cima (`"token_consulta": "",`) mantém a dela.
+4. Confira que o JSON ficou válido (o Insomnia sublinha erro de vírgula ou aspas) e salve.
+
+Não cole o texto em outro lugar (campo de requisição, ambiente de outra coleção, sub-ambiente): a coleção só lê o Base Environment dela.
 O script lê o `JWT_SECRET` do seu `api/.env` e **nunca o imprime**; use só contra a API local.
 
 | Variável | O que é | Resposta esperada |
@@ -58,7 +74,7 @@ Os tokens forjados valem 1 hora (os vencidos já nascem vencidos). Se ficarem ve
 
 1. No Insomnia, **Import** → `docs/insomnia/soufer-tools-seguranca.json`.
 2. Abra **SOUFER Tools — Segurança do JWT e dos middlewares**: 5 pastas e 26 requisições numeradas de 01 a 26.
-3. Cole os tokens forjados no Base Environment (seção 2).
+3. Cole os tokens forjados no Base Environment, como descrito na seção 2.
 4. Rode a pasta 1 primeiro (ela grava os três tokens válidos) e depois as demais na ordem
    (Collection Runner ou uma a uma). Cada execução completa tem 76 testes automáticos.
 
@@ -87,10 +103,13 @@ Variáveis do Base Environment:
 - **`expected 'TOKEN_MALFORMATTED' to deeply equal 'TOKEN_EXPIRED'` (ou `TOKEN_INVALID`, `TOKEN_OUTDATED`) nas pastas 4 e 5.**
   É a falha mais comum: o token forjado não foi colado no Base Environment. Com a variável vazia, o Insomnia envia
   `Authorization: Bearer` sem token e a API responde `TOKEN_MALFORMATTED`, sem relação com o que a requisição quer provar.
-  São 8 requisições (19 a 26), uma para cada uso de token forjado. Rode o script da seção 2, cole as 7 linhas e rode a coleção de novo.
+  São 8 requisições (19 a 26), uma para cada uso de token forjado. Rode o script da seção 2, cole as 7 linhas no JSON do Base Environment (passo a passo na seção 2) e rode a coleção de novo.
+  O script imprime JSON (`"nome": "valor"`), e não `nome=valor`: não dá para colar nos campos de variável um a um sem o formato do editor.
   O primeiro teste de cada uma dessas requisições (`Variável ... está preenchida`) aponta exatamente qual variável falta.
-- **O mesmo erro com a variável preenchida:** o valor foi colado com quebra de linha ou espaço no meio, ou com o prefixo `nome=`.
-  Cole só o que vem depois do `=`, em uma linha.
+- **O mesmo erro com a variável preenchida:** o valor foi colado com quebra de linha ou espaço no meio dentro das aspas.
+  Cada token tem de ficar numa linha só, entre aspas.
+- **O teste `Variável ... está preenchida` falha mesmo depois de colar:** o Base Environment aberto não é o da coleção importada
+  (por exemplo, o de uma importação antiga da mesma coleção) ou o JSON não foi salvo por erro de sintaxe. Reabra o ambiente e confira.
 - Se a pasta 2 ou a 3 falhar com 401 no token de consulta, ele expirou (15 minutos): rode a requisição 03 de novo.
 - Se `GET /v1/opcoes` com o token de consulta (requisição 07) devolver 200, a API está numa versão anterior à API-19.
 - Se os tokens da pasta 1 derem 401 depois de atualizar a API, o login antigo ficou sem `aud`: rode a pasta 1 de novo.

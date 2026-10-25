@@ -4,8 +4,9 @@
 // Uso, a partir da raiz do repositório:
 //   node --env-file=api/.env docs/insomnia/gerar-tokens-invasao.mjs
 //
-// Cole cada valor na variável de mesmo nome do Base Environment da coleção. Use só contra a API local:
-// o script lê o segredo do seu api/.env e nunca o imprime.
+// A saída já vem no formato do editor de ambiente do Insomnia (JSON): apague as 7 linhas de tokens vazios do
+// final do Base Environment e cole as linhas impressas no lugar. Use só contra a API local: o script lê o
+// segredo do seu api/.env e nunca o imprime.
 import { createRequire } from 'node:module';
 
 const require = createRequire(new URL('../../api/package.json', import.meta.url));
@@ -40,4 +41,6 @@ const tokens = {
   token_sem_aud: assinar('manutencao', {}),
 };
 
-for (const [nome, valor] of Object.entries(tokens)) console.log(`${nome}=${valor}`);
+// Uma linha `"nome": "valor",` por token, sem vírgula na última (elas são as últimas chaves do ambiente).
+const linhas = Object.entries(tokens).map(([nome, valor]) => `  ${JSON.stringify(nome)}: ${JSON.stringify(valor)}`);
+console.log(linhas.join(',\n'));
