@@ -60,7 +60,7 @@ Os tokens forjados valem 1 hora (os vencidos já nascem vencidos). Se ficarem ve
 2. Abra **SOUFER Tools — Segurança do JWT e dos middlewares**: 5 pastas e 26 requisições numeradas de 01 a 26.
 3. Cole os tokens forjados no Base Environment (seção 2).
 4. Rode a pasta 1 primeiro (ela grava os três tokens válidos) e depois as demais na ordem
-   (Collection Runner ou uma a uma). Cada execução completa tem 68 testes automáticos.
+   (Collection Runner ou uma a uma). Cada execução completa tem 76 testes automáticos.
 
 Variáveis do Base Environment:
 
@@ -82,8 +82,15 @@ Variáveis do Base Environment:
 | 4 · Sem token e token vencido (401) | Sem token, cabeçalho malformado, texto que não é JWT e tokens vencidos (de manutenção e de consulta, em rota de balcão e do quiosque). É o segundo cenário do "pronto quando". |
 | 5 · Tokens forjados (401) | `alg: none`, outro algoritmo, `aud` trocado nos dois sentidos e token sem `aud`. |
 
-## 5. Observações
+## 5. Se algum teste falhar
 
+- **`expected 'TOKEN_MALFORMATTED' to deeply equal 'TOKEN_EXPIRED'` (ou `TOKEN_INVALID`, `TOKEN_OUTDATED`) nas pastas 4 e 5.**
+  É a falha mais comum: o token forjado não foi colado no Base Environment. Com a variável vazia, o Insomnia envia
+  `Authorization: Bearer` sem token e a API responde `TOKEN_MALFORMATTED`, sem relação com o que a requisição quer provar.
+  São 8 requisições (19 a 26), uma para cada uso de token forjado. Rode o script da seção 2, cole as 7 linhas e rode a coleção de novo.
+  O primeiro teste de cada uma dessas requisições (`Variável ... está preenchida`) aponta exatamente qual variável falta.
+- **O mesmo erro com a variável preenchida:** o valor foi colado com quebra de linha ou espaço no meio, ou com o prefixo `nome=`.
+  Cole só o que vem depois do `=`, em uma linha.
 - Se a pasta 2 ou a 3 falhar com 401 no token de consulta, ele expirou (15 minutos): rode a requisição 03 de novo.
 - Se `GET /v1/opcoes` com o token de consulta (requisição 07) devolver 200, a API está numa versão anterior à API-19.
 - Se os tokens da pasta 1 derem 401 depois de atualizar a API, o login antigo ficou sem `aud`: rode a pasta 1 de novo.
