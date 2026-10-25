@@ -139,7 +139,17 @@ segunda passada, basta rodar o `gitleaks` pela imagem oficial com o Docker ligad
   (32+ caracteres) e `DB_PASSWORD` próprios, senão a API recusa subir. Um ambiente publicado com `NODE_ENV=development`
   continua aceitando os segredos padrão do repositório: use segredos reais também ali.
 
+## Atenção para a equipe (ambiente local)
+
+O `api/.env.example` antigo trazia `NODE_ENV=` vazio, então o `api/.env` de quem o copiou também está com a linha vazia. Depois
+deste PR a API recusa subir nessa situação, com uma mensagem que diz o que fazer: basta trocar a linha para `NODE_ENV=development`.
+Vale avisar a equipe junto com o merge.
+
 ## Limitações conhecidas
+
+- A lista de segredos inseguros do `env.ts` (`INSECURE_JWT_SECRETS`, `INSECURE_DB_PASSWORDS`) é por igualdade exata (sem diferenciar
+  maiúsculas de minúsculas): pega os textos de exemplo conhecidos, mas não variações. O mínimo de 32 caracteres e o `NODE_ENV` por lista de
+  permitidos compensam, e isso fica registrado como risco aceito.
 
 - Os dois riscos aceitos da revisão da expiração (sem revogação no servidor; papel lido do token).
 - As fotos em `/v1/uploads` são públicas de propósito (nomes com UUID, ver `docs/backend/arquitetura.md`) e ficam fora da varredura de rotas, que cobre só o roteador `/v1`.

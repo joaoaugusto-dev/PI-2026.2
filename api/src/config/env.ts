@@ -44,7 +44,7 @@ const INSECURE_JWT_SECRETS = [
 const JWT_SECRET_DEV = 'soufer_tools_fallback_secret';
 const jwtSecret = process.env.JWT_SECRET;
 if (!ambienteLocal) {
-  if (!jwtSecret || INSECURE_JWT_SECRETS.includes(jwtSecret) || jwtSecret.length < 32) {
+  if (!jwtSecret || INSECURE_JWT_SECRETS.includes(jwtSecret.toLowerCase()) || jwtSecret.length < 32) {
     throw new Error(
       `FATAL: JWT_SECRET precisa ser definido com uma chave segura de no mínimo 32 caracteres fora de development/test (${descricaoAmbiente}). Não utilize o segredo de exemplo do .env.example; em desenvolvimento local, defina NODE_ENV=development.`
     );

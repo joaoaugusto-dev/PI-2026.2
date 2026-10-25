@@ -50,6 +50,8 @@ describe('env.ts: segredos padrão só em development e test (D5)', () => {
 
     await expect(carregar({ ...base, JWT_SECRET: 'soufer_tools_super_secret_jwt_key_development_2026' })).rejects.toThrow(/JWT_SECRET/);
     await expect(carregar({ ...base, JWT_SECRET: 'curto' })).rejects.toThrow(/JWT_SECRET/);
+    // a lista é comparada sem diferenciar maiúsculas de minúsculas (o texto de exemplo do .env.example em caixa alta não passa)
+    await expect(carregar({ ...base, JWT_SECRET: 'SOUFER_TOOLS_SUPER_SECRET_JWT_KEY_DEVELOPMENT_2026' })).rejects.toThrow(/JWT_SECRET/);
     await expect(carregar({ NODE_ENV: 'staging', JWT_SECRET: SEGREDO_FORTE, DB_PASSWORD: 'postgres' })).rejects.toThrow(/DB_PASSWORD/);
   });
 
