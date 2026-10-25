@@ -37,6 +37,8 @@ const INSECURE_JWT_SECRETS = [
   'secret',
   'jwt_secret',
   'changeme',
+  // Texto de exemplo do docs/nuvem/dokploy.md: tem mais de 32 caracteres e passaria na checagem de tamanho.
+  'gere_uma_chave_jwt_secreta_longa_e_aleatoria_aqui',
 ];
 
 const JWT_SECRET_DEV = 'soufer_tools_fallback_secret';
@@ -49,7 +51,7 @@ if (!ambienteLocal) {
   }
 }
 
-const INSECURE_DB_PASSWORDS = ['postgres', 'root', '123456', 'password', 'admin'];
+const INSECURE_DB_PASSWORDS = ['postgres', 'root', '123456', 'password', 'admin', 'sua_senha_do_postgres'];
 const dbPassword = process.env.DB_PASSWORD;
 if (!ambienteLocal) {
   if (!dbPassword || INSECURE_DB_PASSWORDS.includes(dbPassword.toLowerCase())) {
