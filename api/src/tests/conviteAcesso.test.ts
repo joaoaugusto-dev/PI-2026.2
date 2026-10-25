@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { assinarToken } from '../utils/tokenJwt.js';
 import { query } from '../config/database.js';
@@ -92,6 +93,9 @@ describe('Convites de acesso', () => {
     expect(aceito.body.data.usuario).toMatchObject({ matricula: M_ALVO, papel: 'manutencao' });
     const sessao = await request(app).get('/v1/auth/me').set('Authorization', `Bearer ${aceito.body.data.token}`);
     expect(sessao.status).toBe(200);
+    // a sessão aberta pelo link vale 7 dias, igual à do login (API-19, revisão da expiração)
+    const { exp, iat } = jwt.decode(aceito.body.data.token) as { exp: number; iat: number };
+    expect(exp - iat).toBe(7 * 24 * 60 * 60);
 
     const login = await request(app).post('/v1/auth/login').send({ matricula: M_ALVO, senha: '482913' });
     expect(login.status).toBe(200);
