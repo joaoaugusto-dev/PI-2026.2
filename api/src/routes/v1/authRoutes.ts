@@ -123,6 +123,10 @@ router.post(
  * /auth/me:
  *   get:
  *     summary: Retorna os dados do usuário autenticado no token atual
+ *     description: >
+ *       Aberta a qualquer perfil autenticado (manutencao, admin e consulta) de propósito, sem
+ *       `authorize`. Devolve só os dados do próprio usuário do token (id, nome, papel e matrícula),
+ *       nada de outros usuários nem de ferramentas, então não há o que restringir por perfil.
  *     tags:
  *       - Autenticação
  *     security:
@@ -133,6 +137,8 @@ router.post(
  *       401:
  *         description: Token inválido ou não fornecido
  */
+// Sem `authorize` de propósito (API-19): devolve só os dados do próprio usuário do token, então
+// qualquer perfil autenticado pode chamar. Está na lista de exceções de tests/segurancaRotas.test.ts.
 router.get('/me', authenticate, AuthController.me);
 
 export default router;
