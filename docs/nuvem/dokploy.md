@@ -74,6 +74,12 @@ No Dokploy, a melhor prática para monorepos é criar **dois aplicativos separad
    # fotos de avaria/perda (anexadas na devolução): outro volume, também persistente
    AVARIAS_DIR=/app/data/avarias
    ```
+   > **`NODE_ENV` é obrigatório em todo ambiente do Dokploy** (production, e também o ambiente de
+   > desenvolvimento/homologação). Sem ele, ou com qualquer valor diferente de `development`/`test`, a API
+   > exige `JWT_SECRET` (32+ caracteres) e `DB_PASSWORD` seguros e recusa subir com os valores padrão do
+   > repositório. Em `NODE_ENV=development` esses padrões voltam a valer, então um ambiente publicado
+   > nunca deve usar `development` sem `JWT_SECRET` e `DB_PASSWORD` próprios.
+   >
    > **Não publique a porta 3000 da API diretamente.** Com `TRUST_PROXY_HOPS=1` a API confia no
    > `X-Forwarded-For`; acessada sem o proxy na frente, qualquer cliente forja o próprio IP e escapa
    > dos limites de tentativa. O único caminho até a API deve ser o domínio do Traefik.
@@ -110,7 +116,7 @@ Após o primeiro deploy da API com o banco conectado:
    até a pessoa usar o link.
 
 > **Não rode `npm run db:seed` em produção.** Ele cria as contas 0001, 0002 e 0053 com a senha
-> `123456` e setores/categorias fictícios; com `NODE_ENV=production` o script se recusa a rodar.
+> `123456` e setores/categorias fictícios; o script só roda com `NODE_ENV=development` ou `test` e se recusa com qualquer outro valor, inclusive vazio.
 > Se o container não tiver o `tsx` (devDependency), use as versões compiladas:
 > `node dist/scripts/migrate.js` e `node dist/scripts/criar-admin.js <matrícula> "<nome>" "<setor>"`.
 

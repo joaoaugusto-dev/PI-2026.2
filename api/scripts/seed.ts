@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import { pool, getClient } from '../src/config/database.js';
+import { env } from '../src/config/env.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,8 +11,9 @@ const __dirname = path.dirname(__filename);
 async function runSeed() {
   // o seed cria contas com a senha 123456 e setores/categorias fictícios: em produção é porta aberta.
   // O primeiro admin de produção sai do `npm run db:admin` (link de convite, sem senha padrão).
-  if (process.env.NODE_ENV === 'production') {
-    console.error('❌ db:seed recusado com NODE_ENV=production (cria contas com senha 123456). Use npm run db:admin.');
+  // Só development e test liberam o seed: NODE_ENV vazio, staging ou com typo também são recusados.
+  if (!env.ambienteLocal) {
+    console.error(`❌ db:seed recusado com ${process.env.NODE_ENV ? `NODE_ENV=${process.env.NODE_ENV}` : 'NODE_ENV não definido'} (cria contas com senha 123456; só roda com NODE_ENV=development ou test). Use npm run db:admin.`);
     await pool.end();
     process.exit(1);
   }

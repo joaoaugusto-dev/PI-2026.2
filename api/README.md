@@ -93,6 +93,10 @@ cp .env.example .env
 ```
 Ajuste as credenciais do seu PostgreSQL no arquivo `.env` (usuário, senha, porta e banco).
 
+> Mantenha `NODE_ENV=development` no `.env` local. Só `development` e `test` aceitam o segredo JWT e a
+> senha do banco padrão; com `NODE_ENV` vazio, ausente ou qualquer outro valor a API recusa subir sem
+> `JWT_SECRET` (32+ caracteres) e `DB_PASSWORD` próprios.
+
 ### 4. Executar Migrations e Seed no Banco
 Crie as tabelas, triggers e popule os dados de teste:
 ```bash
@@ -107,7 +111,13 @@ npm run db:feriados
 
 # Ou informando os anos explicitamente
 npm run db:feriados -- 2028 2029
+
+# Verifica a consistência dos dados (somente leitura; sai com 1 se achar erro)
+npm run data:check
+# Variações: npm run data:check -- --json   |   npm run data:check -- --so-erros
 ```
+
+`db:migrate` registra cada migration aplicada na tabela `schema_migrations` e só roda as pendentes, então pode ser executado quantas vezes for preciso. Depois de atualizar o código, rode-o antes dos testes: uma coluna nova sem migration aplicada derruba dezenas de testes de uma vez.
 
 ### 5. Iniciar o Servidor
 ```bash
@@ -295,7 +305,7 @@ router.use('/ferramentas', ferramentasRoutes);
 
 ## 🧪 Credenciais Iniciais de Teste (após `npm run db:seed`)
 
-> Só para desenvolvimento: com `NODE_ENV=production` o seed se recusa a rodar. Em produção o primeiro
+> Só para desenvolvimento: o seed só roda com `NODE_ENV=development` ou `test`; com qualquer outro valor, inclusive vazio, ele se recusa. Em produção o primeiro
 > admin sai de `npm run db:admin -- <matrícula> "<nome>" "<setor>"`, que imprime um link de convite.
 
 | Perfil | Matrícula | Senha | Finalidade |

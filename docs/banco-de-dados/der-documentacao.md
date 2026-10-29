@@ -1,7 +1,19 @@
 # DB-02 — Modelo Conceitual e Lógico (DER) — Revisão 02/09/2026
 
 **Issue:** [#21](https://github.com/joaoaugusto-dev/PI-2026.2/issues/21) · **Responsável:** Henrique de Oliveira Molinari
-**Entregáveis:** `docs/banco-de-dados/der-visual-dbdiagram.png`, `docs/banco-de-dados/der.dbml`
+**Entregáveis:** `docs/banco-de-dados/der-visual-dbdiagram-24.10.2026.png`, `docs/banco-de-dados/der.dbml`
+
+---
+
+> **Atualização de 20/10/2026.** Este documento registra a revisão de 02/09. O schema
+> seguiu evoluindo: login por matrícula e perfil `admin` (0004), convites de acesso
+> (`convites_acesso`, 0008), bloqueio de login (`usuarios.tentativas_falhas` e
+> `bloqueado_ate`, 0009), foto da avaria (`ocorrencias.foto_url`, 0013) e auditoria
+> automática por triggers (0014). O estado atual campo a campo está em
+> [`dicionario-de-dados.md`](dicionario-de-dados.md) e em [`der.dbml`](der.dbml), ambos
+> conferidos contra o banco. **O PNG [`der-visual-dbdiagram-24.10.2026.png`](der-visual-dbdiagram-24.10.2026.png)
+> foi regerado em 24/10/2026 em dbdiagram.io a partir do `der.dbml` e mostra as
+> 14 tabelas de negócio, inclusive `auditoria`, `convites_acesso` e `notificacoes`.**
 
 ---
 
@@ -102,7 +114,7 @@ virou um arquivo novo em vez de editar o `0001_init.sql`):
 
 ## 3. Como usar os arquivos entregues
 
-- **`der-visual-dbdiagram.png`** — imagem final, para os slides de apresentação e o README.
+- **`der-visual-dbdiagram-24.10.2026.png`** — imagem final, para os slides de apresentação e o README.
   Regerar sempre que o `der.dbml` mudar (passo a passo abaixo).
 - **`der.dbml`** — cole em [dbdiagram.io](https://dbdiagram.io) → "Import
   DBML" para editar visualmente. Exporte de volta como `.dbml` para manter os
@@ -114,8 +126,8 @@ virou um arquivo novo em vez de editar o `0001_init.sql`):
 2. Apague o conteúdo do editor e cole todo o `der.dbml`.
 3. Confira as cores dos grupos de tabelas e reposicione as tabelas se
    necessário (`criado_por` cria uma linha de `usuarios` para `colaboradores`).
-4. Menu **Export → Export to PNG** e salve como `der-visual-dbdiagram.png`,
-   substituindo o arquivo desta pasta.
+4. Menu **Export → Export to PNG** e salve como `der-visual-dbdiagram-DD.MM.AAAA.png` (data da exportação),
+   substituindo o arquivo desta pasta e atualizando os links acima.
 
 ---
 

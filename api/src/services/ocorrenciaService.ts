@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import { getClient, query } from '../config/database.js';
+import { definirUsuarioAuditoria, getClient, query, queryComUsuario } from '../config/database.js';
 import { avariasDir } from '../config/uploads.js';
 import { logger } from '../middlewares/logger.js';
 import { processarImagem } from '../utils/imagem.js';
@@ -174,6 +174,7 @@ export async function atualizar(
   let resolvendoAgora = false;
   try {
     await client.query('BEGIN');
+    await definirUsuarioAuditoria(client, usuarioId);
 
     const atual = await client.query<{ status: Ocorrencia['status'] }>(
       'SELECT status FROM ocorrencias WHERE id = $1 FOR UPDATE',
@@ -252,7 +253,7 @@ export async function atualizar(
  * front anexa a foto em seguida). Mesmo tratamento das fotos de ferramenta, em AVARIAS_DIR;
  * enviar de novo troca a anterior.
  */
-export async function salvarFoto(id: number, imagem: unknown): Promise<Ocorrencia> {
+export async function salvarFoto(id: number, imagem: unknown, usuarioId?: number): Promise<Ocorrencia> {
   const atual = await query<{ foto_url: string | null }>('SELECT foto_url FROM ocorrencias WHERE id = $1', [id]);
   if (!atual.rows[0]) throw new NotFoundError('Ocorrência não encontrada', 'OCORRENCIA_NOT_FOUND');
   const processada = await processarImagem(imagem);
@@ -262,7 +263,7 @@ export async function salvarFoto(id: number, imagem: unknown): Promise<Ocorrenci
   const destino = path.join(avariasDir, arquivo);
   await fs.writeFile(destino, processada);
   try {
-    await query('UPDATE ocorrencias SET foto_url = $1, updated_at = NOW() WHERE id = $2', [`/uploads/avarias/${arquivo}`, id]);
+    await queryComUsuario(usuarioId, 'UPDATE ocorrencias SET foto_url = $1, updated_at = NOW() WHERE id = $2', [`/uploads/avarias/${arquivo}`, id]);
   } catch (error) {
     await fs.rm(destino, { force: true }).catch(() => {}); // não deixa arquivo órfão
     throw error;

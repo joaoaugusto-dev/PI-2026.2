@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { getClient, query } from '../config/database.js';
 import { env } from '../config/env.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { AppError, UnauthorizedError, NotFoundError, TooManyRequestsError } from '../utils/errors.js';
 
 export interface LoginResult {
@@ -111,15 +111,14 @@ export class AuthService {
 
     await query('UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL WHERE id = $1 AND tentativas_falhas > 0', [usuario.id]);
 
-    const token = jwt.sign(
+    const token = assinarToken(
       {
         id: usuario.id,
         nome: usuario.nome,
         matricula: usuario.matricula,
         papel: usuario.papel,
       },
-      env.jwt.secret,
-      { expiresIn: env.jwt.expiresIn as any }
+      env.jwt.expiresIn
     );
 
     return {
@@ -222,9 +221,7 @@ export class AuthService {
       await client.query('COMMIT');
 
       const { id, papel } = usuario.rows[0];
-      const tokenSessao = jwt.sign({ id, nome, matricula, papel }, env.jwt.secret, {
-        expiresIn: env.jwt.expiresIn as any,
-      });
+      const tokenSessao = assinarToken({ id, nome, matricula, papel }, env.jwt.expiresIn);
       return { token: tokenSessao, usuario: { id, nome, matricula, papel } };
     } catch (error) {
       await client.query('ROLLBACK');
@@ -259,15 +256,14 @@ export class AuthService {
       );
     }
 
-    const token = jwt.sign(
+    const token = assinarToken(
       {
         id: colaborador.id,
         nome: colaborador.nome,
         matricula: colaborador.matricula,
         papel: 'consulta',
       },
-      env.jwt.secret,
-      { expiresIn: env.jwt.consultaExpiresIn as any }
+      env.jwt.consultaExpiresIn
     );
 
     return {

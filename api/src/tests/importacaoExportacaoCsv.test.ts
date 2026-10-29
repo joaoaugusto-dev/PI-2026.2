@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
@@ -10,7 +10,7 @@ import { query } from '../config/database.js';
 const PREFIXO = 'ZZTESTE_CSV_';
 // matrículas altas para não colidir com o seed (0001 a 0053)
 const MATRICULAS = ['9971', '9972', '9973', '0974'];
-const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, papel }, '1h');
 
 const importar = (recurso: string, corpo: string, papel = 'admin') =>
   request(app)
@@ -169,7 +169,13 @@ describe('GET /v1/exportacoes/:recurso', () => {
 
   it('o arquivo exportado volta pela importação sem duplicar nada', async () => {
     const exportado = await baixar('/exportacoes/setores');
-    const res = await importar('setores', exportado.body);
+    // setores ZZTESTE_ de outros arquivos de teste nascem e somem em paralelo: se um sumir entre a exportação e a
+    // importação, a reimportação o recriaria. Fora isso, o arquivo volta inteiro.
+    const arquivo = exportado.body
+      .split('\r\n')
+      .filter((linha: string, i: number) => i === 0 || !linha.includes('ZZTESTE_'))
+      .join('\r\n');
+    const res = await importar('setores', arquivo);
     expect(res.status).toBe(200);
     expect(res.body.data.resumo.aceitas).toBe(0);
     expect(res.body.data.resumo.ignoradas).toBe(res.body.data.resumo.total_linhas);

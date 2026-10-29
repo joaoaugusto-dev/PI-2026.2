@@ -1,14 +1,11 @@
 import { afterAll, describe, it, expect } from "vitest";
 import request from "supertest";
-import jwt from "jsonwebtoken";
 import app from "../app.js";
+import { assinarToken } from "../utils/tokenJwt.js";
 import { query } from "../config/database.js";
-import { env } from "../config/env.js";
 
 const token = (papel: string) =>
-  jwt.sign({ id: 1, papel, nome: "Teste", matricula: "0001" }, env.jwt.secret, {
-    expiresIn: "1h",
-  });
+  assinarToken({ id: 1, papel, nome: "Teste", matricula: "0001" }, "1h");
 const auth = (papel: string) => ({ Authorization: `Bearer ${token(papel)}` });
 
 // Regra 8: escrita dos cadastros auxiliares é do admin; a manutenção só lê

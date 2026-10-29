@@ -1,0 +1,103 @@
+{
+  "_origem": "POST /v1/importacoes/ferramentas (text/csv) com evidencias/importacao-exemplo.csv · gerado em 20/10/2026, 21:22:01 · commit 43bf5a5 + alterações ainda não commitadas",
+  "http": 200,
+  "resposta": {
+    "data": {
+      "resumo": {
+        "total_linhas": 8,
+        "aceitas": 2,
+        "rejeitadas": 4,
+        "ignoradas": 2
+      },
+      "aceitas": [
+        {
+          "linha": 2,
+          "id": 37393,
+          "codigo_identificacao": 82,
+          "nome": "ZZEVID_FURADEIRA DE IMPACTO"
+        },
+        {
+          "linha": 3,
+          "id": 37394,
+          "codigo_identificacao": 83,
+          "nome": "ZZEVID_CHAVE DE FENDA PHILLIPS Nº 2"
+        }
+      ],
+      "rejeitadas": [
+        {
+          "linha": 4,
+          "motivos": [
+            "Categoria \"Categoria Inexistente\" não cadastrada"
+          ],
+          "dados": {
+            "nome": "ZZEVID_Alicate de corte",
+            "categoria": "Categoria Inexistente",
+            "marca": "Gedore",
+            "valor": "45,00"
+          }
+        },
+        {
+          "linha": 5,
+          "motivos": [
+            "Valor inválido (use o formato 1.234,56)"
+          ],
+          "dados": {
+            "nome": "ZZEVID_Martelo",
+            "categoria": "Ferramentas Manuais",
+            "marca": "Tramontina",
+            "valor": "12,5,0"
+          }
+        },
+        {
+          "linha": 6,
+          "motivos": [
+            "Nome deve ter no mínimo 2 caracteres"
+          ],
+          "dados": {
+            "nome": "A",
+            "categoria": "Ferramentas Manuais"
+          }
+        },
+        {
+          "linha": 8,
+          "motivos": [
+            "Valor deve ser no máximo 99.999.999,99"
+          ],
+          "dados": {
+            "nome": "ZZEVID_Serra tico-tico",
+            "categoria": "Ferramentas Manuais",
+            "marca": "Makita",
+            "modelo": "4329",
+            "localizacao": "Armário 1",
+            "valor": "99999999999"
+          }
+        }
+      ],
+      "ignoradas": [
+        {
+          "linha": 7,
+          "motivo": "Repetida no arquivo (mesma da linha 2)",
+          "dados": {
+            "nome": "ZZEVID_Furadeira de impacto",
+            "categoria": "Ferramentas Manuais",
+            "marca": "Bosch",
+            "modelo": "GSB 13",
+            "valor": "1234,56"
+          }
+        },
+        {
+          "linha": 9,
+          "motivo": "Já cadastrada (código 1)",
+          "dados": {
+            "nome": "Chave de Impacto Pneumática 1/2 Polegada",
+            "categoria": "Ferramentas Manuais",
+            "marca": "Ingersoll Rand",
+            "modelo": "2145QiMAX",
+            "valor": "10,00"
+          }
+        }
+      ],
+      "colunas_ignoradas": []
+    }
+  }
+}

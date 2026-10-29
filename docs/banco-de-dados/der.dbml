@@ -6,7 +6,10 @@
 // Revisão 24/09/2026 — login por matrícula (#150): usuarios aponta para
 // colaboradores; matrícula com exatamente 4 dígitos; papel manutencao/admin.
 // Atualização API-09: colaboradores.criado_por + índice trigram por nome
-// Gerado a partir de api/db/migrations/ (0001 a 0004)
+// Revisão 20/10/2026 — alinhado às migrations 0008 a 0014: convites_acesso (0008),
+// usuarios.tentativas_falhas/bloqueado_ate (0009), ocorrencias.foto_url (0013) e
+// auditoria alimentada por triggers (0014).
+// Gerado a partir de api/db/migrations/ (0001 a 0014)
 // Importar em https://dbdiagram.io para editar visualmente.
 // ============================================================
 
@@ -113,7 +116,9 @@ Table usuarios {
   colaborador_id integer [not null, unique, ref: - colaboradores.id, note: 'nome e matrícula de login vêm de colaboradores']
   senha_hash varchar(255) [not null, note: 'bcrypt — auth própria, sem Supabase']
   papel papel_usuario [not null, default: 'manutencao']
-  ativo boolean [not null, default: true, note: 'false = cadastro pendente de aprovação por um admin']
+  ativo boolean [not null, default: true, note: 'false = conta desativada']
+  tentativas_falhas integer [not null, default: 0, note: 'senhas erradas seguidas (0009)']
+  bloqueado_ate timestamptz [note: 'bloqueio temporário de login (0009)']
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 
@@ -131,7 +136,19 @@ Table auditoria {
   ip_origem varchar(50)
   created_at timestamptz [not null, default: `now()`]
 
-  Note: 'Sem FK para a tabela/registro auditado (referência genérica por nome + id).'
+  Note: 'Sem FK para a tabela/registro auditado (referência genérica por nome + id). Alimentada por triggers em ferramentas, emprestimos e ocorrencias (0014): UPDATE grava só as colunas que mudaram.'
+}
+
+Table convites_acesso {
+  id integer [pk, increment]
+  colaborador_id integer [not null, ref: > colaboradores.id, note: 'ON DELETE CASCADE']
+  token_hash char(64) [not null, unique, note: 'SHA-256 do token; o link aparece uma única vez']
+  expira_em timestamptz [not null]
+  usado_em timestamptz [note: 'nulo = convite ainda válido']
+  criado_por integer [ref: > usuarios.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Link de acesso gerado pelo admin: quem recebe define a própria senha e entra logado (0008).'
 }
 
 // ---------------- DOMÍNIO: OPERAÇÃO (azul) ----------------
@@ -256,6 +273,7 @@ Table ocorrencias {
   observacoes_resolucao text
   registrada_por integer [not null, ref: > usuarios.id]
   resolvida_por integer [ref: > usuarios.id]
+  foto_url text [note: 'foto da avaria anexada na devolução (0013)']
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 

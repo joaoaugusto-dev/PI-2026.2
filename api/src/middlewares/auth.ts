@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import { UnauthorizedError } from '../utils/errors.js';
 import { UsuarioPayload } from '../types/express.js';
+import { audiencePorPapel, decodificarToken } from '../utils/tokenJwt.js';
 
 const PAPEIS_VALIDOS: string[] = ['manutencao', 'admin', 'consulta'];
 
@@ -20,12 +19,12 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   }
 
   const token = parts[1];
-  let decoded: UsuarioPayload;
+  let decoded: UsuarioPayload & { aud?: unknown };
 
   // Só a decodificação do JWT cai neste try/catch: qualquer falha aqui é
   // mesmo problema de token (assinatura, expiração, formato), nunca de banco.
   try {
-    decoded = jwt.verify(token, env.jwt.secret) as UsuarioPayload;
+    decoded = decodificarToken(token) as unknown as UsuarioPayload & { aud?: unknown };
   } catch (err: any) {
     if (err.name === 'TokenExpiredError') {
       return next(new UnauthorizedError('Token de autenticação expirado', 'TOKEN_EXPIRED'));
@@ -39,6 +38,15 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   // logada recebendo 403 em todas as rotas.
   if (!PAPEIS_VALIDOS.includes(decoded.papel)) {
     return next(new UnauthorizedError('Sessão de uma versão anterior. Faça login novamente.', 'TOKEN_OUTDATED'));
+  }
+
+  // Token sem `aud` é de antes do hardening da API-19: mesmo tratamento do papel antigo (401 e novo
+  // login). Com `aud` de outro tipo de sessão (ex.: token do quiosque num papel de balcão), é inválido.
+  if (decoded.aud === undefined) {
+    return next(new UnauthorizedError('Sessão de uma versão anterior. Faça login novamente.', 'TOKEN_OUTDATED'));
+  }
+  if (decoded.aud !== audiencePorPapel(decoded.papel)) {
+    return next(new UnauthorizedError('Token de autenticação inválido', 'TOKEN_INVALID'));
   }
 
   let { nome, matricula } = decoded;

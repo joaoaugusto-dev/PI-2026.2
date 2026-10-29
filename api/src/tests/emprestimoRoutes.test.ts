@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query, getClient } from '../config/database.js';
 import { criarEmprestimoSchema } from '../validators/emprestimoValidator.js';
@@ -13,7 +13,7 @@ import { criarEmprestimoSchema } from '../validators/emprestimoValidator.js';
 const PREFIXO = 'ZZTESTE_API11_';
 
 function gerarToken(payload: Record<string, unknown>) {
-  return jwt.sign(payload, env.jwt.secret, { expiresIn: '1h' });
+  return assinarToken(payload, '1h');
 }
 
 async function criarFerramenta(nome: string, ehKit = false): Promise<number> {

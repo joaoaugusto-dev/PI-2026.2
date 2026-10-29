@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import { diasNoPeriodo, somarDias } from '../validators/kpiValidator.js';
@@ -13,7 +13,7 @@ import { diasNoPeriodo, somarDias } from '../validators/kpiValidator.js';
 const PREFIXO = 'ZZTESTE_KPI208_';
 const MARCO = 'de=2001-03-01&ate=2001-03-31';
 
-const token = (papel: string) => jwt.sign({ id: 1, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, nome: 'T', papel, matricula: '0001' }, '1h');
 const get = (caminho: string, papel: string | null = 'manutencao') => {
   const req = request(app).get(`/v1/kpis/${caminho}`);
   if (papel) req.set('Authorization', `Bearer ${token(papel)}`);

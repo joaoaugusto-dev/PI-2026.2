@@ -3,11 +3,12 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
 function gerarToken(payload: Record<string, unknown>, expiresIn: string | number = '1h') {
-  return jwt.sign(payload, env.jwt.secret, { expiresIn: expiresIn as any });
+  return assinarToken(payload, expiresIn as any);
 }
 
 describe('GET /v1/auth/me', () => {

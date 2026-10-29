@@ -1,18 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { query } from '../config/database.js';
 import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_SETOR_';
 
 function gerarToken(usuarioId: number, papel = 'admin') {
-  return jwt.sign(
-    { id: usuarioId, nome: 'Test User', papel, matricula: '0001' },
-    env.jwt.secret,
-    { expiresIn: '1h' }
-  );
+  return assinarToken({ id: usuarioId, nome: 'Test User', papel, matricula: '0001' }, '1h');
 }
 
 describe('CRUD Setores (/v1/setores)', () => {
