@@ -3,8 +3,8 @@
 ## Stack
 
 - Vite
-- React 18
-- React Router 6
+- React 19
+- React Router 7
 - TanStack Query
 - Axios
 - React Hook Form
@@ -23,21 +23,23 @@
 |---|---|---|
 | `/login` | Guilherme | Login |
 | `/consulta` | Guilherme | Quiosque de consulta |
+| `/c/:token` | Guilherme | Convite: o colaborador define a senha e entra |
 | `/` | João | Dashboard |
 | `/ferramentas` | João | Lista e filtros |
 | `/ferramentas/nova` | João | Cadastro |
-| `/ferramentas/:id/editar` | João | Edição |
 | `/ferramentas/:id` | João | Detalhe |
-| `/ferramentas/:id/etiqueta` | João | Impressão |
 | `/retiradas/nova` | João | Retirada |
 | `/devolucoes` | João | Devolução |
 | `/indisponiveis` | Guilherme | Tratativa |
 | `/calendario` | João | Vencimentos |
 | `/emprestimos` | Guilherme | Histórico |
+| `/analises` | João | KPIs de gestão (admin) |
 | `/cadastros/colaboradores` | Kauan | CRUD |
 | `/cadastros/setores` | Kauan | CRUD |
 | `/cadastros/categorias` | Kauan | CRUD |
 | `/cadastros/ferramentas` | Kauan | CRUD |
+
+Nas telas de cadastro, o botão de importação abre um diálogo (`ImportarCsvDialog`) para cadastrar em lote a partir de um CSV; não há rota própria.
 
 ## Design system
 

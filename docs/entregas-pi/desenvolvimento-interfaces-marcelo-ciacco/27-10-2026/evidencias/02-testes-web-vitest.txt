@@ -1,0 +1,5 @@
+ RUN  v5.0.3 C:/Users/henri/OneDrive/Desktop/soufer_tools_pi/PI-2026.2/web
+ Test Files  11 passed (11)
+      Tests  72 passed (72)
+   Start at  21:25:33
+   Duration  1.32s (import 65%, transform 29%, tests 4%, worker 2%)

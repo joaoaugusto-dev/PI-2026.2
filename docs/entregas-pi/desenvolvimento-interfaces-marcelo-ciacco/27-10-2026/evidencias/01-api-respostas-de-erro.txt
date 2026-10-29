@@ -1,0 +1,43 @@
+Respostas reais da API (ambiente local, banco soufer_dev) gravadas em 27/10/2026 21:25.
+Tokens omitidos. Perfis: manutencao = matricula 9801; admin = matricula 9802.
+
+### 400 - login com corpo invalido (Zod)
+$ POST /auth/login   corpo: {"matricula":"abc"}  (sem)
+{"error":{"code":"VALIDATION_ERROR","message":"Erro de validação nos dados enviados","details":[{"field":"matricula","message":"Matrícula deve ter exatamente 4 dígitos numéricos (0001 a 9999)","rule":"invalid_string"},{"field":"senha","message":"Senha é obrigatória","rule":"invalid_type"}]}}
+HTTP 400
+
+### 401 - login com senha errada
+$ POST /auth/login   corpo: {"matricula":"9801","senha":"000000"}  (sem)
+{"error":{"code":"INVALID_CREDENTIALS","message":"Matrícula ou senha inválidos","details":[]}}
+HTTP 401
+
+### 401 - rota protegida sem token
+$ GET /ferramentas   (sem)
+{"error":{"code":"TOKEN_NOT_PROVIDED","message":"Token de autenticação não fornecido","details":[]}}
+HTTP 401
+
+### 400 - cadastro de colaborador invalido
+$ POST /colaboradores   corpo: {"matricula":"12345","nome":""}  (admin)
+{"error":{"code":"VALIDATION_ERROR","message":"Erro de validação nos dados enviados","details":[{"field":"nome","message":"Nome não pode ser vazio","rule":"too_small"},{"field":"matricula","message":"Matrícula deve ter exatamente 4 dígitos numéricos (0001 a 9999)","rule":"invalid_string"},{"field":"setorId","message":"setorId deve ser um número","rule":"invalid_type"}]}}
+HTTP 400
+
+### 409 - matricula duplicada
+$ POST /colaboradores   corpo: {"matricula":"9803","nome":"DEMO ENTREGA Colaborador","setorId":2}  (admin)
+{"error":{"code":"DUPLICATE_ENTRY","message":"Registro duplicado ou operação em conflito com o estado atual.","details":[{"detail":"Chave (matricula)=(9803) já existe.","constraint":"colaboradores_matricula_key"}]}}
+HTTP 409
+
+### 403 - manutencao tenta editar colaborador (so admin)
+$ PATCH /colaboradores/4493   corpo: {"nome":"tentativa"}  (manutencao)
+{"error":{"code":"ACCESS_DENIED","message":"Perfil 'manutencao' não possui permissão para acessar esta rota","details":[{"requiredRoles":["admin"],"userRole":"manutencao"}]}}
+HTTP 403
+
+### 403 - manutencao tenta editar ferramenta (so admin)
+$ PATCH /ferramentas/268   corpo: {"nome":"tentativa"}  (manutencao)
+{"error":{"code":"ACCESS_DENIED","message":"Perfil 'manutencao' não possui permissão para acessar esta rota","details":[{"requiredRoles":["admin"],"userRole":"manutencao"}]}}
+HTTP 403
+
+### 404 - ferramenta inexistente
+$ GET /ferramentas/999999   (manutencao)
+{"error":{"code":"FERRAMENTA_NOT_FOUND","message":"Ferramenta não encontrada","details":[]}}
+HTTP 404
+

@@ -1,0 +1,12 @@
+      "headers": {}
+    }
+    res: {
+      "statusCode": 404
+    }
+    responseTime: 6
+ Test Files  42 passed (42)
+      Tests  437 passed (437)
+   Start at  21:24:25
+   Duration  12.93s (import 65%, tests 29%, transform 5%)
+    Isolate  42 workers spawned · ~357ms startup each (spawn + environment, per file)
+             at least ~1.00s faster with isolate: false — reuses workers across files instead of one per file
