@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import type { PoolClient } from 'pg';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { definirUsuarioAuditoria, getClient, query } from '../config/database.js';
 
@@ -169,7 +169,7 @@ describe('auditoria automática — pela API (usuário vem do JWT)', () => {
   let ferramentaId = 0;
 
   beforeAll(() => {
-    tokenReal = jwt.sign({ id: usuarioId, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
+    tokenReal = assinarToken({ id: usuarioId, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' }, '1h');
   });
 
   afterAll(async () => {
@@ -226,7 +226,7 @@ describe('auditoria automática — pela API (usuário vem do JWT)', () => {
 
   it('PATCH da ferramenta audita só o campo alterado, com o usuário do JWT', async () => {
     // edição de ferramenta é só do admin (regra 8); authenticate só decodifica o JWT, o id é o do usuário real
-    const auth = { Authorization: `Bearer ${jwt.sign({ id: usuarioId, nome: 'Admin Teste', papel: 'admin', matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' })}` };
+    const auth = { Authorization: `Bearer ${assinarToken({ id: usuarioId, nome: 'Admin Teste', papel: 'admin', matricula: '0001' }, '1h')}` };
     const criada = await request(app).post('/v1/ferramentas').set(auth).send({ nome: `${P}Serra`, grupoId });
     const id = criada.body.data.id;
 

@@ -1,22 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { query } from '../config/database.js';
 import { env } from '../config/env.js';
 
 const PREFIXO = 'ZZTESTE_OPC_';
 
 function gerarToken(usuarioId: number, papel = 'manutencao') {
-  return jwt.sign(
-    { id: usuarioId, nome: 'Test User', papel, matricula: '0001' },
-    env.jwt.secret,
-    { expiresIn: '1h' }
-  );
+  return assinarToken({ id: usuarioId, nome: 'Test User', papel, matricula: '0001' }, '1h');
 }
 
 describe('GET /v1/opcoes (Opções combinadas)', () => {
   let token: string;
+  let usuarioId: number;
   let setorId: number;
   let catId: number;
   let ativId: number;
@@ -25,7 +22,8 @@ describe('GET /v1/opcoes (Opções combinadas)', () => {
     const usuario = await query<{ id: number }>(
       "SELECT id FROM usuarios WHERE papel = 'manutencao' AND ativo = true LIMIT 1"
     );
-    token = gerarToken(usuario.rows[0].id);
+    usuarioId = usuario.rows[0].id;
+    token = gerarToken(usuarioId);
 
     // Limpa resíduo de uma execução anterior interrompida antes do afterAll
     // (ex.: processo morto no meio do teste), para o INSERT abaixo não
@@ -63,6 +61,23 @@ describe('GET /v1/opcoes (Opções combinadas)', () => {
   it('requer autenticação (retorna 401 sem token)', async () => {
     const res = await request(app).get('/v1/opcoes');
     expect(res.status).toBe(401);
+  });
+
+  it('retorna 403 para o token de consulta (quiosque não lê setores, categorias nem atividades)', async () => {
+    const res = await request(app)
+      .get('/v1/opcoes')
+      .set('Authorization', `Bearer ${gerarToken(0, 'consulta')}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('ACCESS_DENIED');
+  });
+
+  it('admin também lê as opções (é a manutenção com recursos a mais)', async () => {
+    const res = await request(app)
+      .get('/v1/opcoes')
+      .set('Authorization', `Bearer ${gerarToken(usuarioId, 'admin')}`);
+
+    expect(res.status).toBe(200);
   });
 
   it('retorna setores, categorias e atividades ativas em um único payload estruturado', async () => {

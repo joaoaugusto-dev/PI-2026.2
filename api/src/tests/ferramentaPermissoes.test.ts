@@ -1,13 +1,10 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
-import jwt from "jsonwebtoken";
 import app from "../app.js";
-import { env } from "../config/env.js";
+import { assinarToken } from "../utils/tokenJwt.js";
 
 const token = (papel: string) =>
-  jwt.sign({ id: 1, papel, nome: "Teste", matricula: "0001" }, env.jwt.secret, {
-    expiresIn: "1h",
-  });
+  assinarToken({ id: 1, papel, nome: "Teste", matricula: "0001" }, "1h");
 
 // A autorização roda antes de qualquer consulta ao banco, então 403 não depende de dado.
 describe("Permissões de ferramentas por perfil", () => {

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { OpcoesController } from '../../controllers/auxiliaresController.js';
 import { authenticate } from '../../middlewares/auth.js';
+import { authorize } from '../../middlewares/authorize.js';
 
 const router = Router();
 
@@ -48,7 +49,9 @@ const router = Router();
  *                           descricao: { type: string, nullable: true }
  *       401:
  *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão (o token de consulta do quiosque não acessa esta rota)
  */
-router.get('/', authenticate, OpcoesController.obterOpcoes);
+router.get('/', authenticate, authorize('manutencao', 'admin'), OpcoesController.obterOpcoes);
 
 export default router;

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import { converterValor, normalizarCabecalho } from '../validators/importacaoValidator.js';
@@ -10,7 +10,7 @@ import { converterValor, normalizarCabecalho } from '../validators/importacaoVal
 const PREFIXO = 'ZZTESTE_IMPORT_';
 const GRUPO = `${PREFIXO}Grupo`;
 const SETOR = `${PREFIXO}Setor`;
-const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, papel }, '1h');
 
 const importar = (corpo: string | Buffer | undefined, papel: string | null = 'admin', tipo = 'text/csv') => {
   const req = request(app).post('/v1/importacoes/ferramentas').set('Content-Type', tipo);

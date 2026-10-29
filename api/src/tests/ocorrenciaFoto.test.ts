@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 
 // o diretório é lido na importação: aponta para uma pasta temporária antes de tudo
 const pasta = vi.hoisted(() => {
@@ -11,6 +10,7 @@ const pasta = vi.hoisted(() => {
 });
 
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
@@ -19,7 +19,7 @@ const PNG = Buffer.from(
   'base64'
 );
 const PREFIXO = 'ZZTESTE_FOTO_AVARIA_';
-const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, papel }, '1h');
 
 describe('PUT /v1/ocorrencias/:id/foto', () => {
   let id: number;
@@ -106,7 +106,7 @@ describe('foto da ocorrência aberta pela devolução', () => {
     fs.rmSync(pasta, { recursive: true, force: true });
   });
 
-  const comToken = (papel: string, id = usuarioId) => `Bearer ${jwt.sign({ id, papel }, env.jwt.secret, { expiresIn: '1h' })}`;
+  const comToken = (papel: string, id = usuarioId) => `Bearer ${assinarToken({ id, papel }, '1h')}`;
 
   it('a devolução com avaria devolve ocorrencia_id e a foto aparece em /v1/emprestimos', async () => {
     const dev = await request(app)

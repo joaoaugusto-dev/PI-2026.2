@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import { logger } from '../middlewares/logger.js';
@@ -12,7 +13,7 @@ import { logger } from '../middlewares/logger.js';
 // (Regra 8 do CLAUDE.md raiz). Nenhum dado é criado (não precisa reservar
 // faixa de matrícula).
 function gerarToken(payload: Record<string, unknown>) {
-  return jwt.sign(payload, env.jwt.secret, { expiresIn: '1h' });
+  return assinarToken(payload, '1h');
 }
 
 describe('GET /v1/consulta/ferramentas (API-16)', () => {
@@ -110,9 +111,7 @@ describe('GET /v1/consulta/ferramentas (API-16)', () => {
   });
 
   it('retorna 401 TOKEN_EXPIRED com token de consulta expirado', async () => {
-    const expirado = jwt.sign({ id: 0, nome: 'Consulta Teste', papel: 'consulta', matricula: '9999' }, env.jwt.secret, {
-      expiresIn: -10,
-    });
+    const expirado = assinarToken({ id: 0, nome: 'Consulta Teste', papel: 'consulta', matricula: '9999' }, -10);
 
     const res = await request(app).get('/v1/consulta/ferramentas').set('Authorization', `Bearer ${expirado}`);
 

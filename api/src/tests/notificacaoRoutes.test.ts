@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
@@ -10,7 +10,7 @@ import { query } from '../config/database.js';
 const PREFIXO = 'ZZTESTE_API17_';
 
 const gerarToken = (papel: string, id: number) =>
-  jwt.sign({ id, nome: 'Teste', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
+  assinarToken({ id, nome: 'Teste', papel, matricula: '0001' }, '1h');
 
 describe('Rotas de Notificações (API-17)', () => {
   let manutencaoToken: string;

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 
 // Mocka a consulta ao banco usada pela revalidação de `ativo` em
 // authenticate() — os testes de integração de auth.test.ts usam o banco
@@ -14,7 +13,7 @@ const { query } = await import('../config/database.js');
 const { authenticate } = await import('../middlewares/auth.js');
 
 function criarReqComToken(payload: Record<string, unknown>) {
-  const token = jwt.sign(payload, env.jwt.secret, { expiresIn: '1h' });
+  const token = assinarToken(payload, '1h');
   return { headers: { authorization: `Bearer ${token}` } } as unknown as Request;
 }
 
@@ -37,11 +36,7 @@ describe('authenticate — erro de infraestrutura na revalidação de ativo', ()
   });
 
   it('continua devolvendo TOKEN_EXPIRED normalmente quando o problema é mesmo o token', async () => {
-    const tokenExpirado = jwt.sign(
-      { id: 1, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' },
-      env.jwt.secret,
-      { expiresIn: -1 }
-    );
+    const tokenExpirado = assinarToken({ id: 1, nome: 'Manutenção Teste', papel: 'manutencao', matricula: '0001' }, -1);
     const req = { headers: { authorization: `Bearer ${tokenExpirado}` } } as unknown as Request;
     const next = vi.fn() as NextFunction;
 

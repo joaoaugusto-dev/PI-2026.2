@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { getClient } from '../config/database.js';
 import { atrasosNaConexao, emSnapshot, kpisNaConexao, obter } from '../services/dashboardService.js';
 
-const token = (papel: string) => jwt.sign({ id: 1, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, nome: 'T', papel, matricula: '0001' }, '1h');
 
 describe('GET /v1/dashboard', () => {
   it('traz as quatro listas de pendências (total + itens) para manutenção e admin', async () => {

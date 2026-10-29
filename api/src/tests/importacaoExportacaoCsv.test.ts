@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
@@ -10,7 +10,7 @@ import { query } from '../config/database.js';
 const PREFIXO = 'ZZTESTE_CSV_';
 // matrículas altas para não colidir com o seed (0001 a 0053)
 const MATRICULAS = ['9971', '9972', '9973', '0974'];
-const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, papel }, '1h');
 
 const importar = (recurso: string, corpo: string, papel = 'admin') =>
   request(app)

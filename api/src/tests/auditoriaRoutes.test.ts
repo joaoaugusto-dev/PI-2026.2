@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query, queryComUsuario } from '../config/database.js';
 
 // GET /v1/auditoria (DATA-05): consulta da trilha, só admin.
 const PREFIXO = 'ZZTESTE_AUDROTA_';
-const token = (papel: string, id = 1) => jwt.sign({ id, nome: 'T', papel, matricula: '0001' }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string, id = 1) => assinarToken({ id, nome: 'T', papel, matricula: '0001' }, '1h');
 const get = (qs = '', papel: string | null = 'admin', id = 1) => {
   const req = request(app).get(`/v1/auditoria${qs}`);
   if (papel) req.set('Authorization', `Bearer ${token(papel, id)}`);

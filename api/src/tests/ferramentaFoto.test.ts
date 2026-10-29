@@ -3,7 +3,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import sharp from 'sharp';
 
 // o diretório de uploads é lido na importação: aponta para uma pasta temporária antes de tudo
@@ -14,6 +13,7 @@ const pasta = vi.hoisted(() => {
 });
 
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
@@ -23,7 +23,7 @@ const PNG = Buffer.from(
   'base64'
 );
 const PREFIXO = 'ZZTESTE_API_FOTO_';
-const token = (papel: string) => jwt.sign({ id: 1, papel }, env.jwt.secret, { expiresIn: '1h' });
+const token = (papel: string) => assinarToken({ id: 1, papel }, '1h');
 
 describe('PUT /v1/ferramentas/:id/foto', () => {
   let id: number;

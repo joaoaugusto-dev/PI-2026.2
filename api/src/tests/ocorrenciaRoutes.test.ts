@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import { assinarToken } from '../utils/tokenJwt.js';
 import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 
@@ -14,7 +14,7 @@ import { query } from '../config/database.js';
 const PREFIXO = 'ZZTESTE_API13_';
 
 function gerarToken(payload: Record<string, unknown>) {
-  return jwt.sign(payload, env.jwt.secret, { expiresIn: '1h' });
+  return assinarToken(payload, '1h');
 }
 
 async function criarFerramenta(nome: string): Promise<number> {
