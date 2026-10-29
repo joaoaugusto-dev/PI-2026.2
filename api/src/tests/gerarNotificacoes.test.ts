@@ -54,3 +54,65 @@ describe('fn_gerar_notificacoes', () => {
     expect(await doTeste()).toHaveLength(2);
   });
 });
+
+describe('fn_gerar_notificacoes: ocorrência pendente', () => {
+  const PREFIXO_OC = 'ZZTESTE_GERAR_OCORR_';
+  const ocs: Record<string, number> = {};
+  const ferr: Record<string, number> = {};
+
+  beforeAll(async () => {
+    const grupoId = (await query<{ id: number }>('SELECT id FROM grupos_ferramentas ORDER BY id LIMIT 1')).rows[0].id;
+    const usuarioId = (await query<{ id: number }>('SELECT id FROM usuarios WHERE ativo = true ORDER BY id LIMIT 1')).rows[0].id;
+    const casos: Record<string, [string, string, string?]> = {
+      antiga: ['aberta', '10 days'],
+      extraviada: ['em_reparo', '9 days', 'PERDA'],
+      recente: ['aberta', '3 days'],
+      resolvida: ['resolvida', '10 days'],
+      baixada: ['baixada', '10 days'],
+    };
+    for (const [nome, [status, idade, tipo = 'AVARIA']] of Object.entries(casos)) {
+      const f = await query<{ id: number }>('INSERT INTO ferramentas (nome, grupo_id) VALUES ($1, $2) RETURNING id', [`${PREFIXO_OC}${nome}`, grupoId]);
+      const o = await query<{ id: number }>(
+        `INSERT INTO ocorrencias (ferramenta_id, tipo, descricao, status, registrada_por, created_at)
+         VALUES ($1, $5, 'teste', $2, $3, NOW() - $4::interval) RETURNING id`,
+        [f.rows[0].id, status, usuarioId, idade, tipo]
+      );
+      ferr[nome] = f.rows[0].id;
+      ocs[nome] = o.rows[0].id;
+    }
+  });
+
+  afterAll(async () => {
+    const ferramentas = 'SELECT id FROM ferramentas WHERE nome LIKE $1';
+    await query('DELETE FROM notificacoes WHERE mensagem LIKE $1', [`${PREFIXO_OC}%`]);
+    await query(`DELETE FROM ocorrencias WHERE ferramenta_id IN (${ferramentas})`, [`${PREFIXO_OC}%`]);
+    await query('DELETE FROM ferramentas WHERE nome LIKE $1', [`${PREFIXO_OC}%`]);
+  });
+
+  const geradas = async () =>
+    (await query<{ tipo: string; usuario_id: number | null; link: string; mensagem: string }>(
+      'SELECT tipo, usuario_id, link, mensagem FROM notificacoes WHERE mensagem LIKE $1 ORDER BY id',
+      [`${PREFIXO_OC}%`]
+    )).rows;
+
+  it('avisa só as ocorrências não encerradas com mais de 7 dias, para a equipe', async () => {
+    await query('SELECT fn_gerar_notificacoes()');
+    const lista = await geradas();
+    expect(lista).toHaveLength(2);
+    expect(lista.every((n) => n.tipo === 'ocorrencia_pendente' && n.usuario_id === null)).toBe(true);
+    const antiga = lista.find((n) => n.link === `/ferramentas/${ferr.antiga}?ocorrencia=${ocs.antiga}`);
+    expect(antiga?.mensagem).toContain('ocorrência de avaria');
+  });
+
+  it('chama PERDA de extravio na mensagem', async () => {
+    await query('SELECT fn_gerar_notificacoes()');
+    const extraviada = (await geradas()).find((n) => n.link === `/ferramentas/${ferr.extraviada}?ocorrencia=${ocs.extraviada}`);
+    expect(extraviada?.mensagem).toContain('ocorrência de extravio');
+  });
+
+  it('é idempotente', async () => {
+    await query('SELECT fn_gerar_notificacoes()');
+    await query('SELECT fn_gerar_notificacoes()');
+    expect(await geradas()).toHaveLength(2);
+  });
+});

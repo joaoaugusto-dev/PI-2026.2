@@ -1,0 +1,40 @@
+Evidência API-17: execução manual de fn_gerar_notificacoes() em soufer_dev (24/10/2026), com empréstimos e ocorrências de teste
+$ psql -d soufer_dev -f api/db/testes-notificacoes.sql
+
+--- Retiradas abertas criadas (hoje em Brasilia: ver coluna previsao) ---
+          nome          |  previsao  |    hoje    
+------------------------+------------+------------
+ API17 futura           | 2026-10-27 | 2026-10-24
+ API17 hoje             | 2026-10-24 | 2026-10-24
+ API17 atrasada 2 dias  | 2026-10-22 | 2026-10-24
+ API17 atrasada 10 dias | 2026-10-14 | 2026-10-24
+(4 linhas)
+
+--- 1a execucao: SELECT fn_gerar_notificacoes() (inclui avisos de outros emprestimos abertos do banco) ---
+ gerados_total 
+---------------
+             5
+(1 linha)
+
+--- Notificacoes geradas para estas retiradas (esperado: hoje=devolucao_hoje, 2 e 10 dias=atraso, ocorrencias de 10 e 9 dias=ocorrencia_pendente, demais nenhuma) ---
+        tipo         |            titulo            |                                        mensagem                                         | usuario_id | lida 
+---------------------+------------------------------+-----------------------------------------------------------------------------------------+------------+------
+ devolucao_hoje      | Devolução prevista para hoje | API17 hoje com Colaborador Teste API-17 deve ser devolvida hoje.                        |            | f
+ atraso              | Empréstimo atrasado          | API17 atrasada 2 dias com Colaborador Teste API-17 está atrasada desde 22/10.           |            | f
+ atraso              | Empréstimo atrasado          | API17 atrasada 10 dias com Colaborador Teste API-17 está atrasada desde 14/10.          |            | f
+ ocorrencia_pendente | Ocorrência pendente          | API17 ocorrencia 10 dias está com ocorrência de avaria sem solução há 10 dias.          |            | f
+ ocorrencia_pendente | Ocorrência pendente          | API17 ocorrencia extravio 9 dias está com ocorrência de extravio sem solução há 9 dias. |            | f
+(5 linhas)
+
+--- 2a execucao (esperado: 0 novas para estas retiradas, sem duplicar) ---
+ gerados_total 
+---------------
+             0
+(1 linha)
+
+ notificacoes_destas_retiradas 
+-------------------------------
+                             5
+(1 linha)
+
+ROLLBACK

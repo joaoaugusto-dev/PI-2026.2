@@ -1,0 +1,34 @@
+Evidência API-17: coleção do Insomnia (docs/insomnia/soufer-tools-notificacoes.json) executada contra a API local, banco soufer_dev (22/10/2026)
+Executor em Node que roda os mesmos scripts de teste da coleção, na ordem, com a API em npm run dev.
+
+01 — Login da manutenção — 200 -> 200
+02 — Login do admin — 200 -> 200
+03 — Sessão do perfil consulta — 200 -> 200
+04 — Calendário do mês — 200 (manutenção) -> 200
+05 — Calendário do mês — 200 (admin) -> 200
+06 — Calendário de mês sem devoluções — 200 vazio -> 200
+07 — Listar notificações — 200 -> 200
+08 — Listar só as não lidas (sino) — 200 -> 200
+09 — Listar só as lidas (histórico) — 200 -> 200
+10 — Paginação com limit=2 — 200 -> 200
+11 — Listar notificações — 200 (admin) -> 200
+12 — Marcar uma notificação como lida — 200 -> 200
+13 — Marcar de novo (idempotente) — 200 -> 200
+14 — Marcar todas como lidas — 200 -> 200
+15 — Não sobrou nenhuma não lida — 200 -> 200
+16 — lida com valor inválido — 400 -> 400
+17 — limit zero — 400 -> 400
+18 — limit acima do máximo — 400 -> 400
+19 — id não numérico — 400 -> 400
+20 — Notificação inexistente — 404 -> 404
+21 — Calendário sem o mês — 400 -> 400
+22 — Calendário com mês 13 — 400 -> 400
+23 — Calendário com formato errado — 400 -> 400
+24 — Notificações sem token — 401 -> 401
+25 — Calendário sem token — 401 -> 401
+26 — Marcar como lida sem token — 401 -> 401
+27 — Consulta nas notificações — 403 -> 403
+28 — Consulta no calendário — 403 -> 403
+29 — Consulta marcando como lida — 403 -> 403
+
+73 testes, 0 falhas
