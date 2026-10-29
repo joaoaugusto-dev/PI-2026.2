@@ -1,0 +1,32 @@
+Conferência manual — GET /v1/dashboard/kpis (API-18, #69)
+Data: 2026-10-24T22:50:25.310Z
+Banco: desenvolvimento
+HTTP 200
+
+contador        rota  SELECT COUNT(*)  confere
+cadastradas       81               81  sim
+disponiveis       52               52  sim
+em_uso            18               18  sim
+indisponiveis     11               11  sim
+atrasadas         18               18  sim
+ocorrencias        5                5  sim
+
+Resposta bruta: {"data":{"cadastradas":81,"disponiveis":52,"em_uso":18,"indisponiveis":11,"atrasadas":18,"ocorrencias":5}}
+
+Painel (GET /v1/dashboard) kpis.atrasadas = 18, atrasados.total = 18
+
+SQL usado:
+-- cadastradas
+SELECT COUNT(*) FROM ferramentas WHERE ativo;
+-- disponiveis
+SELECT COUNT(*) FROM ferramentas WHERE ativo AND status='disponivel';
+-- em_uso
+SELECT COUNT(*) FROM ferramentas WHERE ativo AND status='em_uso';
+-- indisponiveis
+SELECT COUNT(*) FROM ferramentas WHERE ativo AND status='indisponivel';
+-- atrasadas
+SELECT COUNT(*) FROM emprestimos WHERE data_devolucao IS NULL AND (previsao_devolucao AT TIME ZONE 'America/Sao_Paulo')::date < (NOW() AT TIME ZONE 'America/Sao_Paulo')::date;
+-- ocorrencias
+SELECT COUNT(*) FROM ocorrencias WHERE status='aberta';
+
+Resultado: os 6 números batem

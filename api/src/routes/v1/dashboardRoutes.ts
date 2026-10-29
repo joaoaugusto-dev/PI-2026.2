@@ -32,6 +32,97 @@ router.get('/', authenticate, authorize('manutencao', 'admin'), DashboardControl
 
 /**
  * @openapi
+ * /dashboard/kpis:
+ *   get:
+ *     summary: Os seis contadores do dashboard (vw_dashboard_kpis)
+ *     description: >
+ *       cadastradas, disponiveis, em_uso, indisponiveis, atrasadas e ocorrencias (abertas). Declarada antes de
+ *       /dashboard/{lista}, que senão trataria "kpis" como nome de lista.
+ *     tags:
+ *       - Dashboard
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Contadores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cadastradas:
+ *                       type: integer
+ *                       description: Ferramentas ativas
+ *                     disponiveis:
+ *                       type: integer
+ *                     em_uso:
+ *                       type: integer
+ *                     indisponiveis:
+ *                       type: integer
+ *                     atrasadas:
+ *                       type: integer
+ *                       description: Empréstimos abertos com previsão em dia anterior (Brasília), a mesma definição do cartão de atrasados
+ *                     ocorrencias:
+ *                       type: integer
+ *                       description: Ocorrências abertas
+ *             example:
+ *               data: { cadastradas: 81, disponiveis: 52, em_uso: 18, indisponiveis: 11, atrasadas: 18, ocorrencias: 5 }
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get('/kpis', authenticate, authorize('manutencao', 'admin'), DashboardController.kpis);
+
+/**
+ * @openapi
+ * /dashboard/atrasos:
+ *   get:
+ *     summary: Empréstimos atrasados por setor (gráfico do dashboard)
+ *     description: >
+ *       Atrasado é a previsão em dia anterior (Brasília), a mesma definição do cartão de atrasados; a soma de
+ *       `atrasados` é o `atrasadas` de /dashboard/kpis. Setor de destino da retirada, o setor com mais atrasos primeiro.
+ *       Declarada antes de /dashboard/{lista}.
+ *     tags:
+ *       - Dashboard
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Um item por setor com ao menos um empréstimo atrasado (lista vazia se não houver nenhum)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       setor_id:
+ *                         type: integer
+ *                       setor_nome:
+ *                         type: string
+ *                       atrasados:
+ *                         type: integer
+ *                       maior_atraso_dias:
+ *                         type: integer
+ *                         description: Dias de atraso do empréstimo mais antigo do setor
+ *             example:
+ *               data: [{ setor_id: 3, setor_nome: "Produção", atrasados: 7, maior_atraso_dias: 12 }]
+ *       401:
+ *         description: Token inválido ou não fornecido
+ *       403:
+ *         description: Perfil sem permissão
+ */
+router.get('/atrasos', authenticate, authorize('manutencao', 'admin'), DashboardController.atrasos);
+
+/**
+ * @openapi
  * /dashboard/{lista}:
  *   get:
  *     summary: Uma lista do dashboard, paginada (o "Mostrar tudo" de cada cartão)

@@ -58,6 +58,8 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | PATCH | `/v1/notificacoes/:id/lida` | Manutenção/Admin | Marca uma notificação como lida |
 | PATCH | `/v1/notificacoes/lida` | Manutenção/Admin | Marca todas as não lidas como lidas |
 | GET | `/v1/dashboard` | Manutenção/Admin | Tela inicial: contadores e listas de pendências (ver [Dashboard](#dashboard-get-v1dashboard)) |
+| GET | `/v1/dashboard/kpis` | Manutenção/Admin | Só os seis contadores do dashboard (ver [Dashboard](#dashboard-get-v1dashboard)) |
+| GET | `/v1/dashboard/atrasos` | Manutenção/Admin | Empréstimos atrasados por setor, para o gráfico do dashboard (ver [Dashboard](#dashboard-get-v1dashboard)) |
 | GET | `/v1/kpis/*` | Manutenção/Admin (colaboradores: Admin) | Onze KPIs de uso, avaria e perda, filtrados por `de`/`ate` (ver [KPIs de gestão](#kpis-de-gestão-get-v1kpis)) |
 | POST | `/v1/importacoes/:recurso` | Manutenção/Admin (categorias e setores: Admin) | Importação CSV de ferramentas, colaboradores, categorias e setores (ver [Importação e exportação CSV](#importação-e-exportação-csv)) |
 | GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
@@ -211,6 +213,10 @@ Tudo que a tela inicial mostra, numa chamada só. Perfis `manutencao` e `admin`.
 | `indisponiveis` | Ferramentas indisponíveis com a ocorrência em andamento (`etapa`, `tipo`) e `dias_parada`. |
 
 Cada lista é `{ "total": n, "itens": [...] }` e traz só as 4 primeiras linhas (as do cartão). O "Mostrar tudo" pagina por `GET /v1/dashboard/:lista` (`cobrar_hoje`, `atrasados`, `proximos_do_prazo` ou `indisponiveis`), com `page` e `limit` (padrão 15, máximo 50) e o `meta` padrão de paginação; lista desconhecida é `400`. `dias_parada` conta desde a abertura da ocorrência em andamento; para ferramenta marcada indisponível à mão, sem ocorrência, cai na última alteração da ferramenta (`updated_at`), que muda a cada edição dela. `page` (1 a 100000) e `limit` (1 a 50) fora do intervalo ou não numéricos devolvem `400`. Contadores e as quatro listas saem de uma conexão só e do mesmo snapshot do banco (transação `REPEATABLE READ` somente leitura), então o painel é coerente entre si e a requisição ocupa 1 conexão do pool; cada página de `GET /v1/dashboard/:lista` também é um snapshot próprio, com total e linhas batendo. `kpis.atrasadas` usa a mesma definição da lista de atrasados (previsão em dia anterior), e não a da view de contadores (já passou do horário), para a barra e o cartão mostrarem o mesmo número.
+
+`GET /v1/dashboard/kpis` devolve só o objeto `kpis` (`{ "data": { "cadastradas": n, "disponiveis": n, "em_uso": n, "indisponiveis": n, "atrasadas": n, "ocorrencias": n } }`), lido da `vw_dashboard_kpis` num snapshot próprio, para quem precisa dos contadores sem as listas. `atrasadas` segue a mesma definição do painel. Mesmos perfis (`manutencao` e `admin`; `401` sem token e `403` para `consulta`). A rota vem antes de `/v1/dashboard/:lista`, então `kpis` não é um nome de lista.
+
+`GET /v1/dashboard/atrasos` devolve os empréstimos atrasados agrupados pelo setor de destino, para o gráfico da tela inicial: `{ "data": [ { "setor_id": 3, "setor_nome": "Produção", "atrasados": 7, "maior_atraso_dias": 12 } ] }`. Só entram setores com ao menos um atraso (sem atrasos, `data` é `[]`), o setor com mais atrasos vem primeiro (empate por nome) e `maior_atraso_dias` é o atraso do empréstimo mais antigo do setor. Atrasado tem a mesma definição do cartão de atrasados (previsão em dia anterior, calendário de Brasília), então a soma de `atrasados` é o `kpis.atrasadas`. Mesmos perfis do `/kpis`, também antes de `/:lista`.
 
 ## KPIs de gestão (`GET /v1/kpis/*`)
 
