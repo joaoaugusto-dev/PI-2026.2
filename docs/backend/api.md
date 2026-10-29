@@ -29,7 +29,8 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 |---|---|---|---|
 | GET | `/v1/health` | Público | Healthcheck |
 | POST | `/v1/auth/login` | Público | Login |
-| POST | `/v1/auth/registro` | Público | Auto-cadastro por matrícula (cria conta inativa, aguardando aprovação) |
+| GET | `/v1/auth/convites/:token` | Público (limite de tentativas) | Confere o link de acesso e devolve nome e matrícula de quem vai definir a senha |
+| POST | `/v1/auth/convites/:token/senha` | Público (limite de tentativas) | Define a senha pelo link e já devolve a sessão (o link vale uma vez) |
 | GET | `/v1/auth/me` | Autenticado | Usuário atual |
 | POST | `/v1/consulta/sessao` | Público | Token limitado de consulta |
 | GET | `/v1/consulta/ferramentas` | Consulta | Busca somente leitura; cada item traz só `id`, `nome`, `categoria`, `status`, `localizacao` e `codigo_identificacao` (nunca colaborador, histórico nem valores). Consulta registrada no log |
@@ -62,8 +63,7 @@ Na coluna Perfil, "Manutenção" vale também para o `admin` (a manutenção com
 | GET | `/v1/importacoes/:recurso/modelo` | Igual ao da importação | Modelo de CSV do recurso |
 | GET | `/v1/exportacoes/:recurso` | Manutenção/Admin | Exportação CSV de cadastros e do histórico de empréstimos |
 | GET | `/v1/auditoria` | Admin | Trilha de auditoria: quem mudou o quê, com antes e depois (ver [Auditoria](#auditoria-get-v1auditoria)) |
-| GET | `/v1/usuarios?ativo=false` | Admin | Lista cadastros pendentes de aprovação |
-| PATCH | `/v1/usuarios/:id/ativar` | Admin | Aprova um cadastro pendente |
+| POST | `/v1/colaboradores/:id/convite` | Admin | Gera o link de acesso do colaborador (substitui o auto-cadastro com aprovação, removido em 01/10/2026) |
 
 ## Retirada de ferramenta (`POST /v1/emprestimos`)
 

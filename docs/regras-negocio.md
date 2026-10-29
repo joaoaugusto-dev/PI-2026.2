@@ -20,6 +20,11 @@ jsonb e o comando **`npm run data:check`**. O fim do documento traz o
 [mapa regra → implementação → teste → verificação](#mapa-regra--implementação--teste--verificação)
 e a seção sobre [como as regras são rastreadas e conferidas](#rastreabilidade-e-verificação-das-regras).
 
+**Atualização de 24/10/2026 (DATA-08).** Entrou o complemento
+[Calendário e notificações](#complemento--calendário-e-notificações-derivados-das-regras-1-e-3),
+consequência da API-17: o cálculo do calendário, os três tipos de aviso, o timer do servidor no
+lugar do `pg_cron` e o aviso de ocorrência pendente há mais de 7 dias. Não altera nenhuma das 10 regras.
+
 ---
 
 ## Regra 1 — Um empréstimo aberto por ferramenta
@@ -29,19 +34,19 @@ tempo. Garantido pelo banco, não só pela API.
 
 **Onde está implementada:**
 - Índice único parcial `uq_emprestimo_aberto`
-  (`api/db/migrations/0001_init.sql:209-211`):
+  (`api/db/migrations/0001_init.sql`):
   ```sql
   CREATE UNIQUE INDEX IF NOT EXISTS uq_emprestimo_aberto
   ON emprestimos (ferramenta_id, COALESCE(item_kit_id, 0))
   WHERE data_devolucao IS NULL;
   ```
 - Reforçada pela trigger `fn_valida_retirada`
-  (`api/db/migrations/0001_init.sql:348-371`), que bloqueia a retirada se a
+  (`api/db/migrations/0001_init.sql`), que bloqueia a retirada se a
   ferramenta (não-kit) não estiver com `status = 'disponivel'`.
 
 **O que acontece se for violada:** a tentativa de `INSERT` que colidiria com
 o índice único (ou a trigger) falha no banco com erro de restrição. A camada
-de serviço (`api/src/services/emprestimoService.ts:60-67`) captura esse erro
+de serviço (`api/src/services/emprestimoService.ts`) captura esse erro
 do Postgres e traduz para **HTTP 409** com
 `error.code = "FERRAMENTA_INDISPONIVEL"` (envelope de erro padrão da Seção 5
 do `CLAUDE.md`).
@@ -69,9 +74,9 @@ nunca aparecem juntas.
 
 **Onde está implementada:**
 - Enum `status_ferramenta` com exatamente esses três valores
-  (`api/db/migrations/0001_init.sql:36-40`).
+  (`api/db/migrations/0001_init.sql`).
 - View `vw_dashboard_kpis` já contabiliza os três separadamente
-  (`api/db/migrations/0001_init.sql:554-561`).
+  (`api/db/migrations/0001_init.sql`).
 - No front, páginas distintas (`web/src/pages/FerramentasPage.tsx` e
   `web/src/pages/IndisponiveisPage.tsx`), roteadas separadamente em
   `web/src/router.tsx`.
@@ -101,12 +106,12 @@ ocorrência é aberta automaticamente, herdando o colaborador responsável, e a
 ferramenta vai para `indisponivel` com o motivo gravado.
 
 **Onde está implementada:**
-- Trigger `fn_abre_ocorrencia` (`api/db/migrations/0001_init.sql:472-508`),
+- Trigger `fn_abre_ocorrencia` (`api/db/migrations/0001_init.sql`),
   disparada depois do `UPDATE` em `emprestimos` que registra a devolução:
   insere em `ocorrencias` herdando `colaborador_id` do empréstimo quando
   `condicao_devolucao IN ('avaria', 'perda')`.
 - Trigger irmã `fn_sync_status_ferramenta`
-  (`api/db/migrations/0001_init.sql:436-469`), que muda
+  (`api/db/migrations/0001_init.sql`), que muda
   `ferramentas.status` para `'indisponivel'` e grava `motivo_indisponivel`.
 
 **O que acontece se for violada:** não é uma validação que recusa uma
@@ -155,7 +160,7 @@ Observações sobre o diagrama:
 
 - A transição `indisponivel → disponivel` **não é automática** — é a única
   ação explícita das quatro, de propósito (regra de negócio documentada em
-  `api/src/services/ferramentaService.ts:243-246`: "após o reparo, a
+  `api/src/services/ferramentaService.ts`: "após o reparo, a
   disponibilização deve ser uma ação explícita e auditável"). Tentar
   disponibilizar uma ferramenta que já está disponível devolve **409
   FERRAMENTA_JA_DISPONIVEL**.
@@ -174,9 +179,9 @@ na retirada.
 
 **Onde está implementada:**
 - `atividadeId` e `atividadeObservacao` são `.optional()` em
-  `criarEmprestimoSchema` (`api/src/validators/emprestimoValidator.ts:50-51`).
+  `criarEmprestimoSchema` (`api/src/validators/emprestimoValidator.ts`).
 - Coluna `emprestimos.atividade_id` é `NULLABLE`
-  (`api/db/migrations/0001_init.sql:186`).
+  (`api/db/migrations/0001_init.sql`).
 
 **O que acontece se for violada:** não há violação possível — é um campo
 opcional, nunca gera erro por estar ausente.
@@ -198,14 +203,14 @@ foi preenchido.
   → `colaboradorService.identificar`: tenta matrícula exata primeiro, depois
   nome tolerante a acento/erro de digitação via `unaccent` + `pg_trgm`
   (índice `idx_colaboradores_nome_trgm`,
-  `api/db/migrations/0003_colaboradores_identificacao.sql:29-30`).
+  `api/db/migrations/0003_colaboradores_identificacao.sql`).
 - Cadastro rápido reaproveita o mesmo `POST /v1/colaboradores` já usado pela
   tela de cadastro, aberto a `manutencao`/`admin`.
 
 **Divergência conhecida:** o schema não tem `codigo_cracha` como campo
 separado — foi removido já no `0001_init.sql` porque, na prática, o crachá
 **é** a própria matrícula (comentário explícito em
-`api/src/validators/colaboradorValidator.ts:34-36`). A regra 5 ainda fala em
+`api/src/validators/colaboradorValidator.ts`). A regra 5 ainda fala em
 "código de crachá" como algo distinto da matrícula; o código trata os dois
 como o mesmo valor.
 
@@ -267,15 +272,15 @@ Marcada como **"em revisão"** no `CLAUDE.md` desde a visita técnica à Soufer
 **O que o código realmente faz hoje:** gera um `codigo_identificacao`
 **SMALLINT de 4 dígitos (1 a 9999)**, sem prefixo `SF` e sem relação com o
 `id` da linha:
-- Coluna com `CHECK` (`api/db/migrations/0001_init.sql:144`):
+- Coluna com `CHECK` (`api/db/migrations/0001_init.sql`):
   `codigo_identificacao SMALLINT CHECK (codigo_identificacao BETWEEN 1 AND 9999)`.
 - Trigger `fn_gera_codigo_identificacao`
-  (`api/db/migrations/0001_init.sql:273-300`): busca o menor código livre
+  (`api/db/migrations/0001_init.sql`): busca o menor código livre
   entre 1 e 9999, serializado com `pg_advisory_xact_lock` para evitar corrida
   entre cadastros concorrentes (ver `docs/issues/api-13-endpoints-ocorrencias.md`
   para o histórico dessa correção).
 - Unicidade só entre ferramentas ativas, via índice parcial
-  `uq_ferramenta_codigo_ativo` (`api/db/migrations/0001_init.sql:163-165`) —
+  `uq_ferramenta_codigo_ativo` (`api/db/migrations/0001_init.sql`) —
   o código é reaproveitável quando a ferramenta é baixada (`ativo = false`).
 - Não existe, em nenhum lugar do código (`api/src/`), geração ou validação de
   um formato `SF######` — a busca por `"SF"`/`codigo_patrimonio` não retorna
@@ -290,7 +295,7 @@ reescrever a regra por conta própria.
 **O que acontece se for violada:** inserir um valor fora de 1-9999 falha no
 `CHECK` do banco. Esgotar os 9999 códigos ativos dispara
 `RAISE EXCEPTION 'Limite máximo de 9999 ferramentas ativas atingido...'`
-(`api/db/migrations/0001_init.sql:287`).
+(`api/db/migrations/0001_init.sql`).
 
 **Exemplo real:** `api/src/tests/ferramentaService.test.ts` cadastra uma
 ferramenta sem informar `codigo_identificacao` (bloco que cria a ferramenta com
@@ -310,19 +315,27 @@ códigos", a mensagem da trigger sai como `409 BUSINESS_RULE_VIOLATION`.
 
 ## Regra 8 — Três perfis e suas permissões
 
-**Atualização de 01/10/2026:** `admin` é a manutenção com recursos a mais — tudo
-que a manutenção faz (balcão, etiqueta, atividades, retirada/devolução) o admin
-também faz; a manutenção nunca tem permissão que o admin não tenha. Os
-parágrafos abaixo (30/09/2026) que dizem que o admin recebe 403 no balcão ou ao
-editar atividades estão superados; os testes já refletem a nova regra.
+**O que diz:** o admin é a manutenção com recursos a mais (decisão de 01/10/2026): tudo
+que a manutenção faz (balcão, etiqueta, atividades, retirada e devolução, notificações) o
+admin também faz, e a manutenção nunca tem permissão que o admin não tenha.
 
-**O que diz (atualizado em 30/09/2026):** `manutencao` opera o balcão
-(retirada, devolução, consulta, indisponíveis, calendário, histórico, e faz
-cadastro rápido de colaborador); `admin` cria os colaboradores, gera o link de acesso de cada um e cuida dos
-cadastros auxiliares (Colaboradores, Ferramentas, Categorias, Setores —
-edição/inativação exclusivas do admin, leitura/criação de
-ferramenta/colaborador abertas à manutenção) e, desde esta issue, também lê
-e cadastra Atividades; `consulta` tem sessão de 15 minutos só leitura (nome, categoria, status e localização da ferramenta; nunca quem está com ela, histórico ou valores), com token isolado do da manutenção/admin.
+- `manutencao` opera o balcão: retirada, devolução, consulta de ferramentas,
+  indisponíveis, calendário e histórico; também faz o cadastro rápido de colaborador no
+  meio do fluxo.
+- `admin` cria os colaboradores e gera o **link de acesso** de cada um
+  (`POST /v1/colaboradores/:id/convite`, migration `0008_convites_acesso.sql`): quem recebe
+  define a própria senha e já entra logado. Cuida também dos cadastros auxiliares
+  (Colaboradores, Ferramentas, Categorias e Setores): edição e inativação são só dele, com
+  403 para a manutenção; leitura e criação de ferramenta e de colaborador seguem abertas à
+  manutenção porque o fluxo de retirada as consome. O admin também recebe as notificações
+  (`notificacaoRoutes.ts` autoriza os dois perfis).
+- `consulta` tem sessão de 15 minutos por matrícula, sem senha, só leitura: vê nome,
+  categoria, status e localização da ferramenta, nunca quem está com ela, histórico ou
+  valores. O token da consulta e o da manutenção/admin são isolados nos dois sentidos, e a
+  entrada tem limite de tentativas por IP e por matrícula (`consultaRoutes.ts`,
+  `middlewares/rateLimit.ts`).
+- Não existe mais auto-cadastro com aprovação: o colaborador cadastrado pelo admin já é o
+  funcionário. As rotas `/v1/usuarios` e `/v1/auth/registro` foram removidas.
 
 **Onde está implementada** (confirmado rota a rota em 20/10/2026, `authorize(...)` em cada
 arquivo de `api/src/routes/v1/`). O `admin` entra em todas as rotas da manutenção; a coluna
@@ -342,14 +355,7 @@ arquivo de `api/src/routes/v1/`). O `admin` entra em todas as rotas da manutenç
 | `consulta` (sessão de 15 minutos) | só `GET /v1/consulta/ferramentas`, com token isolado | — |
 
 O 403 genérico vem de `api/src/middlewares/authorize.ts` (função `authorize`,
-`error.code = "ACCESS_DENIED"`). O auto-cadastro com aprovação (`/v1/usuarios`) deixou de
-existir em 01/10/2026: o colaborador cadastrado pelo admin já é o funcionário e recebe o
-link de acesso.
-
-**Histórico (30/09/2026):** o texto da regra já dizia que o admin "lê e cadastra"
-atividades, mas `atividadeRoutes.ts` autorizava só `manutencao`; foi corrigido e, na decisão
-de 01/10/2026 ("o admin é a manutenção com recursos a mais"), `PUT`/`PATCH`/`DELETE` de
-atividades também passaram a aceitar o admin.
+`error.code = "ACCESS_DENIED"`).
 
 **O que acontece se for violada:** **HTTP 403** com `error.code =
 "ACCESS_DENIED"` e `details: [{ requiredRoles, userRole }]`.
@@ -374,7 +380,7 @@ fallback de sábado/domingo se a API estiver fora.
 - `buscarNaBrasilApi`: chama
   `https://brasilapi.com.br/api/feriados/v1/{ano}`; falha de rede ou status
   não-OK lança `AppError(502, 'BRASIL_API_UNAVAILABLE')`.
-- Cache: tabela `feriados` (`api/db/migrations/0001_init.sql:246-253`),
+- Cache: tabela `feriados` (`api/db/migrations/0001_init.sql`),
   preenchida por `sincronizarFeriados` (upsert).
 - `gerarFallbackFinsDeSemana`: gera só sábados/domingos do
   ano, marcados com `tipo: 'fallback_fim_de_semana'`.
@@ -420,6 +426,49 @@ ferramenta, sem relação com a entrega do trabalho).
 
 ---
 
+## Complemento — Calendário e notificações (derivados das regras 1 e 3)
+
+**Não é uma 11ª regra de negócio inegociável.** São duas leituras derivadas dos
+empréstimos e das ocorrências que as regras 1 e 3 já garantem, entregues na API-17
+(telas de calendário e de notificações). O que muda aqui é o cálculo, e ele merece
+estar documentado porque envolve data, fuso e deduplicação.
+
+**Calendário** (`GET /v1/emprestimos/calendario?mes=AAAA-MM`): só entram empréstimos
+**abertos** (`data_devolucao` nulo) cuja previsão cai no mês. O dia é calculado no fuso
+de Brasília (`America/Sao_Paulo`), então uma previsão às 23:30 de 31/03 conta em março.
+Responde só os dias que têm devolução, em ordem cronológica. Perfis `manutencao` e `admin`.
+
+**Notificações** (`fn_gerar_notificacoes()`, migrations `0006` e `0015`): três tipos, todos
+da equipe toda (`usuario_id` nulo, `lida` compartilhado):
+
+| Tipo | Quando nasce | Deduplicação |
+|---|---|---|
+| `devolucao_hoje` | Empréstimo aberto com previsão para hoje (data de Brasília) | Um por empréstimo (`link` `/ferramentas/:id?emprestimo=:id`) |
+| `atraso` | Empréstimo aberto com previsão em dia anterior | Um por empréstimo; o mesmo empréstimo que estava em `devolucao_hoje` ganha o `atraso` no dia seguinte |
+| `ocorrencia_pendente` | Ocorrência com status fora de `resolvida` e `baixada`, aberta há **mais de 7 dias** (constante `dias_pendente`) | Um por ocorrência (`link` `/ferramentas/:id?ocorrencia=:id`). Na mensagem, `PERDA` aparece como "extravio" |
+
+**Quem executa.** O timer do `api/src/server.ts` chama `fn_gerar_notificacoes()` ao subir e
+a cada 30 minutos, e `fn_limpar_notificacoes()` ao subir e a cada 24 horas (apaga as lidas
+com mais de 30 dias). O `pg_cron` deixou de ser requisito: o PostgreSQL do Dokploy não traz
+a extensão, e onde ela existir só funciona como reforço, porque as duas funções são
+idempotentes. Como o timer roda todos os dias, o aviso também sai no fim de semana (o
+`pg_cron` rodava só de segunda a sexta).
+
+**Se for violada / se falhar.** Não há 409 aqui: a geração é do banco, não de uma rota. Se o
+timer falhar, o servidor registra `logger.warn` e tenta na rodada seguinte; o efeito visível
+é o sino sem avisos novos. Se a ocorrência continuar pendente depois que o aviso lido for
+apagado (30 dias), nasce um novo aviso, na prática um lembrete mensal. A ocorrência nunca
+retrocede de status (a API recusa), então uma encerrada não volta a ficar pendente.
+
+**Teste:** `api/src/tests/gerarNotificacoes.test.ts` (`devolucao_hoje` e `atraso` sem aviso para
+prazo futuro, `ocorrencia_pendente` só para as não encerradas com mais de 7 dias, `PERDA` chamada
+de extravio e a segunda execução sem duplicar). Evidência
+da execução manual e da coleção do Insomnia em
+[`testes/api-17-notificacoes/`](testes/api-17-notificacoes/). Rotas documentadas em
+[`backend/api.md`](backend/api.md#notificações-v1notificacoes).
+
+---
+
 ## Resumo
 
 | # | Regra | Implementação técnica | Status |
@@ -434,6 +483,7 @@ ferramenta, sem relação com a entrega do trabalho).
 | 8 | 3 perfis e permissões | `authorize()` por rota | ✅ Implementada; matriz revisada em 20/10/2026 |
 | 9 | Feriados BrasilAPI + fallback | Service com cache | ✅ Implementada e testada, inclusive o fallback e a falha de banco |
 | 10 | Entrega fora do prazo = zero | — | N/A — regra institucional, sem implementação de software |
+| — | Calendário e notificações (derivados das regras 1 e 3) | `fn_gerar_notificacoes`, timer do servidor, `GET /v1/emprestimos/calendario` | ✅ Implementada e testada; não é uma das 10 regras |
 
 ---
 
@@ -487,6 +537,7 @@ que o banco o recusa (erro `23505`) e que a verificação roda limpa.
 | 8 | API | `authorize()`, token de consulta isolado | `permissoesCadastros.test.ts`, `ferramentaPermissoes.test.ts`, `authorize.test.ts`, `consultaSessao*.test.ts`, `auditoriaRoutes.test.ts` | — (permissão não deixa marca no dado) |
 | 9 | API + banco | `feriadoService`, tabela `feriados` | `feriado.test.ts`, `feriadoFallback.test.ts` | — |
 | 10 | — (institucional) | — | — | — |
+| — | Calendário e notificações | `fn_gerar_notificacoes`, `fn_limpar_notificacoes`, timer em `server.ts`, migrations `0006`, `0007` e `0015` | `gerarNotificacoes.test.ts` | — (aviso derivado, não deixa dado a conferir) |
 | — | Validação geral | Zod em todas as rotas de escrita, `errorHandler` | `ferramentaValidation.test.ts`, `errorHandler.test.ts`, `kpi.test.ts`, `importacaoFerramentas.test.ts` | `FERRAMENTA_VALOR_NEGATIVO`, `FERRAMENTA_NOME_VAZIO`, `FERRAMENTA_SUBGRUPO_FORA_DO_GRUPO`, `EMPRESTIMO_PREVISAO_ANTES_RETIRADA`, `EMPRESTIMO_DEVOLUCAO_ANTES_RETIRADA`, `EMPRESTIMO_DEVOLVIDO_SEM_CONDICAO`, `EMPRESTIMO_COLABORADOR_INATIVO_ABERTO`, `FOTO_ARQUIVO_INEXISTENTE` |
 
 As evidências de execução de cada coluna (saída dos testes, do `data:check`, da importação
