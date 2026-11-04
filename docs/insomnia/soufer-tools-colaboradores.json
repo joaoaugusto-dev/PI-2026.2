@@ -154,6 +154,38 @@
       "settingFollowRedirects": "global"
     },
     {
+      "_id": "req_01b",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790200000000,
+      "created": 1790200000000,
+      "name": "01b · Login do admin — 200",
+      "description": "## O que faz\nAutentica o admin do seed e grava o token em `token_admin`.\n\n## Por que existe\nEditar (PATCH) e inativar (DELETE) colaborador são exclusivos do `admin` (403 para a manutenção). As requisições 13, 14, 22, 24 e 25 usam `token_admin`; sem este login a variável ficava vazia e todas retornavam 403 `ACCESS_DENIED`.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma.\n- **Corpo (JSON):** matrícula `0053` / senha `123456` (admin criado pelo `seed.sql`).\n- **Variáveis gravadas:** `token_admin`\n\n## Resultado esperado\nHTTP 200 com `data.token` e `data.usuario.papel = admin`.\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é admin\n\n## Observações\nRequer o seed executado (`npm run db:seed`).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0053\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1500,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Resposta traz um token', () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test('Perfil é admin', () => {\n  insomnia.expect(corpo.data.usuario.papel).to.eql('admin');\n});\n\n// Grava no ambiente só se a resposta foi a esperada (200).\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_admin', String(corpo.data.token));\n}",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
       "_id": "req_02",
       "_type": "request",
       "parentId": "fld_1",
@@ -363,7 +395,7 @@
       "modified": 1790200000000,
       "created": 1790200000000,
       "name": "09 · Identificar o colaborador recém-cadastrado por nome — 200",
-      "description": "## O que faz\nBusca \"joao augusto\" (sem acento, minúsculo) logo após o cadastro da requisição 08.\n\n## Por que existe\nFecha o fluxo de ponta a ponta descrito na issue #45: identificar → não achar → cadastrar → identificar de novo, agora encontrando o colaborador recém-criado. É também o critério de aceite literal da issue (\"buscar 'joao augusto' acha 'João Augusto'\").\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Parâmetros de query:** `termo=joao augusto`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador criado na requisição 08.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Encontrou o colaborador recém-cadastrado\n\n## Observações\nDepende da requisição 08.",
+      "description": "## O que faz\nBusca \"joao augusto\" (sem acento, minúsculo) logo após o cadastro da requisição 08.\n\n## Por que existe\nFecha o fluxo de ponta a ponta descrito na issue #45: identificar → não achar → cadastrar → identificar de novo, agora encontrando o colaborador recém-criado. É também o critério de aceite literal da issue (\"buscar 'joao augusto' acha 'João Augusto'\").\n\n## Como está configurada\n- **Método e rota:** `GET /v1/colaboradores/identificar`\n- **Parâmetros de query:** `termo=joao augusto`\n- **Autenticação:** Bearer Token = variável de ambiente `token` (login da manutenção, requisição 01).\n- **Variáveis lidas:** `token`, `colaborador_id`\n- **Variáveis gravadas:** nenhuma\n\n## Resultado esperado\nHTTP 200 com o colaborador criado na requisição 08.\n\n## Testes automáticos\nExecutados sozinhos após a resposta (aba Tests, ou painel do Collection Runner):\n- Status HTTP 200\n- Encontrou o colaborador recém-cadastrado\n\n## Observações\nDepende da requisição 08. Se o banco tiver outros \"João Augusto\" ativos (sobras de execuções antigas), a API responde 409 `COLABORADOR_AMBIGUO`; o teste aceita isso desde que o colaborador criado esteja entre os candidatos. Para limpar, inative os homônimos antigos com a requisição 14.",
       "method": "GET",
       "url": "{{ _.base_url }}/colaboradores/identificar?termo=joao augusto",
       "body": {},
@@ -375,7 +407,7 @@
       },
       "metaSortKey": 9000,
       "isPrivate": false,
-      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test('Status HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('Encontrou o colaborador recém-cadastrado', () => {\n  insomnia.expect(String(corpo.data.id)).to.eql(insomnia.environment.get('colaborador_id'));\n});",
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\nconst idCriado = insomnia.environment.get('colaborador_id');\n\n// 200 = único \"João Augusto\" ativo. 409 COLABORADOR_AMBIGUO = há outros homônimos ativos no banco\n// (sobras de execuções antigas); nesse caso o colaborador criado deve estar entre os candidatos.\ninsomnia.test('Status HTTP 200 (ou 409 ambíguo por homônimos)', () => {\n  insomnia.expect([200, 409]).to.include(insomnia.response.code);\n});\n\ninsomnia.test('Encontrou o colaborador recém-cadastrado', () => {\n  if (insomnia.response.code === 200) {\n    insomnia.expect(String(corpo.data.id)).to.eql(idCriado);\n  } else {\n    insomnia.expect(corpo.error.code).to.eql('COLABORADOR_AMBIGUO');\n    const ids = (corpo.error.details || []).map((c) => String(c.id));\n    insomnia.expect(ids).to.include(idCriado);\n  }\n});",
       "settingStoreCookies": true,
       "settingSendCookies": true,
       "settingDisableRenderRequestBody": false,
