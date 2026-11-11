@@ -1,0 +1,868 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-24T20:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v13.1.0",
+  "resources": [
+    {
+      "_id": "wrk_soufer_tools_seguranca",
+      "_type": "workspace",
+      "parentId": null,
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "SOUFER Tools — Segurança do JWT e dos middlewares",
+      "description": "# Testes da API SOUFER Tools — Segurança do JWT e dos middlewares (issue #78, API-19)\nColeção de invasão simulada: prova que o sistema **bloqueia certo**. Todos os testes esperam uma recusa (401 ou 403), exceto a pasta 3, que confirma que quem deve entrar continua entrando.\n\n**Como usar:** suba a API (`npm run dev` em `api/`, com `NODE_ENV=development`), rode a pasta 1 (tokens válidos), gere os tokens forjados com o script `docs/insomnia/gerar-tokens-invasao.mjs` (ver `teste-api-seguranca.md`) e rode as pastas na ordem pelo Collection Runner.\n\nCada requisição traz na sua descrição: o que faz, por que existe, como está configurada e o resultado esperado.\n\n**Variáveis de ambiente** (Base Environment): `base_url`; `token`, `token_admin` e `token_consulta` (gravados por script na pasta 1); e as sete variáveis de tokens forjados (`token_vencido_manutencao`, `token_vencido_consulta`, `token_alg_none`, `token_hs512`, `token_aud_consulta_em_balcao`, `token_aud_sessao_em_consulta`, `token_sem_aud`), coladas a partir da saída do script.\n\nA coleção só lê dados e não grava nada: a única escrita tentada (`POST /emprestimos`) é barrada com 403 antes de ler o corpo.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base_seguranca",
+      "_type": "environment",
+      "parentId": "wrk_soufer_tools_seguranca",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000/v1",
+        "token": "",
+        "token_admin": "",
+        "token_consulta": "",
+        "token_vencido_manutencao": "",
+        "token_vencido_consulta": "",
+        "token_alg_none": "",
+        "token_hs512": "",
+        "token_aud_consulta_em_balcao": "",
+        "token_aud_sessao_em_consulta": "",
+        "token_sem_aud": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1790600000000
+    },
+    {
+      "_id": "fld_1",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_seguranca",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "1 — Autenticação",
+      "description": "Obtém os três tokens válidos usados pelo resto da coleção: manutenção e admin (login por matrícula) e consulta (sessão por matrícula). Os três são gravados por script.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "fld_2",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_seguranca",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "2 — Token de consulta e perfis errados (403)",
+      "description": "O token do quiosque tentando rotas da manutenção, e a manutenção e o admin tentando a rota do quiosque. Todas devem ser barradas por `authorize` com 403 `ACCESS_DENIED`.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "fld_3",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_seguranca",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "3 — Acessos que devem passar (200)",
+      "description": "O contraponto da pasta 2: confirma que o bloqueio não é cego. Cada perfil continua entrando onde deve.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000
+    },
+    {
+      "_id": "fld_4",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_seguranca",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "4 — Sem token e token vencido (401)",
+      "description": "Ausência de token, cabeçalho malformado, token que não é JWT e tokens vencidos. Todas devem responder 401 com o código certo. Os dois tokens vencidos vêm do script `gerar-tokens-invasao.mjs`.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000
+    },
+    {
+      "_id": "fld_5",
+      "_type": "request_group",
+      "parentId": "wrk_soufer_tools_seguranca",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "5 — Tokens forjados (401)",
+      "description": "Tokens adulterados que só existem se o atacante conhecer o segredo (ou nem isso, no `alg: none`): algoritmo trocado e `aud` trocado entre sessão de balcão e quiosque. A API deve recusar todos. Os tokens vêm do script `gerar-tokens-invasao.mjs`.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000
+    },
+    {
+      "_id": "req_01",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "01 — Login da manutenção — 200",
+      "description": "## O que faz\nAutentica a manutenção por matrícula e devolve um token JWT de sessão de balcão (7 dias).\n\n## Por que existe\nPrimeiro passo da coleção: os testes das pastas 2 e 3 usam este token.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula e senha do seed.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token`\n\n## Resultado esperado\nHTTP 200 com `data.token` e perfil `manutencao`.\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é manutencao\n\n## Observações\nRequer o seed (`npm run db:seed`) e a API com `NODE_ENV=development`. Se os demais testes derem 401, rode esta de novo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0001\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é manutencao\", () => {\n  insomnia.expect((corpo.data.usuario || corpo.data.colaborador).papel).to.eql('manutencao');\n});\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token', String(corpo.data.token));\n}\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_02",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "02 — Login do admin — 200",
+      "description": "## O que faz\nAutentica o admin por matrícula e devolve um token JWT de sessão de balcão.\n\n## Por que existe\nO admin é a manutenção com recursos a mais: a pasta 2 prova que ele também não entra na rota do quiosque, e a pasta 3 que ele lê as opções.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/auth/login`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula e senha do seed.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token_admin`\n\n## Resultado esperado\nHTTP 200 com `data.token` e perfil `admin`.\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é admin\n\n## Observações\nSe o seu banco não tem o admin 0053, troque matrícula e senha do corpo (ou crie um admin com `npm run db:admin`).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"matricula\": \"0053\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é admin\", () => {\n  insomnia.expect((corpo.data.usuario || corpo.data.colaborador).papel).to.eql('admin');\n});\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_admin', String(corpo.data.token));\n}\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_03",
+      "_type": "request",
+      "parentId": "fld_1",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "03 — Sessão do quiosque (consulta) — 200",
+      "description": "## O que faz\nAbre uma sessão de consulta pela matrícula, sem senha, e devolve um token de 15 minutos.\n\n## Por que existe\nÉ o token que tenta invadir as rotas da manutenção na pasta 2.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/consulta/sessao`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Corpo (JSON):** matrícula de um colaborador do seed.\n- **Variáveis lidas:** `base_url`\n- **Variáveis gravadas:** `token_consulta`\n\n## Resultado esperado\nHTTP 200 com `data.token` e perfil `consulta`.\n\n## Testes automáticos\n- Status HTTP 200\n- Resposta traz um token\n- Perfil é consulta\n\n## Observações\nO token expira em 15 minutos: se os testes da pasta 2 ou 3 falharem por 401, rode esta de novo. A sessão de consulta tem limite de tentativas por IP e por matrícula.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/consulta/sessao",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identificador\": \"0003\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test(\"Resposta traz um token\", () => {\n  insomnia.expect(corpo.data.token).to.be.a('string').and.not.empty;\n});\n\ninsomnia.test(\"Perfil é consulta\", () => {\n  insomnia.expect((corpo.data.usuario || corpo.data.colaborador).papel).to.eql('consulta');\n});\nif (insomnia.response.code === 200) {\n  insomnia.environment.set('token_consulta', String(corpo.data.token));\n}\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_04",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "04 — Consulta lê a lista de ferramentas da manutenção — 403",
+      "description": "## O que faz\nToken de consulta pedindo `GET /v1/ferramentas`, a listagem completa da manutenção.\n\n## Por que existe\nPrimeiro cenário da issue: o quiosque não pode ver o que a manutenção vê (descrição, quem está com a ferramenta, motivo de indisponibilidade).\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_05",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "05 — Consulta tenta registrar uma retirada — 403",
+      "description": "## O que faz\nToken de consulta tentando `POST /v1/emprestimos` (retirada de ferramenta).\n\n## Por que existe\nUma rota que escreve: o quiosque é só leitura. O corpo é vazio porque `authorize` roda antes da validação, e o 403 prova que ele barra antes de qualquer outra coisa.\n\n## Como está configurada\n- **Método e rota:** `POST /v1/emprestimos`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Corpo (JSON):** objeto vazio, de propósito.\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)\n\n## Observações\nNada é gravado: a API nega antes de ler o corpo.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/emprestimos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_06",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "06 — Consulta lê a trilha de auditoria — 403",
+      "description": "## O que faz\nToken de consulta pedindo `GET /v1/auditoria`.\n\n## Por que existe\nA auditoria é só do admin: o token de consulta é o de menor privilégio e precisa ser barrado aqui.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/auditoria`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auditoria",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_07",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "07 — Consulta lê as opções de formulário — 403",
+      "description": "## O que faz\nToken de consulta pedindo `GET /v1/opcoes` (setores, categorias e atividades).\n\n## Por que existe\nRota fechada na API-19: antes só exigia estar autenticado, e o token do quiosque conseguia ler as listas.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/opcoes`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)\n\n## Observações\nSe esta devolver 200, a API está em versão anterior à API-19.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_08",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "08 — Consulta lê o dashboard — 403",
+      "description": "## O que faz\nToken de consulta pedindo `GET /v1/dashboard` (pendências da operação).\n\n## Por que existe\nMostra quem está atrasado e quais ferramentas estão em uso, informação que o quiosque nunca vê.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/dashboard`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/dashboard",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_09",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "09 — Manutenção tenta a rota do quiosque — 403",
+      "description": "## O que faz\nToken da manutenção pedindo `GET /v1/consulta/ferramentas`.\n\n## Por que existe\nO isolamento vale nos dois sentidos: a rota do quiosque é exclusiva do papel `consulta`.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/consulta/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token }}`\n- **Variáveis lidas:** `base_url`, `token`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/consulta/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 6000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_10",
+      "_type": "request",
+      "parentId": "fld_2",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "10 — Admin tenta a rota do quiosque — 403",
+      "description": "## O que faz\nToken do admin pedindo `GET /v1/consulta/ferramentas`.\n\n## Por que existe\nMesmo o admin, que faz tudo o que a manutenção faz, não usa a rota exclusiva do quiosque.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/consulta/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_admin }}`\n- **Variáveis lidas:** `base_url`, `token_admin`\n\n## Resultado esperado\nHTTP 403 com `error.code` = `ACCESS_DENIED`.\n\n## Testes automáticos\n- Status HTTP 403\n- Código de erro é ACCESS_DENIED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/consulta/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 7000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 403\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(403);\n});\n\ninsomnia.test(\"Código de erro é ACCESS_DENIED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('ACCESS_DENIED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_11",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "11 — Consulta lê a lista do quiosque — 200",
+      "description": "## O que faz\nToken de consulta pedindo a listagem própria do quiosque.\n\n## Por que existe\nProva que o bloqueio da pasta 2 não derrubou a rota que o quiosque realmente usa.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/consulta/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 200.\n\n## Testes automáticos\n- Status HTTP 200\n\n## Observações\nCada item traz só `id`, `nome`, `categoria`, `status`, `localizacao` e `codigo_identificacao`.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/consulta/ferramentas?limit=5",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_12",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "12 — Consulta lê os próprios dados em /auth/me — 200",
+      "description": "## O que faz\nToken de consulta pedindo `GET /v1/auth/me`.\n\n## Por que existe\nRota aberta a todo perfil autenticado de propósito: devolve só os dados do próprio usuário do token.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/auth/me`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_consulta`\n\n## Resultado esperado\nHTTP 200.\n\n## Testes automáticos\n- Status HTTP 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "13 — Manutenção lê as opções — 200",
+      "description": "## O que faz\nToken da manutenção pedindo `GET /v1/opcoes`.\n\n## Por que existe\nA manutenção usa as opções nos formulários de retirada e cadastro rápido.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/opcoes`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token }}`\n- **Variáveis lidas:** `base_url`, `token`\n\n## Resultado esperado\nHTTP 200.\n\n## Testes automáticos\n- Status HTTP 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "14 — Admin lê as opções — 200",
+      "description": "## O que faz\nToken do admin pedindo `GET /v1/opcoes`.\n\n## Por que existe\nO admin é a manutenção com recursos a mais: nunca tem menos acesso que ela.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/opcoes`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_admin }}`\n- **Variáveis lidas:** `base_url`, `token_admin`\n\n## Resultado esperado\nHTTP 200.\n\n## Testes automáticos\n- Status HTTP 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/opcoes",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_3",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "15 — Manutenção lê a lista de ferramentas — 200",
+      "description": "## O que faz\nToken da manutenção pedindo `GET /v1/ferramentas`.\n\n## Por que existe\nContraponto direto da primeira requisição da pasta 2: a mesma rota, perfil certo.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token }}`\n- **Variáveis lidas:** `base_url`, `token`\n\n## Resultado esperado\nHTTP 200.\n\n## Testes automáticos\n- Status HTTP 200",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas?limit=5",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 200\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "16 — Sem token — 401 TOKEN_NOT_PROVIDED",
+      "description": "## O que faz\nChama uma rota protegida sem o cabeçalho `Authorization`.\n\n## Por que existe\nToda rota fora da lista de públicas precisa de `authenticate`; o teste automático `segurancaRotas.test.ts` faz isto nas 69 rotas protegidas.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** Nenhuma. A requisição é enviada sem o cabeçalho `Authorization`, de propósito.\n- **Variáveis lidas:** `base_url`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_NOT_PROVIDED`.\n\n## Testes automáticos\n- Status HTTP 401\n- Código de erro é TOKEN_NOT_PROVIDED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_NOT_PROVIDED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_NOT_PROVIDED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "17 — Cabeçalho malformado — 401 TOKEN_MALFORMATTED",
+      "description": "## O que faz\nEnvia `Authorization: Token abc`, sem o prefixo `Bearer`.\n\n## Por que existe\nO formato do cabeçalho é conferido antes de qualquer decodificação.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Token abc`\n- **Variáveis lidas:** `base_url`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_MALFORMATTED`.\n\n## Testes automáticos\n- Status HTTP 401\n- Código de erro é TOKEN_MALFORMATTED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Token abc"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_MALFORMATTED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_MALFORMATTED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_18",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "18 — Texto que não é JWT — 401 TOKEN_INVALID",
+      "description": "## O que faz\nEnvia `Bearer isto-nao-e-um-jwt`.\n\n## Por que existe\nToken sem estrutura de JWT não pode derrubar a API nem passar.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer isto-nao-e-um-jwt`\n- **Variáveis lidas:** `base_url`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_INVALID`.\n\n## Testes automáticos\n- Status HTTP 401\n- Código de erro é TOKEN_INVALID\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer isto-nao-e-um-jwt"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "let corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_INVALID\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_19",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "19 — Token vencido da manutenção — 401 TOKEN_EXPIRED",
+      "description": "## O que faz\nToken de manutenção assinado com o segredo certo, mas já vencido, em `GET /v1/ferramentas`.\n\n## Por que existe\nSegundo cenário da issue: token vencido deve dar 401, não importa o papel.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_vencido_manutencao }}`\n- **Variáveis lidas:** `base_url`, `token_vencido_manutencao`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_EXPIRED`.\n\n## Testes automáticos\n- Variável `token_vencido_manutencao` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_EXPIRED\n- Resposta não vaza dados da rota (sem `data`)\n\n## Observações\nA variável `token_vencido_manutencao` vem do script `gerar-tokens-invasao.mjs` (ver o guia). Vazia, a requisição falha com TOKEN_MALFORMATTED (e o primeiro teste avisa).",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_vencido_manutencao }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_vencido_manutencao está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_vencido_manutencao') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_EXPIRED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_EXPIRED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_20",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "20 — Token vencido do quiosque na rota do quiosque — 401 TOKEN_EXPIRED",
+      "description": "## O que faz\nToken de consulta vencido em `GET /v1/consulta/ferramentas`.\n\n## Por que existe\nDepois dos 15 minutos o quiosque perde o acesso; o front então volta à tela de matrícula.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/consulta/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_vencido_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_vencido_consulta`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_EXPIRED`.\n\n## Testes automáticos\n- Variável `token_vencido_consulta` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_EXPIRED\n- Resposta não vaza dados da rota (sem `data`)\n\n## Observações\nA variável `token_vencido_consulta` vem do script `gerar-tokens-invasao.mjs`.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/consulta/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_vencido_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_vencido_consulta está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_vencido_consulta') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_EXPIRED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_EXPIRED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_21",
+      "_type": "request",
+      "parentId": "fld_4",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "21 — Token vencido do quiosque em rota da manutenção — 401 TOKEN_EXPIRED",
+      "description": "## O que faz\nToken de consulta vencido em `GET /v1/ferramentas`.\n\n## Por que existe\nA expiração é conferida antes do perfil: vencido dá 401 (e não 403), em qualquer rota.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_vencido_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_vencido_consulta`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_EXPIRED`.\n\n## Testes automáticos\n- Variável `token_vencido_consulta` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_EXPIRED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_vencido_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 6000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_vencido_consulta está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_vencido_consulta') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_EXPIRED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_EXPIRED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_22",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "22 — Token com alg none — 401 TOKEN_INVALID",
+      "description": "## O que faz\nToken sem assinatura (`alg: none`), com payload de admin e `aud` de sessão válidos.\n\n## Por que existe\nAtaque clássico de JWT: dizer no cabeçalho que não há assinatura. A API fixa o algoritmo em HS256 e recusa.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/auth/me`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_alg_none }}`\n- **Variáveis lidas:** `base_url`, `token_alg_none`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_INVALID`.\n\n## Testes automáticos\n- Variável `token_alg_none` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_INVALID\n- Resposta não vaza dados da rota (sem `data`)\n\n## Observações\nEste token nem precisa do segredo para ser forjado.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_alg_none }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_alg_none está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_alg_none') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_INVALID\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_23",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "23 — Token HS512 com o segredo certo — 401 TOKEN_INVALID",
+      "description": "## O que faz\nToken de admin assinado com o segredo certo e o `aud` certo, mas com o algoritmo HS512.\n\n## Por que existe\nProva que o algoritmo está fixo em HS256: só a regra de algoritmo barra este token.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/auth/me`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_hs512 }}`\n- **Variáveis lidas:** `base_url`, `token_hs512`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_INVALID`.\n\n## Testes automáticos\n- Variável `token_hs512` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_INVALID\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_hs512 }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_hs512 está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_hs512') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_INVALID\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_24",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "24 — aud de consulta em papel de balcão — 401 TOKEN_INVALID",
+      "description": "## O que faz\nToken de `manutencao` com o `aud` do quiosque, em `GET /v1/ferramentas`.\n\n## Por que existe\nO `aud` separa os dois tokens por construção: um papel de balcão com `aud` de consulta é inconsistente e é recusado.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_aud_consulta_em_balcao }}`\n- **Variáveis lidas:** `base_url`, `token_aud_consulta_em_balcao`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_INVALID`.\n\n## Testes automáticos\n- Variável `token_aud_consulta_em_balcao` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_INVALID\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_aud_consulta_em_balcao }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 3000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_aud_consulta_em_balcao está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_aud_consulta_em_balcao') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_INVALID\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_25",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "25 — aud de sessão em papel de consulta — 401 TOKEN_INVALID",
+      "description": "## O que faz\nToken de `consulta` com o `aud` da sessão de balcão, em `GET /v1/consulta/ferramentas`.\n\n## Por que existe\nO sentido inverso do teste anterior: o papel de consulta só vale com o `aud` do quiosque.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/consulta/ferramentas`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_aud_sessao_em_consulta }}`\n- **Variáveis lidas:** `base_url`, `token_aud_sessao_em_consulta`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_INVALID`.\n\n## Testes automáticos\n- Variável `token_aud_sessao_em_consulta` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_INVALID\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/consulta/ferramentas",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_aud_sessao_em_consulta }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 4000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_aud_sessao_em_consulta está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_aud_sessao_em_consulta') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_INVALID\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_INVALID');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_26",
+      "_type": "request",
+      "parentId": "fld_5",
+      "modified": 1790600000000,
+      "created": 1790600000000,
+      "name": "26 — Token sem aud (sessão antiga) — 401 TOKEN_OUTDATED",
+      "description": "## O que faz\nToken de manutenção válido, mas sem `aud`: como os emitidos antes da API-19.\n\n## Por que existe\nAs sessões de 7 dias anteriores ao hardening caem aqui; o front trata o 401 como logout e pede novo login.\n\n## Como está configurada\n- **Método e rota:** `GET /v1/auth/me`\n- **Autenticação:** cabeçalho `Authorization: Bearer {{ _.token_sem_aud }}`\n- **Variáveis lidas:** `base_url`, `token_sem_aud`\n\n## Resultado esperado\nHTTP 401 com `error.code` = `TOKEN_OUTDATED`.\n\n## Testes automáticos\n- Variável `token_sem_aud` está preenchida (se falhar, os demais testes desta requisição falham por TOKEN_MALFORMATTED)\n- Status HTTP 401\n- Código de erro é TOKEN_OUTDATED\n- Resposta não vaza dados da rota (sem `data`)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token_sem_aud }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 5000,
+      "isPrivate": false,
+      "afterResponseScript": "// Sem o token colado no Base Environment a API só vê \"Bearer\" e responde TOKEN_MALFORMATTED, sem relação com o que a requisição quer provar.\ninsomnia.test(\"Variável token_sem_aud está preenchida (rode gerar-tokens-invasao.mjs e cole o valor no Base Environment)\", () => {\n  insomnia.expect(String(insomnia.environment.get('token_sem_aud') || '')).to.not.be.empty;\n});\n\nlet corpo = {};\ntry { corpo = insomnia.response.json(); } catch (e) { corpo = {}; }\n\ninsomnia.test(\"Status HTTP 401\", () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});\n\ninsomnia.test(\"Código de erro é TOKEN_OUTDATED\", () => {\n  insomnia.expect(corpo.error.code).to.eql('TOKEN_OUTDATED');\n});\n\ninsomnia.test(\"Resposta não vaza dados da rota (sem data)\", () => {\n  insomnia.expect(corpo).to.not.have.property('data');\n});\n",
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    }
+  ]
+}
