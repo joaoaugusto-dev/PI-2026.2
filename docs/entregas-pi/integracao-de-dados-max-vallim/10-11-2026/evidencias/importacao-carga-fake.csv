@@ -1,0 +1,35 @@
+﻿nome;categoria;marca;modelo;setor;localizacao;descricao;valor
+Chave de fenda Phillips;Ferramentas Manuais;Gedore;D766;Usinagem CNC;Armário 1;;33,80
+Chave de fenda Phillips;Ferramentas Manuais;Tramontina;A619;Montagem Industrial;Armário 1;;20,41
+Alicate de corte;Ferramentas Manuais;Gedore;A346;Usinagem CNC;Gaveta 4;;61,68
+Alicate de corte;Ferramentas Manuais;Tramontina;G226;Montagem Industrial;Bancada A;;42,96
+Martelo de borracha;Ferramentas Manuais;Tramontina;D150;Montagem Industrial;Armário 1;;45,20
+Martelo de borracha;Ferramentas Manuais;Tramontina;B653;Usinagem CNC;Gaveta 4;;35,14
+Chave inglesa 12 polegadas;Ferramentas Manuais;Stanley;H285;Usinagem CNC;Gaveta 4;;97,02
+Chave inglesa 12 polegadas;Ferramentas Manuais;Gedore;G829;Usinagem CNC;Gaveta 4;;82,93
+Jogo de chaves Allen;Ferramentas Manuais;Bosch;D796;Manutenção Geral;Gaveta 2;;60,95
+Jogo de chaves Allen;Ferramentas Manuais;Stanley;D470;Estamparia;Armário 2;;53,28
+Furadeira de impacto;Ferramentas Elétricas;Bosch;B183;Manutenção Geral;Armário 3;;734,45
+Furadeira de impacto;Ferramentas Elétricas;DeWalt;C846;Controle de Qualidade;Armário 3;;622,31
+Esmerilhadeira angular 4 1/2;Ferramentas Elétricas;Makita;D268;Estamparia;Armário 2;;323,68
+Esmerilhadeira angular 4 1/2;Ferramentas Elétricas;Bosch;H179;Manutenção Geral;Gaveta 4;;436,03
+Serra tico-tico;Ferramentas Elétricas;Bosch;C708;Controle de Qualidade;Gaveta 4;;436,05
+Serra tico-tico;Ferramentas Elétricas;Bosch;A376;Controle de Qualidade;Bancada A;;327,51
+Parafusadeira a bateria;Ferramentas Elétricas;DeWalt;H417;Usinagem e Ajustagem;Gaveta 4;;489,44
+Parafusadeira a bateria;Ferramentas Elétricas;Makita;D784;Estamparia;Armário 1;;634,99
+Chave de impacto 1/2 polegada;Ferramentas Pneumáticas;Chicago Pneumatic;G219;Controle de Qualidade;Armário 1;;1.433,20
+Lixadeira pneumática;Ferramentas Pneumáticas;Chicago Pneumatic;B856;Montagem Industrial;Gaveta 2;;1.114,59
+Lixadeira pneumática;Ferramentas Pneumáticas;Schulz;D182;Montagem Industrial;Gaveta 2;;1.233,45
+Paquímetro digital 150 mm;Instrumentos de Medição;Digimess;B938;Controle de Qualidade;Prateleira 5;;438,24
+Paquímetro digital 150 mm;Instrumentos de Medição;Digimess;C799;Controle de Qualidade;Armário 2;;512,01
+Micrômetro externo 0-25 mm;Instrumentos de Medição;Mitutoyo;B337;Usinagem e Ajustagem;Armário 2;;266,47
+Micrômetro externo 0-25 mm;Instrumentos de Medição;Mitutoyo;G286;Estamparia;Armário 3;;491,58
+Torquímetro de estalo;Instrumentos de Medição;Gedore;G478;Manutenção Geral;Gaveta 4;;473,82
+Torquímetro de estalo;Instrumentos de Medição;Tramontina;H979;Manutenção Geral;Gaveta 4;;1.160,13
+Máquina de solda MIG;Equipamentos de Solda;Esab;K898;Usinagem e Ajustagem;Prateleira 5;;4.463,57
+Máscara de solda automática;Equipamentos de Solda;3M;D206;Controle de Qualidade;Bancada A;;508,75
+Máscara de solda automática;Equipamentos de Solda;3M;A313;Controle de Qualidade;Armário 2;;290,46
+Alicate de pressão;Categoria Inexistente;Gedore;;Usinagem CNC;;;45,00
+Martelo;Ferramentas Manuais;Tramontina;;Usinagem CNC;;;12,5,0
+A;Ferramentas Manuais;;;Usinagem CNC;;;
+Chave de fenda Phillips;Ferramentas Manuais;Gedore;D766;Usinagem CNC;Armário 1;;33,80
