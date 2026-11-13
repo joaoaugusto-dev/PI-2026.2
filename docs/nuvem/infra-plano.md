@@ -113,6 +113,7 @@ flowchart TD
 3. **Plano de Contingência (Plano B):**
    - Caso haja impedimento na AWS ou necessidade de failover ágil, a API e o banco PostgreSQL poderão ser hospedados em plataformas PaaS alternativas (**Render** ou **Railway**) sem alteração no código-fonte ou modelagem SQL.
    - Alternativamente, foi modelada a adição de uma 2ª instância em standby (IaaS) para failover automatizado com custo adicional de ~$9.99/mês.
+   - Proposta de ponte entre o servidor caseiro (Dokploy) e a EC2, com backup diário e failover: [`ponte-servidor-caseiro-aws.md`](ponte-servidor-caseiro-aws.md).
 
 ---
 
