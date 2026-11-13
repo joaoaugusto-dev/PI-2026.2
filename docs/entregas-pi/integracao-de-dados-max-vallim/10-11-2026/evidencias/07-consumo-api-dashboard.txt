@@ -1,0 +1,8 @@
+GET /v1/dashboard/kpis
+{"data":{"cadastradas":27,"disponiveis":21,"em_uso":4,"indisponiveis":2,"atrasadas":0,"ocorrencias":2}}
+
+GET /v1/dashboard/atrasos
+{"data":[]}
+
+GET /v1/ferramentas?status=indisponivel (limit=3)
+{"data":[{"id":49571,"nome":"CHAVE DE FENDA PHILLIPS","descricao":null,"marca":"Gedore","modelo":"D766","codigo_identificacao":1,"grupo_id":2,"subgrupo_id":null,"setor_id":2,"localizacao":"Armário 1","status":"indisponivel","motivo_indisponivel":"avaria","etiqueta_impressa_em":null,"foto_url":null,"ativo":true,"created_at":"2026-11-13T13:07:10.410Z"},{"id":49572,"nome":"CHAVE DE FENDA PHILLIPS","descricao":null,"marca":"Tramontina","modelo":"A619","codigo_identificacao":2,"grupo_id":2,"subgrupo_id":null,"setor_id":3,"localizacao":"Armário 1","status":"indisponivel","motivo_indisponivel":"perda","etiqueta_impressa_em":null,"foto_url":null,"ativo":true,"created_at":"2026-11-13T13:07:10.410Z"
