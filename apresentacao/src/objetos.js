@@ -1,0 +1,127 @@
+/* GERADO por scripts/gerar-objetos.py: não editar à mão.
+   Objetos de cada slide (por número), com a posição na tela (fração de 1920x1080).
+   Lista fixa: o celular mostra na hora, sem medir nada. O id é tipo-N, na ordem do slide. */
+export const OBJETOS = {
+  1: [
+    ["imagem-1", "imagem", "Logo", 0.2865, 0.362, 0.4271, 0.178],
+    ["titulo-1", "titulo", "Título", 0.1771, 0.5845, 0.6458, 0.1155],
+  ],
+  2: [
+    ["titulo-1", "titulo", "Título", 0.0729, 0.1194, 0.8542, 0.0616],
+    ["grupo-1", "grupo", "Guilherme Portilho da Rosa Santi", 0.0729, 0.3029, 0.201, 0.5252],
+    ["grupo-2", "grupo", "Henrique de Oliveira Molinari", 0.2906, 0.3029, 0.201, 0.5252],
+    ["grupo-3", "grupo", "João Augusto de Freitas", 0.5083, 0.3029, 0.201, 0.5252],
+    ["grupo-4", "grupo", "Kauan Leander Leandrini", 0.726, 0.3029, 0.201, 0.5252],
+  ],
+  3: [
+    ["titulo-1", "titulo", "Título", 0.0729, 0.1194, 0.8542, 0.0616],
+    ["grupo-1", "grupo", "Prof. Marcelo Ciacco de Almeida", 0.0729, 0.321, 0.201, 0.4891],
+    ["grupo-2", "grupo", "Prof. Max Streicher Vallim", 0.2906, 0.321, 0.201, 0.4891],
+    ["grupo-3", "grupo", "Prof. Nivaldo de Andrade", 0.5083, 0.321, 0.201, 0.4891],
+    ["grupo-4", "grupo", "Prof. Rodrigo Marudi de Oliveira", 0.726, 0.321, 0.201, 0.4891],
+  ],
+  4: [
+    ["titulo-1", "titulo", "Título", 0.0729, 0.1194, 0.8542, 0.0616],
+    ["grupo-1", "grupo", "Front-end", 0.0729, 0.2901, 0.1608, 0.5435],
+    ["grupo-2", "grupo", "Back-end", 0.2462, 0.2901, 0.1608, 0.5435],
+    ["grupo-3", "grupo", "Banco e dados", 0.4196, 0.2901, 0.1608, 0.5435],
+    ["grupo-4", "grupo", "Nuvem", 0.5929, 0.2901, 0.1608, 0.5435],
+    ["grupo-5", "grupo", "Gestão e design", 0.7662, 0.2901, 0.1608, 0.5435],
+  ],
+  5: [
+    ["titulo-1", "titulo", "Título", 0.0729, 0.1194, 0.8542, 0.0616],
+    ["grupo-1", "grupo", "Introdução", 0.0729, 0.3203, 0.201, 0.4285],
+    ["grupo-2", "grupo", "Banco e nuvem", 0.2906, 0.3203, 0.201, 0.4285],
+    ["grupo-3", "grupo", "Back-end", 0.5083, 0.3203, 0.201, 0.4285],
+    ["grupo-4", "grupo", "Front-end e demo", 0.726, 0.3203, 0.201, 0.4285],
+  ],
+  6: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["imagem-1", "imagem", "Quadro branco", 0.2063, 0.2588, 0.4938, 0.4961],
+    ["lista-1", "lista", "O que a visita mostrou", 0.2063, 0.7771, 0.4938, 0.0896],
+    ["imagem-2", "imagem", "Visita técnica", 0.7208, 0.2588, 0.25, 0.6078],
+  ],
+  7: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["grupo-1", "grupo", "Ferramenta", 0.2063, 0.2588, 0.2326, 0.5375],
+    ["grupo-2", "grupo", "Colaborador", 0.4722, 0.2588, 0.2326, 0.5375],
+    ["grupo-3", "grupo", "Registro", 0.7382, 0.2588, 0.2326, 0.5375],
+    ["lista-1", "lista", "Perfis e ODS", 0.2063, 0.8259, 0.7646, 0.0407],
+  ],
+  8: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["kpi-1", "kpi", "Commits", 0.2063, 0.2588, 0.1826, 0.318],
+    ["kpi-2", "kpi", "Pull requests", 0.4003, 0.2588, 0.1826, 0.318],
+    ["kpi-3", "kpi", "Issues", 0.5943, 0.2588, 0.1826, 0.318],
+    ["kpi-4", "kpi", "Testes automatizados", 0.7883, 0.2588, 0.1826, 0.318],
+    ["grafico-1", "grafico", "Entregas do Dia Maker", 0.2063, 0.6028, 0.7646, 0.1898],
+    ["lista-1", "lista", "Documentação", 0.2063, 0.8185, 0.7646, 0.0481],
+  ],
+  9: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["diagrama-1", "diagrama", "Diagrama do banco", 0.2063, 0.2588, 0.4385, 0.6078],
+    ["codigo-1", "codigo", "0001_init.sql", 0.6635, 0.2588, 0.3073, 0.2487],
+    ["lista-1", "lista", "Banco em números", 0.6635, 0.5298, 0.3073, 0.3369],
+  ],
+  10: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["diagrama-1", "diagrama", "Dokploy", 0.2063, 0.2588, 0.5396, 0.6078],
+    ["kpi-1", "kpi", "Serviços no ar", 0.7625, 0.2588, 0.2083, 0.1296],
+    ["kpi-2", "kpi", "Deploys em uma semana", 0.7625, 0.4051, 0.2083, 0.1296],
+    ["lista-1", "lista", "Por que servidor próprio", 0.7625, 0.5514, 0.2083, 0.3152],
+  ],
+  11: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["grupo-1", "grupo", "Serviços AWS", 0.2063, 0.2588, 0.3719, 0.6078],
+    ["grafico-1", "grafico", "Custos", 0.599, 0.2588, 0.3719, 0.6078],
+  ],
+  12: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["diagrama-1", "diagrama", "Esteira da API", 0.2063, 0.2588, 0.7646, 0.1019],
+    ["codigo-1", "codigo", "200 · sucesso", 0.2063, 0.3903, 0.3, 0.4763],
+    ["codigo-2", "codigo", "409 · erro", 0.5208, 0.3903, 0.3, 0.4763],
+    ["kpi-1", "kpi", "Recursos em /v1", 0.8354, 0.3903, 0.1354, 0.2298],
+    ["kpi-2", "kpi", "Testes da API", 0.8354, 0.6368, 0.1354, 0.2298],
+  ],
+  13: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["codigo-1", "codigo", "Requisição", 0.2063, 0.3116, 0.2828, 0.4125],
+    ["diagrama-1", "diagrama", "Middlewares", 0.5026, 0.3116, 0.1719, 0.4125],
+    ["codigo-2", "codigo", "Resposta", 0.688, 0.3116, 0.2828, 0.4125],
+    ["codigo-3", "codigo", "Log do servidor", 0.2063, 0.7444, 0.7646, 0.1222],
+  ],
+  14: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["codigo-1", "codigo", "emprestimoRoutes.ts", 0.2063, 0.3051, 0.375, 0.4417],
+    ["codigo-2", "codigo", "emprestimoService.ts", 0.5958, 0.3051, 0.375, 0.4417],
+    ["lista-1", "lista", "Regras de segurança", 0.2063, 0.8185, 0.7646, 0.0481],
+  ],
+  15: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["grupo-1", "grupo", "Paleta", 0.2063, 0.2588, 0.3719, 0.2065],
+    ["lista-1", "lista", "Status", 0.2063, 0.5977, 0.3719, 0.0676],
+    ["grupo-2", "grupo", "Botão de 60 px", 0.2063, 0.7977, 0.3719, 0.0861],
+    ["codigo-1", "codigo", "StatusBadge.tsx", 0.599, 0.2588, 0.3719, 0.625],
+  ],
+  16: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["imagem-1", "imagem", "Tela no computador", 0.2063, 0.2588, 0.4304, 0.4782],
+    ["celular-1", "celular", "Celular: retirada", 0.6696, 0.2588, 0.1341, 0.4782],
+    ["celular-2", "celular", "Celular: dashboard", 0.8367, 0.2588, 0.1341, 0.4782],
+    ["lista-1", "lista", "Destaques do front", 0.2063, 0.763, 0.7646, 0.1037],
+  ],
+  17: [
+    ["titulo-1", "titulo", "Título", 0.0729, 0.4424, 0.4201, 0.104],
+    ["grupo-1", "grupo", "Roteiro da demo", 0.5451, 0.275, 0.3819, 0.45],
+  ],
+  18: [
+    ["titulo-1", "titulo", "Título", 0.2063, 0.1676, 0.7646, 0.0616],
+    ["imagem-1", "imagem", "Antes", 0.2063, 0.2589, 0.384, 0.3857],
+    ["imagem-2", "imagem", "Depois", 0.6236, 0.2588, 0.3473, 0.3859],
+    ["lista-1", "lista", "Impacto", 0.2063, 0.6743, 0.375, 0.1923],
+    ["lista-2", "lista", "Aprendizados", 0.5958, 0.6743, 0.375, 0.1923],
+  ],
+  19: [
+    ["titulo-1", "titulo", "Obrigado", 0.3254, 0.3388, 0.3491, 0.1444],
+  ],
+}

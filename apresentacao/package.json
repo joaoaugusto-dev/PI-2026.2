@@ -1,0 +1,25 @@
+{
+  "name": "soufer-tools-apresentacao",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/artifact.mjs && cp dist/index.html deploy/index.html"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.2.5",
+    "@fontsource-variable/geist-mono": "^5.2.5",
+    "lucide-react": "^1.38.0",
+    "motion": "^12.23.12",
+    "prism-react-renderer": "^2.4.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "simple-icons": "^16.37.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.2",
+    "vite": "^7.1.5",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}
