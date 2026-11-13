@@ -14,7 +14,7 @@
 | O que é o sistema "principal"? | O **servidor caseiro** (Dokploy + Docker + Traefik + PostgreSQL em contêiner). |
 | Qual o papel da AWS? | Guardar **cópia diária** do que está no servidor caseiro e **assumir o serviço** se ele cair. |
 | Dá para fazer tudo dentro da EC2? | **Dá**, e é o caminho mais barato e o que a equipe já domina. Mas a EC2 sozinha deixa buracos: o backup mora no mesmo disco, não há alarme independente e o DNS não troca sozinho. |
-| Quais serviços AWS a mais valem a pena? | **S3** (cofre dos backups) e **SNS/CloudWatch** (alerta). **Route 53** só se o Learner Lab liberar; senão, DNS gratuito (DuckDNS) ou domínio próprio com API de atualização. Detalhes na seção 4. |
+| Quais serviços AWS a mais valem a pena? | **S3** (cofre dos backups) e **SNS/CloudWatch** (alerta). **Route 53** só se o Learner Lab liberar; senão, a API de atualização do provedor de DNS do `servidorcaseiro.online` (a confirmar). Detalhes na seção 4. |
 | Como a EC2 fala com a casa? | Por um **túnel WireGuard** iniciado pela casa (funciona atrás de roteador/CGNAT, sem abrir porta no roteador). |
 | Quem puxa o backup? | A **EC2 puxa** do servidor caseiro. Assim a casa não precisa guardar chave da AWS (no Learner Lab as credenciais expiram e não dá para criar usuário IAM). |
 | Quanto custa? | Standby "frio" (EC2 desligada, só liga se a casa cair): **~US$ 5,75/mês**. Standby "quente" (EC2 sempre ligada): **~US$ 36/mês**. Ver seção 9. |
@@ -27,9 +27,13 @@ troca) e só depois automatizar a troca (Fase 2). A replicação contínua do ba
 
 ## 2. Premissas e limites
 
-1. **Servidor caseiro:** Dokploy com três serviços (`soufer-tools-web`, `soufer-tools-api`, `soufer-postgres`), HTTPS
-   pelo Traefik, conforme [`dokploy.md`](dokploy.md). A porta 3000 da API **não** é publicada (exigência do
-   `TRUST_PROXY_HOPS=1`).
+1. **Servidor caseiro** (entrega de 13/10/2026): Dokploy v0.30.2 com 7,65 GiB de memória e 112 GB de disco
+   (98 GB já ocupados naquela data), HTTPS pelo Traefik, conforme [`dokploy.md`](dokploy.md). Dois ambientes no mesmo
+   servidor: **produção** (branch `main`; front em `soufer-tools.servidorcaseiro.online`, API em
+   `api-soufer.servidorcaseiro.online`, banco `soufer_prod`) e **desenvolvimento** (branch `development`; banco
+   `soufer_dev`). Na data, produção tinha 192 ferramentas e 113 colaboradores. A porta 3000 da API **não** é
+   publicada (exigência do `TRUST_PROXY_HOPS=1`). Como o disco da casa está quase cheio, os backups **não** devem
+   ficar lá: moram na EC2 e no S3.
 2. **EC2 atual** (guia de deploy, Partes 1 a 9): Ubuntu 24.04, `t3.medium`, Nginx + API Node (PM2) + PostgreSQL 16 +
    front estático, Elastic IP `32.202.0.79`, segredos no Secrets Manager (`soufer-tools/prod`) e `LabRole`.
 3. **Learner Lab:** a sessão dura cerca de 4 horas, só existe a `LabRole`, e as credenciais temporárias rotacionam.
@@ -80,7 +84,7 @@ flowchart LR
     EC2 -->|"1x por dia: pg_dump + rsync (puxa)"| PG
 ```
 
-**Fluxo normal:** o usuário abre `https://app.<dominio>`; o DNS aponta para a casa; a EC2 só puxa o backup.
+**Fluxo normal:** o usuário abre `https://soufer-tools.servidorcaseiro.online`; o DNS aponta para a casa; a EC2 só puxa o backup.
 **Fluxo de falha:** o vigia detecta que a casa não responde, a EC2 restaura/ativa o banco e a API, o DNS passa a
 apontar para o Elastic IP da EC2.
 
@@ -96,7 +100,7 @@ apontar para o Elastic IP da EC2.
 | Segredos (`JWT_SECRET`, senhas) | `.env` com `chmod 600` | **Secrets Manager** (já em uso) | **Secrets Manager** |
 | Detectar que a casa caiu | Script na EC2 (quem vigia e quem assume é o mesmo; se a EC2 cair, ninguém avisa) | CloudWatch Alarm / Route 53 Health Check / monitor externo | Script na EC2 **+** um monitor externo gratuito (ex.: UptimeRobot) para alertar a equipe |
 | Avisar a equipe | e-mail via script | **SNS** | SNS se liberado; senão webhook do Discord/WhatsApp pelo script |
-| Trocar o DNS | API do provedor de DNS chamada pelo script | **Route 53** (failover automático com health check) | Route 53 se liberado; senão DuckDNS/domínio próprio + script |
+| Trocar o DNS | API do provedor de DNS chamada pelo script | **Route 53** (failover automático com health check) | Route 53 se liberado; senão API do provedor de DNS atual + script |
 | Ligar a EC2 só na falha (standby frio) | Impossível (ela mesma está desligada) | EventBridge + Lambda, ou o script rodar em outra máquina | Só em conta real. No Lab, usar standby "quente" ou ligar à mão |
 
 Conclusão: **EC2 + S3 + Secrets Manager** é o conjunto mínimo e honesto. O resto é opcional e depende do que o Lab libera.
@@ -124,6 +128,9 @@ Conclusão: **EC2 + S3 + Secrets Manager** é o conjunto mínimo e honesto. O re
   GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO backup_ro;
   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO backup_ro;
   ```
+
+  Isso é compatível com a pendência da entrega de 13/10 ("remover a porta externa do banco"): sai a porta
+  aberta para qualquer origem e entra uma publicada só no IP do túnel.
 
   > As migrations criam tabelas novas com o dono `postgres`/`soufer`; o `ALTER DEFAULT PRIVILEGES` precisa ser
   > executado **pelo papel que roda as migrations**, senão tabelas novas ficam fora do backup. Validar com
@@ -167,7 +174,7 @@ cd ~/PI-2026.2/api && scripts/com-segredos.sh npm run db:migrate   # idempotente
 
 ### 6.4 Alternativa: backup nativo do Dokploy
 
-O Dokploy agenda backup do banco para um destino S3. Funcionaria, **mas** exige chave de acesso fixa da AWS, e o
+A aba de backups do Dokploy ainda está sem destino (pendência da entrega de 13/10). Ele agenda backup do banco para um destino S3. Funcionaria, **mas** exige chave de acesso fixa da AWS, e o
 Learner Lab não oferece isso. Em conta real é a opção mais simples; no Lab, usar o modelo "EC2 puxa".
 
 ---
@@ -176,7 +183,7 @@ Learner Lab não oferece isso. Em conta real é a opção mais simples; no Lab, 
 
 ### 7.1 Detecção
 
-- Vigia na EC2 (`systemd timer` a cada 30 s) consulta **`https://app.<dominio>/v1/health`** pela internet pública
+- Vigia na EC2 (`systemd timer` a cada 30 s) consulta **`https://api-soufer.servidorcaseiro.online/v1/health`** pela internet pública
   (o mesmo caminho do usuário) e confere `"status":"ok"`.
 - **Gatilho:** 6 falhas seguidas (≈ 3 minutos) **e** nenhum sinal de vida da casa no túnel (handshake do WireGuard
   parado). Se só o túnel caiu e o site público responde, **não troca**: só alerta.
@@ -188,7 +195,7 @@ Learner Lab não oferece isso. Em conta real é a opção mais simples; no Lab, 
 1. Alerta "iniciando assunção".
 2. Restaura o último dump (se o standby não estiver com banco já carregado) e roda `db:migrate`.
 3. Sobe a API com `scripts/com-segredos.sh` (mesmos `JWT_SECRET` e `DB_PASSWORD` do Secrets Manager).
-4. Confere `curl http://127.0.0.1:3000/v1/health` e `curl -I https://<dominio-da-ec2>/`.
+4. Confere `curl http://127.0.0.1:3000/v1/health` e `curl -I https://reserva.servidorcaseiro.online/`.
 5. Atualiza o DNS para o Elastic IP da EC2.
 6. Grava a marca `/var/lib/soufer/MODO_RESERVA_ATIVO` e avisa a equipe com a hora do último backup (o que pode ter se perdido).
 
@@ -196,12 +203,12 @@ Learner Lab não oferece isso. Em conta real é a opção mais simples; no Lab, 
 
 | Ponto | Problema | Solução |
 |---|---|---|
-| **Domínio `sslip.io`** | O nome embute o IP (`32-202-0-79.sslip.io`); não existe como apontar o mesmo nome para dois IPs. | Usar **domínio de verdade** com TTL 60 s (`.com.br` no Registro.br, ou subdomínio DuckDNS). Já citado no guia como plano B (item 8.6). |
-| **Certificado HTTPS na EC2** | O Let's Encrypt por HTTP-01 só emite se o DNS já apontar para a EC2, e no momento da falha é tarde. | Emitir o certificado da EC2 **antes**, por **DNS-01** (plugin do provedor de DNS), ou manter um nome próprio da reserva (`reserva.<dominio>`) já com certificado. |
+| **Domínio** | A EC2 atual usa `sslip.io`, cujo nome embute o IP (`32-202-0-79.sslip.io`) e não aceita outro destino. A casa já usa um domínio real (`servidorcaseiro.online`). | Reutilizar `servidorcaseiro.online`: na falha, os mesmos nomes (`soufer-tools.` e `api-soufer.`) passam a apontar para o Elastic IP. Baixar o TTL desses registros para 60 s e descobrir se o provedor de DNS tem API. |
+| **Dois nomes na casa, um na EC2** | Na casa o front e a API têm hostnames separados e `VITE_API_URL` absoluta; o front da EC2 é compilado com `/v1` relativo. | Nginx da EC2 atende **os dois** hostnames (front e `/v1` em ambos) e a API da EC2 recebe `CORS_ORIGIN=https://soufer-tools.servidorcaseiro.online`. Assim abas antigas, com o front em cache, continuam funcionando. |
+| **Certificado HTTPS na EC2** | O Let's Encrypt por HTTP-01 só emite se o DNS já apontar para a EC2, e no momento da falha é tarde. | Emitir o certificado da EC2 **antes**, por **DNS-01** (plugin do provedor de DNS), ou manter um nome próprio da reserva (`reserva.servidorcaseiro.online`) já com certificado. |
 | **`JWT_SECRET` diferente** | Todo mundo seria deslogado (sessões de 7 dias). | Usar o **mesmo** `JWT_SECRET` nos dois lados (copiar uma vez para o Secrets Manager). |
-| **`CORS_ORIGIN`** | Front na EC2 chamando outra origem → erro de CORS. | Mesmo domínio nos dois lados (o DNS é que muda), então `CORS_ORIGIN` não muda. |
 | **`TRUST_PROXY_HOPS`** | Sem `1`, o limite de tentativas de login passa a valer para todos juntos. | Nginx da EC2 já exige `TRUST_PROXY_HOPS=1`; manter. |
-| **Versões diferentes** | Casa em `develop`, EC2 em `main`: o dump pode ter migration que a EC2 não conhece. | Fixar a mesma tag/commit nas duas pontas e registrar a versão no backup. |
+| **Versões diferentes** | A produção da casa acompanha a `main` por deploy automático (webhook); a EC2 só atualiza com `git pull` manual. O dump pode ter migration que a EC2 não conhece. | Antes de restaurar, atualizar a EC2 para o mesmo commit da `main` e registrar o commit no nome do backup. |
 | **Seed** | Rodar `db:seed` na reserva cria contas `123456`. | Nunca rodar; a API já recusa com `NODE_ENV=production`. |
 | **Notificações e feriados** | Os jobs da API (BrasilAPI, notificações) rodam nos dois lados e duplicam. | Manter a API da reserva **desligada** até a promoção. |
 
@@ -305,10 +312,10 @@ Cada item é um candidato a issue no board (ver `CLAUDE.md`, seção 8; não há
 
 | # | O que falta saber | Por que importa |
 |---|---|---|
-| 1 | Sistema operacional e hardware do servidor caseiro; versão do Docker e do Dokploy | Instalar WireGuard e definir volumes |
+| 1 | Sistema operacional e versão do Docker do servidor caseiro (hardware já conhecido) | Instalar WireGuard e definir volumes |
 | 2 | Versão do PostgreSQL da imagem do Dokploy | `pg_dump` da EC2 precisa ser igual ou mais novo |
 | 3 | A casa tem IP público fixo, dinâmico ou está atrás de CGNAT? | Define se o túnel só pode ser iniciado pela casa (o desenho já assume isso) |
-| 4 | Domínio definitivo (próprio ou DuckDNS) | Sem isso não há failover por DNS |
+| 4 | Qual o provedor de DNS do `servidorcaseiro.online` e se ele tem API de atualização | Sem isso a troca de DNS é manual |
 | 5 | O Learner Lab libera Route 53, SNS, EventBridge/Lambda? | Define o que vira script na EC2 |
 | 6 | Caminho real dos volumes de fotos no host | Backup das fotos |
 | 7 | Decisão da equipe: RPO 24 h aceito, ou backup horário? | Seção 9.1 |
@@ -359,7 +366,7 @@ find "$DESTINO" -maxdepth 1 -name '*.dump' -mtime +14 -delete
 ```text
 falhas = ler contador em /var/lib/soufer/falhas
 se existe MODO_RESERVA_ATIVO: sair (reserva já é a principal; failback é manual)
-se GET https://app.<dominio>/v1/health devolve status "ok" em 5 s: falhas = 0; sair
+se GET https://api-soufer.servidorcaseiro.online/v1/health devolve status "ok" em 5 s: falhas = 0; sair
 senão: falhas += 1
 se falhas >= 6 e último handshake do WireGuard tem mais de 3 min:
     alertar "casa fora do ar"; executar promover.sh
