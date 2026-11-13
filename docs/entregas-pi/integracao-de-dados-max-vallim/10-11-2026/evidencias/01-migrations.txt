@@ -1,0 +1,6 @@
+
+> soufer-tools-api@1.0.0 db:migrate
+> tsx scripts/migrate.ts
+
+🔄 Iniciando execução das migrations no PostgreSQL...
+✅ Nenhuma migration pendente. O banco de dados já está atualizado!

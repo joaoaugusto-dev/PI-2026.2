@@ -1,0 +1,11 @@
+
+> soufer-tools-api@1.0.0 db:feriados
+> tsx scripts/sincronizar-feriados.ts 2026
+
+📅 Sincronizando feriados nacionais (BrasilAPI)...
+📋 Anos selecionados: 2026
+
+⏳ Sincronizando ano 2026...
+✅ Ano 2026: 14 feriados inseridos/atualizados com sucesso!
+
+🎉 Processo finalizado! Total de 14 registros sincronizados na tabela 'feriados'.
