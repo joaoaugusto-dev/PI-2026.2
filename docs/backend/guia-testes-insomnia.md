@@ -36,7 +36,7 @@ A collection já vem pronta com todas as rotas e os casos de erro mais comuns
    necessário; em vez disso, use **Create → Import From File** (ou arraste o
    arquivo direto para a janela do Insomnia).
 3. Selecione o arquivo
-   [`api/docs/insomnia-collection.json`](../../api/docs/insomnia-collection.json).
+   [`api/docs/soufer-tools-*.json`](../../api/docs/).
 4. Uma nova collection chamada **"SOUFER Tools API"** vai aparecer na barra
    lateral, já com as pastas de requests (health, auth, consulta,
    ferramentas).
@@ -198,7 +198,7 @@ cadastro até a baixa. Passo a passo com as requests da collection:
 
 ## 8. Referências
 
-- Collection: [`api/docs/insomnia-collection.json`](../../api/docs/insomnia-collection.json)
+- Collection: [`api/docs/soufer-tools-*.json`](../../api/docs/)
 - Lista completa de endpoints: [`docs/backend/api.md`](api.md)
 - Regras de negócio (avaria/perda, disponibilizar, baixa lógica):
   [`docs/backend/processos.md`](processos.md)
