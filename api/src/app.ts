@@ -8,6 +8,8 @@ import { swaggerSpec } from './config/swagger.js';
 import { httpLogger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { registrarContextoRequisicao } from './middlewares/contextoRequisicao.js';
+import { docsAdminAuth } from './middlewares/docsAuth.js';
+import { docsLimiter } from './middlewares/rateLimit.js';
 import { NotFoundError } from './utils/errors.js';
 import v1Routes from './routes/v1/index.js';
 
@@ -67,9 +69,9 @@ app.use(express.urlencoded({ extended: true }));
 // Logging estruturado
 app.use(httpLogger);
 
-// Documentação Swagger UI
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use('/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Documentação Swagger UI — só admin (HTTP Basic, ver middlewares/docsAuth.ts)
+app.use('/docs', docsLimiter, docsAdminAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/v1/docs', docsLimiter, docsAdminAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
  * @openapi

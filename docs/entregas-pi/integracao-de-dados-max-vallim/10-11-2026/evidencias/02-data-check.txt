@@ -1,0 +1,29 @@
+
+> soufer-tools-api@1.0.0 data:check
+> tsx scripts/data-check.ts
+
+🔎 SOUFER Tools — verificação de consistência dos dados
+Banco: soufer_dev @ 127.0.0.1:5432   Data: 13/11/2026, 10:07
+
+✅ EM_USO_SEM_EMPRESTIMO......................... 0
+✅ EMPRESTIMO_ABERTO_FERRAMENTA_NAO_EM_USO....... 0
+✅ INDISPONIVEL_SEM_MOTIVO....................... 0
+✅ MOTIVO_COM_STATUS_DIFERENTE................... 0
+✅ INDISPONIVEL_SEM_OCORRENCIA_ABERTA............ 0
+✅ OCORRENCIA_ABERTA_FERRAMENTA_DISPONIVEL....... 0
+✅ COLABORADOR_MATRICULA_DUPLICADA............... 0
+✅ FERRAMENTA_CODIGO_DUPLICADO................... 0
+✅ EMPRESTIMO_PREVISAO_ANTES_RETIRADA............ 0
+✅ EMPRESTIMO_DEVOLUCAO_ANTES_RETIRADA........... 0
+✅ EMPRESTIMO_DEVOLVIDO_SEM_CONDICAO............. 0
+✅ EMPRESTIMO_COLABORADOR_INATIVO_ABERTO......... 0
+✅ FERRAMENTA_SUBGRUPO_FORA_DO_GRUPO............. 0
+✅ FERRAMENTA_VALOR_NEGATIVO..................... 0
+✅ FERRAMENTA_NOME_VAZIO......................... 0
+✅ OCORRENCIA_SEM_COLABORADOR_COM_EMPRESTIMO..... 0
+✅ FOTO_ARQUIVO_INEXISTENTE...................... 0
+✅ AUDITORIA_TRIGGER_AUSENTE..................... 0
+✅ AUDITORIA_SEM_REGISTRO........................ 0
+
+Resumo: 19 verificações · 19 ok · 0 com erro · 0 com aviso
+Resultado: tudo certo (saída 0)

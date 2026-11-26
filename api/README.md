@@ -142,6 +142,10 @@ O servidor iniciará em `http://localhost:3000`.
 Com o servidor rodando, acesse a documentação interativa no navegador:
 👉 **[http://localhost:3000/docs](http://localhost:3000/docs)** (ou `/v1/docs`)
 
+Acesso restrito a **admin**: o navegador pede usuário e senha (HTTP Basic) — use a
+matrícula e a senha de uma conta `admin`. Conta `manutencao` recebe 403; credencial
+errada, 401 (limite de 10 tentativas falhas por minuto por IP).
+
 ---
 
 ## 📐 Padrões de Comunicação

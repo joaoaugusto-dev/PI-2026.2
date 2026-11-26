@@ -1,0 +1,15 @@
+Login manutencao (0001): ok
+Disponiveis: 27 | colaboradores usados: 6 | setorDestinoId=4
+POST /emprestimos ferramenta=49573 (ALICATE DE CORTE) -> HTTP 201
+POST /emprestimos ferramenta=49574 (ALICATE DE CORTE) -> HTTP 201
+POST /emprestimos ferramenta=49571 (CHAVE DE FENDA PHILLIPS) -> HTTP 201
+POST /emprestimos ferramenta=49572 (CHAVE DE FENDA PHILLIPS) -> HTTP 201
+POST /emprestimos ferramenta=49588 (CHAVE DE IMPACTO 1/2 POLEGADA) -> HTTP 201
+POST /emprestimos ferramenta=49577 (CHAVE INGLESA 12 POLEGADAS) -> HTTP 201
+POST /emprestimos ferramenta=49578 (CHAVE INGLESA 12 POLEGADAS) -> HTTP 201
+POST /emprestimos ferramenta=49583 (ESMERILHADEIRA ANGULAR 4 1/2) -> HTTP 201
+Retirar de novo a mesma ferramenta -> HTTP 409 FERRAMENTA_INDISPONIVEL
+PATCH devolucao emprestimo=7161 ok -> HTTP 200
+PATCH devolucao emprestimo=7162 ok -> HTTP 200
+PATCH devolucao emprestimo=7163 avaria -> HTTP 200 ocorrencia=5529
+PATCH devolucao emprestimo=7164 perda -> HTTP 200 ocorrencia=5530

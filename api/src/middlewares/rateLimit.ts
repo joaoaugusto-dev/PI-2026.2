@@ -68,6 +68,15 @@ export const conviteLimiter = criarLimiter({
 // Login por matrícula (issue #150): a matrícula tem só 9.999 valores
 // possíveis e não é secreta (mesmo raciocínio do consultaSessaoLimiter) — sem limite, dá pra forçar a senha contra qualquer uma
 // das matrículas sem nenhum freio.
+// Swagger (/docs) com HTTP Basic de admin: só as tentativas que falham contam,
+// porque o browser repete a credencial em cada asset da página.
+export const docsLimiter = criarLimiter({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'Muitas tentativas de acesso à documentação. Aguarde um minuto e tente novamente.',
+  skipSuccessfulRequests: true,
+});
+
 export const loginLimiter = criarLimiter({
   windowMs: 60 * 1000,
   max: 10,
