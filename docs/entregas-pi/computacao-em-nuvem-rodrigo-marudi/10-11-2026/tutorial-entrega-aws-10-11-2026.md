@@ -8,7 +8,7 @@ Versão de 10/11/2026 (atividade do Prof. Rodrigo Marudi, 03/11/2026). Este guia
 - **Pronto quando.** Cada passo termina com o que você deve ver. Se não viu, não avance.
 - **Correção.** Os quadros "Correção" marcam os pontos em que nós erramos na primeira vez e o que fazer para não repetir.
 - **Extra (não feito por nós).** Itens marcados assim são recomendados, mas não foram executados na nossa entrega. O relatório não os afirma.
-- **Evidências.** Em cada passo há uma linha "Print". Tire o print com a data e a hora visíveis (relógio do Windows na tela) e guarde em `docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/prints-aws/`, com o número do passo no nome (por exemplo `4.8 Alarme de disponibilidade da API (1).png`).
+- **Evidências.** Em cada passo há uma linha "Print". Tire o print com a data e a hora visíveis (relógio do Windows na tela) e guarde em `docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/10-11-2026/prints-aws/`, com o número do passo no nome (por exemplo `4.8 Alarme de disponibilidade da API (1).png`).
 - **Horários.** O console da AWS, o CloudWatch e o servidor usam UTC. Brasília é UTC−3 (22:02 UTC são 19:02).
 - **Sessão do laboratório.** O Learner Lab dura cerca de 4 horas. Se acabar, clique em *Start Lab* de novo e inicie a instância em EC2 > Instâncias > Estado da instância > Iniciar. Com o IP elástico o endereço não muda, e o PM2 e o Nginx sobem sozinhos. As métricas do CloudWatch só existem enquanto a instância roda.
 
@@ -1075,7 +1075,7 @@ Reconecte e rode `uptime; pm2 status; curl -s http://127.0.0.1/v1/health; system
 
 ### 9.2 Onde guardar e como nomear
 
-Guarde tudo em `docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/prints-aws/`, com o número do passo no nome. As notas de medição vão em `docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/10-11-2026/` (por exemplo, `00-baseline-antes-carga-ab.md`).
+Guarde tudo em `docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/10-11-2026/prints-aws/`, com o número do passo no nome. As notas de medição vão em `docs/entregas-pi/computacao-em-nuvem-rodrigo-marudi/10-11-2026/` (por exemplo, `00-baseline-antes-carga-ab.md`).
 
 ### 9.3 O relatório (PDF)
 
